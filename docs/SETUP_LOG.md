@@ -82,3 +82,10 @@ Hasil `php artisan migrate`: 23 migrasi DONE di SQLite dev. Tidak ada error.
 - 22 model di `app/Models/`: `Role`, `Permission`, `Unit`, `User` (ditulis ulang ikut desain + `SoftDeletes`), `Mak`, `JenisPengadaan`, `MetodePengadaan`, `LevelPengadaan`, `Permohonan`, `PermohonanMak`, `Pengadaan`, `Kontrak`, `RencanaPembayaran`, `Pembayaran`, `Reminder`, `PenerimaanBarang`, `Dokumen`, `ApprovalPermohonan`, `ApprovalPengadaan`, `ApprovalPembayaran`, `StatusHistory`, `Notification`. Isi hanya fillable, casts, dan relasi. Tanpa logika bisnis, sesuai aturan Service Layer.
 - `UserFactory` diselaraskan (`nama`, `role_id` via factory, tanpa kolom yang sudah dihapus). `RoleFactory` baru dibuat.
 - `pint --dirty`: 3 file dirapikan otomatis. `php artisan test`: 2 test lolos.
+
+## 10. Seeder role
+
+- `RoleSeeder` baru: 9 peran via `firstOrCreate` (idempoten). Terdaftar di `DatabaseSeeder`.
+- `DatabaseSeeder` diperbaiki ikut skema baru: user uji pakai `nama` dan `role_id` Admin. Kolom lama (`name`, `email_verified_at`, `remember_token`) dibuang.
+- Hasil: 9 role + 1 user uji di SQLite dev. `pint --dirty` rapikan 1 file. Test 2/2 lolos.
+- Catatan: `db:seed` ulang gagal pada user uji karena email unik. Sama seperti bawaan Laravel. Reset via `migrate:fresh --seed` bila perlu.
