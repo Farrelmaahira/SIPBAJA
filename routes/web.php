@@ -1,29 +1,22 @@
 <?php
 
-use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 Route::get('/', function () {
     return view('welcome');
 });
 
 Route::middleware('guest')->group(function () {
-    Route::get('/login', function () {
-        return view('auth.login');
-    })->name('login');
+    Route::get('/login', [AuthController::class, 'show'])->name('login');
+    Route::post('/login', [AuthController::class, 'store'])->name('login.store');
 });
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', function () {
-        return view('dashboard');
+        return Inertia::render('Dashboard');
     })->name('dashboard');
 
-    Route::post('/logout', function () {
-        Auth::logout();
-
-        request()->session()->invalidate();
-        request()->session()->regenerateToken();
-
-        return redirect()->route('login');
-    })->name('logout');
+    Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
 });

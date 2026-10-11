@@ -25,7 +25,7 @@ Success criteria:
 |---|---|
 | Framework | Laravel 13 |
 | Language | PHP 8.5.11 |
-| Frontend | Livewire + Tailwind CSS |
+| Frontend | React + Inertia.js + Tailwind CSS |
 | DB (development) | SQLite |
 | DB (production target) | PostgreSQL 18 |
 
@@ -52,25 +52,25 @@ Business logic lives ONLY in Service classes. No exceptions, including authentic
 Request flow:
 
 ```
-Livewire Component / Controller  ->  Service  ->  Model
+React Page (Inertia)  ->  Controller  ->  Service  ->  Model
 ```
 
 What belongs where:
-- Livewire components and controllers handle only: input, validation call, calling a Service, returning the view/response.
+- Controllers handle only: input, validation call, calling a Service, returning the Inertia response/redirect.
 - ALL business logic and ALL write queries live in Service classes.
-- Livewire components and controllers must NOT contain business logic or direct Eloquent queries. A component or controller method that decides, calculates, or queries beyond reading for display is a violation.
+- Controllers must NOT contain business logic or direct Eloquent queries. A controller method that decides, calculates, or queries beyond reading for display is a violation.
 - This pattern applies to EVERY feature, without exception.
 
 Rules:
-- Livewire components and controllers handle only: input, validation call, calling a Service, returning the view/response.
+- Controllers handle only: input, validation call, calling a Service, returning the Inertia response/redirect.
 - ALL business logic and ALL write queries live in Service classes.
-- Livewire components and controllers must NOT contain business logic or direct Eloquent queries.
+- Controllers must NOT contain business logic or direct Eloquent queries.
 - One Service per domain, located in `app/Services/`.
   Examples: `AuthService`, `PermohonanService`, `PengadaanService`, `KontrakService`, `PembayaranService`, `RencanaPembayaranService`.
 - A Service method that writes to more than one table MUST use a DB transaction.
-- Services must not depend on Livewire, Request, or session objects. Pass plain data (arrays, DTOs, models) as parameters.
-- Validation: Form Request or Livewire validation. Authorization: Policy/Gate per role.
-- Every inbound data MUST use a dedicated Form Request class in `app/Http/Requests/` so input is structured. Name PascalCase with `Request` suffix (example `SimpanPermohonanRequest`). Controllers and Livewire components only call the Request validation, then pass `validated()` to the Service. Services must NEVER read raw input. `authorize()` enforces the Policy/Gate per role. `rules()` and `messages()` use Bahasa Indonesia.
+- Services must not depend on Request or session objects. Pass plain data (arrays, DTOs, models) as parameters.
+- Validation: Form Request. Authorization: Policy/Gate per role.
+- Every inbound data MUST use a dedicated Form Request class in `app/Http/Requests/` so input is structured. Name PascalCase with `Request` suffix (example `SimpanPermohonanRequest`). Controllers only call the Request validation, then pass `validated()` to the Service. Services must NEVER read raw input. `authorize()` enforces the Policy/Gate per role. `rules()` and `messages()` use Bahasa Indonesia.
 - Notifications triggered by `status_history` changes: use Laravel Observer / model events. NEVER use DB triggers.
 
 ---
@@ -129,7 +129,7 @@ Domain terms stay in Indonesian (`Permohonan`, `Pengadaan`, `Kontrak`, `Pembayar
 - Do NOT change anything in Section 2 (stack) or Section 3 (database) without user approval.
 - Do NOT add packages.
 - Do NOT invent business rules.
-- Do NOT put business logic in Livewire components, controllers, Blade views, or Models.
+- Do NOT put business logic in controllers, React components, Blade views, or Models.
 - Do NOT use DB triggers.
 - Do NOT edit old migrations.
 - Do NOT refactor or "clean up" code outside the scope of the current task.

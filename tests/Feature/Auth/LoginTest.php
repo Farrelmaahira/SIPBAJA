@@ -2,13 +2,11 @@
 
 namespace Tests\Feature\Auth;
 
-use App\Livewire\Auth\Login;
 use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Database\Seeders\UserSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Livewire\Livewire;
 use Tests\TestCase;
 
 class LoginTest extends TestCase
@@ -29,45 +27,45 @@ class LoginTest extends TestCase
 
     public function test_login_dengan_email_berhasil(): void
     {
-        Livewire::test(Login::class)
-            ->set('login', 'admin@pnj.ac.id')
-            ->set('password', 'password123')
-            ->call('authenticate')
-            ->assertRedirect(route('dashboard'));
+        $response = $this->post(route('login.store'), [
+            'login' => 'admin@pnj.ac.id',
+            'password' => 'password123',
+        ]);
 
+        $response->assertRedirect(route('dashboard'));
         $this->assertAuthenticated();
     }
 
     public function test_login_dengan_nama_berhasil(): void
     {
-        Livewire::test(Login::class)
-            ->set('login', 'PPK')
-            ->set('password', 'password123')
-            ->call('authenticate')
-            ->assertRedirect(route('dashboard'));
+        $response = $this->post(route('login.store'), [
+            'login' => 'PPK',
+            'password' => 'password123',
+        ]);
 
+        $response->assertRedirect(route('dashboard'));
         $this->assertAuthenticated();
     }
 
     public function test_login_dengan_password_salah_gagal(): void
     {
-        Livewire::test(Login::class)
-            ->set('login', 'admin@pnj.ac.id')
-            ->set('password', 'salahpassword')
-            ->call('authenticate')
-            ->assertHasErrors('login');
+        $response = $this->post(route('login.store'), [
+            'login' => 'admin@pnj.ac.id',
+            'password' => 'salahpassword',
+        ]);
 
+        $response->assertSessionHasErrors('login');
         $this->assertGuest();
     }
 
     public function test_login_membutuhkan_validasi(): void
     {
-        Livewire::test(Login::class)
-            ->set('login', '')
-            ->set('password', 'pendek')
-            ->call('authenticate')
-            ->assertHasErrors(['login', 'password']);
+        $response = $this->post(route('login.store'), [
+            'login' => '',
+            'password' => 'pendek',
+        ]);
 
+        $response->assertSessionHasErrors(['login', 'password']);
         $this->assertGuest();
     }
 

@@ -65,11 +65,11 @@
 ## Technical Specifications
 
 ### Frontend
-- **Technology Stack:** Livewire 3 dengan Tailwind CSS, dirender di sisi server dalam satu aplikasi monolitik.
+- **Technology Stack:** React dengan Inertia.js dan Tailwind CSS dalam satu aplikasi monolitik (routing Laravel di server, render React di client).
 - **Design System:** Belum ditentukan.
 - **Responsive Design:** Responsif dasar menggunakan utilitas Tailwind.
 
 ### Backend
 - **Technology Stack:** PHP 8.5.11 dengan Laravel 13.
-- **API Requirements:** Tidak ada REST API karena aplikasi monolitik Livewire. Lapisan API (Laravel Sanctum untuk autentikasi dan Scribe untuk dokumentasi) baru ditambahkan jika nanti ada konsumen eksternal.
+- **API Requirements:** Tidak ada REST API karena aplikasi monolitik Inertia (komunikasi via protokol Inertia, bukan REST). Lapisan API (Laravel Sanctum untuk autentikasi dan Scribe untuk dokumentasi) baru ditambahkan jika nanti ada konsumen eksternal.
 - **Database:** PostgreSQL 18, relasional. Data dokumen, persetujuan, dan riwayat status disimpan dalam tabel bersama yang dapat merujuk ke berbagai objek pengadaan.
