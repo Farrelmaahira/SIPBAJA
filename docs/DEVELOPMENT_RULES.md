@@ -47,18 +47,26 @@ Rules:
 
 ## 4. Architecture: Service Layer (mandatory)
 
+Business logic lives ONLY in Service classes. No exceptions, including authentication.
+
 Request flow:
 
 ```
 Livewire Component / Controller  ->  Service  ->  Model
 ```
 
+What belongs where:
+- Livewire components and controllers handle only: input, validation call, calling a Service, returning the view/response.
+- ALL business logic and ALL write queries live in Service classes.
+- Livewire components and controllers must NOT contain business logic or direct Eloquent queries. A component or controller method that decides, calculates, or queries beyond reading for display is a violation.
+- This pattern applies to EVERY feature, without exception.
+
 Rules:
 - Livewire components and controllers handle only: input, validation call, calling a Service, returning the view/response.
 - ALL business logic and ALL write queries live in Service classes.
 - Livewire components and controllers must NOT contain business logic or direct Eloquent queries.
 - One Service per domain, located in `app/Services/`.
-  Examples: `PermohonanService`, `PengadaanService`, `KontrakService`, `PembayaranService`, `RencanaPembayaranService`.
+  Examples: `AuthService`, `PermohonanService`, `PengadaanService`, `KontrakService`, `PembayaranService`, `RencanaPembayaranService`.
 - A Service method that writes to more than one table MUST use a DB transaction.
 - Services must not depend on Livewire, Request, or session objects. Pass plain data (arrays, DTOs, models) as parameters.
 - Validation: Form Request or Livewire validation. Authorization: Policy/Gate per role.
@@ -103,13 +111,10 @@ Rules:
 
 ## 6. Naming Conventions
 
-Priority: PascalCase for files, classes, and variables.
+- PHP class files and class names: PascalCase (`PermohonanService.php`, `AuthService`)
+- Methods and PHP variables: camelCase (`hitungTotal()`, `$nominalPengadaan`)
 
-Use PascalCase for:
-- PHP class files and class names (`PermohonanService.php`)
-- Methods and PHP variables (`$NominalPengadaan`, `HitungTotal()`)
-
-Exceptions (framework requirements, do NOT use PascalCase):
+Exceptions (do NOT use PascalCase or camelCase here):
 - Database table and column names: snake_case (follow the database design file)
 - Blade / Livewire view files: kebab-case
 - Route URIs and route names: kebab-case / dot notation
