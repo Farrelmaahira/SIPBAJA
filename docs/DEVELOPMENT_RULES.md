@@ -149,7 +149,22 @@ Domain terms stay in Indonesian (`Permohonan`, `Pengadaan`, `Kontrak`, `Pembayar
 
 ## 9. Not Decided Yet (ask the user, do not decide yourself)
 
-- Folder structure beyond `app/Services/`
+- Folder structure beyond `app/Services/` (frontend component structure is decided in Section 10)
 - Design system / UI component library
 - Testing strategy
 - Commit message format
+
+---
+
+## 10. Frontend: Atomic Design (React + Inertia)
+
+- Hierarchy satu arah: atoms → molecules → organisms → templates → pages.
+- Lokasi: `resources/js/components/atoms/`, `molecules/`, `organisms/`, `templates/`; pages di `resources/js/Pages/`.
+- Pages hanya wiring props/data ke satu template. Tanpa logika. Tanpa fetch. Tanpa state selain display.
+- Atoms presentational saja. Props eksplisit. Tanpa global state. Tanpa fetch.
+- Molecules gabung atoms. Organisms gabung molecules. Templates atur layout. Pages pilih template + copy.
+- Layer boleh dilewati bila tidak ada yang dikelompokkan; arah tetap satu arah.
+- Cek komponen existing sebelum buat baru.
+- Styling: plain Tailwind utilities saja. Design system belum diputuskan.
+- Tanpa business logic di komponen React. Mapping display (contoh status code → copy) di page/template saja.
+- Error pages: tiap `Pages/Errors/*.jsx` render `ErrorTemplate` bersama dengan `{status, title, message}`.

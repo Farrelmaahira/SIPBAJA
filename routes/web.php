@@ -4,12 +4,9 @@ use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', function () {
-    return view('welcome');
-});
 
 Route::middleware('guest')->group(function () {
-    Route::get('/login', [AuthController::class, 'show'])->name('login');
+    Route::get('/', [AuthController::class, 'show'])->name('login');
     Route::post('/login', [AuthController::class, 'store'])->name('login.store');
 });
 
