@@ -10,7 +10,7 @@ class RoleSeeder extends Seeder
     public function run(): void
     {
         $NamaPeran = [
-            'Jurusan/Unit/Bidang',
+            'Pemohon',
             'Perencanaan',
             'Bidang 2',
             'PPBJ',
