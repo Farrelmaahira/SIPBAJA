@@ -23,7 +23,7 @@ class UserSeeder extends Seeder
         ];
 
         $roleNames = [
-            'jurusan@pnj.ac.id' => 'Jurusan/Unit/Bidang',
+            'jurusan@pnj.ac.id' => 'Pemohon',
             'perencanaan@pnj.ac.id' => 'Perencanaan',
             'bidang2@pnj.ac.id' => 'Bidang 2',
             'ppbj@pnj.ac.id' => 'PPBJ',
