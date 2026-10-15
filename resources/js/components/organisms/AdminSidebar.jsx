@@ -1,9 +1,5 @@
 import { useEffect } from 'react';
-import DashboardIcon from '../atoms/icons/DashboardIcon';
-import UsersIcon from '../atoms/icons/UsersIcon';
-import BuildingIcon from '../atoms/icons/BuildingIcon';
-import LayersIcon from '../atoms/icons/LayersIcon';
-import XIcon from '../atoms/icons/XIcon';
+import { LayoutGrid, Users, Building, Layers, X } from 'lucide-react';
 import SidebarNavItem from '../molecules/SidebarNavItem';
 import HelpCard from '../molecules/HelpCard';
 
@@ -26,28 +22,28 @@ export default function AdminSidebar({
         {
             key: 'admin.dashboard',
             label: 'Dashboard',
-            icon: DashboardIcon,
+            icon: LayoutGrid,
             href: '/admin/dashboard',
             active: activeRoute === 'admin.dashboard',
         },
         {
             key: 'admin.users',
             label: 'Pengguna',
-            icon: UsersIcon,
+            icon: Users,
             href: '#pengguna',
             active: activeRoute === 'admin.users',
         },
         {
             key: 'admin.units',
             label: 'Unit Kerja',
-            icon: BuildingIcon,
+            icon: Building,
             href: '#unit-kerja',
             active: activeRoute === 'admin.units',
         },
         {
             key: 'admin.mak',
             label: 'Master MAK',
-            icon: LayersIcon,
+            icon: Layers,
             href: '#master-mak',
             active: activeRoute === 'admin.mak',
         },
@@ -96,7 +92,7 @@ export default function AdminSidebar({
                             className="md:hidden inline-flex items-center justify-center w-11 h-11 rounded-xl text-[#5F6F6A] hover:bg-[#EEF5F2] hover:text-[#14201C] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C5A]"
                             aria-label="Tutup menu navigasi"
                         >
-                            <XIcon className="w-5 h-5" />
+                            <X className="w-5 h-5" />
                         </button>
                     )}
                 </div>

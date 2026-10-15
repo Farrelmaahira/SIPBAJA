@@ -4,9 +4,7 @@ import AdminTopbar from '../organisms/AdminTopbar';
 import HeroBanner from '../organisms/HeroBanner';
 import RecentUsersTable from '../organisms/RecentUsersTable';
 import StatCard from '../molecules/StatCard';
-import UsersIcon from '../atoms/icons/UsersIcon';
-import BuildingIcon from '../atoms/icons/BuildingIcon';
-import LayersIcon from '../atoms/icons/LayersIcon';
+import { Users, Building, Layers } from 'lucide-react';
 
 export default function AdminDashboardTemplate({
     stats = {},
@@ -67,7 +65,7 @@ export default function AdminDashboardTemplate({
                         aria-label="Statistik sistem"
                     >
                         <StatCard
-                            icon={UsersIcon}
+                            icon={Users}
                             value={totalPengguna}
                             label="Total Pengguna"
                             unit="akun"
@@ -75,7 +73,7 @@ export default function AdminDashboardTemplate({
                             iconColor="text-[#0E7C5A]"
                         />
                         <StatCard
-                            icon={BuildingIcon}
+                            icon={Building}
                             value={totalUnit}
                             label="Unit Kerja Terdaftar"
                             unit="unit"
@@ -83,7 +81,7 @@ export default function AdminDashboardTemplate({
                             iconColor="text-[#1F55C7]"
                         />
                         <StatCard
-                            icon={LayersIcon}
+                            icon={Layers}
                             value={totalMak}
                             label="Kode Anggaran MAK"
                             unit="kode"
