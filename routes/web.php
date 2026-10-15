@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\PenggunaController;
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -29,6 +30,10 @@ Route::middleware('auth')->group(function () {
             ],
         ]);
     })->name('admin.dashboard');
+
+    Route::prefix('admin')->name('admin.')->group(function () {
+        Route::resource('pengguna', PenggunaController::class)->except(['show', 'create', 'edit']);
+    });
 
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
 });
