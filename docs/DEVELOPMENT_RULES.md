@@ -149,7 +149,7 @@ Domain terms stay in Indonesian (`Permohonan`, `Pengadaan`, `Kontrak`, `Pembayar
 
 ## 9. Not Decided Yet (ask the user, do not decide yourself)
 
-- Folder structure beyond `app/Services/` (frontend component structure is decided in Section 10)
+- Folder structure beyond `app/Services/` (frontend structure is decided: components in Section 10, hooks/utils in Section 11)
 - Design system / UI component library
 - Testing strategy
 - Commit message format
@@ -160,11 +160,35 @@ Domain terms stay in Indonesian (`Permohonan`, `Pengadaan`, `Kontrak`, `Pembayar
 
 - Hierarchy satu arah: atoms → molecules → organisms → templates → pages.
 - Lokasi: `resources/js/components/atoms/`, `molecules/`, `organisms/`, `templates/`; pages di `resources/js/Pages/`.
-- Pages hanya wiring props/data ke satu template. Tanpa logika. Tanpa fetch. Tanpa state selain display.
+- Pages hanya perekat: panggil hook/util (Section 11), teruskan hasil ke satu template lewat props. Tanpa fetch. State yang dipakai lebih dari satu bagian wajib hidup di page.
 - Atoms presentational saja. Props eksplisit. Tanpa global state. Tanpa fetch.
 - Molecules gabung atoms. Organisms gabung molecules. Templates atur layout. Pages pilih template + copy.
 - Layer boleh dilewati bila tidak ada yang dikelompokkan; arah tetap satu arah.
 - Cek komponen existing sebelum buat baru.
 - Styling: plain Tailwind utilities saja. Design system belum diputuskan.
-- Tanpa business logic di komponen React. Mapping display (contoh status code → copy) di page/template saja.
+- Tanpa business logic di komponen React. Normalisasi, format, dan mapping pindah ke hook/util (Section 11); template hanya render props.
 - Error pages: tiap `Pages/Errors/*.jsx` render `ErrorTemplate` bersama dengan `{status, title, message}`.
+
+---
+
+## 11. Pemisahan Logic dari Tampilan
+
+- Template/komponen UI murni presentasi: dilarang `useState` untuk data bisnis, filter, sort, kalkulasi, normalisasi, atau fetch; yang boleh hanya state UI lokal murni (buka/tutup dropdown, tab aktif); terima semua data dan handler lewat props.
+  - Salah: `AdminDashboardTemplate` menyimpan `searchQuery` dan menghitung `filteredUsers` di dalam template.
+  - Benar: template terima `searchQuery`, `onSearchChange`, dan `users` yang sudah difilter lewat props.
+- Logic stateful (search, filter, sort, pagination) wajib di custom hook di `resources/js/hooks/use<Nama>.js`, pakai `useMemo` untuk hasil turunan, return object `{ state, setter, hasilTurunan }`.
+  - Salah: filter `recentUsers` inline di body template.
+  - Benar: `const { query, setQuery, filteredUsers } = useUserSearch(recentUsers)` dipanggil di page, hasilnya dioper ke template.
+- Logic murni (normalisasi, format, mapping) wajib di util `resources/js/utils/<nama>.js` sebagai fungsi murni tanpa efek samping agar mudah dites.
+  - Salah: `stats.totalPengguna ?? stats.total_pengguna ?? 128` tersebar di template.
+  - Benar: `normalizeAdminStats(stats)` di util, template hanya render `stats.totalPengguna`.
+- Normalisasi format API (camelCase vs snake_case) diutamakan di layer API/controller/resource; komponen hanya terima satu format.
+  - Salah: template membaca dua format (`stats.totalPengguna ?? stats.total_pengguna`).
+  - Benar: backend kirim satu format, atau satu fungsi normalisasi di page/util sebelum props diteruskan.
+- Dilarang default data palsu: pakai `0` / `null` / `[]`, sediakan prop `isLoading`, tampilkan skeleton atau `"-"`.
+  - Salah: `const totalPengguna = stats.totalPengguna ?? 128`.
+  - Benar: `const totalPengguna = stats.totalPengguna ?? 0` + `{isLoading ? <Skeleton /> : totalPengguna}`.
+- Page/container adalah perekat: panggil hook dan util, oper hasil ke template lewat props; state yang dipakai lebih dari satu bagian (contoh search di topbar + tabel) wajib hidup di page, bukan di template.
+  - Salah: `searchQuery` hidup di `AdminDashboardTemplate` lalu dipakai topbar dan tabel di dalamnya.
+  - Benar: `Pages/Admin/Dashboard.jsx` panggil `useUserSearch`, teruskan `searchQuery` / `onSearchChange` / `filteredUsers` ke template.
+- Checklist sebelum commit: template tanpa `useState` bisnis/filter? tidak ada angka/data hardcode palsu? hook dan util bisa dites terpisah?
