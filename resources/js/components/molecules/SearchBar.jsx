@@ -1,4 +1,4 @@
-import SearchIcon from '../atoms/icons/SearchIcon';
+import { Search } from 'lucide-react';
 
 export default function SearchBar({
     value = '',
@@ -11,7 +11,7 @@ export default function SearchBar({
         <div
             className={`relative flex items-center w-full max-w-md min-h-[44px] rounded-xl bg-[#F7FAF9] border border-[#E4EBE8] px-3.5 focus-within:border-[#0E7C5A] focus-within:ring-2 focus-within:ring-[#0E7C5A]/20 transition-all ${className}`}
         >
-            <SearchIcon className="w-[18px] h-[18px] text-[#8A9A95] shrink-0" />
+            <Search className="w-[18px] h-[18px] text-[#8A9A95] shrink-0" />
             <input
                 id={id}
                 type="text"

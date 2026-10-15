@@ -1,4 +1,4 @@
-import PlusIcon from '../atoms/icons/PlusIcon';
+import { Plus } from 'lucide-react';
 
 export default function HeroBanner({
     userName = 'Administrator',
@@ -43,7 +43,7 @@ export default function HeroBanner({
                     onClick={onAddUser}
                     className="inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-2.5 rounded-xl bg-white text-[#0E7C5A] hover:bg-[#EEF5F2] active:bg-[#D6EFE4] text-sm font-semibold transition-colors duration-150 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E7C5A] cursor-pointer"
                 >
-                    <PlusIcon className="w-5 h-5 text-[#0E7C5A]" />
+                    <Plus className="w-5 h-5 text-[#0E7C5A]" />
                     <span>Tambah Pengguna</span>
                 </button>
             </div>

@@ -68,7 +68,7 @@ Screens covered: Dashboard Permohonan (1440×980), Login (1440×900), Logo board
 
 ## 3. Typography Rules
 
-**Font family:** Inter (Regular 400, Medium 500, Semi Bold 600, Bold 700). Fallback: `system-ui, sans-serif`.
+**Font family:** Plus Jakarta Sans (Regular 400, Medium 500, Semi Bold 600, Bold 700). Fallback: `system-ui, sans-serif`.
 
 | Role | Size | Weight | Letter spacing | Color | Usage |
 |---|---|---|---|---|---|
@@ -290,14 +290,14 @@ pending      #2F6FED / #E8F0FF / #1F55C7   (dot / bg / text)
 approved     #12A06B / #E4F6EC / #0B7A4E
 rejected     #E5484D / #FDECEC / #B42318
 shadow base  rgba(13,51,38,a)
-font         Inter 400/500/600/700
+font         Plus Jakarta Sans 400/500/600/700
 radius       10 / 12 / 14 / 16 / 18 / 20 / 24 / 999
 ```
 
 ### Ready-to-use Prompts
 
 **Generic screen**
-> Build a SIPBAJA screen using Inter, canvas `#F3F6F5`, white cards with 1px `#E4EBE8` border, radius 18–24, and soft green-tinted shadows (`rgba(13,51,38,.05)`). Primary color `#0E7C5A`. Text `#14201C` / `#5F6F6A` / `#8A9A95`. Line icons (Lucide, 2px stroke). UI copy in Bahasa Indonesia.
+> Build a SIPBAJA screen using Plus Jakarta Sans, canvas `#F3F6F5`, white cards with 1px `#E4EBE8` border, radius 18–24, and soft green-tinted shadows (`rgba(13,51,38,.05)`). Primary color `#0E7C5A`. Text `#14201C` / `#5F6F6A` / `#8A9A95`. Line icons (Lucide, 2px stroke). UI copy in Bahasa Indonesia.
 
 **Dashboard page**
 > Create a 1440×980 dashboard: 272px white sidebar (logo, active nav pill filled `#0E7C5A` with white text, group label "PERMOHONAN SAYA", help card `#EAF5F1`), topbar with 340px search, bell, and profile pill. Main has a 148px hero banner (radius 24, solid `#0E7C5A`, white title "Selamat datang, …", white CTA "Buat Permohonan"), three stat cards (icon box 56, number 34 Bold) for Menunggu Verifikasi / Ditolak / Disetujui, and a table card with columns No Permohonan, Judul Pengadaan, Tanggal Pengajuan, Status, Aksi.
@@ -309,7 +309,7 @@ radius       10 / 12 / 14 / 16 / 18 / 20 / 24 / 999
 > Pill, radius 999, padding 6×12, 7px dot + 12 Semi Bold label. Menunggu Verifikasi: bg `#E8F0FF`, text `#1F55C7`, dot `#2F6FED`. Disetujui: bg `#E4F6EC`, text `#0B7A4E`, dot `#12A06B`. Ditolak: bg `#FDECEC`, text `#B42318`, dot `#E5484D`.
 
 **Logo**
-> Rounded-square tile (radius 25%) with solid `#0E7C5A` fill, white isometric package cube, white circular check badge bottom-right. Wordmark "SIP" in `#14201C` + "BAJA" in `#0E7C5A`, Inter Bold, letter spacing -1; tagline "Sistem Informasi Pengadaan Barang dan Jasa" in Medium `#5F6F6A`.
+> Rounded-square tile (radius 25%) with solid `#0E7C5A` fill, white isometric package cube, white circular check badge bottom-right. Wordmark "SIP" in `#14201C` + "BAJA" in `#0E7C5A`, Plus Jakarta Sans Bold, letter spacing -1; tagline "Sistem Informasi Pengadaan Barang dan Jasa" in Medium `#5F6F6A`.
 
 ### Self-check Before Delivering
 1. Only one saturated brand hue, no gradients, status colors used in pills and icon chips only.

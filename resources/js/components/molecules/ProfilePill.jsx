@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { router } from '@inertiajs/react';
-import ChevronDownIcon from '../atoms/icons/ChevronDownIcon';
+import { ChevronDown } from 'lucide-react';
 
 function getInitials(name = '') {
     if (!name) return 'A';
@@ -61,7 +61,7 @@ export default function ProfilePill({ user = {}, className = '' }) {
                         {displayRole}
                     </p>
                 </div>
-                <ChevronDownIcon
+                <ChevronDown
                     className={`w-4 h-4 text-[#8A9A95] transition-transform duration-200 ${
                         open ? 'rotate-180' : ''
                     }`}

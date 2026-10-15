@@ -1,6 +1,5 @@
 import StatusPill from '../atoms/StatusPill';
-import EyeIcon from '../atoms/icons/EyeIcon';
-import UsersIcon from '../atoms/icons/UsersIcon';
+import { Eye, Users } from 'lucide-react';
 
 export default function RecentUsersTable({
     users = [],
@@ -43,7 +42,7 @@ export default function RecentUsersTable({
             {!hasUsers ? (
                 <div className="py-12 px-6 text-center">
                     <div className="w-12 h-12 rounded-2xl bg-[#EEF5F2] text-[#5F6F6A] mx-auto flex items-center justify-center mb-3">
-                        <UsersIcon className="w-6 h-6" />
+                        <Users className="w-6 h-6" />
                     </div>
                     <p className="text-sm font-semibold text-[#14201C]">
                         Belum ada pengguna terdaftar
@@ -123,7 +122,7 @@ export default function RecentUsersTable({
                                             className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] w-10 h-10 rounded-xl text-[#5F6F6A] hover:bg-[#EEF5F2] hover:text-[#0E7C5A] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C5A] cursor-pointer"
                                             aria-label={`Lihat detail ${u.nama}`}
                                         >
-                                            <EyeIcon className="w-5 h-5" />
+                                            <Eye className="w-5 h-5" />
                                         </button>
                                     </td>
                                 </tr>

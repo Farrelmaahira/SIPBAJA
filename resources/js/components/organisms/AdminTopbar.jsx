@@ -1,5 +1,4 @@
-import MenuIcon from '../atoms/icons/MenuIcon';
-import BellIcon from '../atoms/icons/BellIcon';
+import { Menu, Bell } from 'lucide-react';
 import SearchBar from '../molecules/SearchBar';
 import ProfilePill from '../molecules/ProfilePill';
 
@@ -19,7 +18,7 @@ export default function AdminTopbar({
                     className="md:hidden inline-flex items-center justify-center min-w-[44px] min-h-[44px] w-11 h-11 rounded-xl bg-white border border-[#E4EBE8] text-[#5F6F6A] hover:bg-[#EEF5F2] hover:text-[#14201C] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C5A] cursor-pointer"
                     aria-label="Buka menu navigasi"
                 >
-                    <MenuIcon className="w-5 h-5" />
+                    <Menu className="w-5 h-5" />
                 </button>
 
                 {/* Search Bar */}
@@ -39,7 +38,7 @@ export default function AdminTopbar({
                     className="relative inline-flex items-center justify-center min-w-[44px] min-h-[44px] w-11 h-11 rounded-xl bg-white border border-[#E4EBE8] text-[#5F6F6A] hover:bg-[#EEF5F2] hover:text-[#14201C] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C5A] cursor-pointer"
                     aria-label="Notifikasi sistem"
                 >
-                    <BellIcon className="w-5 h-5" />
+                    <Bell className="w-5 h-5" />
                     <span
                         className="absolute top-2.5 right-2.5 w-2.5 h-2.5 rounded-full bg-[#E5484D] border-2 border-white ring-1 ring-white"
                         aria-hidden="true"
