@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import AdminSidebar from '../organisms/AdminSidebar';
-import AdminTopbar from '../organisms/AdminTopbar';
+import DashboardShellTemplate from './DashboardShellTemplate';
+import { adminSidebarPreset } from '../organisms/AdminSidebar';
+import { adminTopbarPreset } from '../organisms/AdminTopbar';
 import HeroBanner from '../organisms/HeroBanner';
 import RecentUsersTable from '../organisms/RecentUsersTable';
 import StatCard from '../molecules/StatCard';
@@ -15,7 +16,6 @@ export default function AdminDashboardTemplate({
     onViewUser,
     onViewAllUsers,
 }) {
-    const [mobileOpen, setMobileOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
     const filteredUsers = recentUsers.filter((u) => {
@@ -34,70 +34,55 @@ export default function AdminDashboardTemplate({
     const totalMak = stats.totalMak ?? stats.total_mak ?? 86;
 
     return (
-        <div className="min-h-screen flex bg-[#F3F6F5] text-[#14201C] font-sans antialiased">
-            {/* Sidebar */}
-            <AdminSidebar
-                mobileOpen={mobileOpen}
-                onClose={() => setMobileOpen(false)}
-                activeRoute={activeRoute}
+        <DashboardShellTemplate
+            sidebarProps={{ ...adminSidebarPreset, activeRoute }}
+            topbarProps={{
+                ...adminTopbarPreset,
+                user,
+                searchValue: searchQuery,
+                onSearchChange: (e) => setSearchQuery(e.target.value),
+            }}
+        >
+            <HeroBanner
+                userName={user?.nama || user?.name || 'Administrator'}
+                onAddUser={onAddUser}
             />
 
-            {/* Main Area */}
-            <div className="flex-1 min-w-0 flex flex-col min-h-screen">
-                <main className="flex-1 p-5 md:py-7 md:px-10 max-w-7xl w-full mx-auto flex flex-col gap-7">
-                    {/* Topbar */}
-                    <AdminTopbar
-                        onMenuClick={() => setMobileOpen(true)}
-                        user={user}
-                        searchValue={searchQuery}
-                        onSearchChange={(e) => setSearchQuery(e.target.value)}
-                    />
+            <section
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
+                aria-label="Statistik sistem"
+            >
+                <StatCard
+                    icon={Users}
+                    value={totalPengguna}
+                    label="Total Pengguna"
+                    unit="akun"
+                    iconBg="bg-[#E4F6EC]"
+                    iconColor="text-[#0E7C5A]"
+                />
+                <StatCard
+                    icon={Building}
+                    value={totalUnit}
+                    label="Unit Kerja Terdaftar"
+                    unit="unit"
+                    iconBg="bg-[#E8F0FF]"
+                    iconColor="text-[#1F55C7]"
+                />
+                <StatCard
+                    icon={Layers}
+                    value={totalMak}
+                    label="Kode Anggaran MAK"
+                    unit="kode"
+                    iconBg="bg-[#EEF5F2]"
+                    iconColor="text-[#0E7C5A]"
+                />
+            </section>
 
-                    {/* Hero Banner */}
-                    <HeroBanner
-                        userName={user?.nama || user?.name || 'Administrator'}
-                        onAddUser={onAddUser}
-                    />
-
-                    {/* Stats Grid: 3 columns */}
-                    <section
-                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
-                        aria-label="Statistik sistem"
-                    >
-                        <StatCard
-                            icon={Users}
-                            value={totalPengguna}
-                            label="Total Pengguna"
-                            unit="akun"
-                            iconBg="bg-[#E4F6EC]"
-                            iconColor="text-[#0E7C5A]"
-                        />
-                        <StatCard
-                            icon={Building}
-                            value={totalUnit}
-                            label="Unit Kerja Terdaftar"
-                            unit="unit"
-                            iconBg="bg-[#E8F0FF]"
-                            iconColor="text-[#1F55C7]"
-                        />
-                        <StatCard
-                            icon={Layers}
-                            value={totalMak}
-                            label="Kode Anggaran MAK"
-                            unit="kode"
-                            iconBg="bg-[#EEF5F2]"
-                            iconColor="text-[#0E7C5A]"
-                        />
-                    </section>
-
-                    {/* Recent Users Table */}
-                    <RecentUsersTable
-                        users={filteredUsers}
-                        onViewUser={onViewUser}
-                        onViewAll={onViewAllUsers}
-                    />
-                </main>
-            </div>
-        </div>
+            <RecentUsersTable
+                users={filteredUsers}
+                onViewUser={onViewUser}
+                onViewAll={onViewAllUsers}
+            />
+        </DashboardShellTemplate>
     );
 }

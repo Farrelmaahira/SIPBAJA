@@ -1,7 +1,7 @@
 import { LayoutGrid, Users, Building, Layers } from 'lucide-react';
 import DashboardSidebar from './DashboardSidebar';
 
-const adminNavItems = [
+export const adminNavItems = [
     {
         key: 'admin.dashboard',
         label: 'Dashboard',
@@ -28,6 +28,14 @@ const adminNavItems = [
     },
 ];
 
+export const adminSidebarPreset = {
+    navItems: adminNavItems,
+    brandSubtitle: 'Panel Administrator',
+    sectionTitle: 'Manajemen Sistem',
+    navAriaLabel: 'Navigasi admin',
+    drawerAriaLabel: 'Menu navigasi admin',
+};
+
 export default function AdminSidebar({
     mobileOpen = false,
     onClose,
@@ -35,12 +43,8 @@ export default function AdminSidebar({
 }) {
     return (
         <DashboardSidebar
-            navItems={adminNavItems}
+            {...adminSidebarPreset}
             activeRoute={activeRoute}
-            brandSubtitle="Panel Administrator"
-            sectionTitle="Manajemen Sistem"
-            navAriaLabel="Navigasi admin"
-            drawerAriaLabel="Menu navigasi admin"
             mobileOpen={mobileOpen}
             onClose={onClose}
         />
