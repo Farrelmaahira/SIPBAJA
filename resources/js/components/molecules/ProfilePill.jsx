@@ -3,18 +3,24 @@ import { router } from '@inertiajs/react';
 import { ChevronDown } from 'lucide-react';
 
 function getInitials(name = '') {
-    if (!name) return 'A';
+    if (!name) return 'P';
     const parts = name.trim().split(/\s+/);
     if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
     return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
-export default function ProfilePill({ user = {}, className = '' }) {
+export default function ProfilePill({
+    user = {},
+    fallbackName = 'Pengguna',
+    fallbackRole = 'Peran belum ditetapkan',
+    fallbackEmail = '-',
+    className = '',
+}) {
     const [open, setOpen] = useState(false);
     const containerRef = useRef(null);
 
-    const displayName = user?.name || user?.nama || 'Administrator';
-    const displayRole = user?.role || 'Administrator Utama';
+    const displayName = user?.name || user?.nama || fallbackName;
+    const displayRole = user?.role || fallbackRole;
     const initials = getInitials(displayName);
 
     useEffect(() => {
@@ -75,7 +81,7 @@ export default function ProfilePill({ user = {}, className = '' }) {
                             {displayName}
                         </p>
                         <p className="text-[11px] text-[#8A9A95] truncate">
-                            {user?.email || 'admin@pnj.ac.id'}
+                            {user?.email || fallbackEmail}
                         </p>
                     </div>
                     <button
