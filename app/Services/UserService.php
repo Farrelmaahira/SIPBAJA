@@ -11,7 +11,7 @@ class UserService
     public function paginate(?string $q): LengthAwarePaginator
     {
         return User::query()
-            ->with(['Role:id,nama', 'Unit:id,nama'])
+            ->with(['role:id,nama', 'unit:id,nama'])
             ->when($q, function ($query, $q) {
                 $query->where(function ($sub) use ($q) {
                     $sub->where('nama', 'like', "%{$q}%")
