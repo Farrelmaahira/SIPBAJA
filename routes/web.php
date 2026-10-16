@@ -8,7 +8,6 @@ use App\Http\Controllers\Admin\UnitKerjaController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardAdminController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 Route::middleware('guest')->group(function () {
     Route::get('/', [AuthController::class, 'show'])->name('login');
@@ -16,13 +15,8 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
-    Route::get('/dashboard', function () {
-        return Inertia::render('Dashboard');
-    })->name('dashboard');
-
-    Route::get('/admin/dashboard', DashboardAdminController::class)->name('admin.dashboard');
-
     Route::prefix('admin')->name('admin.')->group(function () {
+        Route::get('dashboard', DashboardAdminController::class)->name('dashboard');
         Route::resource('pengguna', PenggunaController::class)->except(['show', 'create', 'edit']);
         Route::resource('unit-kerja', UnitKerjaController::class)->parameters(['unit-kerja' => 'unit'])->except(['show', 'create', 'edit']);
         Route::resource('mak', MakController::class)->except(['show', 'create', 'edit']);
