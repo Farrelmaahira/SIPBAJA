@@ -1,4 +1,4 @@
-import { LayoutGrid, Users, Building, Layers } from 'lucide-react';
+import { LayoutGrid, Users, Building, Layers, ShieldCheck, KeyRound } from 'lucide-react';
 import DashboardSidebar from './DashboardSidebar';
 
 export const adminNavItems = [
@@ -9,22 +9,34 @@ export const adminNavItems = [
         href: '/admin/dashboard',
     },
     {
-        key: 'admin.users',
+        key: 'admin.pengguna.index',
         label: 'Pengguna',
         icon: Users,
-        href: '#pengguna',
+        href: '/admin/pengguna',
     },
     {
-        key: 'admin.units',
+        key: 'admin.unit-kerja.index',
         label: 'Unit Kerja',
         icon: Building,
-        href: '#unit-kerja',
+        href: '/admin/unit-kerja',
     },
     {
-        key: 'admin.mak',
+        key: 'admin.mak.index',
         label: 'Master MAK',
         icon: Layers,
-        href: '#master-mak',
+        href: '/admin/mak',
+    },
+    {
+        key: 'admin.role.index',
+        label: 'Peran',
+        icon: ShieldCheck,
+        href: '/admin/role',
+    },
+    {
+        key: 'admin.role-permission.index',
+        label: 'Hak Akses',
+        icon: KeyRound,
+        href: '/admin/role-permission',
     },
 ];
 
