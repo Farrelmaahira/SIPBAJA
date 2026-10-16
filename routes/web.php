@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\MakController;
 use App\Http\Controllers\Admin\PenggunaController;
+use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\UnitKerjaController;
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
@@ -37,6 +38,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('pengguna', PenggunaController::class)->except(['show', 'create', 'edit']);
         Route::resource('unit-kerja', UnitKerjaController::class)->parameters(['unit-kerja' => 'unit'])->except(['show', 'create', 'edit']);
         Route::resource('mak', MakController::class)->except(['show', 'create', 'edit']);
+        Route::resource('role', RoleController::class)->except(['show', 'create', 'edit']);
     });
 
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
