@@ -76,6 +76,19 @@ class MakTest extends TestCase
         $this->assertDatabaseHas('maks', ['id' => $mak->id]);
     }
 
+    public function test_ppk_yang_sudah_dihapus_ditolak(): void
+    {
+        $ppk = User::where('email', 'ppk@pnj.ac.id')->firstOrFail();
+        $ppk->delete();
+
+        $response = $this->actingAs($this->admin())->post(route('admin.mak.store'), [
+            'nama' => 'MAK Yatim',
+            'ppk_user_id' => $ppk->id,
+        ]);
+
+        $response->assertSessionHasErrors('ppk_user_id');
+    }
+
     public function test_bukan_admin_ditolak_dengan_403(): void
     {
         $nonAdmin = User::where('email', 'ppbj@pnj.ac.id')->firstOrFail();

@@ -29,6 +29,8 @@ class RoleController extends Controller
 
     public function store(SimpanRoleRequest $request): RedirectResponse
     {
+        $this->authorize('create', Role::class);
+
         $this->roles->create($request->validated());
 
         return redirect()->route('admin.role.index')->with('success', 'Peran berhasil ditambahkan.');

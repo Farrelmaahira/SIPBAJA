@@ -29,6 +29,8 @@ class UnitKerjaController extends Controller
 
     public function store(SimpanUnitRequest $request): RedirectResponse
     {
+        $this->authorize('create', Unit::class);
+
         $this->units->create($request->validated());
 
         return redirect()->route('admin.unit-kerja.index')->with('success', 'Unit kerja berhasil ditambahkan.');

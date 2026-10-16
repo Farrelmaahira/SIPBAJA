@@ -6,6 +6,7 @@ use App\Models\Unit;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Database\Seeders\UserSeeder;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -66,6 +67,15 @@ class UnitKerjaTest extends TestCase
 
         $response->assertRedirect();
         $this->assertDatabaseMissing('units', ['id' => $unit->id]);
+    }
+
+    public function test_nama_duplikat_level_database_ditolak(): void
+    {
+        Unit::create(['nama' => 'Unit Kembar']);
+
+        $this->expectException(QueryException::class);
+
+        Unit::create(['nama' => 'Unit Kembar']);
     }
 
     public function test_bukan_admin_ditolak_dengan_403(): void

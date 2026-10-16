@@ -11,7 +11,7 @@ class SimpanPenggunaRequest extends FormRequest
     public function authorize(): bool
     {
         return $this->user()->can('create', User::class)
-            || ($this->user()->can('update', $this->route('pengguna')) && $this->route('pengguna') !== null);
+            || ($this->route('pengguna') !== null && $this->user()->can('update', $this->route('pengguna')));
     }
 
     /**

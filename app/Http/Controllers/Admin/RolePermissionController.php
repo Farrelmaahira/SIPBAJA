@@ -34,7 +34,7 @@ class RolePermissionController extends Controller
         return Inertia::render('Admin/RolePermission/Index', [
             'roles' => Role::orderBy('nama')->get(['id', 'nama']),
             'groupedPermissions' => $grouped,
-            'assignments' => Role::with('Permissions:id')->get()->mapWithKeys(function ($role) {
+            'assignments' => Role::with('permissions:id')->get()->mapWithKeys(function ($role) {
                 return [$role->id => $role->Permissions->pluck('id')->all()];
             }),
             'selectedRoleId' => (int) request('role_id', 0),

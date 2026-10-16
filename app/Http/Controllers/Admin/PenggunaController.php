@@ -33,6 +33,8 @@ class PenggunaController extends Controller
 
     public function store(SimpanPenggunaRequest $request): RedirectResponse
     {
+        $this->authorize('create', User::class);
+
         $this->users->create($request->validated());
 
         return redirect()->route('admin.pengguna.index')->with('success', 'Pengguna berhasil ditambahkan.');

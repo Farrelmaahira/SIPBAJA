@@ -26,7 +26,7 @@ class SimpanMakRequest extends FormRequest
                 'required', 'string', 'max:255',
                 $mak ? Rule::unique('maks', 'nama')->ignore($mak->id) : 'unique:maks,nama',
             ],
-            'ppk_user_id' => ['required', 'exists:users,id'],
+            'ppk_user_id' => ['required', Rule::exists('users', 'id')->whereNull('deleted_at')],
         ];
     }
 

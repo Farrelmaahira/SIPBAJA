@@ -31,6 +31,8 @@ class MakController extends Controller
 
     public function store(SimpanMakRequest $request): RedirectResponse
     {
+        $this->authorize('create', Mak::class);
+
         $this->maks->create($request->validated());
 
         return redirect()->route('admin.mak.index')->with('success', 'MAK berhasil ditambahkan.');

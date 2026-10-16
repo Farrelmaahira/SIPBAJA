@@ -32,6 +32,7 @@ export default function Index() {
     const [query, setQuery] = useState(filters?.q ?? '');
     const [modalMode, setModalMode] = useState(null);
     const [deleteTarget, setDeleteTarget] = useState(null);
+    const [editId, setEditId] = useState(null);
 
     const form = useForm({ ...EMPTY_FORM });
     const { data, setData, errors, processing, clearErrors } = form;
@@ -52,6 +53,7 @@ export default function Index() {
     const openCreate = () => {
         setData({ ...EMPTY_FORM });
         clearErrors();
+        setEditId(null);
         setModalMode('create');
     };
 
@@ -64,7 +66,7 @@ export default function Index() {
             unit_id: row.unit_id ?? row.unit?.id ?? '',
         });
         clearErrors();
-        form.setData('editId', row.id);
+        setEditId(row.id);
         setModalMode('edit');
     };
 
@@ -72,7 +74,7 @@ export default function Index() {
 
     const submitForm = () => {
         if (modalMode === 'edit') {
-            router.put(`/admin/pengguna/${data.editId}`, data, {
+            router.put(`/admin/pengguna/${editId}`, data, {
                 preserveScroll: true,
                 onSuccess: () => setModalMode(null),
             });
