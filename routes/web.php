@@ -33,14 +33,37 @@ Route::middleware('auth')->group(function () {
         Route::put('role-permission/{role}', [RolePermissionController::class, 'update'])->name('role-permission.update');
     });
 
-    Route::get('/pemohon/dashboard', DashboardPemohonController::class)->name('pemohon.dashboard');
-    Route::get('/perencanaan/dashboard', DashboardPerencanaanController::class)->name('perencanaan.dashboard');
-    Route::get('/bidang-2/dashboard', DashboardBidang2Controller::class)->name('bidang2.dashboard');
-    Route::get('/ppbj/dashboard', DashboardPpbjController::class)->name('ppbj.dashboard');
-    Route::get('/pp/dashboard', DashboardPpController::class)->name('pp.dashboard');
-    Route::get('/ppk/dashboard', DashboardPpkController::class)->name('ppk.dashboard');
-    Route::get('/perlengkapan/dashboard', DashboardPerlengkapanController::class)->name('perlengkapan.dashboard');
-    Route::get('/keuangan/dashboard', DashboardKeuanganController::class)->name('keuangan.dashboard');
+    Route::prefix('pemohon')->name('pemohon.')->group(function () {
+        Route::get('dashboard', DashboardPemohonController::class)->name('dashboard');
+    });
+
+    Route::prefix('perencanaan')->name('perencanaan.')->group(function () {
+        Route::get('dashboard', DashboardPerencanaanController::class)->name('dashboard');
+    });
+
+    Route::prefix('bidang-2')->name('bidang2.')->group(function () {
+        Route::get('dashboard', DashboardBidang2Controller::class)->name('dashboard');
+    });
+
+    Route::prefix('ppbj')->name('ppbj.')->group(function () {
+        Route::get('dashboard', DashboardPpbjController::class)->name('dashboard');
+    });
+
+    Route::prefix('pp')->name('pp.')->group(function () {
+        Route::get('dashboard', DashboardPpController::class)->name('dashboard');
+    });
+
+    Route::prefix('ppk')->name('ppk.')->group(function () {
+        Route::get('dashboard', DashboardPpkController::class)->name('dashboard');
+    });
+
+    Route::prefix('perlengkapan')->name('perlengkapan.')->group(function () {
+        Route::get('dashboard', DashboardPerlengkapanController::class)->name('dashboard');
+    });
+
+    Route::prefix('keuangan')->name('keuangan.')->group(function () {
+        Route::get('dashboard', DashboardKeuanganController::class)->name('dashboard');
+    });
 
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
 });
