@@ -106,8 +106,6 @@ export default function DashboardSidebar({
                     </nav>
                 </div>
             </div>
-
-            <div className="pt-6">{helpCard ?? <HelpCard />}</div>
         </div>
     );
 
