@@ -32,8 +32,6 @@ Success criteria:
 Rules:
 - Do NOT add any package or library without user approval.
 - Do NOT use PostgreSQL-specific features (JSONB operators, arrays, DB triggers, etc.). Migrations and queries must run on both SQLite and PostgreSQL.
-- Design system is not decided yet. Use plain Tailwind utilities only.
-
 ---
 
 ## 3. Database
@@ -158,37 +156,37 @@ Domain terms stay in Indonesian (`Permohonan`, `Pengadaan`, `Kontrak`, `Pembayar
 
 ## 10. Frontend: Atomic Design (React + Inertia)
 
-- Hierarchy satu arah: atoms → molecules → organisms → templates → pages.
-- Lokasi: `resources/js/components/atoms/`, `molecules/`, `organisms/`, `templates/`; pages di `resources/js/Pages/`.
-- Pages hanya perekat: panggil hook/util (Section 11), teruskan hasil ke satu template lewat props. Tanpa fetch. State yang dipakai lebih dari satu bagian wajib hidup di page.
-- Atoms presentational saja. Props eksplisit. Tanpa global state. Tanpa fetch.
-- Molecules gabung atoms. Organisms gabung molecules. Templates atur layout. Pages pilih template + copy.
-- Layer boleh dilewati bila tidak ada yang dikelompokkan; arah tetap satu arah.
-- Cek komponen existing sebelum buat baru.
-- Styling: plain Tailwind utilities saja. Design system belum diputuskan.
-- Tanpa business logic di komponen React. Normalisasi, format, dan mapping pindah ke hook/util (Section 11); template hanya render props.
-- Error pages: tiap `Pages/Errors/*.jsx` render `ErrorTemplate` bersama dengan `{status, title, message}`.
+- One-way hierarchy: atoms → molecules → organisms → templates → pages.
+- Locations: `resources/js/components/atoms/`, `molecules/`, `organisms/`, `templates/`; pages in `resources/js/Pages/`.
+- Pages are glue only: call hooks/utils (Section 11), pass the results to a single template via props. No fetch. State used by more than one part MUST live in the page.
+- Atoms are presentational only. Explicit props. No global state. No fetch.
+- Molecules combine atoms. Organisms combine molecules. Templates handle layout. Pages choose the template + copy.
+- A layer may be skipped when there is nothing to group; the direction stays one-way.
+- Check existing components before creating new ones.
+- Styling: plain Tailwind utilities only. Design system is not decided yet.
+- No business logic in React components. Normalization, formatting, and mapping move to hooks/utils (Section 11); templates only render props.
+- Error pages: every `Pages/Errors/*.jsx` renders the shared `ErrorTemplate` with `{status, title, message}`.
 
 ---
 
-## 11. Pemisahan Logic dari Tampilan
+## 11. Separating Logic from Presentation
 
-- Template/komponen UI murni presentasi: dilarang `useState` untuk data bisnis, filter, sort, kalkulasi, normalisasi, atau fetch; yang boleh hanya state UI lokal murni (buka/tutup dropdown, tab aktif); terima semua data dan handler lewat props.
-  - Salah: `AdminDashboardTemplate` menyimpan `searchQuery` dan menghitung `filteredUsers` di dalam template.
-  - Benar: template terima `searchQuery`, `onSearchChange`, dan `users` yang sudah difilter lewat props.
-- Logic stateful (search, filter, sort, pagination) wajib di custom hook di `resources/js/hooks/use<Nama>.js`, pakai `useMemo` untuk hasil turunan, return object `{ state, setter, hasilTurunan }`.
-  - Salah: filter `recentUsers` inline di body template.
-  - Benar: `const { query, setQuery, filteredUsers } = useUserSearch(recentUsers)` dipanggil di page, hasilnya dioper ke template.
-- Logic murni (normalisasi, format, mapping) wajib di util `resources/js/utils/<nama>.js` sebagai fungsi murni tanpa efek samping agar mudah dites.
-  - Salah: `stats.totalPengguna ?? stats.total_pengguna ?? 128` tersebar di template.
-  - Benar: `normalizeAdminStats(stats)` di util, template hanya render `stats.totalPengguna`.
-- Normalisasi format API (camelCase vs snake_case) diutamakan di layer API/controller/resource; komponen hanya terima satu format.
-  - Salah: template membaca dua format (`stats.totalPengguna ?? stats.total_pengguna`).
-  - Benar: backend kirim satu format, atau satu fungsi normalisasi di page/util sebelum props diteruskan.
-- Dilarang default data palsu: pakai `0` / `null` / `[]`, sediakan prop `isLoading`, tampilkan skeleton atau `"-"`.
-  - Salah: `const totalPengguna = stats.totalPengguna ?? 128`.
-  - Benar: `const totalPengguna = stats.totalPengguna ?? 0` + `{isLoading ? <Skeleton /> : totalPengguna}`.
-- Page/container adalah perekat: panggil hook dan util, oper hasil ke template lewat props; state yang dipakai lebih dari satu bagian (contoh search di topbar + tabel) wajib hidup di page, bukan di template.
-  - Salah: `searchQuery` hidup di `AdminDashboardTemplate` lalu dipakai topbar dan tabel di dalamnya.
-  - Benar: `Pages/Admin/Dashboard.jsx` panggil `useUserSearch`, teruskan `searchQuery` / `onSearchChange` / `filteredUsers` ke template.
-- Checklist sebelum commit: template tanpa `useState` bisnis/filter? tidak ada angka/data hardcode palsu? hook dan util bisa dites terpisah?
+- Templates/UI components are purely presentational: `useState` is forbidden for business data, filters, sorting, calculations, normalization, or fetching; only purely local UI state is allowed (dropdown open/close, active tab); receive all data and handlers via props.
+  - Wrong: `AdminDashboardTemplate` stores `searchQuery` and computes `filteredUsers` inside the template.
+  - Right: the template receives `searchQuery`, `onSearchChange`, and the already-filtered `users` via props.
+- Stateful logic (search, filter, sort, pagination) MUST live in a custom hook at `resources/js/hooks/use<Name>.js`, use `useMemo` for derived results, and return an object `{ state, setter, derivedResult }`.
+  - Wrong: filtering `recentUsers` inline in the template body.
+  - Right: `const { query, setQuery, filteredUsers } = useUserSearch(recentUsers)` is called in the page, and the result is passed to the template.
+- Pure logic (normalization, formatting, mapping) MUST live in a util at `resources/js/utils/<name>.js` as pure functions without side effects so they are easy to test.
+  - Wrong: `stats.totalPengguna ?? stats.total_pengguna ?? 128` scattered across templates.
+  - Right: `normalizeAdminStats(stats)` in a util; the template only renders `stats.totalPengguna`.
+- API format normalization (camelCase vs snake_case) is preferred at the API/controller/resource layer; components receive only one format.
+  - Wrong: the template reads two formats (`stats.totalPengguna ?? stats.total_pengguna`).
+  - Right: the backend sends one format, or a single normalization function in the page/util runs before props are passed down.
+- Fake default data is forbidden: use `0` / `null` / `[]`, provide an `isLoading` prop, and show a skeleton or `"-"`.
+  - Wrong: `const totalPengguna = stats.totalPengguna ?? 128`.
+  - Right: `const totalPengguna = stats.totalPengguna ?? 0` + `{isLoading ? <Skeleton /> : totalPengguna}`.
+- Page/container is glue: it calls hooks and utils and passes the results to the template via props; state used by more than one part (example: search in the topbar + table) MUST live in the page, not in the template.
+  - Wrong: `searchQuery` lives in `AdminDashboardTemplate` and is then used by the topbar and table inside it.
+  - Right: `Pages/Admin/Dashboard.jsx` calls `useUserSearch` and passes `searchQuery` / `onSearchChange` / `filteredUsers` to the template.
+- Checklist before commit: template free of business/filter `useState`? No fake hardcoded numbers/data? Hooks and utils testable in isolation?
