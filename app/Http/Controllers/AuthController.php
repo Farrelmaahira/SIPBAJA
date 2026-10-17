@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Auth\LoginRequest;
-use App\Models\User;
 use App\Services\AuthService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -22,12 +21,12 @@ class AuthController extends Controller
         $validated = $request->validated();
 
         $user = $authService->attemptLogin($validated['login'], $validated['password'], $request->ip());
-        $role = strtolower($user->Role->nama);
-        $route = $role . '.dashboard';
+        $role = str_replace(' ', '', strtolower($user->Role->nama));
+        $route = $role.'.dashboard';
         $request->session()->regenerate();
+
         return redirect()->intended(route($route));
     }
-
 
     public function destroy(): RedirectResponse
     {
