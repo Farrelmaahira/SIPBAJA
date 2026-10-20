@@ -61,4 +61,29 @@ class RolePermissionTest extends TestCase
             'permission_ids' => [],
         ])->assertForbidden();
     }
+
+    public function test_seluruh_peran_memiliki_default_permissions_setelah_seeding(): void
+    {
+        $expectedRoles = [
+            'Pemohon',
+            'Perencanaan',
+            'Bidang 2',
+            'PPBJ',
+            'PP',
+            'PPK',
+            'Perlengkapan',
+            'Keuangan',
+            'Admin',
+        ];
+
+        foreach ($expectedRoles as $roleName) {
+            $role = Role::where('nama', $roleName)->first();
+            $this->assertNotNull($role, "Peran {$roleName} tidak ditemukan.");
+            $this->assertGreaterThan(
+                0,
+                $role->Permissions()->count(),
+                "Peran {$roleName} seharusnya memiliki default permissions setelah seeding."
+            );
+        }
+    }
 }

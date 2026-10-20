@@ -12,8 +12,7 @@ class DashboardAdminController extends Controller
      */
     public function __invoke(Request $request)
     {
-        return Inertia
-        ::render('Admin/Dashboard', [
+        return Inertia::render('Admin/Dashboard', [
             'stats' => [
                 ['label' => 'Total Pengguna', 'value' => 24, 'unit' => 'Akun', 'variant' => 'primary'],
                 ['label' => 'Unit Terdaftar', 'value' => 8, 'unit' => 'Unit', 'variant' => 'info'],

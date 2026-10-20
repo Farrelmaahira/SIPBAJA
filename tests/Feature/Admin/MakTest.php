@@ -3,13 +3,16 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\Mak;
+use App\Models\Permission;
 use App\Models\Permohonan;
 use App\Models\PermohonanMak;
 use App\Models\Unit;
 use App\Models\User;
+use Database\Seeders\RbacSeeder;
 use Database\Seeders\RoleSeeder;
 use Database\Seeders\UserSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Gate;
 use Tests\TestCase;
 
 class MakTest extends TestCase
@@ -20,7 +23,7 @@ class MakTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed([RoleSeeder::class, UserSeeder::class]);
+        $this->seed([RoleSeeder::class, UserSeeder::class, RbacSeeder::class]);
     }
 
     private function admin(): User
@@ -94,5 +97,14 @@ class MakTest extends TestCase
         $nonAdmin = User::where('email', 'ppbj@pnj.ac.id')->firstOrFail();
 
         $this->actingAs($nonAdmin)->get(route('admin.mak.index'))->assertForbidden();
+    }
+
+    public function test_pengguna_dengan_izin_dapat_melihat_mak(): void
+    {
+        $nonAdmin = User::where('email', 'ppbj@pnj.ac.id')->firstOrFail();
+        $permission = Permission::firstOrCreate(['kode' => 'MAK.view']);
+        $nonAdmin->Role->Permissions()->syncWithoutDetaching([$permission->id]);
+
+        $this->assertTrue(Gate::forUser($nonAdmin)->allows('viewAny', Mak::class));
     }
 }

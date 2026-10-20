@@ -32,7 +32,7 @@ class LoginTest extends TestCase
             'password' => 'password123',
         ]);
 
-        $response->assertRedirect(route('dashboard'));
+        $response->assertRedirect(route('admin.dashboard'));
         $this->assertAuthenticated();
     }
 
@@ -43,7 +43,7 @@ class LoginTest extends TestCase
             'password' => 'password123',
         ]);
 
-        $response->assertRedirect(route('dashboard'));
+        $response->assertRedirect(route('ppk.dashboard'));
         $this->assertAuthenticated();
     }
 
@@ -71,7 +71,7 @@ class LoginTest extends TestCase
 
     public function test_guest_tidak_bisa_membuka_dashboard(): void
     {
-        $this->get(route('dashboard'))->assertRedirect(route('login'));
+        $this->get(route('admin.dashboard'))->assertRedirect(route('login'));
     }
 
     public function test_seeder_membuat_satu_akun_per_role(): void

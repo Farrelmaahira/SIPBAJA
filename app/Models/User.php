@@ -66,4 +66,41 @@ class User extends Authenticatable
     {
         return $this->hasMany(Notification::class, 'user_id');
     }
+
+    public function hasRole(string|array $roles): bool
+    {
+        $roleName = $this->Role?->nama;
+        if (! $roleName) {
+            return false;
+        }
+
+        $roles = (array) $roles;
+
+        return in_array($roleName, $roles, true);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function getPermissionCodes(): array
+    {
+        if (! $this->Role) {
+            return [];
+        }
+
+        if ($this->hasRole('Admin')) {
+            return Permission::pluck('kode')->all();
+        }
+
+        return $this->Role->Permissions()->pluck('kode')->all();
+    }
+
+    public function hasPermission(string $permissionCode): bool
+    {
+        if ($this->hasRole('Admin')) {
+            return true;
+        }
+
+        return in_array($permissionCode, $this->getPermissionCodes(), true);
+    }
 }

@@ -29,10 +29,12 @@ class RbacSeeder extends Seeder
             Permission::firstOrCreate(['kode' => $code]);
         }
 
-        $admin = Role::where('nama', 'Admin')->firstOrFail();
-
-        $admin->Permissions()->sync(
-            Permission::whereIn('kode', $map['Admin'])->pluck('id')
-        );
+        foreach ($map as $roleName => $permissionCodes) {
+            $role = Role::where('nama', $roleName)->first();
+            if ($role) {
+                $permissionIds = Permission::whereIn('kode', $permissionCodes)->pluck('id');
+                $role->Permissions()->sync($permissionIds);
+            }
+        }
     }
 }
