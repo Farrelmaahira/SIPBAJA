@@ -47,12 +47,32 @@ class RoleDashboardAccessTest extends TestCase
         }
     }
 
-    public function test_user_terautentikasi_dapat_mengakses_setiap_dashboard(): void
+    public function test_pengguna_hanya_dapat_mengakses_dashboard_perannya_sendiri(): void
     {
-        $user = User::first();
+        $roleRoutes = [
+            'jurusan@pnj.ac.id' => 'pemohon.dashboard',
+            'perencanaan@pnj.ac.id' => 'perencanaan.dashboard',
+            'bidang2@pnj.ac.id' => 'bidang2.dashboard',
+            'ppbj@pnj.ac.id' => 'ppbj.dashboard',
+            'pp@pnj.ac.id' => 'pp.dashboard',
+            'ppk@pnj.ac.id' => 'ppk.dashboard',
+            'perlengkapan@pnj.ac.id' => 'perlengkapan.dashboard',
+            'keuangan@pnj.ac.id' => 'keuangan.dashboard',
+            'admin@pnj.ac.id' => 'admin.dashboard',
+        ];
 
-        $routes = [
-            'pemohon.dashboard',
+        foreach ($roleRoutes as $email => $routeName) {
+            $user = User::where('email', $email)->firstOrFail();
+            $response = $this->actingAs($user)->get(route($routeName));
+            $response->assertOk();
+        }
+    }
+
+    public function test_pengguna_dilarang_mengakses_dashboard_peran_lain(): void
+    {
+        $pemohon = User::where('email', 'jurusan@pnj.ac.id')->firstOrFail();
+
+        $otherRoutes = [
             'perencanaan.dashboard',
             'bidang2.dashboard',
             'ppbj.dashboard',
@@ -60,12 +80,22 @@ class RoleDashboardAccessTest extends TestCase
             'ppk.dashboard',
             'perlengkapan.dashboard',
             'keuangan.dashboard',
+            'admin.dashboard',
         ];
 
-        foreach ($routes as $route) {
-            $response = $this->actingAs($user)->get(route($route));
-            $response->assertOk();
+        foreach ($otherRoutes as $routeName) {
+            $response = $this->actingAs($pemohon)->get(route($routeName));
+            $response->assertForbidden();
         }
+    }
+
+    public function test_bukan_admin_dilarang_mengakses_admin_dashboard(): void
+    {
+        $nonAdmin = User::where('email', 'ppbj@pnj.ac.id')->firstOrFail();
+
+        $response = $this->actingAs($nonAdmin)->get(route('admin.dashboard'));
+
+        $response->assertForbidden();
     }
 
     public function test_guest_diredirect_ke_login_saat_mengakses_dashboard(): void

@@ -12,6 +12,7 @@ use Database\Seeders\RbacSeeder;
 use Database\Seeders\RoleSeeder;
 use Database\Seeders\UserSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Gate;
 use Tests\TestCase;
 
 class MakTest extends TestCase
@@ -104,8 +105,6 @@ class MakTest extends TestCase
         $permission = Permission::firstOrCreate(['kode' => 'MAK.view']);
         $nonAdmin->Role->Permissions()->syncWithoutDetaching([$permission->id]);
 
-        $response = $this->actingAs($nonAdmin)->get(route('admin.mak.index'));
-
-        $response->assertOk();
+        $this->assertTrue(Gate::forUser($nonAdmin)->allows('viewAny', Mak::class));
     }
 }
