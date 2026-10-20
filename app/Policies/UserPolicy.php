@@ -6,33 +6,28 @@ use App\Models\User;
 
 class UserPolicy
 {
-    private function isAdmin(User $user): bool
-    {
-        return $user->role?->nama === 'Admin';
-    }
-
     public function viewAny(User $user): bool
     {
-        return $this->isAdmin($user);
+        return $user->hasPermission('akun.view');
     }
 
     public function view(User $user, User $model): bool
     {
-        return $this->isAdmin($user);
+        return $user->hasPermission('akun.view');
     }
 
     public function create(User $user): bool
     {
-        return $this->isAdmin($user);
+        return $user->hasPermission('akun.create');
     }
 
     public function update(User $user, User $model): bool
     {
-        return $this->isAdmin($user);
+        return $user->hasPermission('akun.update');
     }
 
     public function delete(User $user, User $model): bool
     {
-        return $this->isAdmin($user);
+        return $user->hasPermission('akun.delete');
     }
 }

@@ -7,33 +7,28 @@ use App\Models\User;
 
 class MakPolicy
 {
-    private function isAdmin(User $user): bool
-    {
-        return $user->role?->nama === 'Admin';
-    }
-
     public function viewAny(User $user): bool
     {
-        return $this->isAdmin($user);
+        return $user->hasPermission('MAK.view');
     }
 
     public function view(User $user, Mak $mak): bool
     {
-        return $this->isAdmin($user);
+        return $user->hasPermission('MAK.view');
     }
 
     public function create(User $user): bool
     {
-        return $this->isAdmin($user);
+        return $user->hasPermission('MAK.create');
     }
 
     public function update(User $user, Mak $mak): bool
     {
-        return $this->isAdmin($user);
+        return $user->hasPermission('MAK.update');
     }
 
     public function delete(User $user, Mak $mak): bool
     {
-        return $this->isAdmin($user);
+        return $user->hasPermission('MAK.delete');
     }
 }
