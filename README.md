@@ -1,58 +1,238 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# SIPBAJA (Sistem Informasi Pengadaan Barang dan Jasa)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+SIPBAJA adalah aplikasi web monolitik terpusat berbasis **Laravel 13 + React (Inertia.js)** yang mendigitalkan seluruh alur pengadaan barang dan jasa di lingkungan kampus. Sistem ini menyelesaikan kendala fragmentasi dokumen, lambatnya pelacakan manual antar-unit, kepatuhan batas nominal pengadaan, serta memastikan penegakan aturan persetujuan bertingkat (*tiered approval*) dan verifikasi ganda (*dual approval*) sebelum pembayaran dapat dicairkan.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Fitur Utama
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **Autentikasi & Dynamic RBAC:** Kontrol akses berbasis peran (Pemohon, Perencanaan, Bidang 2/WD2, PPBJ, PP, PPK, Perlengkapan, Keuangan, Admin) dengan dashboard dan izin spesifik.
+- **Pengajuan Permohonan Pengadaan:** Pemohon dapat mengajukan dokumen pengadaan, mengunggah berkas lampiran, dan melakukan revisi berkas tanpa menghapus versi lama.
+- **Verifikasi Anggaran & Manajemen MAK:** Perencanaan memverifikasi ketersediaan anggaran dan menentukan MAK yang relevan.
+- **Persetujuan Bertingkat (Tiered Approval):** Validasi persetujuan berjenjang dari Bidang 2 dengan unggahan memo resmi atau penolakan disertai alasan.
+- **Manajemen Paket Pengadaan & Plotting PPK:** PPBJ memecah permohonan ke dalam paket pengadaan, menentukan level nominal (<50jt, 50–200jt, >200jt), metode, serta menetapkan 1 dari 4 akun PPK sesuai jenis MAK.
+- **Review Dokumen Pengadaan:** Review oleh Pejabat Pengadaan (PP) untuk nominal 50–200 juta dan penandatanganan oleh PPK di semua level nominal.
+- **Penerbitan Kontrak & Termin Pembayaran:** PPBJ menerbitkan SPK/Kontrak/Surat Pesanan dan menetapkan rencana termin pembayaran beserta tanggal reminder.
+- **Penerimaan Barang:** Perlengkapan mendokumentasikan foto serah terima barang dan berita acara penerimaan resmi.
+- **Realisasi Pembayaran & Verifikasi Ganda (Dual Approval):** Pembayaran termin wajib disetujui secara paralel/ganda oleh PPK dan Bidang 2 sebelum berkas dapat diproses dan dibayarkan oleh Keuangan.
+- **Pelacakan Status Berbasis Unit & Audit Trail:** Riwayat status lengkap dicatat per perubahan aktor, dengan visibilitas data dibatasi per unit kerja (`unit_id`).
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## Tech Stack
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+| Lapisan | Teknologi | Keterangan |
+|---|---|---|
+| **Backend Framework** | Laravel 13 | Monolitik via Inertia protocol |
+| **Bahasa Pemrograman** | PHP 8.5.x (min. PHP 8.3) | Standar PSR-12, constructor promotion, strict typing |
+| **Frontend Framework** | React 19 + Inertia.js 3.x | Single Page Application tanpa REST API terpisah |
+| **Styling** | Tailwind CSS v4 | Berdasarkan *SIPBAJA Design System* (Emerald `#0E7C5A`) |
+| **Database (Dev)** | SQLite | Cepat untuk pengembangan lokal dan CI |
+| **Database (Target Prod)** | PostgreSQL 18 | Relasional murni, kompatibel dengan SQLite tanpa DB triggers |
+| **Build Tool** | Vite 8 + Laravel Vite Plugin | Hot module replacement & asset bundling |
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+## Prasyarat Sistem
 
-## Agentic Development
+Sebelum memulai instalasi, pastikan dependensi berikut telah terpasang pada komputer Anda:
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+- **PHP**: `^8.3` (Disarankan PHP 8.5.x) dengan ekstensi `pdo`, `pdo_sqlite`, `pdo_pgsql`, `mbstring`, `openssl`, `tokenizer`, `xml`, `ctype`, `json`, `curl`.
+- **Composer**: `v2.x`
+- **Node.js**: `v20.x` atau `v22.x` (LTS)
+- **NPM**: `v10.x` atau lebih baru
+- **Git**
+
+---
+
+## Langkah Instalasi
+
+Jalankan perintah berikut secara berurutan di terminal:
 
 ```bash
-composer require laravel/boost --dev
+# 1. Clone repositori
+git clone https://github.com/Farrelmaahira/SIPBAJA.git
+cd SIPBAJA
 
-php artisan boost:install
+# 2. Pasang dependensi PHP
+composer install
+
+# 3. Salin file environment
+cp .env.example .env
+
+# 4. Generate Application Key
+php artisan key:generate
+
+# 5. Siapkan database SQLite dan jalankan migrasi
+touch database/database.sqlite
+php artisan migrate --seed
+
+# 6. Pasang dependensi Node.js
+npm install
+
+# 7. Build asset frontend
+npm run build
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+---
 
-## Contributing
+## Konfigurasi (.env)
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Pastikan variabel penting pada berkas `.env` disesuaikan:
 
-## Code of Conduct
+```env
+APP_NAME=SIPBAJA
+APP_ENV=local
+APP_KEY=base64:...
+APP_DEBUG=true
+APP_URL=http://localhost:8000
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+# Konfigurasi Database Lokal (SQLite)
+DB_CONNECTION=sqlite
+# DB_DATABASE=/path/to/database/database.sqlite
 
-## Security Vulnerabilities
+# Atau Target Produksi (PostgreSQL)
+# DB_CONNECTION=pgsql
+# DB_HOST=127.0.0.1
+# DB_PORT=5432
+# DB_DATABASE=sipbaja
+# DB_USERNAME=postgres
+# DB_PASSWORD=secret
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+# Session & Storage
+SESSION_DRIVER=database
+SESSION_LIFETIME=60
+FILESYSTEM_DISK=local
+```
 
-## License
+> **Catatan:** Migrasi dan query dilarang menggunakan fitur PostgreSQL-spesifik (seperti JSONB operators, arrays, DB triggers) agar tetap 100% kompatibel dengan SQLite.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+---
+
+## Cara Penggunaan
+
+### Menjalankan Server Pengembangan
+
+Jalankan server backend dan Vite frontend secara bersamaan:
+
+```bash
+# Menjalankan artisan serve dan vite dev secara paralel
+composer run dev
+```
+
+Atau jalankan di dua terminal terpisah:
+
+```bash
+# Terminal 1: Backend Laravel
+php artisan serve
+
+# Terminal 2: Vite Dev Server
+npm run dev
+```
+
+Buka peramban di `http://localhost:8000`.
+
+### Rute & Endpoint Halaman Utama
+
+Aplikasi SIPBAJA menggunakan arsitektur monolitik Inertia.js (bukan public REST API). Seluruh rute dilindungi oleh middleware `auth` dan `role`:
+
+| Endpoint / URL | Method | Peran Akses | Deskripsi |
+|---|---|---|---|
+| `/` | `GET` | Guest | Halaman Login SIPBAJA |
+| `/login` | `POST` | Guest | Proses autentikasi pengguna |
+| `/logout` | `POST` | Auth | Mengakhiri sesi login |
+| `/admin/dashboard` | `GET` | Admin | Dashboard Admin & statistik sistem |
+| `/admin/pengguna` | `GET/POST/PUT/DELETE` | Admin | Manajemen akun pengguna |
+| `/admin/unit-kerja` | `GET/POST/PUT/DELETE` | Admin | Manajemen referensi unit/jurusan |
+| `/admin/mak` | `GET/POST/PUT/DELETE` | Admin | Pemetaan 4 MAK ke PPK penanggung jawab |
+| `/admin/role-permission` | `GET/PUT` | Admin | Pengaturan matrix izin hak akses dinamis |
+| `/pemohon/dashboard` | `GET` | Pemohon | Dashboard & monitoring permohonan unit |
+| `/perencanaan/dashboard` | `GET` | Perencanaan | Verifikasi anggaran & penentuan MAK |
+| `/bidang-2/dashboard` | `GET` | Bidang 2 | Persetujuan awal permohonan & approval pembayaran |
+| `/ppbj/dashboard` | `GET` | PPBJ | Pemaketan pengadaan, kontrak, & jadwal termin |
+| `/pp/dashboard` | `GET` | PP | Review dokumen pengadaan nominal 50–200 juta |
+| `/ppk/dashboard` | `GET` | PPK | Review & penandatanganan berkas dan approval termin |
+| `/perlengkapan/dashboard`| `GET` | Perlengkapan | Pencatatan penerimaan barang & berita acara |
+| `/keuangan/dashboard` | `GET` | Keuangan | Realisasi pembayaran setelah disetujui PPK & Bidang 2 |
+
+---
+
+## Struktur Direktori
+
+Struktur kode mengikuti prinsip pemisahan ketat (Service Layer & Atomic Design):
+
+```text
+sipbaja/
+├── app/
+│   ├── Http/
+│   │   ├── Controllers/       # Controller tipis: delegasi ke Service & render Inertia
+│   │   ├── Middleware/        # Middleware autentikasi & role check
+│   │   └── Requests/          # Dedicated Form Request class & validasi bahasa Indonesia
+│   ├── Models/                # Eloquent Models & relasi data
+│   ├── Policies/              # Otorisasi hak akses data (misal: batasan per unit_id)
+│   └── Services/              # PUSAT LOGIKA BISNIS: transaksi tulis, kalkulasi, kueri data
+├── database/
+│   ├── factories/             # Factory untuk kebutuhan testing
+│   ├── migrations/            # Skema tabel database (migrasi baru untuk setiap perubahan)
+│   └── seeders/               # Seed peran, MAK, level pengadaan, dan user awal
+├── docs/                      # Dokumentasi PRD, Database, Design System, & Rules
+├── resources/
+│   ├── js/
+│   │   ├── components/        # Atomic Design
+│   │   │   ├── atoms/         # Komponen dasar (Button, Input, Badge, Pill)
+│   │   │   ├── molecules/     # Gabungan atom (FormField, SearchBar, StatCard)
+│   │   │   ├── organisms/     # Modul kompleks (Sidebar, Topbar, TableCard)
+│   │   │   └── templates/     # Tata letak halaman (murni presentasional)
+│   │   ├── hooks/             # Custom React Hooks untuk stateful UI (search, filter, sort)
+│   │   ├── utils/             # Fungsi murni (formatting mata uang, tanggal, normalisasi)
+│   │   ├── Pages/             # Halaman utama Inertia (perekat template, hook, & props)
+│   │   └── app.jsx            # Entry point Inertia React
+│   └── views/
+│       └── app.blade.php      # Root template HTML
+├── routes/
+│   └── web.php                # Definisi rute aplikasi
+└── tests/
+    ├── Feature/               # Feature testing (HTTP endpoint, alur peran, approval)
+    └── Unit/                  # Unit testing (Service logic & validasi kalkulasi)
+```
+
+---
+
+## Pengujian (Testing)
+
+Pengujian menggunakan PHPUnit untuk memastikan integritas logika bisnis dan hak akses peran:
+
+```bash
+# Menjalankan seluruh test suite
+php artisan test
+
+# Menjalankan pengujian secara ringkas
+php artisan test --compact
+
+# Menjalankan pengujian spesifik per berkas
+php artisan test tests/Feature/AuthTest.php
+
+# Menjalankan pengujian dengan filter nama method
+php artisan test --filter=test_user_can_login
+```
+
+Sebelum menyelesaikan perubahan kode PHP, format kode dengan Laravel Pint:
+
+```bash
+vendor/bin/pint --format agent
+```
+
+---
+
+## Panduan Kontribusi & Aturan Pengembangan
+
+Setiap pengembang atau agen AI wajib mematuhi panduan pada [DEVELOPMENT_RULES.md](file:///d:/Farrel/PROJECTS/sipbaja/docs/DEVELOPMENT_RULES.md):
+
+1. **Arsitektur Service Layer:** Dilarang meletakkan logika bisnis atau kueri Eloquent langsung di Controller, Model, atau React Component. Semua logika tulis dan mutasi database wajib berada di `app/Services/` dalam transaksi DB jika menyentuh lebih dari satu tabel.
+2. **Validasi & Otorisasi:** Input data wajib menggunakan Form Request di `app/Http/Requests/` dengan pesan Bahasa Indonesia. Otorisasi kepemilikan data dibatasi via Policy/Gate (mis. pembatasan permohonan per `unit_id`).
+3. **Database & Migrasi:** Skema tabel adalah mutlak mengacu pada [DATABASE_SIPBAJA.md](file:///d:/Farrel/PROJECTS/sipbaja/docs/DATABASE_SIPBAJA.md). Jangan mengedit migrasi lama; selalu buat file migrasi baru untuk setiap perubahan skema. Dilarang menggunakan trigger database.
+4. **Desain & UI:** Mengikuti [DESIGN.md](file:///d:/Farrel/PROJECTS/sipbaja/docs/DESIGN.md) (warna brand `#0E7C5A`, Plus Jakarta Sans, card-based, tanpa gradien). Template React bersifat presentasional; dilarang meletakkan `useState` logika filter/data bisnis di dalam template.
+5. **Git & Commit:**
+   - Gunakan branch fitur untuk setiap penambahan (`feat/nama-fitur` atau `fix/nama-bug`).
+   - Format pesan commit mengacu pada Conventional Commits (`feat: ...`, `fix: ...`, `refactor: ...`).
+   - Pastikan seluruh test lulus (`php artisan test`) dan linter rapi (`vendor/bin/pint`) sebelum membuat Pull Request.
