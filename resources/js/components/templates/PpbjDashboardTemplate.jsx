@@ -59,7 +59,7 @@ export default function PpbjDashboardTemplate({
         {
             key: 'pengajuan',
             label: 'Pengajuan',
-            href: '#',
+            href: '/ppbj/permohonan',
             icon: ClipboardList
         },
     ];
