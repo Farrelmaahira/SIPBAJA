@@ -1,4 +1,4 @@
-import { Search, FileText, Package, Calendar, Eye, ArrowRight } from 'lucide-react';
+import { FileText, Package, Calendar, Eye, ArrowRight } from 'lucide-react';
 import StatusPill from '../atoms/StatusPill';
 import { formatRupiah, formatTanggalIndo } from '../../utils/formatters';
 
@@ -33,9 +33,8 @@ export default function PpbjTabbedTable({
 
     return (
         <div className="bg-white rounded-[20px] border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.05)] overflow-hidden">
-            {/* Top Toolbar: Tabs + Search Bar */}
-            <div className="p-5 md:p-6 border-b border-[#E4EBE8] flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                {/* Tab Navigation Buttons */}
+            {/* Tab Navigation Toolbar */}
+            <div className="p-5 md:p-6 border-b border-[#E4EBE8] flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2 overflow-x-auto pb-1 lg:pb-0" role="tablist">
                     {tabs.map((tab) => {
                         const Icon = tab.icon;
@@ -67,18 +66,6 @@ export default function PpbjTabbedTable({
                             </button>
                         );
                     })}
-                </div>
-
-                {/* Search Input Field */}
-                <div className="relative w-full lg:w-80">
-                    <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8A9A95]" />
-                    <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => onSearchChange?.(e.target.value)}
-                        placeholder="Cari nomor, judul, atau status..."
-                        className="w-full h-11 pl-10 pr-4 rounded-xl bg-[#F7FAF9] border border-[#E4EBE8] text-sm text-[#14201C] placeholder:text-[#8A9A95] focus:outline-none focus:border-[#0E7C5A] focus:ring-3 focus:ring-[#0E7C5A]/15 transition-colors"
-                    />
                 </div>
             </div>
 

@@ -4,6 +4,7 @@ import {
     Package,
     CreditCard,
     Plus,
+    ClipboardList
 } from 'lucide-react';
 import DashboardShellTemplate from './DashboardShellTemplate';
 import StatCard from '../molecules/StatCard';
@@ -52,8 +53,14 @@ export default function PpbjDashboardTemplate({
         {
             key: 'dashboard',
             label: 'Dashboard',
-            href: '#',
+            href: '/ppbj/dashboard',
             icon: LayoutDashboard,
+        },
+        {
+            key: 'pengajuan',
+            label: 'Pengajuan',
+            href: '#',
+            icon: ClipboardList
         },
     ];
 
@@ -67,6 +74,7 @@ export default function PpbjDashboardTemplate({
             }}
             topbarProps={{
                 user,
+                showSearch: false,
             }}
         >
             {/* Hero Banner */}
