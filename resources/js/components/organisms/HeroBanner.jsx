@@ -7,6 +7,7 @@ export default function HeroBanner({
     description = 'Kelola akun pengguna, unit kerja, dan konfigurasi master data pengadaan.',
     ctaLabel = 'Tambah Pengguna',
     ctaIcon: CtaIcon = Plus,
+    ctaVariant = 'primary',
     onCta,
     // Legacy alias kept for AdminDashboardTemplate backward compatibility
     userName,
@@ -52,9 +53,19 @@ export default function HeroBanner({
                     <button
                         type="button"
                         onClick={resolvedOnCta}
-                        className="inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-2.5 rounded-xl bg-white text-[#0E7C5A] hover:bg-[#EEF5F2] active:bg-[#D6EFE4] text-sm font-semibold transition-colors duration-150 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E7C5A] cursor-pointer"
+                        className={`inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors duration-150 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E7C5A] cursor-pointer ${
+                            ctaVariant === 'translucent'
+                                ? 'bg-white/15 text-white hover:bg-white/25 border border-white/20'
+                                : 'bg-white text-[#0E7C5A] hover:bg-[#EEF5F2] active:bg-[#D6EFE4]'
+                        }`}
                     >
-                        {CtaIcon && <CtaIcon className="w-5 h-5 text-[#0E7C5A]" />}
+                        {CtaIcon && (
+                            <CtaIcon
+                                className={`w-5 h-5 ${
+                                    ctaVariant === 'translucent' ? 'text-white' : 'text-[#0E7C5A]'
+                                }`}
+                            />
+                        )}
                         <span>{ctaLabel}</span>
                     </button>
                 </div>

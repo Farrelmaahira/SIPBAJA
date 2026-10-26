@@ -13,11 +13,10 @@ const NAV_ITEMS = [
         href: '/pemohon/dashboard',
     },
     {
-        // TODO: Implement pemohon.permohonan.index route.
         key: 'permohonan',
         label: 'List Permohonan',
         icon: ClipboardList,
-        href: '#',
+        href: '/pemohon/permohonan',
     },
 ];
 

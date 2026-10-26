@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Role;
+use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -34,8 +35,11 @@ class UserSeeder extends Seeder
             'admin@pnj.ac.id' => 'Admin',
         ];
 
+        $unitJurusan = Unit::firstOrCreate(['nama' => 'Jurusan Teknik Informatika']);
+
         foreach ($accounts as $account) {
             $role = Role::where('nama', $roleNames[$account['email']])->firstOrFail();
+            $unitId = $account['email'] === 'jurusan@pnj.ac.id' ? $unitJurusan->id : null;
 
             User::updateOrCreate(
                 ['email' => $account['email']],
@@ -43,7 +47,7 @@ class UserSeeder extends Seeder
                     'nama' => $account['nama'],
                     'password' => 'password123',
                     'role_id' => $role->id,
-                    'unit_id' => null,
+                    'unit_id' => $unitId,
                 ]
             );
         }

@@ -23,9 +23,7 @@ export default function Dashboard({
     });
 
     const handleBuatPermohonan = () => {
-        // TODO: Arahkan ke route formulir pengajuan permohonan (misal: route('pemohon.permohonan.create'))
-        // saat fitur pembuatan permohonan telah diimplementasikan.
-        alert('Fitur Buat Permohonan sedang dalam pengembangan untuk modul berikutnya.');
+        router.visit('/pemohon/permohonan/create');
     };
 
     return (

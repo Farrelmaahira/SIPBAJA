@@ -56,4 +56,9 @@ class Permohonan extends Model
     {
         return $this->hasMany(ApprovalPermohonan::class, 'permohonan_id');
     }
+
+    public function Dokumen(): HasMany
+    {
+        return $this->hasMany(Dokumen::class, 'ref_id')->where('ref_type', 'permohonan');
+    }
 }

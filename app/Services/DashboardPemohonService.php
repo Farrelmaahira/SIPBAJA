@@ -51,9 +51,10 @@ class DashboardPemohonService
     {
         return Permohonan::where('unit_id', $user->unit_id)
             ->whereNotIn('status', ['ditolak'])
+            ->with('Dokumen')
             ->orderBy('created_at', 'desc')
             ->limit(10)
-            ->get(['id', 'nomor_surat', 'judul', 'estimasi_anggaran', 'status', 'created_at']);
+            ->get(['id', 'nomor_surat', 'judul', 'estimasi_anggaran', 'status', 'created_at', 'ringkasan_tujuan']);
     }
 
     /**

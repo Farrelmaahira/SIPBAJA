@@ -15,6 +15,7 @@ use App\Http\Controllers\DashboardPerlengkapanController;
 use App\Http\Controllers\DashboardPpbjController;
 use App\Http\Controllers\DashboardPpController;
 use App\Http\Controllers\DashboardPpkController;
+use App\Http\Controllers\PermohonanPemohonController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -35,6 +36,10 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('pemohon')->name('pemohon.')->middleware('role:Pemohon')->group(function () {
         Route::get('dashboard', DashboardPemohonController::class)->name('dashboard');
+        Route::get('permohonan', [PermohonanPemohonController::class, 'index'])->name('permohonan.index');
+        Route::get('permohonan/create', [PermohonanPemohonController::class, 'create'])->name('permohonan.create');
+        Route::post('permohonan', [PermohonanPemohonController::class, 'store'])->name('permohonan.store');
+        Route::get('permohonan/{permohonan}/dokumen', [PermohonanPemohonController::class, 'downloadDokumen'])->name('permohonan.dokumen.download');
     });
 
     Route::prefix('perencanaan')->name('perencanaan.')->middleware('role:Perencanaan')->group(function () {

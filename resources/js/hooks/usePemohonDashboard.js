@@ -13,7 +13,7 @@ export default function usePemohonDashboard({ ringkasan, permohonanAktif, statis
     // Ubah tahun via Inertia partial reload — hanya statistikBulanan dan tahunAktif yang di-refresh.
     function gantiTahun(tahun) {
         router.get(
-            route('pemohon.dashboard'),
+            '/pemohon/dashboard',
             { tahun },
             { preserveState: true, only: ['statistikBulanan', 'tahunAktif'] },
         );

@@ -87,7 +87,7 @@ Desain terdiri dari tiga zona visual utama dalam satu tampilan dashboard shell:
 
 ### Fase 1 — Backend: Request, Service & Controller
 
-- [ ] **1.1** Buat `app/Http/Requests/SimpanPermohonanRequest.php`:
+- [x] **1.1** Buat `app/Http/Requests/SimpanPermohonanRequest.php`:
   - Otorisasi: Pastikan user memiliki role `Pemohon` dan memiliki `unit_id` valid.
   - Rules:
     - `judul`: required, string, max: 255
@@ -97,7 +97,7 @@ Desain terdiri dari tiga zona visual utama dalam satu tampilan dashboard shell:
     - `file_dokumen`: required, file, mimes:pdf, max: 10240 (10 MB sesuai PRD)
   - Messages: Seluruh pesan validasi dalam Bahasa Indonesia yang ramah dan jelas.
 
-- [ ] **1.2** Buat `app/Services/PermohonanService.php`:
+- [x] **1.2** Buat `app/Services/PermohonanService.php`:
   - Method `simpanPermohonan(User $user, array $data, UploadedFile $file): Permohonan`
   - Dibungkus dalam `DB::transaction()`:
     1. Simpan baris ke tabel `permohonan` (`unit_id`, `created_by`, `nomor_surat`, `judul`, `ringkasan_tujuan`, `estimasi_anggaran`, `revisi_ke = 0`, `status = 'diajukan'`).
@@ -106,72 +106,72 @@ Desain terdiri dari tiga zona visual utama dalam satu tampilan dashboard shell:
     4. Simpan baris awal ke tabel `status_history` (`ref_type = 'permohonan'`, `ref_id = $permohonan->id`, `status_lama = null`, `status_baru = 'diajukan'`, `actor_id = $user->id`).
   - Mengembalikan model `Permohonan`.
 
-- [ ] **1.3** Buat `app/Http/Controllers/PermohonanPemohonController.php`:
+- [x] **1.3** Buat `app/Http/Controllers/PermohonanPemohonController.php`:
   - `create(Request $request)`: Render Inertia `Pemohon/Permohonan/Create`.
   - `store(SimpanPermohonanRequest $request)`: Panggil `PermohonanService->simpanPermohonan()`, kemudian redirect ke `pemohon.dashboard` dengan flash session `success`.
 
-- [ ] **1.4** Daftarkan route di `routes/web.php` dalam grup middleware `role:Pemohon`:
+- [x] **1.4** Daftarkan route di `routes/web.php` dalam grup middleware `role:Pemohon`:
   - `GET /pemohon/permohonan/create` -> `pemohon.permohonan.create`
   - `POST /pemohon/permohonan` -> `pemohon.permohonan.store`
 
 ### Fase 2 — Frontend: Komponen Atom & Molekul
 
-- [ ] **2.1** Buat atom `resources/js/components/atoms/DropzoneUpload.jsx`:
+- [x] **2.1** Buat atom `resources/js/components/atoms/DropzoneUpload.jsx`:
   - Area dropzone interaktif (dragover visual feedback, cursor pointer).
   - Validasi sisi klien untuk format PDF dan ukuran berkas (maksimal 10MB).
   - Tampilan berkas terpilih: ikon file, nama file, badge ukuran file, dan tombol "Ganti Berkas" / "Hapus".
   - Pesan error inline jika berkas tidak sesuai kriteria.
   - Keyboard accessible (dapat diaktifkan via tombol Space/Enter).
 
-- [ ] **2.2** Buat molekul `resources/js/components/molecules/MoneyInput.jsx`:
+- [x] **2.2** Buat molekul `resources/js/components/molecules/MoneyInput.jsx`:
   - Input field dengan styling kotak `Rp` di sisi kiri.
   - Memformat tampilan angka dengan separator ribuan saat pengguna mengetik, namun mengoper nilai numerik murni ke form state.
 
-- [ ] **2.3** Buat molekul `resources/js/components/molecules/AlurStepperItem.jsx`:
+- [x] **2.3** Buat molekul `resources/js/components/molecules/AlurStepperItem.jsx`:
   - Menampilkan nomor tahapan (1-4) atau ikon centang dengan garis penghubung vertikal.
   - Menampilkan badge status (contoh: "Anda di sini", "Menunggu Persetujuan", dsb.) dan deskripsi langkah.
 
 ### Fase 3 — Frontend: Organism
 
-- [ ] **3.1** Buat organism `resources/js/components/organisms/PermohonanFormCard.jsx`:
+- [x] **3.1** Buat organism `resources/js/components/organisms/PermohonanFormCard.jsx`:
   - Memuat field Judul Pengadaan, Nominal / Estimasi Anggaran, dan Dropzone Upload Surat Permohonan (serta Nomor Surat dan Ringkasan Tujuan sesuai hasil konfirmasi).
   - Menampilkan pesan error validasi per field dari props Inertia `errors`.
   - Tombol submit dengan status disabled dan loading state saat `processing`.
 
-- [ ] **3.2** Buat organism `resources/js/components/organisms/AlurPermohonanCard.jsx`:
+- [x] **3.2** Buat organism `resources/js/components/organisms/AlurPermohonanCard.jsx`:
   - Panel putih dengan 4 langkah alur permohonan pengadaan.
 
-- [ ] **3.3** Buat organism `resources/js/components/organisms/PanduanPengajuanCard.jsx`:
+- [x] **3.3** Buat organism `resources/js/components/organisms/PanduanPengajuanCard.jsx`:
   - Panel hijau muda dengan ikon `ShieldCheck` dan 3 butir checklist "Sebelum Mengirim".
 
 ### Fase 4 — Frontend: Template & Page
 
-- [ ] **4.1** Buat template `resources/js/components/templates/PermohonanCreateTemplate.jsx`:
+- [x] **4.1** Buat template `resources/js/components/templates/PermohonanCreateTemplate.jsx`:
   - Memanfaatkan `DashboardShellTemplate` sebagai layout induk.
   - Hero banner khusus dengan judul "Buat Permohonan Pengadaan" dan tombol `← Kembali`.
   - Grid 2 kolom responsif: form card di kiri (2 span) dan alur + panduan di kanan (1 span).
 
-- [ ] **4.2** Buat page `resources/js/Pages/Pemohon/Permohonan/Create.jsx`:
+- [x] **4.2** Buat page `resources/js/Pages/Pemohon/Permohonan/Create.jsx`:
   - Menggunakan Inertia hook `useForm` untuk mengelola form input dan upload file multipart/form-data.
   - Menghubungkan tombol `← Kembali` ke `router.visit(route('pemohon.dashboard'))`.
 
-- [ ] **4.3** Update `Dashboard.jsx` dan `PemohonDashboardTemplate.jsx`:
+- [x] **4.3** Update `Dashboard.jsx` dan `PemohonDashboardTemplate.jsx`:
   - Ubah tombol `Buat Permohonan` pada HeroBanner agar membuka `route('pemohon.permohonan.create')`.
   - Ubah CTA pada empty-state tabel permohonan agar mengarahkan ke rute pembuatan yang sama.
 
 ### Fase 5 — Verifikasi & Pengujian
 
-- [ ] **5.1** Buat feature test `tests/Feature/PermohonanPemohonTest.php`:
+- [x] **5.1** Buat feature test `tests/Feature/PermohonanPemohonTest.php`:
   - Pemohon dapat membuka form buat permohonan.
   - User non-pemohon dilarang mengakses form (403).
   - Validasi data kosong dan berkas non-PDF / ukuran >10MB ditolak.
   - Berhasil menyimpan data permohonan, dokumen, dan riwayat status ke database SQLite/PostgreSQL.
   - File PDF fisik tersimpan di disk storage yang ditentukan.
 
-- [ ] **5.2** Format kode PHP dengan `vendor/bin/pint --dirty --format agent`.
-- [ ] **5.3** Jalankan seluruh unit & feature test dengan `php artisan test --compact`.
-- [ ] **5.4** Jalankan `npm run build` untuk memverifikasi kebersihan bundel frontend.
-- [ ] **5.5** Uji interaksi form secara langsung di browser: pengisian form, upload drag & drop, validasi error, submit permohonan, dan konfirmasi munculnya data baru di dashboard.
+- [x] **5.2** Format kode PHP dengan `vendor/bin/pint --dirty --format agent`.
+- [x] **5.3** Jalankan seluruh unit & feature test dengan `php artisan test --compact`.
+- [x] **5.4** Jalankan `npm run build` untuk memverifikasi kebersihan bundel frontend.
+- [x] **5.5** Uji interaksi form secara langsung di browser: pengisian form, upload drag & drop, validasi error, submit permohonan, dan konfirmasi munculnya data baru di dashboard.
 
 ---
 
