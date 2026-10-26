@@ -109,7 +109,7 @@ class PpbjDashboardService
             ->map(fn (Pengadaan $p) => [
                 'id' => $p->id,
                 'nomorSurat' => $p->Permohonan?->nomor_surat ?? '-',
-                'judul' => $p->Permohonan?->judul ?? ('Paket Pengadaan #' . $p->id),
+                'judul' => $p->Permohonan?->judul ?? ('Paket Pengadaan #'.$p->id),
                 'unitNama' => $p->Permohonan?->Unit?->nama ?? '-',
                 'makNama' => $p->PermohonanMak?->Mak?->nama ?? '-',
                 'jenisNama' => $p->Jenis?->nama ?? '-',

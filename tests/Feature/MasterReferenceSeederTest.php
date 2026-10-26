@@ -69,19 +69,19 @@ class MasterReferenceSeederTest extends TestCase
         }
 
         $level1 = LevelPengadaan::where('nama', '<50jt')->first();
-        $this->assertNotNull($level1, "Level pengadaan <50jt tidak ditemukan.");
+        $this->assertNotNull($level1, 'Level pengadaan <50jt tidak ditemukan.');
         $this->assertEquals(0, (float) $level1->min_nominal);
         $this->assertEquals(50000000, (float) $level1->max_nominal);
         $this->assertFalse($level1->perlu_review_pp);
 
         $level2 = LevelPengadaan::where('nama', '50-200jt')->first();
-        $this->assertNotNull($level2, "Level pengadaan 50-200jt tidak ditemukan.");
+        $this->assertNotNull($level2, 'Level pengadaan 50-200jt tidak ditemukan.');
         $this->assertEquals(50000000, (float) $level2->min_nominal);
         $this->assertEquals(200000000, (float) $level2->max_nominal);
         $this->assertTrue($level2->perlu_review_pp);
 
         $level3 = LevelPengadaan::where('nama', '>200jt')->first();
-        $this->assertNotNull($level3, "Level pengadaan >200jt tidak ditemukan.");
+        $this->assertNotNull($level3, 'Level pengadaan >200jt tidak ditemukan.');
         $this->assertEquals(200000000, (float) $level3->min_nominal);
         $this->assertNull($level3->max_nominal);
         $this->assertFalse($level3->perlu_review_pp);

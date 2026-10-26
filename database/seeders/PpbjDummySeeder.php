@@ -80,7 +80,7 @@ class PpbjDummySeeder extends Seeder
                 [
                     'versi' => 1,
                     'nama_asli' => 'Memo_Persetujuan_PRM_001.pdf',
-                    'nama_hash' => hash('sha256', 'Memo_Persetujuan_PRM_001') . '.pdf',
+                    'nama_hash' => hash('sha256', 'Memo_Persetujuan_PRM_001').'.pdf',
                     'mime_type' => 'application/pdf',
                     'ukuran_bytes' => 102400,
                     'uploaded_by' => $bidang2->id,
@@ -137,7 +137,7 @@ class PpbjDummySeeder extends Seeder
                 [
                     'versi' => 1,
                     'nama_asli' => 'Memo_Persetujuan_PRM_002.pdf',
-                    'nama_hash' => hash('sha256', 'Memo_Persetujuan_PRM_002') . '.pdf',
+                    'nama_hash' => hash('sha256', 'Memo_Persetujuan_PRM_002').'.pdf',
                     'mime_type' => 'application/pdf',
                     'ukuran_bytes' => 102400,
                     'uploaded_by' => $bidang2->id,
@@ -232,7 +232,7 @@ class PpbjDummySeeder extends Seeder
                 [
                     'versi' => 1,
                     'nama_asli' => 'Memo_Persetujuan_PRM_003.pdf',
-                    'nama_hash' => hash('sha256', 'Memo_Persetujuan_PRM_003') . '.pdf',
+                    'nama_hash' => hash('sha256', 'Memo_Persetujuan_PRM_003').'.pdf',
                     'mime_type' => 'application/pdf',
                     'ukuran_bytes' => 102400,
                     'uploaded_by' => $bidang2->id,
@@ -270,7 +270,7 @@ class PpbjDummySeeder extends Seeder
                 [
                     'versi' => 1,
                     'nama_asli' => 'Tanda_Tangan_PPK_PGD_003.pdf',
-                    'nama_hash' => hash('sha256', 'Tanda_Tangan_PPK_PGD_003') . '.pdf',
+                    'nama_hash' => hash('sha256', 'Tanda_Tangan_PPK_PGD_003').'.pdf',
                     'mime_type' => 'application/pdf',
                     'ukuran_bytes' => 102400,
                     'uploaded_by' => $makBluNonFisik->ppk_user_id,
@@ -322,7 +322,7 @@ class PpbjDummySeeder extends Seeder
                 [
                     'versi' => 1,
                     'nama_asli' => 'Memo_Persetujuan_PRM_004.pdf',
-                    'nama_hash' => hash('sha256', 'Memo_Persetujuan_PRM_004') . '.pdf',
+                    'nama_hash' => hash('sha256', 'Memo_Persetujuan_PRM_004').'.pdf',
                     'mime_type' => 'application/pdf',
                     'ukuran_bytes' => 102400,
                     'uploaded_by' => $bidang2->id,
@@ -412,7 +412,7 @@ class PpbjDummySeeder extends Seeder
                 [
                     'versi' => 1,
                     'nama_asli' => 'Memo_Persetujuan_PRM_005.pdf',
-                    'nama_hash' => hash('sha256', 'Memo_Persetujuan_PRM_005') . '.pdf',
+                    'nama_hash' => hash('sha256', 'Memo_Persetujuan_PRM_005').'.pdf',
                     'mime_type' => 'application/pdf',
                     'ukuran_bytes' => 102400,
                     'uploaded_by' => $bidang2->id,
@@ -477,7 +477,7 @@ class PpbjDummySeeder extends Seeder
                 [
                     'versi' => 1,
                     'nama_asli' => 'Berkas_Bayar_Termin_1.pdf',
-                    'nama_hash' => hash('sha256', 'Berkas_Bayar_Termin_1') . '.pdf',
+                    'nama_hash' => hash('sha256', 'Berkas_Bayar_Termin_1').'.pdf',
                     'mime_type' => 'application/pdf',
                     'ukuran_bytes' => 204800,
                     'uploaded_by' => $ppbj->id,
@@ -493,7 +493,7 @@ class PpbjDummySeeder extends Seeder
                 [
                     'versi' => 1,
                     'nama_asli' => 'Legalitas_Vendor_PT_Maju.pdf',
-                    'nama_hash' => hash('sha256', 'Legalitas_Vendor_PT_Maju') . '.pdf',
+                    'nama_hash' => hash('sha256', 'Legalitas_Vendor_PT_Maju').'.pdf',
                     'mime_type' => 'application/pdf',
                     'ukuran_bytes' => 153600,
                     'uploaded_by' => $ppbj->id,

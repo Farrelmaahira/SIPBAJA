@@ -44,7 +44,7 @@
 **Interfaces:**
 - Produces: Data master di tabel `roles` (PPK), `users` (4 PPK), `maks` (4 MAK terhubung ke masing-masing PPK), `jenis_pengadaan` (Barang, Jasa, Konstruksi), `metode_pengadaan` (Inaproc, SPSE, Tender, Non-Tender), dan `level_pengadaan` (<50jt, 50-200jt perlu review PP, >200jt).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Buat file `tests/Feature/MasterReferenceSeederTest.php` yang memverifikasi bahwa setelah `MasterReferenceSeeder` dijalankan:
 - Terdapat 4 user dengan role PPK: `ppk.blufisik@pnj.ac.id`, `ppk.blunonfisik@pnj.ac.id`, `ppk.rmfisik@pnj.ac.id`, `ppk.rmnonfisik@pnj.ac.id`.
@@ -53,23 +53,23 @@ Buat file `tests/Feature/MasterReferenceSeederTest.php` yang memverifikasi bahwa
 - Terdapat 4 record `metode_pengadaan`: `Inaproc`, `SPSE`, `Tender`, `Non-Tender`.
 - Terdapat 3 record `level_pengadaan` dengan batasan nominal dan flag `perlu_review_pp` yang tepat.
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `php artisan test tests/Feature/MasterReferenceSeederTest.php`
 Expected: FAIL (class `MasterReferenceSeeder` does not exist).
 
-- [ ] **Step 3: Implement `MasterReferenceSeeder.php`**
+- [x] **Step 3: Implement `MasterReferenceSeeder.php`**
 
 Implementasikan `database/seeders/MasterReferenceSeeder.php`:
 - Menggunakan `updateOrCreate` agar idempoten.
 - Daftarkan `MasterReferenceSeeder::class` di dalam `database/seeders/DatabaseSeeder.php`.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `php artisan test tests/Feature/MasterReferenceSeederTest.php`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add database/seeders/MasterReferenceSeeder.php database/seeders/DatabaseSeeder.php tests/Feature/MasterReferenceSeederTest.php
@@ -88,7 +88,7 @@ git commit -m "feat(seeder): add master reference seeder for ppk, maks, and proc
 - Consumes: Data master dari `MasterReferenceSeeder` (MAK, Unit, User PPK/Pemohon/Perencanaan/Bidang 2).
 - Produces: Data pengujian pada tabel `permohonan`, `permohonan_mak`, `approval_permohonan`, `pengadaan`, `approval_pengadaan`, `kontrak`, `rencana_pembayaran`, `reminder`, `pembayaran`, dan `dokumen`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Buat file `tests/Feature/PpbjDummySeederTest.php` yang menguji keberadaan 5 skenario data setelah `PpbjDummySeeder` dipanggil:
 - **Skenario 1:** Permohonan `PRM-PPBJ-001` berstatus siap dipaketkan (approval Bidang 2 disetujui, MAK terpilih, tidak memiliki relasi `pengadaan`).
@@ -97,24 +97,24 @@ Buat file `tests/Feature/PpbjDummySeederTest.php` yang menguji keberadaan 5 sken
 - **Skenario 4:** Paket pengadaan `PGD-PPBJ-004` memiliki `kontrak`, 3 termin di `rencana_pembayaran`, dan `reminder`.
 - **Skenario 5:** Termin pembayaran pada `PGD-PPBJ-005` memiliki record `pembayaran` berstatus `menunggu_ppk` atau `menunggu_bidang2` dengan dokumen berkas bayar terlampir.
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `php artisan test tests/Feature/PpbjDummySeederTest.php`
 Expected: FAIL (class `PpbjDummySeeder` does not exist).
 
-- [ ] **Step 3: Implement `PpbjDummySeeder.php`**
+- [x] **Step 3: Implement `PpbjDummySeeder.php`**
 
 Tulis logika seeder di `database/seeders/PpbjDummySeeder.php` yang membangun ke-5 skenario transaksi tersebut secara konsisten:
 - Gunakan transaksi database atau pemanggilan model terurut untuk menjaga integritas foreign key gabungan `(permohonan_id, permohonan_mak_id)`.
 - Pastikan nominal termin sama persis dengan total nominal pengadaan/kontrak.
 - Daftarkan dokumen pendukung dummy di tabel `dokumen`.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `php artisan test tests/Feature/PpbjDummySeederTest.php`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add database/seeders/PpbjDummySeeder.php tests/Feature/PpbjDummySeederTest.php
@@ -146,18 +146,18 @@ git commit -m "feat(seeder): implement comprehensive ppbj dummy seeder covering 
   ```
 - Route: `GET /ppbj/dashboard` mengembalikan render Inertia `Ppbj/Dashboard` dengan data props di atas.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Buat `tests/Feature/PpbjDashboardTest.php`:
 - Memverifikasi user non-PPBJ atau tamu dilarang mengakses `/ppbj/dashboard` (redirect atau 403).
 - Memverifikasi user PPBJ dapat mengakses `/ppbj/dashboard` dan menerima props `stats`, `permohonanMasuk`, `pengadaanBerjalan`, dan `terminKontrak` dari `PpbjDashboardService`.
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `php artisan test tests/Feature/PpbjDashboardTest.php`
 Expected: FAIL (props kosong atau service belum ada).
 
-- [ ] **Step 3: Implement `PpbjDashboardService.php` and update Controller**
+- [x] **Step 3: Implement `PpbjDashboardService.php` and update Controller**
 
 - Buat `app/Services/PpbjDashboardService.php`:
   - `hitungStats(): array`
@@ -167,12 +167,12 @@ Expected: FAIL (props kosong atau service belum ada).
 - Update `app/Http/Controllers/DashboardPpbjController.php`:
   - Inject `PpbjDashboardService` dan kirimkan hasil `getDashboardData()` ke `Inertia::render('Ppbj/Dashboard', ...)`.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `php artisan test tests/Feature/PpbjDashboardTest.php`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/Services/PpbjDashboardService.php app/Http/Controllers/DashboardPpbjController.php tests/Feature/PpbjDashboardTest.php
@@ -197,27 +197,27 @@ git commit -m "feat(ppbj): add dashboard service and wire props to controller"
 - `usePpbjDashboard({ permohonanMasuk, pengadaanBerjalan, terminKontrak })` mengembalikan `{ activeTab, setActiveTab, searchQuery, setSearchQuery, filteredItems, stats }`
 - `PpbjDashboardTemplate` menerima props murni tanpa business logic di dalamnya.
 
-- [ ] **Step 1: Implement `formatters.js` and `usePpbjDashboard.js`**
+- [x] **Step 1: Implement `formatters.js` and `usePpbjDashboard.js`**
 
 - Tulis util `resources/js/utils/formatters.js` untuk format mata uang Rupiah (`Rp 150.000.000`) dan format tanggal Indonesia.
 - Tulis custom hook `resources/js/hooks/usePpbjDashboard.js` dengan stateful logic pencarian teks dan pergantian tab (`tab: 'permohonan' | 'pengadaan' | 'termin'`).
 
-- [ ] **Step 2: Implement UI components (`StatusPill`, `PpbjTabbedTable`, `PpbjDashboardTemplate`)**
+- [x] **Step 2: Implement UI components (`StatusPill`, `PpbjTabbedTable`, `PpbjDashboardTemplate`)**
 
 - `StatusPill.jsx`: Mengikuti [DESIGN.md](file:///d:/Farrel/PROJECTS/sipbaja/docs/DESIGN.md) (Menunggu Verifikasi: `#E8F0FF` / `#1F55C7`, Disetujui: `#E4F6EC` / `#0B7A4E`, Ditolak: `#FDECEC` / `#B42318`).
 - `PpbjTabbedTable.jsx`: Tabel dengan tab bar (3 tab), header row `#F1F7F4`, baris data hover `#F7FAF9`, dan tombol aksi.
 - `PpbjDashboardTemplate.jsx`: Menerapkan Hero Banner (emerald `#0E7C5A`, radius 24, 2 lingkaran dekoratif transparan), 3 Stat Cards (radius 18, border `#E4EBE8`, icon box 56), dan `PpbjTabbedTable`.
 
-- [ ] **Step 3: Update `Pages/Ppbj/Dashboard.jsx` as Glue Layer**
+- [x] **Step 3: Update `Pages/Ppbj/Dashboard.jsx` as Glue Layer**
 
 Hubungkan props dari Inertia (`stats`, `permohonanMasuk`, `pengadaanBerjalan`, `terminKontrak`) ke `usePpbjDashboard`, lalu operkan ke `PpbjDashboardTemplate`.
 
-- [ ] **Step 4: Build asset with Vite to verify no syntax/bundling errors**
+- [x] **Step 4: Build asset with Vite to verify no syntax/bundling errors**
 
 Run: `npm run build`
 Expected: Build sukses tanpa error atau manifest warning.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add resources/js/utils/formatters.js resources/js/hooks/usePpbjDashboard.js resources/js/components/atoms/StatusPill.jsx resources/js/components/molecules/PpbjTabbedTable.jsx resources/js/components/templates/PpbjDashboardTemplate.jsx resources/js/Pages/Ppbj/Dashboard.jsx
@@ -231,23 +231,23 @@ git commit -m "feat(ppbj): build responsive tabbed dashboard template and atomic
 **Files:**
 - Modify: `README.md` (jika ada catatan seeder baru)
 
-- [ ] **Step 1: Execute all tests**
+- [x] **Step 1: Execute all tests**
 
 Run: `php artisan test`
 Expected: Seluruh unit dan feature tests lulus (0 failures).
 
-- [ ] **Step 2: Run Pint Code Formatter**
+- [x] **Step 2: Run Pint Code Formatter**
 
 Run: `vendor/bin/pint --format agent`
 Expected: Seluruh kode PHP sesuai standar PSR-12 dan aturan project.
 
-- [ ] **Step 3: Verify Seeders Execution in Fresh Database**
+- [x] **Step 3: Verify Seeders Execution in Fresh Database**
 
 Run: `php artisan migrate:fresh --seed`
 Run: `php artisan db:seed --class=PpbjDummySeeder`
 Expected: Migrasi dan seeding berjalan mulus tanpa error foreign key atau constraint violation.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add .
