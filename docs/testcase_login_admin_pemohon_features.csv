@@ -1,0 +1,115 @@
+"ID Test","Modul / Role","Skenario Pengujian","Prasyarat (Pre-condition)","Langkah-langkah","Hasil yang Diharapkan"
+"TC-AUTH-001","Otentikasi / Publik","Login Berhasil dengan Kredensial Valid","Pengguna sudah terdaftar di sistem dengan email dan password yang benar.","1. Buka halaman utama aplikasi di browser.
+2. Masukkan email terdaftar pada kolom Email atau Nama Pengguna.
+3. Masukkan password yang sesuai.
+4. Klik tombol Masuk.","Pengguna berhasil masuk dan otomatis diarahkan ke halaman dashboard yang sesuai dengan peran masing-masing (misal: Admin ke /admin/dashboard, Pemohon ke /pemohon/dashboard)."
+"TC-AUTH-002","Otentikasi / Publik","Login Gagal karena Password Salah","Pengguna memasukkan email terdaftar tetapi password keliru.","1. Buka halaman login.
+2. Masukkan email terdaftar.
+3. Masukkan password yang salah.
+4. Klik tombol Masuk.","Sistem menolak autentikasi, tetap berada di halaman login, dan menampilkan pesan kesalahan: Kredensial yang diberikan tidak cocok dengan data kami."
+"TC-AUTH-003","Otentikasi / Publik","Login Gagal karena Email Tidak Terdaftar","Pengguna memasukkan email yang belum pernah didaftarkan.","1. Buka halaman login.
+2. Masukkan alamat email sembarang yang tidak ada di sistem.
+3. Masukkan password sembarang.
+4. Klik tombol Masuk.","Sistem menolak autentikasi dan menampilkan pesan kesalahan bahwa akun tidak ditemukan."
+"TC-AUTH-004","Otentikasi / Publik","Validasi Input Kosong pada Formulir Login","Pengguna berada di halaman login.","1. Buka halaman login.
+2. Kosongkan kolom email dan password.
+3. Klik tombol Masuk.","Formulir menolak submit dan menampilkan pesan validasi bahwa email dan password wajib diisi."
+"TC-AUTH-005","Otentikasi / Publik","Pengalihan Otomatis Berdasarkan Peran (Role Redirection)","Tersedia akun untuk masing-masing peran (Admin, Pemohon, Perencanaan, Bidang 2, PPBJ, PP, PPK, Perlengkapan, Keuangan).","1. Login bergantian dengan masing-masing akun peran.
+2. Periksa URL tujuan setelah submit login berhasil.","Setiap pengguna diarahkan ke rute dashboard spesifik perannya tanpa salah sasaran (contoh: jurusan@pnj.ac.id ke /pemohon/dashboard, admin@pnj.ac.id ke /admin/dashboard)."
+"TC-AUTH-006","Otentikasi / Akses","Proteksi Halaman Internal dari Pengguna Tamu (Guest)","Pengguna belum melakukan login (tamu).","1. Buka browser baru dalam mode incognito.
+2. Akses langsung URL internal seperti http://localhost:8000/admin/dashboard atau http://localhost:8000/pemohon/dashboard.","Akses ditolak oleh middleware auth, dan pengguna otomatis dialihkan ke halaman login (/). "
+"TC-AUTH-007","Otentikasi / Semua Role","Keluar dari Sistem (Logout) melalui Menu Profil Topbar","Pengguna sedang dalam posisi login aktif di dashboard.","1. Klik area profil pengguna di pojok kanan atas topbar.
+2. Klik opsi Keluar dari akun pada menu dropdown yang muncul.","Sesi pengguna diakhiri, token autentikasi dihapus, dan pengguna diarahkan kembali ke halaman login utama."
+"TC-AUTH-008","Otentikasi / Keamanan","Pencegahan Akses Lintas Peran (Cross-Role Authorization)","Pengguna login sebagai Pemohon (jurusan@pnj.ac.id).","1. Login menggunakan akun Pemohon.
+2. Ketikkan URL area Admin di address bar, misalnya: http://localhost:8000/admin/dashboard atau http://localhost:8000/admin/pengguna.","Sistem merespons dengan status HTTP 403 Forbidden dan menampilkan halaman kesalahan akses tidak diizinkan."
+"TC-ADM-001","Admin / Dashboard","Menampilkan Ringkasan Metrik Statistik Utama","Pengguna login sebagai Admin.","1. Akses menu Dashboard Admin (/admin/dashboard).
+2. Perhatikan kartu statistik pada bagian atas halaman.","Tampil tiga kartu metrik dengan data akurat: Total Pengguna, Unit Terdaftar, dan MAK Aktif dengan visualisasi warna yang tegas."
+"TC-ADM-002","Admin / Dashboard","Menampilkan Tabel Pengguna Terbaru (Recent Users)","Terdapat data pengguna di database.","1. Buka Dashboard Admin.
+2. Gulir ke bagian tabel Pengguna Terbaru.","Tabel menampilkan nama, email, peran, unit, status keaktifan (pill status aktif/nonaktif), dan tanggal bergabung."
+"TC-ADM-003","Admin / Dashboard","Responsifitas Navigasi Sidebar pada Layar Ponsel","Pengguna membuka aplikasi dari perangkat ponsel atau browser dengan lebar viewport < 768px.","1. Buka dashboard pada layar mobile.
+2. Klik tombol ikon menu (hamburger) di sebelah kiri atas topbar.
+3. Klik tombol silang (X) atau area latar gelap di luar menu.","Sidebar muncul mulus sebagai off-canvas drawer dari sisi kiri dan dapat ditutup kembali tanpa merusak tata letak konten utama."
+"TC-ADM-004","Admin / Dashboard","Interaktivitas Popover Notifikasi Topbar","Pengguna login di halaman dashboard admin.","1. Klik ikon lonceng notifikasi di pojok kanan atas.
+2. Klik area sembarang di luar popover.","Muncul jendela kecil popover notifikasi dengan informasi pembaruan sistem dan popover menutup kembali saat mengklik area luar."
+"TC-ADM-005","Admin / Kelola Pengguna","Melihat Daftar Seluruh Pengguna Sistem","Pengguna login sebagai Admin dan masuk ke menu Pengguna.","1. Klik menu Pengguna di sidebar navigasi admin (/admin/pengguna).
+2. Periksa tampilan tabel pengguna.","Tabel memuat daftar pengguna lengkap dengan pagination, kolom nama, email, peran, unit kerja, dan tombol aksi (Edit, Hapus)."
+"TC-ADM-006","Admin / Kelola Pengguna","Pencarian Pengguna Berdasarkan Nama atau Email","Tersedia beberapa data pengguna di sistem.","1. Buka halaman daftar pengguna (/admin/pengguna).
+2. Ketik nama atau email tertentu pada kolom pencarian.
+3. Tekan tombol Enter atau tunggu hasil filter live.","Daftar pengguna otomatis memfilter baris yang sesuai dengan kata kunci pencarian."
+"TC-ADM-007","Admin / Kelola Pengguna","Menambah Pengguna Baru dengan Data Lengkap","Pengguna login sebagai Admin.","1. Klik tombol Tambah Pengguna pada halaman pengguna.
+2. Isi Nama Lengkap, Email, Password, pilih Peran, dan pilih Unit Kerja.
+3. Klik tombol Simpan.","Pengguna baru tersimpan di database, modal tertutup, muncul notifikasi sukses, dan nama pengguna baru muncul pada tabel."
+"TC-ADM-008","Admin / Kelola Pengguna","Validasi Penambahan Pengguna dengan Email Duplikat","Email target sudah terdaftar sebelumnya di database.","1. Buka form Tambah Pengguna.
+2. Masukkan alamat email yang sudah ada di database.
+3. Isi kolom lainnya dengan benar lalu klik Simpan.","Sistem menolak penyimpanan dan menampilkan pesan validasi error bahwa email sudah terdaftar."
+"TC-ADM-009","Admin / Kelola Pengguna","Mengubah Data Pengguna (Edit User)","Tersedia data pengguna yang ingin disunting.","1. Klik tombol aksi Edit (ikon pensil) pada baris pengguna tertentu.
+2. Ubah nama atau perannya pada formulir modal.
+3. Klik tombol Simpan Perubahan.","Data pengguna berhasil diperbarui di database dan tabel menampilkan data terbaru secara instan."
+"TC-ADM-010","Admin / Kelola Pengguna","Menghapus Pengguna (Soft Delete)","Tersedia akun pengguna yang tidak lagi aktif.","1. Klik tombol aksi Hapus (ikon tempat sampah) pada baris pengguna.
+2. Konfirmasi penghapusan pada dialog peringatan.","Data pengguna dihapus dari tampilan tabel dan ditandai sebagai soft delete di database tanpa merusak relasi historis."
+"TC-ADM-011","Admin / Unit Kerja","Melihat Daftar Unit Kerja Kampus","Pengguna login sebagai Admin.","1. Klik menu Unit Kerja pada sidebar (/admin/unit-kerja).
+2. Periksa tabel unit kerja.","Daftar jurusan, unit, dan bidang tampil lengkap beserta jumlah pengguna yang terikat pada unit tersebut."
+"TC-ADM-012","Admin / Unit Kerja","Menambah Unit Kerja Baru","Pengguna berada di halaman Unit Kerja.","1. Klik tombol Tambah Unit Kerja.
+2. Masukkan nama unit kerja (misal: Unit Pusat Karir).
+3. Klik Simpan.","Unit kerja baru tersimpan di database dan langsung muncul dalam daftar unit kerja serta opsi dropdown formulir pengguna."
+"TC-ADM-013","Admin / Unit Kerja","Validasi Nama Unit Kerja Duplikat","Nama unit kerja yang dimasukkan sudah ada sebelumnya.","1. Buka form Tambah Unit Kerja.
+2. Masukkan nama unit yang persis sama dengan yang sudah ada.
+3. Klik Simpan.","Sistem menampilkan pesan validasi bahwa nama unit kerja sudah digunakan."
+"TC-ADM-014","Admin / Unit Kerja","Mengubah Nama Unit Kerja","Tersedia unit kerja yang ingin diperbaiki namanya.","1. Klik tombol Edit pada baris unit kerja yang dipilih.
+2. Perbaiki nama unit kerja lalu klik Simpan.","Nama unit kerja berhasil diperbarui di database dan tabel menampilkan nama yang baru."
+"TC-ADM-015","Admin / Unit Kerja","Menghapus Unit Kerja","Tersedia unit kerja yang tidak memiliki keterikatan data.","1. Klik tombol Hapus pada baris unit kerja target.
+2. Konfirmasi tindakan pada dialog modal.","Unit kerja terhapus dari daftar dan database."
+"TC-ADM-016","Admin / Kelola MAK","Melihat Daftar 4 Kategori MAK","Pengguna login sebagai Admin.","1. Klik menu MAK di sidebar navigasi (/admin/mak).
+2. Periksa daftar MAK yang tampil.","Tampil 4 kategori MAK standar: BLU Fisik, BLU Non-Fisik, RM Fisik, dan RM Non-Fisik beserta nama pejabat PPK yang ditugaskan."
+"TC-ADM-017","Admin / Kelola MAK","Mengubah Pejabat PPK Penanggung Jawab MAK","Pengguna berada di halaman MAK.","1. Klik tombol Edit pada salah satu kartu/baris MAK.
+2. Pilih akun PPK lain pada menu dropdown penugasan.
+3. Klik Simpan Perubahan.","Penugasan PPK pada MAK tersebut berhasil diperbarui dan tersimpan di database."
+"TC-ADM-018","Admin / Kelola Peran","Melihat Daftar 9 Peran Pengguna","Pengguna login sebagai Admin.","1. Klik menu Peran pada sidebar (/admin/role).
+2. Periksa daftar peran yang tersedia.","Tampil seluruh peran standar SIPBAJA: Pemohon, Perencanaan, Bidang 2, PPBJ, PP, PPK, Perlengkapan, Keuangan, dan Admin."
+"TC-ADM-019","Admin / Matriks Hak Akses","Melihat Matriks Hak Akses (Role Permissions)","Pengguna login sebagai Admin.","1. Klik menu Hak Akses pada sidebar (/admin/role-permission).
+2. Perhatikan tabel matriks izin.","Tampil tabel matriks yang memetakan setiap peran dengan seluruh daftar kode permission/izin fitur sistem."
+"TC-ADM-020","Admin / Matriks Hak Akses","Mengubah Izin Fitur pada Peran Tertentu","Pengguna berada di halaman Matriks Hak Akses.","1. Pilih peran target dari daftar peran atau tabel matriks.
+2. Centang atau hilangkan centang pada izin tertentu (misal: pengadaan.create).
+3. Klik tombol Simpan Hak Akses.","Tabel pivot role_permissions berhasil diperbarui di database dan notifikasi sukses muncul."
+"TC-PMH-001","Pemohon / Dashboard","Melihat Ringkasan Statistik Permohonan Unit","Pengguna login sebagai akun Pemohon (jurusan@pnj.ac.id) yang memiliki unit_id.","1. Buka Dashboard Pemohon (/pemohon/dashboard).
+2. Perhatikan 4 kartu statistik di bawah hero banner.","Tampil 4 kartu metrik dengan data akurat milik unit pemohon: Total Permohonan, Menunggu Verifikasi, Disetujui, dan Ditolak."
+"TC-PMH-002","Pemohon / Dashboard","Verifikasi Badge Kontekstual pada Kartu Statistik","Terdapat data permohonan dengan variasi status di unit pemohon.","1. Amati bagian pojok kanan atas masing-masing kartu statistik.","Kartu Total Permohonan menampilkan badge '+N bulan ini' jika ada penambahan bulan berjalan, Menunggu Verifikasi menampilkan 'Dalam antrean', dan Ditolak menampilkan 'Perlu revisi'."
+"TC-PMH-003","Pemohon / Dashboard","Visualisasi Grafik Batang Disetujui vs Ditolak","Pengguna berada di Dashboard Pemohon.","1. Perhatikan grafik batang Statistik Permohonan di bagian tengah halaman.
+2. Periksa batang hijau (Disetujui) dan batang merah muda (Ditolak) pada setiap bulan (Jan-Des).","Grafik SVG native merender perbandingan jumlah permohonan yang disetujui dan ditolak per bulan secara presisi dengan skala sumbu Y dinamis."
+"TC-PMH-004","Pemohon / Dashboard","Mengubah Filter Tahun pada Grafik Permohonan","Pengguna berada di Dashboard Pemohon.","1. Pada kontrol toggle tahun di grafik, klik tombol tahun sebelumnya (misal: 2025).
+2. Perhatikan respons grafik.
+3. Klik kembali tahun berjalan (2026).","Data grafik diperbarui secara real-time via partial reload Inertia sesuai tahun yang dipilih tanpa me-reload seluruh halaman."
+"TC-PMH-005","Pemohon / Dashboard","Menampilkan Tabel Permohonan Sedang Berlangsung","Terdapat pengajuan permohonan aktif oleh unit pemohon.","1. Gulir ke bagian tabel Permohonan Sedang Berlangsung di dashboard.","Tabel menampilkan kolom: No Permohonan, Judul Pengadaan, Tanggal, Nilai Pengajuan, Status (StatusPill), dan tombol Aksi."
+"TC-PMH-006","Pemohon / Dashboard","Isolasi Data Permohonan Antar Unit (Data Scoping)","Terdapat permohonan milik unit Teknik Informatika dan unit Teknik Mesin di database.","1. Login dengan akun unit Teknik Informatika.
+2. Buka Dashboard Pemohon dan periksa tabel permohonan.","Hanya permohonan yang diajukan oleh unit Teknik Informatika yang tampil; permohonan milik unit Teknik Mesin tidak terlihat."
+"TC-PMH-007","Pemohon / Dashboard","Tampilan Kondisi Kosong (Empty State) Tabel Permohonan","Unit pemohon belum memiliki riwayat pengajuan permohonan aktif.","1. Login dengan akun unit baru yang belum memiliki permohonan.
+2. Buka Dashboard Pemohon.","Tabel menampilkan pesan ramah: 'Tidak ada permohonan aktif. Buat permohonan pengadaan pertama unit Anda untuk memulai' beserta tombol 'Buat Permohonan'."
+"TC-PMH-008","Pemohon / Dashboard","Membuka Modal Detail Permohonan via Nomor Surat","Tersedia permohonan pada tabel dashboard.","1. Klik tautan teks Nomor Surat pada baris tabel permohonan.","Muncul jendela modal Detail Permohonan yang memuat: Nomor Surat, Judul Pengadaan, Nilai Anggaran, Tanggal, Status, Ringkasan Tujuan, dan Lampiran Berkas."
+"TC-PMH-009","Pemohon / Dashboard","Menu Aksi Baris Tabel (3 Titik)","Pengguna berada di tabel permohonan dashboard.","1. Klik tombol 3 titik (...) pada baris permohonan.
+2. Perhatikan menu dropdown yang muncul.
+3. Klik tombol Lihat Detail.","Dropdown muncul dengan opsi 'Lihat Detail' dan 'Unduh Berkas'. Saat 'Lihat Detail' diklik, modal rincian permohonan terbuka."
+"TC-PMH-010","Pemohon / Dashboard","Mengunduh Berkas Surat Permohonan dari Baris Tabel / Modal","Permohonan memiliki lampiran berkas PDF fisik di storage.","1. Buka modal detail permohonan atau klik opsi 'Unduh Berkas' pada menu 3 titik.
+2. Klik tombol 'Unduh'.","Browser mengunduh berkas surat permohonan asli berformat PDF dari endpoint aman server."
+"TC-PMH-011","Pemohon / Dashboard","Navigasi Tombol Buat Permohonan di Hero Banner","Pengguna berada di Dashboard Pemohon.","1. Klik tombol 'Buat Permohonan' berwarna hijau di hero banner atas.","Halaman berpindah secara instan ke formulir pembuatan permohonan pengadaan (/pemohon/permohonan/create)."
+"TC-PMH-012","Pemohon / Dashboard","Navigasi Tautan 'Lihat Semua' ke Halaman Riwayat","Pengguna berada di Dashboard Pemohon.","1. Klik tautan 'Lihat Semua' di kanan atas tabel dashboard.","Halaman berpindah ke rute riwayat permohonan lengkap (/pemohon/permohonan)."
+"TC-PMH-013","Pemohon / Buat Permohonan","Membuka Formulir Pengajuan Permohonan Pengadaan","Pengguna login sebagai Pemohon.","1. Akses halaman /pemohon/permohonan/create atau klik tombol Buat Permohonan.","Tampil formulir bersih 2 kolom: sisi kiri kartu input Detail Pengadaan, sisi kanan panel Alur Permohonan 4 langkah dan panduan Sebelum Mengirim."
+"TC-PMH-014","Pemohon / Buat Permohonan","Validasi Formulir Kosong Saat Mengirim Permohonan","Pengguna berada di halaman buat permohonan.","1. Biarkan seluruh kolom formulir kosong.
+2. Klik tombol Kirim Permohonan.","Formulir menolak pengiriman dan menampilkan pesan error inline merah pada masing-masing field: Judul pengadaan wajib diisi, Estimasi anggaran wajib diisi, dan Surat permohonan wajib diunggah."
+"TC-PMH-015","Pemohon / Buat Permohonan","Input Nilai Anggaran dengan Format Rupiah Otomatis","Pengguna mengisi kolom Nominal / Estimasi Anggaran.","1. Masukkan angka nominal '150000000' pada kolom estimasi anggaran.","Input otomatis memformat angka menjadi '150.000.000' dengan prefix kotak 'Rp' di sisi kiri tanpa menghilangkan nilai numerik murni saat dikirim ke server."
+"TC-PMH-016","Pemohon / Buat Permohonan","Unggah Dokumen Melalui Dropzone (Drag and Drop / Klik)","Tersedia berkas surat permohonan berformat PDF dengan ukuran < 10 MB.","1. Klik area dropzone bertuliskan 'Klik untuk upload atau drag & drop'.
+2. Pilih berkas PDF dari file dialog sistem, atau tarik dan lepaskan berkas ke dalam kotak dropzone.","Dropzone menampilkan kartu berkas terpilih yang memuat nama file, ukuran berkas (misal: 1.2 MB), serta tombol 'Ganti' dan 'Hapus'."
+"TC-PMH-017","Pemohon / Buat Permohonan","Validasi Penolakan Format Berkas Non-PDF pada Dropzone","Pengguna mencoba mengunggah berkas gambar (JPG/PNG) atau dokumen Word (DOCX).","1. Pilih berkas bertipe .docx atau .jpg pada dialog unggah.","Sistem langsung menolak berkas di sisi klien dan menampilkan peringatan: 'Format berkas harus berupa dokumen PDF (.pdf)'."
+"TC-PMH-018","Pemohon / Buat Permohonan","Validasi Penolakan Berkas PDF Melebihi Batas 10 MB","Tersedia berkas PDF berukuran lebih dari 10 MB (misal: 12 MB).","1. Unggah berkas PDF berukuran 12 MB pada dropzone.","Sistem menolak berkas dan menampilkan pesan: 'Ukuran berkas melebihi batas maksimal 10 MB'."
+"TC-PMH-019","Pemohon / Buat Permohonan","Menghapus atau Mengganti Berkas yang Sudah Dipilih","Telah ada berkas PDF yang terpilih di dropzone.","1. Klik tombol ikon silang (Hapus) pada kartu berkas terpilih.
+2. Periksa kembali tampilan dropzone.","Berkas terhapus dari state formulir dan dropzone kembali ke tampilan awal siap unggah."
+"TC-PMH-020","Pemohon / Buat Permohonan","Pengajuan Permohonan Berhasil Disimpan (End-to-End)","Pengguna mengisi formulir dengan data valid dan berkas PDF sah.","1. Masukkan Judul Pengadaan: 'Pengadaan Server dan Switch Laboratorium'.
+2. Masukkan Estimasi Anggaran: '85000000'.
+3. Unggah surat permohonan berformat PDF.
+4. Klik tombol 'Kirim Permohonan'.","Tombol menampilkan status loading 'Mengirim...', data tersimpan atomik di database (tabel permohonan status 'diajukan', tabel dokumen, tabel status_history), berkas fisik tersimpan di disk lokal dengan nama hash aman, dan pengguna diredirect ke dashboard dengan permohonan baru tercantum di tabel."
+"TC-PMH-021","Pemohon / Buat Permohonan","Navigasi Tombol 'Kembali' pada Banner","Pengguna berada di halaman formulir pengajuan permohonan.","1. Klik tombol 'Kembali' (translucent) di pojok kanan banner hero.","Pengguna diarahkan kembali ke halaman Dashboard Pemohon tanpa melakukan submit formulir."
+"TC-PMH-022","Pemohon / Riwayat","Melihat Daftar Lengkap Permohonan Unit (Halaman Index)","Pengguna login sebagai Pemohon dan masuk ke menu List Permohonan.","1. Klik menu 'List Permohonan' di sidebar (/pemohon/permohonan).","Tampil seluruh daftar permohonan milik unit pemohon dilengkapi filter status tombol, kolom pencarian cepat, dan informasi jumlah total pengadaan."
+"TC-PMH-023","Pemohon / Riwayat","Pencarian Permohonan Berdasarkan Nomor Surat atau Judul","Tersedia banyak permohonan dalam daftar riwayat.","1. Ketikkan kata kunci nomor surat (misal: 'PRM/2026') atau sebagian judul pada kolom pencarian.
+2. Tekan Enter.","Daftar tabel menyaring baris permohonan yang relevan sesuai kata kunci pencarian secara instan."
+"TC-PMH-024","Pemohon / Riwayat","Penyaringan Permohonan Berdasarkan Status Pengadaan","Terdapat permohonan dengan status berbeda (Diajukan, Menunggu Persetujuan, Disetujui, Ditolak).","1. Klik tombol filter status tertentu (misal: 'Diajukan' atau 'Disetujui').","Tabel hanya menampilkan permohonan yang memiliki status sesuai tombol filter yang aktif."
+"TC-PMH-025","Pemohon / Riwayat","Akses Detail dan Unduh Berkas dari Halaman Riwayat","Pengguna berada di halaman /pemohon/permohonan.","1. Klik nomor surat atau klik opsi 'Lihat Detail' dari tombol aksi baris permohonan.
+2. Di dalam modal, klik tombol 'Unduh'.","Modal rincian permohonan terbuka dengan benar dan berkas PDF lampiran dapat diunduh langsung."

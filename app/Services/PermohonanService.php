@@ -117,7 +117,9 @@ class PermohonanService
      */
     public function ambilDokumen(User $user, Permohonan $permohonan): array
     {
-        abort_unless($user->unit_id === $permohonan->unit_id, 403, 'Akses tidak diizinkan untuk unit lain.');
+        $user->loadMissing('role');
+        $isReviewer = in_array($user->role?->nama, ['Admin', 'Bidang 2', 'Perencanaan', 'PPBJ', 'PPK', 'PP', 'Perlengkapan', 'Keuangan']);
+        abort_unless($isReviewer || ($user->unit_id && $user->unit_id === $permohonan->unit_id), 403, 'Akses tidak diizinkan untuk unit lain.');
 
         $dokumen = $permohonan->Dokumen()->where('tipe_dokumen', 'surat_permohonan')->latest('versi')->firstOrFail();
         $path = 'dokumen/permohonan/'.$dokumen->nama_hash;

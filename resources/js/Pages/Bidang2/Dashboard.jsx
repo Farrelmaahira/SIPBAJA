@@ -1,16 +1,54 @@
-import { Head, usePage } from '@inertiajs/react';
-import RoleDashboardTemplate from '../../components/templates/RoleDashboardTemplate';
+import { Head } from '@inertiajs/react';
+import useBidang2Dashboard from '../../hooks/useBidang2Dashboard';
+import Bidang2DashboardTemplate from '../../components/templates/Bidang2DashboardTemplate';
 
-export default function Dashboard() {
-    const { auth } = usePage().props;
+export default function Dashboard({
+    auth,
+    ringkasan,
+    riwayatTerbaru,
+    statistikBulanan,
+    totalDisetujui,
+    totalDitolak,
+    tahunAktif,
+}) {
+    const {
+        ringkasan: ringkasanData,
+        riwayatTerbaru: riwayatData,
+        chartData,
+        totalDisetujui: statDisetujui,
+        totalDitolak: statDitolak,
+        tahunAktif: activeYear,
+        viewMode,
+        setViewMode,
+        gantiTahun,
+        selectedPermohonan,
+        setSelectedPermohonan,
+    } = useBidang2Dashboard({
+        ringkasan,
+        riwayatTerbaru,
+        statistikBulanan,
+        totalDisetujui,
+        totalDitolak,
+        tahunAktif,
+    });
 
     return (
         <>
             <Head title="Dashboard Bidang 2 - SIPBAJA" />
-            <RoleDashboardTemplate
-                roleTitle="Dashboard Bidang 2"
-                roleDescription="Persetujuan awal bertingkat permohonan pengadaan dan persetujuan ganda pembayaran termin."
+            <Bidang2DashboardTemplate
                 user={auth?.user}
+                ringkasan={ringkasanData}
+                riwayatTerbaru={riwayatData}
+                chartData={chartData}
+                totalDisetujui={statDisetujui}
+                totalDitolak={statDitolak}
+                tahunAktif={activeYear}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                gantiTahun={gantiTahun}
+                selectedPermohonan={selectedPermohonan}
+                onSelectPermohonan={setSelectedPermohonan}
+                onCloseDetail={() => setSelectedPermohonan(null)}
             />
         </>
     );

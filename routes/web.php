@@ -15,7 +15,9 @@ use App\Http\Controllers\DashboardPerlengkapanController;
 use App\Http\Controllers\DashboardPpbjController;
 use App\Http\Controllers\DashboardPpController;
 use App\Http\Controllers\DashboardPpkController;
+use App\Http\Controllers\PengajuanBidang2Controller;
 use App\Http\Controllers\PermohonanPemohonController;
+use App\Http\Controllers\RkaklBidang2Controller;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -48,6 +50,9 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('bidang-2')->name('bidang2.')->middleware('role:Bidang 2')->group(function () {
         Route::get('dashboard', DashboardBidang2Controller::class)->name('dashboard');
+        Route::get('pengajuan', [PengajuanBidang2Controller::class, 'index'])->name('pengajuan.index');
+        Route::get('rkakl', [RkaklBidang2Controller::class, 'index'])->name('rkakl.index');
+        Route::get('permohonan/{permohonan}/dokumen', [PermohonanPemohonController::class, 'downloadDokumen'])->name('permohonan.dokumen.download');
     });
 
     Route::prefix('ppbj')->name('ppbj.')->middleware('role:PPBJ')->group(function () {
