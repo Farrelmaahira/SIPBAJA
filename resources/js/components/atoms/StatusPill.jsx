@@ -1,4 +1,5 @@
 const STATUS_CONFIG = {
+    // Existing user-status variants
     aktif: {
         bg: 'bg-[#E4F6EC]',
         text: 'text-[#0B7A4E]',
@@ -17,10 +18,41 @@ const STATUS_CONFIG = {
         dot: 'bg-[#2F6FED]',
         defaultLabel: 'Pending',
     },
+    // Permohonan status variants
+    neutral: {
+        bg: 'bg-[#F3F6F5]',
+        text: 'text-[#5F6F6A]',
+        dot: 'bg-[#8A9A95]',
+        defaultLabel: '-',
+    },
+    info: {
+        bg: 'bg-[#E8F0FF]',
+        text: 'text-[#1F55C7]',
+        dot: 'bg-[#2F6FED]',
+        defaultLabel: 'Info',
+    },
+    success: {
+        bg: 'bg-[#E4F6EC]',
+        text: 'text-[#0B7A4E]',
+        dot: 'bg-[#12A06B]',
+        defaultLabel: 'Disetujui',
+    },
+    danger: {
+        bg: 'bg-[#FDECEC]',
+        text: 'text-[#B42318]',
+        dot: 'bg-[#E5484D]',
+        defaultLabel: 'Ditolak',
+    },
+    warning: {
+        bg: 'bg-[#FEF3E2]',
+        text: 'text-[#B45309]',
+        dot: 'bg-[#D97706]',
+        defaultLabel: 'Proses',
+    },
 };
 
 export default function StatusPill({ status = 'aktif', label }) {
-    const config = STATUS_CONFIG[status] || STATUS_CONFIG.aktif;
+    const config = STATUS_CONFIG[status] || STATUS_CONFIG.neutral;
     const displayLabel = label || config.defaultLabel;
 
     return (

@@ -21,6 +21,7 @@ class Permohonan extends Model
         'estimasi_anggaran',
         'revisi_ke',
         'status',
+        'created_at',
     ];
 
     protected function casts(): array
