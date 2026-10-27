@@ -56,4 +56,70 @@ class PermohonanService
             ];
         })->all();
     }
+
+    /**
+     * Mengambil detail permohonan pengadaan berdasarkan ID untuk peran PPBJ.
+     *
+     * @return array{
+     *     id: int,
+     *     nomorSurat: string,
+     *     judul: string,
+     *     ringkasanTujuan: string,
+     *     unitNama: string,
+     *     estimasiAnggaran: float,
+     *     revisiKe: int,
+     *     status: string,
+     *     tanggalPengajuan: string,
+     *     pembuatNama: string,
+     *     makList: array<int, array{kode: string, nama: string}>,
+     *     paketList: array<int, array{id: int, makKode: string, nominal: float, status: string}>
+     * }
+     */
+    public function getPermohonanDetail(int $id): array
+    {
+        $permohonan = Permohonan::with([
+            'Unit',
+            'Creator',
+            'PermohonanMak.Mak',
+            'Pengadaan.PermohonanMak.Mak',
+        ])->findOrFail($id);
+
+        $makList = $permohonan->PermohonanMak
+            ->filter(fn ($pm) => $pm->Mak !== null)
+            ->map(fn ($pm) => [
+                'kode' => (string) $pm->Mak->kode,
+                'nama' => (string) $pm->Mak->nama,
+            ])
+            ->values()
+            ->all();
+
+        $paketList = $permohonan->Pengadaan
+            ->map(fn ($p) => [
+                'id' => (int) $p->id,
+                'makKode' => (string) ($p->PermohonanMak?->Mak?->kode ?? '-'),
+                'nominal' => (float) ($p->nominal ?? 0),
+                'status' => (string) ($p->status ?? '-'),
+            ])
+            ->values()
+            ->all();
+
+        $tanggalPengajuan = $permohonan->created_at
+            ? Carbon::parse($permohonan->created_at)->format('Y-m-d')
+            : '';
+
+        return [
+            'id' => (int) $permohonan->id,
+            'nomorSurat' => (string) ($permohonan->nomor_surat ?? '-'),
+            'judul' => (string) ($permohonan->judul ?? '-'),
+            'ringkasanTujuan' => (string) ($permohonan->ringkasan_tujuan ?? ''),
+            'unitNama' => (string) ($permohonan->Unit?->nama ?? '-'),
+            'estimasiAnggaran' => (float) ($permohonan->estimasi_anggaran ?? 0),
+            'revisiKe' => (int) ($permohonan->revisi_ke ?? 0),
+            'status' => (string) ($permohonan->status ?? 'menunggu_persetujuan'),
+            'tanggalPengajuan' => $tanggalPengajuan,
+            'pembuatNama' => (string) ($permohonan->Creator?->name ?? '-'),
+            'makList' => $makList,
+            'paketList' => $paketList,
+        ];
+    }
 }

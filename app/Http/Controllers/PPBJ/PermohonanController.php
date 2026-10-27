@@ -43,9 +43,11 @@ class PermohonanController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(string $id): Response
     {
-        //
+        return Inertia::render('Ppbj/Permohonan/Show', [
+            'permohonan' => $this->permohonanService->getPermohonanDetail((int) $id),
+        ]);
     }
 
     /**
