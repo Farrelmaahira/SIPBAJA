@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\PPBJ;
 
+use App\Http\Controllers\Controller;
 use App\Services\PpbjDashboardService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;

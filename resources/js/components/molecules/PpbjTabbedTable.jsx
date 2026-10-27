@@ -33,42 +33,6 @@ export default function PpbjTabbedTable({
 
     return (
         <div className="bg-white rounded-[20px] border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.05)] overflow-hidden">
-            {/* Tab Navigation Toolbar */}
-            <div className="p-5 md:p-6 border-b border-[#E4EBE8] flex items-center justify-between gap-4">
-                <div className="flex items-center gap-2 overflow-x-auto pb-1 lg:pb-0" role="tablist">
-                    {tabs.map((tab) => {
-                        const Icon = tab.icon;
-                        const isActive = activeTab === tab.key;
-                        return (
-                            <button
-                                key={tab.key}
-                                type="button"
-                                role="tab"
-                                aria-selected={isActive}
-                                onClick={() => onTabChange?.(tab.key)}
-                                className={`inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap cursor-pointer ${
-                                    isActive
-                                        ? 'bg-[#0E7C5A] text-white shadow-[0_4px_12px_rgba(14,124,90,0.25)]'
-                                        : 'bg-[#F7FAF9] text-[#5F6F6A] hover:bg-[#EEF5F2] hover:text-[#14201C]'
-                                }`}
-                            >
-                                <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-[#8A9A95]'}`} />
-                                <span>{tab.label}</span>
-                                <span
-                                    className={`px-2 py-0.5 rounded-full text-xs ${
-                                        isActive
-                                            ? 'bg-white/20 text-white'
-                                            : 'bg-[#E4EBE8] text-[#5F6F6A]'
-                                    }`}
-                                >
-                                    {tab.count}
-                                </span>
-                            </button>
-                        );
-                    })}
-                </div>
-            </div>
-
             {/* Table / List Container */}
             <div className="overflow-x-auto">
                 {items.length === 0 ? (
