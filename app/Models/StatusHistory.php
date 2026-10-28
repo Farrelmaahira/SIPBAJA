@@ -11,7 +11,7 @@ class StatusHistory extends Model
 
     public $timestamps = false;
 
-    protected $fillable = ['ref_type', 'ref_id', 'status_lama', 'status_baru', 'actor_id'];
+    protected $fillable = ['ref_type', 'ref_id', 'status_lama', 'status_baru', 'actor_id', 'created_at'];
 
     public function Actor(): BelongsTo
     {

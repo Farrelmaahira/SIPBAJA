@@ -47,6 +47,14 @@ export default function PpbjDashboardTemplate({
             iconBg: 'bg-[#E4F6EC]',
             iconColor: 'text-[#0B7A4E]',
         },
+        {
+            icon: CreditCard,
+            label: stats[2]?.label || 'Termin Siap Bayar',
+            value: stats[2]?.value ?? 0,
+            unit: stats[2]?.unit || 'Termin',
+            iconBg: 'bg-[#E4F6EC]',
+            iconColor: 'text-[#0B7A4E]',
+        },
     ];
 
     const navItems = [
@@ -109,7 +117,7 @@ export default function PpbjDashboardTemplate({
             </section>
 
             {/* Stat Cards Grid */}
-            <section className="grid grid-cols-1 md:grid-cols-3 gap-5" aria-label="Ringkasan Statistik">
+            <section className="grid grid-cols-1 md:grid-cols-4 gap-5" aria-label="Ringkasan Statistik">
                 {statConfig.map((item, index) => (
                     <StatCard
                         key={index}

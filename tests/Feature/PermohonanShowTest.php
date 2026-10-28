@@ -64,6 +64,12 @@ class PermohonanShowTest extends TestCase
                 ->has('pembuatNama')
                 ->has('makList')
                 ->has('paketList')
+                ->has('bisaDipecah')
+                ->has('sudahDikunci')
+                ->has('sisaAnggaran')
+                ->has('totalNominalPaket')
+                ->has('availableMak')
+                ->has('referenceData')
             )
         );
     }

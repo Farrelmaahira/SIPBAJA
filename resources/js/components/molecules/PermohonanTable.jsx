@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, ArrowRight, Layers } from 'lucide-react';
+import { FileText, ArrowRight, Layers, Eye } from 'lucide-react';
 import StatusPill from '../atoms/StatusPill';
 import { formatRupiah, formatTanggalIndo } from '../../utils/formatters';
 
@@ -112,14 +112,12 @@ export default function PermohonanTable({ items = [] }) {
 
                                     {/* Aksi */}
                                     <td className="py-4 px-5 align-top text-right whitespace-nowrap">
-                                        <button
-                                            type="button"
-                                            className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-[#0E7C5A] hover:bg-[#EAF5F1] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0E7C5A]/30"
+                                        <a href={`/ppbj/permohonan/${item.id}`}
+                                            className='min-h-[44px] min-w-[44px] inline-flex items-center justify-center border-[0.5px] gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-[#0E7C5A] hover:bg-[#EAF5F1] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0E7C5A]/30'
                                             aria-label={`Detail permohonan ${item.nomorSurat}`}
                                         >
-                                            <span>Detail</span>
-                                            <ArrowRight className="w-3.5 h-3.5" />
-                                        </button>
+                                            <Eye />
+                                        </a>
                                     </td>
                                 </tr>
                             );

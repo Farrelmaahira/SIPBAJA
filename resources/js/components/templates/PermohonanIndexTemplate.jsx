@@ -3,10 +3,7 @@ import { LayoutDashboard, ClipboardList } from 'lucide-react';
 import DashboardShellTemplate from './DashboardShellTemplate';
 import PermohonanTable from '../molecules/PermohonanTable';
 
-export default function PermohonanIndexTemplate({
-    user = {},
-    items = [],
-}) {
+export default function PermohonanIndexTemplate({ user = {}, items = [] }) {
     const navItems = [
         {
             key: 'dashboard',

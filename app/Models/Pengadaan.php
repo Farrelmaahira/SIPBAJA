@@ -77,4 +77,9 @@ class Pengadaan extends Model
     {
         return $this->hasMany(ApprovalPengadaan::class, 'pengadaan_id');
     }
+
+    public function Dokumen(): HasMany
+    {
+        return $this->hasMany(Dokumen::class, 'ref_id')->where('ref_type', 'pengadaan');
+    }
 }

@@ -49,6 +49,9 @@ Route::middleware('auth')->group(function () {
     Route::prefix('ppbj')->name('ppbj.')->middleware('role:PPBJ')->group(function () {
         Route::get('dashboard', DashboardPpbjController::class)->name('dashboard');
         Route::resource('permohonan', PermohonanController::class);
+        Route::post('permohonan/{id}/pengadaan/draft', [PermohonanController::class, 'storeDraft'])->name('permohonan.pengadaan.draft');
+        Route::delete('pengadaan/{id}', [PermohonanController::class, 'destroyDraft'])->name('pengadaan.destroy');
+        Route::post('permohonan/{id}/pengadaan/submit', [PermohonanController::class, 'submitReviewer'])->name('permohonan.pengadaan.submit');
     });
 
     Route::prefix('pp')->name('pp.')->middleware('role:PP')->group(function () {

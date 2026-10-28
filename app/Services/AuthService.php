@@ -10,13 +10,13 @@ use Illuminate\Validation\ValidationException;
 
 class AuthService
 {
-    public function attemptLogin(string $login, string $password, string $ip): User
+    public function attemptLogin(string $login, string $password, string $ip, bool $remember = false): User
     {
         $this->ensureNotRateLimited($login, $ip);
 
         $field = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'nama';
 
-        if (! Auth::attempt([$field => $login, 'password' => $password])) {
+        if (! Auth::attempt([$field => $login, 'password' => $password], $remember)) {
             RateLimiter::hit($this->throttleKey($login, $ip));
 
             throw ValidationException::withMessages([

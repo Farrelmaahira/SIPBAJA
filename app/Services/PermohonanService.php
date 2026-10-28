@@ -57,23 +57,14 @@ class PermohonanService
         })->all();
     }
 
+    public function __construct(
+        protected PengadaanService $pengadaanService
+    ) {}
+
     /**
      * Mengambil detail permohonan pengadaan berdasarkan ID untuk peran PPBJ.
      *
-     * @return array{
-     *     id: int,
-     *     nomorSurat: string,
-     *     judul: string,
-     *     ringkasanTujuan: string,
-     *     unitNama: string,
-     *     estimasiAnggaran: float,
-     *     revisiKe: int,
-     *     status: string,
-     *     tanggalPengajuan: string,
-     *     pembuatNama: string,
-     *     makList: array<int, array{kode: string, nama: string}>,
-     *     paketList: array<int, array{id: int, makKode: string, nominal: float, status: string}>
-     * }
+     * @return array<string, mixed>
      */
     public function getPermohonanDetail(int $id): array
     {
@@ -82,12 +73,17 @@ class PermohonanService
             'Creator',
             'PermohonanMak.Mak',
             'Pengadaan.PermohonanMak.Mak',
+            'Pengadaan.Jenis',
+            'Pengadaan.Metode',
+            'Pengadaan.Level',
+            'Pengadaan.Ppk',
+            'Pengadaan.Dokumen',
         ])->findOrFail($id);
 
         $makList = $permohonan->PermohonanMak
             ->filter(fn ($pm) => $pm->Mak !== null)
             ->map(fn ($pm) => [
-                'kode' => (string) $pm->Mak->kode,
+                'kode' => (string) ($pm->Mak->kode ?? $pm->Mak->nama),
                 'nama' => (string) $pm->Mak->nama,
             ])
             ->values()
@@ -96,9 +92,20 @@ class PermohonanService
         $paketList = $permohonan->Pengadaan
             ->map(fn ($p) => [
                 'id' => (int) $p->id,
-                'makKode' => (string) ($p->PermohonanMak?->Mak?->kode ?? '-'),
+                'makKode' => (string) ($p->PermohonanMak?->Mak?->kode ?? $p->PermohonanMak?->Mak?->nama ?? '-'),
+                'makNama' => (string) ($p->PermohonanMak?->Mak?->nama ?? '-'),
                 'nominal' => (float) ($p->nominal ?? 0),
-                'status' => (string) ($p->status ?? '-'),
+                'status' => (string) ($p->status ?? 'draft'),
+                'jenisNama' => (string) ($p->Jenis?->nama ?? '-'),
+                'metodeNama' => (string) ($p->Metode?->nama ?? '-'),
+                'levelNama' => (string) ($p->Level?->nama ?? '-'),
+                'ppkNama' => (string) ($p->Ppk?->nama ?? '-'),
+                'dokumenList' => $p->Dokumen->map(fn ($d) => [
+                    'id' => (int) $d->id,
+                    'namaAsli' => (string) $d->nama_asli,
+                    'ukuranBytes' => (int) $d->ukuran_bytes,
+                    'versi' => (int) $d->versi,
+                ])->values()->all(),
             ])
             ->values()
             ->all();
@@ -107,7 +114,9 @@ class PermohonanService
             ? Carbon::parse($permohonan->created_at)->format('Y-m-d')
             : '';
 
-        return [
+        $splitContext = $this->pengadaanService->getSplitContext($id);
+
+        return array_merge([
             'id' => (int) $permohonan->id,
             'nomorSurat' => (string) ($permohonan->nomor_surat ?? '-'),
             'judul' => (string) ($permohonan->judul ?? '-'),
@@ -120,6 +129,6 @@ class PermohonanService
             'pembuatNama' => (string) ($permohonan->Creator?->name ?? '-'),
             'makList' => $makList,
             'paketList' => $paketList,
-        ];
+        ], $splitContext);
     }
 }
