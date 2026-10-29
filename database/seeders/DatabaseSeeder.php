@@ -18,6 +18,8 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             UserSeeder::class,
             RbacSeeder::class,
+            MasterSeeder::class,
+            PengadaanPpSeeder::class,
         ]);
     }
 }
