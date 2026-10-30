@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class RkaklBidang2Controller extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request): JsonResponse
     {
-        return Inertia::render('Bidang2/Rkakl/Index');
+        return response()->json([
+            'message' => 'Dokumen RKAKL Bidang 2.',
+        ]);
     }
 }

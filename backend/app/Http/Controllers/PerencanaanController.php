@@ -11,10 +11,8 @@ use App\Models\Permohonan;
 use App\Models\User;
 use App\Services\PerencanaanService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\Http\Response;
 
 class PerencanaanController extends Controller
 {
@@ -39,7 +37,7 @@ class PerencanaanController extends Controller
         ]);
     }
 
-    public function index(Request $request): Response
+    public function index(Request $request): JsonResponse
     {
         $filters = [
             'q' => $request->query('q', ''),
@@ -55,7 +53,7 @@ class PerencanaanController extends Controller
             ->whereNull('read_at')
             ->count();
 
-        return Inertia::render('Perencanaan/Pengajuan/Index', [
+        return response()->json([
             'permohonan' => $permohonan,
             'filters' => $filters,
             'recentNotifications' => $recentNotifications,
@@ -63,7 +61,7 @@ class PerencanaanController extends Controller
         ]);
     }
 
-    public function show(Permohonan $permohonan): Response
+    public function show(Permohonan $permohonan): JsonResponse
     {
         $detail = $this->perencanaanService->getDetailPermohonan($permohonan);
         $recentNotifications = Notification::where('user_id', auth()->id())
@@ -74,14 +72,14 @@ class PerencanaanController extends Controller
             ->whereNull('read_at')
             ->count();
 
-        return Inertia::render('Perencanaan/Pengajuan/Show', [
+        return response()->json([
             'detail' => $detail,
             'recentNotifications' => $recentNotifications,
             'unreadNotificationsCount' => $unreadCount,
         ]);
     }
 
-    public function approve(VerifikasiPermohonanRequest $request, Permohonan $permohonan): RedirectResponse
+    public function approve(VerifikasiPermohonanRequest $request, Permohonan $permohonan): JsonResponse
     {
         $this->perencanaanService->approvePermohonan(
             $permohonan,
@@ -89,11 +87,12 @@ class PerencanaanController extends Controller
             $request->validated('mak_ids')
         );
 
-        return redirect()->route('perencanaan.pengajuan.index')
-            ->with('success', 'Permohonan berhasil diverifikasi dan diteruskan ke tahap berikutnya.');
+        return response()->json([
+            'message' => 'Permohonan berhasil diverifikasi dan diteruskan ke tahap berikutnya.',
+        ]);
     }
 
-    public function reject(TolakPermohonanRequest $request, Permohonan $permohonan): RedirectResponse
+    public function reject(TolakPermohonanRequest $request, Permohonan $permohonan): JsonResponse
     {
         $this->perencanaanService->rejectPermohonan(
             $permohonan,
@@ -101,20 +100,22 @@ class PerencanaanController extends Controller
             $request->validated('alasan')
         );
 
-        return redirect()->route('perencanaan.pengajuan.index')
-            ->with('success', 'Permohonan telah ditolak dan dikembalikan ke pemohon.');
+        return response()->json([
+            'message' => 'Permohonan telah ditolak dan dikembalikan ke pemohon.',
+        ]);
     }
 
-    public function kirimPengadaan(Request $request, Permohonan $permohonan): RedirectResponse
+    public function kirimPengadaan(Request $request, Permohonan $permohonan): JsonResponse
     {
         $makId = (int) $request->input('mak_id', 1);
         $this->perencanaanService->kirimPengadaan($permohonan, auth()->user(), $makId);
 
-        return redirect()->route('perencanaan.pengajuan.index')
-            ->with('success', 'Jenis MAK pengadaan berhasil ditetapkan dan dikirim.');
+        return response()->json([
+            'message' => 'Jenis MAK pengadaan berhasil ditetapkan dan dikirim.',
+        ]);
     }
 
-    public function jenisMak(Request $request): Response
+    public function jenisMak(Request $request): JsonResponse
     {
         $q = $request->query('q', '');
         $maks = $this->perencanaanService->paginateMaks($q);
@@ -129,7 +130,7 @@ class PerencanaanController extends Controller
             ->whereNull('read_at')
             ->count();
 
-        return Inertia::render('Perencanaan/JenisMak/Index', [
+        return response()->json([
             'maks' => $maks,
             'ppkOptions' => $ppkOptions,
             'filters' => ['q' => $q],
@@ -138,28 +139,34 @@ class PerencanaanController extends Controller
         ]);
     }
 
-    public function storeMak(SimpanJenisMakRequest $request): RedirectResponse
+    public function storeMak(SimpanJenisMakRequest $request): JsonResponse
     {
-        $this->perencanaanService->storeMak($request->validated());
+        $mak = $this->perencanaanService->storeMak($request->validated());
 
-        return back()->with('success', 'Jenis MAK baru berhasil ditambahkan.');
+        return response()->json([
+            'message' => 'Jenis MAK baru berhasil ditambahkan.',
+            'mak' => $mak,
+        ], 201);
     }
 
-    public function updateMak(SimpanJenisMakRequest $request, Mak $mak): RedirectResponse
+    public function updateMak(SimpanJenisMakRequest $request, Mak $mak): JsonResponse
     {
-        $this->perencanaanService->updateMak($mak, $request->validated());
+        $mak = $this->perencanaanService->updateMak($mak, $request->validated());
 
-        return back()->with('success', 'Jenis MAK berhasil diperbarui.');
+        return response()->json([
+            'message' => 'Jenis MAK berhasil diperbarui.',
+            'mak' => $mak,
+        ]);
     }
 
-    public function destroyMak(Mak $mak): RedirectResponse
+    public function destroyMak(Mak $mak): Response
     {
         $this->perencanaanService->deleteMak($mak);
 
-        return back()->with('success', 'Jenis MAK berhasil dihapus.');
+        return response()->noContent();
     }
 
-    public function rkakl(): Response
+    public function rkakl(): JsonResponse
     {
         $rkaklData = $this->perencanaanService->getRkaklData();
         $recentNotifications = Notification::where('user_id', auth()->id())
@@ -170,50 +177,56 @@ class PerencanaanController extends Controller
             ->whereNull('read_at')
             ->count();
 
-        return Inertia::render('Perencanaan/Rkakl/Index', [
+        return response()->json([
             'rkakl' => $rkaklData,
             'recentNotifications' => $recentNotifications,
             'unreadNotificationsCount' => $unreadCount,
         ]);
     }
 
-    public function storeRkakl(Request $request): RedirectResponse
+    public function storeRkakl(Request $request): JsonResponse
     {
         $filename = $request->input('filename', 'RKAKL_TA_2026_Satker_Politeknik_v4.pdf');
         $this->perencanaanService->replaceRkakl(auth()->user(), $filename);
 
-        return back()->with('success', 'Dokumen RKAKL berhasil diperbarui dengan versi terbaru.');
+        return response()->json([
+            'message' => 'Dokumen RKAKL berhasil diperbarui dengan versi terbaru.',
+        ]);
     }
 
-    public function notifikasi(Request $request): Response
+    public function notifikasi(Request $request): JsonResponse
     {
         $tab = $request->query('tab', 'semua');
         $notifData = $this->perencanaanService->getNotifications(auth()->user(), $tab);
 
-        return Inertia::render('Perencanaan/Notifikasi/Index', [
+        return response()->json([
             'notifications' => $notifData['notifications'],
             'unreadCount' => $notifData['unread_count'],
             'activeTab' => $notifData['active_tab'],
         ]);
     }
 
-    public function markAllRead(): RedirectResponse
+    public function markAllRead(): JsonResponse
     {
         $this->perencanaanService->markAllNotificationsRead(auth()->user());
 
-        return back()->with('success', 'Semua notifikasi telah ditandai dibaca.');
+        return response()->json([
+            'message' => 'Semua notifikasi telah ditandai dibaca.',
+        ]);
     }
 
-    public function markOneRead(Notification $notification): RedirectResponse
+    public function markOneRead(Notification $notification): JsonResponse
     {
         if ($notification->user_id === auth()->id() && is_null($notification->read_at)) {
             $notification->update(['read_at' => now()]);
         }
 
-        return back();
+        return response()->json([
+            'message' => 'Notifikasi ditandai dibaca.',
+        ]);
     }
 
-    public function profil(): Response
+    public function profil(): JsonResponse
     {
         $user = auth()->user()->load(['Role', 'Unit']);
         $recentNotifications = Notification::where('user_id', auth()->id())
@@ -224,7 +237,7 @@ class PerencanaanController extends Controller
             ->whereNull('read_at')
             ->count();
 
-        return Inertia::render('Perencanaan/Profil/Index', [
+        return response()->json([
             'user' => $user,
             'recentNotifications' => $recentNotifications,
             'unreadNotificationsCount' => $unreadCount,

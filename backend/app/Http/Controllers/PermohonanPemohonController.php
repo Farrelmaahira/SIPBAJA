@@ -5,11 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Requests\SimpanPermohonanRequest;
 use App\Models\Permohonan;
 use App\Services\PermohonanService;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Inertia\Inertia;
-use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PermohonanPemohonController extends Controller
 {
@@ -20,15 +19,15 @@ class PermohonanPemohonController extends Controller
     /**
      * Menampilkan formulir pembuatan permohonan baru untuk Pemohon.
      */
-    public function create(Request $request): Response
+    public function create(Request $request): JsonResponse
     {
-        return Inertia::render('Pemohon/Permohonan/Create');
+        return response()->json(['message' => 'Formulir permohonan baru.']);
     }
 
     /**
      * Menampilkan daftar seluruh permohonan pengadaan untuk Pemohon.
      */
-    public function index(Request $request): Response
+    public function index(Request $request): JsonResponse
     {
         $user = $request->user();
         $status = $request->query('status');
@@ -36,7 +35,7 @@ class PermohonanPemohonController extends Controller
 
         $permohonanList = $this->permohonanService->daftarPermohonan($user, $status, $search);
 
-        return Inertia::render('Pemohon/Permohonan/Index', [
+        return response()->json([
             'permohonanList' => $permohonanList,
             'filters' => [
                 'status' => $status ?? 'semua',
@@ -48,7 +47,7 @@ class PermohonanPemohonController extends Controller
     /**
      * Mengunduh berkas surat permohonan.
      */
-    public function downloadDokumen(Request $request, Permohonan $permohonan)
+    public function downloadDokumen(Request $request, Permohonan $permohonan): StreamedResponse
     {
         $user = $request->user();
         $info = $this->permohonanService->ambilDokumen($user, $permohonan);
@@ -59,16 +58,17 @@ class PermohonanPemohonController extends Controller
     /**
      * Menyimpan permohonan baru melalui PermohonanService.
      */
-    public function store(SimpanPermohonanRequest $request): RedirectResponse
+    public function store(SimpanPermohonanRequest $request): JsonResponse
     {
         $user = $request->user();
         $validated = $request->validated();
         $file = $request->file('file_dokumen');
 
-        $this->permohonanService->simpanPermohonan($user, $validated, $file);
+        $permohonan = $this->permohonanService->simpanPermohonan($user, $validated, $file);
 
-        return redirect()
-            ->route('pemohon.dashboard')
-            ->with('success', 'Permohonan pengadaan berhasil dikirim dan masuk antrean verifikasi.');
+        return response()->json([
+            'message' => 'Permohonan pengadaan berhasil dikirim dan masuk antrean verifikasi.',
+            'permohonan' => $permohonan,
+        ], 201);
     }
 }

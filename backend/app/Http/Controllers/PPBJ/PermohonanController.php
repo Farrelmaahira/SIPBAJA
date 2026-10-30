@@ -6,10 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\PPBJ\StoreDraftPengadaanRequest;
 use App\Services\PengadaanService;
 use App\Services\PermohonanService;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\Http\Response;
 
 class PermohonanController extends Controller
 {
@@ -21,9 +20,9 @@ class PermohonanController extends Controller
     /**
      * Menampilkan daftar permohonan pengadaan untuk peran PPBJ.
      */
-    public function index(): Response
+    public function index(): JsonResponse
     {
-        return Inertia::render('Ppbj/Permohonan/Index', [
+        return response()->json([
             'permohonanList' => $this->permohonanService->getPermohonanPpbjList(),
         ]);
     }
@@ -31,9 +30,9 @@ class PermohonanController extends Controller
     /**
      * Menampilkan detail permohonan pengadaan untuk peran PPBJ.
      */
-    public function show(string $id): Response
+    public function show(string $id): JsonResponse
     {
-        return Inertia::render('Ppbj/Permohonan/Show', [
+        return response()->json([
             'permohonan' => $this->permohonanService->getPermohonanDetail((int) $id),
         ]);
     }
@@ -41,7 +40,7 @@ class PermohonanController extends Controller
     /**
      * Menyimpan paket pengadaan draft baru.
      */
-    public function storeDraft(StoreDraftPengadaanRequest $request, string $id): RedirectResponse
+    public function storeDraft(StoreDraftPengadaanRequest $request, string $id): JsonResponse
     {
         $this->pengadaanService->simpanDraftPengadaan(
             (int) $id,
@@ -49,26 +48,30 @@ class PermohonanController extends Controller
             $request->user()
         );
 
-        return back()->with('success', 'Paket pengadaan berhasil disimpan sebagai draft.');
+        return response()->json([
+            'message' => 'Paket pengadaan berhasil disimpan sebagai draft.',
+        ], 201);
     }
 
     /**
      * Menghapus paket pengadaan berstatus draft.
      */
-    public function destroyDraft(Request $request, string $id): RedirectResponse
+    public function destroyDraft(Request $request, string $id): Response
     {
         $this->pengadaanService->hapusDraftPengadaan((int) $id, $request->user());
 
-        return back()->with('success', 'Draft paket pengadaan berhasil dihapus.');
+        return response()->noContent();
     }
 
     /**
      * Submit seluruh paket pengadaan ke reviewer dan kunci permohonan.
      */
-    public function submitReviewer(Request $request, string $id): RedirectResponse
+    public function submitReviewer(Request $request, string $id): JsonResponse
     {
         $this->pengadaanService->submitKeReviewer((int) $id, $request->user());
 
-        return back()->with('success', 'Seluruh paket pengadaan berhasil dikirim ke reviewer dan permohonan telah dikunci.');
+        return response()->json([
+            'message' => 'Seluruh paket pengadaan berhasil dikirim ke reviewer dan permohonan telah dikunci.',
+        ]);
     }
 }

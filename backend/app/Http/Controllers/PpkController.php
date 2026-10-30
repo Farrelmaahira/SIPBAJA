@@ -8,10 +8,7 @@ use App\Models\Notification;
 use App\Models\Pengadaan;
 use App\Services\PpkService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class PpkController extends Controller
 {
@@ -36,7 +33,7 @@ class PpkController extends Controller
         ]);
     }
 
-    public function index(Request $request): Response
+    public function index(Request $request): JsonResponse
     {
         $filters = [
             'q' => $request->query('q', ''),
@@ -52,7 +49,7 @@ class PpkController extends Controller
             ->whereNull('read_at')
             ->count();
 
-        return Inertia::render('Ppk/Pengajuan/Index', [
+        return response()->json([
             'pengajuan' => $pengajuan,
             'filters' => $filters,
             'recentNotifications' => $recentNotifications,
@@ -60,7 +57,7 @@ class PpkController extends Controller
         ]);
     }
 
-    public function review(Pengadaan $pengadaan): Response
+    public function review(Pengadaan $pengadaan): JsonResponse
     {
         $detail = $this->ppkService->getDetailPengadaan($pengadaan);
         $recentNotifications = Notification::where('user_id', auth()->id())
@@ -71,30 +68,32 @@ class PpkController extends Controller
             ->whereNull('read_at')
             ->count();
 
-        return Inertia::render('Ppk/Pengajuan/Review', [
+        return response()->json([
             'detail' => $detail,
             'recentNotifications' => $recentNotifications,
             'unreadNotificationsCount' => $unreadCount,
         ]);
     }
 
-    public function approve(Pengadaan $pengadaan): RedirectResponse
+    public function approve(Pengadaan $pengadaan): JsonResponse
     {
         $this->ppkService->approvePengadaan($pengadaan, auth()->user());
 
-        return redirect()->route('ppk.pengajuan.index')
-            ->with('success', 'Dokumen pengadaan berhasil disetujui oleh PPK.');
+        return response()->json([
+            'message' => 'Dokumen pengadaan berhasil disetujui oleh PPK.',
+        ]);
     }
 
-    public function reject(ReviewPengadaanRequest $request, Pengadaan $pengadaan): RedirectResponse
+    public function reject(ReviewPengadaanRequest $request, Pengadaan $pengadaan): JsonResponse
     {
         $this->ppkService->rejectPengadaan($pengadaan, auth()->user(), $request->validated('alasan'));
 
-        return redirect()->route('ppk.pengajuan.index')
-            ->with('success', 'Dokumen pengadaan ditolak dan dikembalikan ke PPBJ.');
+        return response()->json([
+            'message' => 'Dokumen pengadaan ditolak dan dikembalikan ke PPBJ.',
+        ]);
     }
 
-    public function pembayaran(Pengadaan $pengadaan): Response
+    public function pembayaran(Pengadaan $pengadaan): JsonResponse
     {
         $detail = $this->ppkService->getDetailPengadaan($pengadaan);
         $recentNotifications = Notification::where('user_id', auth()->id())
@@ -105,33 +104,35 @@ class PpkController extends Controller
             ->whereNull('read_at')
             ->count();
 
-        return Inertia::render('Ppk/Pengajuan/Pembayaran', [
+        return response()->json([
             'detail' => $detail,
             'recentNotifications' => $recentNotifications,
             'unreadNotificationsCount' => $unreadCount,
         ]);
     }
 
-    public function approvePembayaran(Request $request, Pengadaan $pengadaan): RedirectResponse
+    public function approvePembayaran(Request $request, Pengadaan $pengadaan): JsonResponse
     {
         $filename = $request->input('filename', "Memo_Persetujuan_{$pengadaan->Permohonan?->nomor_surat}.pdf");
         $catatan = $request->input('catatan');
 
         $this->ppkService->approvePembayaran($pengadaan, auth()->user(), $filename, $catatan);
 
-        return redirect()->route('ppk.pengajuan.index')
-            ->with('success', 'Dokumen pembayaran beserta Memo Persetujuan berhasil disetujui.');
+        return response()->json([
+            'message' => 'Dokumen pembayaran beserta Memo Persetujuan berhasil disetujui.',
+        ]);
     }
 
-    public function rejectPembayaran(TolakPermohonanRequest $request, Pengadaan $pengadaan): RedirectResponse
+    public function rejectPembayaran(TolakPermohonanRequest $request, Pengadaan $pengadaan): JsonResponse
     {
         $this->ppkService->rejectPembayaran($pengadaan, auth()->user(), $request->validated('alasan'));
 
-        return redirect()->route('ppk.pengajuan.index')
-            ->with('success', 'Dokumen pembayaran telah ditolak beserta catatan revisi.');
+        return response()->json([
+            'message' => 'Dokumen pembayaran telah ditolak beserta catatan revisi.',
+        ]);
     }
 
-    public function show(Pengadaan $pengadaan): Response
+    public function show(Pengadaan $pengadaan): JsonResponse
     {
         $detail = $this->ppkService->getDetailPengadaan($pengadaan);
         $recentNotifications = Notification::where('user_id', auth()->id())
@@ -142,42 +143,46 @@ class PpkController extends Controller
             ->whereNull('read_at')
             ->count();
 
-        return Inertia::render('Ppk/Pengajuan/Show', [
+        return response()->json([
             'detail' => $detail,
             'recentNotifications' => $recentNotifications,
             'unreadNotificationsCount' => $unreadCount,
         ]);
     }
 
-    public function notifikasi(Request $request): Response
+    public function notifikasi(Request $request): JsonResponse
     {
         $tab = $request->query('tab', 'semua');
         $notifData = $this->ppkService->getNotifications(auth()->user(), $tab);
 
-        return Inertia::render('Ppk/Notifikasi/Index', [
+        return response()->json([
             'notifications' => $notifData['notifications'],
             'unreadCount' => $notifData['unread_count'],
             'activeTab' => $notifData['active_tab'],
         ]);
     }
 
-    public function markAllRead(): RedirectResponse
+    public function markAllRead(): JsonResponse
     {
         $this->ppkService->markAllNotificationsRead(auth()->user());
 
-        return back()->with('success', 'Semua notifikasi telah ditandai dibaca.');
+        return response()->json([
+            'message' => 'Semua notifikasi telah ditandai dibaca.',
+        ]);
     }
 
-    public function markOneRead(Notification $notification): RedirectResponse
+    public function markOneRead(Notification $notification): JsonResponse
     {
         if ($notification->user_id === auth()->id() && is_null($notification->read_at)) {
             $notification->update(['read_at' => now()]);
         }
 
-        return back();
+        return response()->json([
+            'message' => 'Notifikasi ditandai dibaca.',
+        ]);
     }
 
-    public function profil(): Response
+    public function profil(): JsonResponse
     {
         $user = auth()->user()->load(['Role', 'Unit']);
         $recentNotifications = Notification::where('user_id', auth()->id())
@@ -188,7 +193,7 @@ class PpkController extends Controller
             ->whereNull('read_at')
             ->count();
 
-        return Inertia::render('Ppk/Profil/Index', [
+        return response()->json([
             'user' => $user,
             'recentNotifications' => $recentNotifications,
             'unreadNotificationsCount' => $unreadCount,

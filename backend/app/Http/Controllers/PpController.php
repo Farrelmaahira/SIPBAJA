@@ -7,10 +7,7 @@ use App\Models\Notification;
 use App\Models\Pengadaan;
 use App\Services\PpService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class PpController extends Controller
 {
@@ -42,7 +39,7 @@ class PpController extends Controller
     /**
      * Tampilan Halaman List Pengajuan dengan pencarian & filter status.
      */
-    public function index(Request $request): Response
+    public function index(Request $request): JsonResponse
     {
         $filters = [
             'q' => $request->query('q', ''),
@@ -58,7 +55,7 @@ class PpController extends Controller
             ->whereNull('read_at')
             ->count();
 
-        return Inertia::render('Pp/Pengajuan/Index', [
+        return response()->json([
             'pengajuan' => $pengajuan,
             'filters' => $filters,
             'recentNotifications' => $recentNotifications,
@@ -69,7 +66,7 @@ class PpController extends Controller
     /**
      * Tampilan Halaman Review Dokumen Pengadaan.
      */
-    public function review(Pengadaan $pengadaan): Response
+    public function review(Pengadaan $pengadaan): JsonResponse
     {
         $detail = $this->ppService->getDetailPengadaan($pengadaan);
         $recentNotifications = Notification::where('user_id', auth()->id())
@@ -80,7 +77,7 @@ class PpController extends Controller
             ->whereNull('read_at')
             ->count();
 
-        return Inertia::render('Pp/Pengajuan/Review', [
+        return response()->json([
             'detail' => $detail,
             'recentNotifications' => $recentNotifications,
             'unreadNotificationsCount' => $unreadCount,
@@ -90,29 +87,31 @@ class PpController extends Controller
     /**
      * Aksi Persetujuan Dokumen Pengadaan oleh PP.
      */
-    public function approve(Pengadaan $pengadaan): RedirectResponse
+    public function approve(Pengadaan $pengadaan): JsonResponse
     {
         $this->ppService->approve($pengadaan, auth()->user());
 
-        return redirect()->route('pp.pengajuan.index')
-            ->with('success', 'Dokumen pengadaan berhasil disetujui dan diteruskan ke PPK.');
+        return response()->json([
+            'message' => 'Dokumen pengadaan berhasil disetujui dan diteruskan ke PPK.',
+        ]);
     }
 
     /**
      * Aksi Penolakan / Permintaan Revisi Dokumen Pengadaan oleh PP.
      */
-    public function reject(ReviewPengadaanRequest $request, Pengadaan $pengadaan): RedirectResponse
+    public function reject(ReviewPengadaanRequest $request, Pengadaan $pengadaan): JsonResponse
     {
         $this->ppService->reject($pengadaan, auth()->user(), $request->validated('alasan'));
 
-        return redirect()->route('pp.pengajuan.index')
-            ->with('success', 'Dokumen pengadaan berhasil ditolak dan dikembalikan ke PPBJ untuk direvisi.');
+        return response()->json([
+            'message' => 'Dokumen pengadaan berhasil ditolak dan dikembalikan ke PPBJ untuk direvisi.',
+        ]);
     }
 
     /**
      * Tampilan Halaman Rekap Pengajuan (Detail Siklus 5 Tahap).
      */
-    public function show(Pengadaan $pengadaan): Response
+    public function show(Pengadaan $pengadaan): JsonResponse
     {
         $detail = $this->ppService->getDetailPengadaan($pengadaan);
         $recentNotifications = Notification::where('user_id', auth()->id())
@@ -123,7 +122,7 @@ class PpController extends Controller
             ->whereNull('read_at')
             ->count();
 
-        return Inertia::render('Pp/Pengajuan/Show', [
+        return response()->json([
             'detail' => $detail,
             'recentNotifications' => $recentNotifications,
             'unreadNotificationsCount' => $unreadCount,
@@ -133,12 +132,12 @@ class PpController extends Controller
     /**
      * Tampilan Halaman Semua Notifikasi.
      */
-    public function notifikasi(Request $request): Response
+    public function notifikasi(Request $request): JsonResponse
     {
         $tab = $request->query('tab', 'semua');
         $notifData = $this->ppService->getNotifications(auth()->user(), $tab);
 
-        return Inertia::render('Pp/Notifikasi/Index', [
+        return response()->json([
             'notifications' => $notifData['notifications'],
             'unreadCount' => $notifData['unread_count'],
             'activeTab' => $notifData['active_tab'],
@@ -148,29 +147,33 @@ class PpController extends Controller
     /**
      * Aksi Tandai Semua Notifikasi Telah Dibaca.
      */
-    public function markAllRead(): RedirectResponse
+    public function markAllRead(): JsonResponse
     {
         $this->ppService->markAllNotificationsRead(auth()->user());
 
-        return back()->with('success', 'Semua notifikasi telah ditandai dibaca.');
+        return response()->json([
+            'message' => 'Semua notifikasi telah ditandai dibaca.',
+        ]);
     }
 
     /**
      * Aksi Tandai Satu Notifikasi Telah Dibaca.
      */
-    public function markOneRead(Notification $notification): RedirectResponse
+    public function markOneRead(Notification $notification): JsonResponse
     {
         if ($notification->user_id === auth()->id() && is_null($notification->read_at)) {
             $notification->update(['read_at' => now()]);
         }
 
-        return back();
+        return response()->json([
+            'message' => 'Notifikasi ditandai dibaca.',
+        ]);
     }
 
     /**
      * Tampilan Halaman Profil Pengguna PP.
      */
-    public function profil(): Response
+    public function profil(): JsonResponse
     {
         $user = auth()->user()->load(['Role', 'Unit']);
         $recentNotifications = Notification::where('user_id', auth()->id())
@@ -181,7 +184,7 @@ class PpController extends Controller
             ->whereNull('read_at')
             ->count();
 
-        return Inertia::render('Pp/Profil/Index', [
+        return response()->json([
             'user' => $user,
             'recentNotifications' => $recentNotifications,
             'unreadNotificationsCount' => $unreadCount,

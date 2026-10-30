@@ -7,9 +7,8 @@ use App\Http\Requests\SimpanRoleRequest;
 use App\Models\Role;
 use App\Services\RoleService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Http\RedirectResponse;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 
 class RoleController extends Controller
 {
@@ -17,42 +16,48 @@ class RoleController extends Controller
 
     public function __construct(private RoleService $roles) {}
 
-    public function index(): Response
+    public function index(): JsonResponse
     {
         $this->authorize('viewAny', Role::class);
 
-        return Inertia::render('Admin/Role/Index', [
+        return response()->json([
             'roles' => $this->roles->paginate(request('q')),
             'filters' => ['q' => request('q', '')],
         ]);
     }
 
-    public function store(SimpanRoleRequest $request): RedirectResponse
+    public function store(SimpanRoleRequest $request): JsonResponse
     {
         $this->authorize('create', Role::class);
 
-        $this->roles->create($request->validated());
+        $role = $this->roles->create($request->validated());
 
-        return redirect()->route('admin.role.index')->with('success', 'Peran berhasil ditambahkan.');
+        return response()->json([
+            'message' => 'Peran berhasil ditambahkan.',
+            'role' => $role,
+        ], 201);
     }
 
-    public function update(SimpanRoleRequest $request, Role $role): RedirectResponse
+    public function update(SimpanRoleRequest $request, Role $role): JsonResponse
     {
         $this->authorize('update', $role);
 
-        $this->roles->update($role, $request->validated());
+        $role = $this->roles->update($role, $request->validated());
 
-        return redirect()->route('admin.role.index')->with('success', 'Peran berhasil diubah.');
+        return response()->json([
+            'message' => 'Peran berhasil diubah.',
+            'role' => $role,
+        ]);
     }
 
-    public function destroy(Role $role): RedirectResponse
+    public function destroy(Role $role): Response|JsonResponse
     {
         $this->authorize('delete', $role);
 
         if (! $this->roles->delete($role)) {
-            return redirect()->route('admin.role.index')->with('error', 'Peran dipakai pengguna dan tidak bisa dihapus.');
+            return response()->json(['message' => 'Peran dipakai pengguna dan tidak bisa dihapus.'], 422);
         }
 
-        return redirect()->route('admin.role.index')->with('success', 'Peran berhasil dihapus.');
+        return response()->noContent();
     }
 }

@@ -131,4 +131,105 @@ class PermohonanService
             'nama_asli' => $dokumen->nama_asli,
         ];
     }
+
+    /**
+     * Mengambil daftar permohonan pengadaan untuk peran PPBJ.
+     *
+     * @return array<int, array{
+     *     id: int,
+     *     nomorSurat: string,
+     *     judul: string,
+     *     ringkasanTujuan: string,
+     *     unitNama: string,
+     *     estimasiAnggaran: float,
+     *     revisiKe: int,
+     *     status: string,
+     *     tanggalPengajuan: string,
+     *     makList: array<int, string>,
+     *     jumlahPaket: int
+     * }>
+     */
+    public function getPermohonanPpbjList(): array
+    {
+        $permohonanItems = Permohonan::with(['Unit', 'PermohonanMak.Mak', 'Pengadaan'])
+            ->orderByDesc('created_at')
+            ->get();
+
+        return $permohonanItems->map(function (Permohonan $item): array {
+            $makList = $item->PermohonanMak
+                ->map(fn ($pm) => $pm->Mak?->nama ?? $pm->Mak?->kode)
+                ->filter()
+                ->values()
+                ->all();
+
+            $tanggalPengajuan = $item->created_at
+                ? Carbon::parse($item->created_at)->format('Y-m-d')
+                : '';
+
+            return [
+                'id' => (int) $item->id,
+                'nomorSurat' => (string) ($item->nomor_surat ?? '-'),
+                'judul' => (string) ($item->judul ?? '-'),
+                'ringkasanTujuan' => (string) ($item->ringkasan_tujuan ?? ''),
+                'unitNama' => (string) ($item->Unit?->nama ?? '-'),
+                'estimasiAnggaran' => (float) ($item->estimasi_anggaran ?? 0),
+                'revisiKe' => (int) ($item->revisi_ke ?? 0),
+                'status' => (string) ($item->status ?? 'menunggu_persetujuan'),
+                'tanggalPengajuan' => $tanggalPengajuan,
+                'makList' => $makList,
+                'jumlahPaket' => (int) $item->Pengadaan->count(),
+            ];
+        })->all();
+    }
+
+    /**
+     * Mengambil detail permohonan pengadaan berdasarkan ID untuk peran PPBJ.
+     */
+    public function getPermohonanDetail(int $id): array
+    {
+        $permohonan = Permohonan::with([
+            'Unit',
+            'Creator',
+            'PermohonanMak.Mak',
+            'Pengadaan.PermohonanMak.Mak',
+        ])->findOrFail($id);
+
+        $makList = $permohonan->PermohonanMak
+            ->filter(fn ($pm) => $pm->Mak !== null)
+            ->map(fn ($pm) => [
+                'kode' => (string) ($pm->Mak->kode ?? $pm->Mak->nama),
+                'nama' => (string) $pm->Mak->nama,
+            ])
+            ->values()
+            ->all();
+
+        $paketList = $permohonan->Pengadaan
+            ->map(fn ($p) => [
+                'id' => (int) $p->id,
+                'makKode' => (string) ($p->PermohonanMak?->Mak?->nama ?? $p->PermohonanMak?->Mak?->kode ?? '-'),
+                'nominal' => (float) ($p->nominal ?? 0),
+                'status' => (string) ($p->status ?? '-'),
+            ])
+            ->values()
+            ->all();
+
+        $tanggalPengajuan = $permohonan->created_at
+            ? Carbon::parse($permohonan->created_at)->format('Y-m-d')
+            : '';
+
+        return [
+            'id' => (int) $permohonan->id,
+            'nomorSurat' => (string) ($permohonan->nomor_surat ?? '-'),
+            'judul' => (string) ($permohonan->judul ?? '-'),
+            'ringkasanTujuan' => (string) ($permohonan->ringkasan_tujuan ?? ''),
+            'unitNama' => (string) ($permohonan->Unit?->nama ?? '-'),
+            'estimasiAnggaran' => (float) ($permohonan->estimasi_anggaran ?? 0),
+            'revisiKe' => (int) ($permohonan->revisi_ke ?? 0),
+            'status' => (string) ($permohonan->status ?? 'menunggu_persetujuan'),
+            'tanggalPengajuan' => $tanggalPengajuan,
+            'pembuatNama' => (string) ($permohonan->Creator?->nama ?? $permohonan->Creator?->name ?? '-'),
+            'makList' => $makList,
+            'paketList' => $paketList,
+        ];
+    }
 }

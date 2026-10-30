@@ -3,13 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Permohonan;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class PengajuanBidang2Controller extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request): JsonResponse
     {
         $status = $request->query('status', 'semua');
         $search = $request->query('search', '');
@@ -29,7 +28,7 @@ class PengajuanBidang2Controller extends Controller
 
         $permohonanList = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
 
-        return Inertia::render('Bidang2/Pengajuan/Index', [
+        return response()->json([
             'permohonanList' => $permohonanList,
             'filters' => [
                 'status' => $status,

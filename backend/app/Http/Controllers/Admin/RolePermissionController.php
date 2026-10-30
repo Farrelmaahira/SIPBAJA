@@ -8,9 +8,7 @@ use App\Models\Permission;
 use App\Models\Role;
 use App\Services\RolePermissionService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Http\RedirectResponse;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\Http\JsonResponse;
 
 class RolePermissionController extends Controller
 {
@@ -18,7 +16,7 @@ class RolePermissionController extends Controller
 
     public function __construct(private RolePermissionService $assignments) {}
 
-    public function index(): Response
+    public function index(): JsonResponse
     {
         $this->authorize('viewAny', Role::class);
 
@@ -31,7 +29,7 @@ class RolePermissionController extends Controller
             return $items->values();
         });
 
-        return Inertia::render('Admin/RolePermission/Index', [
+        return response()->json([
             'roles' => Role::orderBy('nama')->get(['id', 'nama']),
             'groupedPermissions' => $grouped,
             'assignments' => Role::with('permissions:id')->get()->mapWithKeys(function ($role) {
@@ -41,11 +39,12 @@ class RolePermissionController extends Controller
         ]);
     }
 
-    public function update(SimpanRolePermissionRequest $request, Role $role): RedirectResponse
+    public function update(SimpanRolePermissionRequest $request, Role $role): JsonResponse
     {
         $this->assignments->sync($role, $request->validated()['permission_ids'] ?? []);
 
-        return redirect()->route('admin.role-permission.index', ['role_id' => $role->id])
-            ->with('success', 'Hak akses berhasil disimpan.');
+        return response()->json([
+            'message' => 'Hak akses berhasil disimpan.',
+        ]);
     }
 }
