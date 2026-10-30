@@ -41,17 +41,24 @@ export interface PpbjTabbedTableProps {
   onSearchChange?: (query: string) => void;
   items?: PpbjTabbedTableItem[];
   counts?: PpbjTabbedTableCounts;
+  isLoading?: boolean;
 }
 
 export const PpbjTabbedTable: FC<PpbjTabbedTableProps> = ({
   activeTab = 'permohonan',
   items = [],
+  isLoading = false,
 }) => {
   return (
     <div className="bg-white rounded-[20px] border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.05)] overflow-hidden">
       {/* Table / List Container */}
       <div className="overflow-x-auto">
-        {items.length === 0 ? (
+        {isLoading ? (
+          <div className="py-16 flex flex-col items-center justify-center gap-2 text-center text-[#8A9A95]">
+            <div className="w-8 h-8 border-3 border-[#0E7C5A] border-t-transparent rounded-full animate-spin" />
+            <p className="text-xs text-[#5F6F6A]">Memuat data pengadaan PPBJ...</p>
+          </div>
+        ) : items.length === 0 ? (
           <div className="py-16 text-center text-[#8A9A95]">
             <p className="text-base font-medium text-[#5F6F6A]">Tidak ada data yang ditemukan</p>
             <p className="text-xs mt-1">Coba sesuaikan kata kunci pencarian Anda.</p>

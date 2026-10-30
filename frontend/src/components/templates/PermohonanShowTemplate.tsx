@@ -42,6 +42,7 @@ export interface PermohonanShowData {
 export interface PermohonanShowTemplateProps {
   user?: ProfilePillUser | null;
   permohonan?: PermohonanShowData;
+  isLoading?: boolean;
   flash?: {
     success?: string;
     error?: string;
@@ -53,6 +54,7 @@ export interface PermohonanShowTemplateProps {
 export const PermohonanShowTemplate: FC<PermohonanShowTemplateProps> = ({
   user = {},
   permohonan = {},
+  isLoading = false,
   flash = {},
   onSubmitToReviewer,
 }) => {
@@ -128,8 +130,17 @@ export const PermohonanShowTemplate: FC<PermohonanShowTemplateProps> = ({
           </div>
         )}
 
-        {/* Back Link & Header */}
-        <div className="flex flex-col gap-3">
+        {isLoading ? (
+          <div className="bg-white rounded-2xl border border-[#E4EBE8] p-16 text-center shadow-xs">
+            <div className="flex flex-col items-center justify-center gap-3">
+              <div className="w-8 h-8 border-3 border-[#0E7C5A] border-t-transparent rounded-full animate-spin" />
+              <p className="text-sm font-medium text-[#5F6F6A]">Memuat detail permohonan pengadaan...</p>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Back Link & Header */}
+            <div className="flex flex-col gap-3">
           <div>
             <Link
               to="/ppbj/permohonan"
@@ -342,6 +353,8 @@ export const PermohonanShowTemplate: FC<PermohonanShowTemplateProps> = ({
             sudahDikunci={isLocked}
           />
         </section>
+        </>
+        )}
       </div>
     </DashboardShellTemplate>
   );

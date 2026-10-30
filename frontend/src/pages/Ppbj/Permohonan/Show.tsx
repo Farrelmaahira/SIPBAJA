@@ -8,7 +8,7 @@ export const PpbjPermohonanShow: FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const [permohonan, setPermohonan] = useState<any>(null);
-  const [, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!id) return;
@@ -38,7 +38,7 @@ export const PpbjPermohonanShow: FC = () => {
     };
   }, [id]);
 
-  return <PermohonanShowTemplate user={user} permohonan={permohonan} />;
+  return <PermohonanShowTemplate user={user} permohonan={permohonan} isLoading={isLoading} />;
 };
 
 export default PpbjPermohonanShow;

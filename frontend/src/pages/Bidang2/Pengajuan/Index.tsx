@@ -35,7 +35,7 @@ export const PengajuanIndex: FC = () => {
   const [selectedStatus, setSelectedStatus] = useState('semua');
   const [detailPermohonan, setDetailPermohonan] = useState<any>(null);
   const [items, setItems] = useState<any[]>([]);
-  const [, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchPengajuan = async (searchQuery = search, status = selectedStatus) => {
     setIsLoading(true);
@@ -153,7 +153,16 @@ export const PengajuanIndex: FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E4EBE8]">
-                {items.length === 0 ? (
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={7} className="py-12 text-center text-sm text-[#5F6F6A]">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <div className="w-6 h-6 border-2 border-[#0E7C5A] border-t-transparent rounded-full animate-spin" />
+                        <p className="text-xs text-[#5F6F6A]">Memuat data pengajuan...</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : items.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="py-12 text-center text-sm text-[#5F6F6A]">
                       Tidak ada pengajuan yang sesuai dengan filter pencarian.

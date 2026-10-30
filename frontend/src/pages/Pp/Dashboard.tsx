@@ -37,7 +37,7 @@ export const PpDashboard: FC = () => {
   const [recentNotifications, setRecentNotifications] = useState<any[]>([]);
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState<number>(0);
   const [viewMode, setViewMode] = useState<'bulan' | 'tahun'>('tahun');
-  const [, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -336,7 +336,16 @@ export const PpDashboard: FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F0F4F2] text-xs">
-              {pengadaanPerluReview.length === 0 ? (
+              {isLoading ? (
+                <tr>
+                  <td colSpan={6} className="py-12 text-center text-[#8A9A95]">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <div className="w-6 h-6 border-2 border-[#0E7C5A] border-t-transparent rounded-full animate-spin" />
+                      <p className="text-xs text-[#5F6F6A]">Memuat daftar pengadaan...</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : pengadaanPerluReview.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-8 text-center text-[#8A9A95]">
                     Tidak ada pengadaan yang menunggu review saat ini.

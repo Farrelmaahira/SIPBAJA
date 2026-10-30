@@ -27,7 +27,7 @@ export const PpPengajuanIndex: FC = () => {
   const [totalCount, setTotalCount] = useState<number>(0);
   const [recentNotifications, setRecentNotifications] = useState<any[]>([]);
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState<number>(0);
-  const [, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchPengajuan = async (q = searchQuery, statuses = selectedStatuses) => {
     setIsLoading(true);
@@ -226,7 +226,16 @@ export const PpPengajuanIndex: FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F0F4F2] text-xs">
-              {items.length === 0 ? (
+              {isLoading ? (
+                <tr>
+                  <td colSpan={6} className="py-12 text-center text-[#8A9A95]">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <div className="w-6 h-6 border-2 border-[#0E7C5A] border-t-transparent rounded-full animate-spin" />
+                      <p className="text-xs text-[#5F6F6A]">Memuat daftar pengajuan PP...</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : items.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-8 text-center text-[#8A9A95]">
                     Tidak ada pengajuan ditemukan.

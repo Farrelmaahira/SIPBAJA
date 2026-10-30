@@ -7,11 +7,13 @@ import type { ProfilePillUser } from '../molecules/ProfilePill';
 export interface PermohonanIndexTemplateProps {
   user?: ProfilePillUser | null;
   items?: PermohonanTableItem[];
+  isLoading?: boolean;
 }
 
 export const PermohonanIndexTemplate: FC<PermohonanIndexTemplateProps> = ({
   user = {},
   items = [],
+  isLoading = false,
 }) => {
   const navItems = [
     {
@@ -53,7 +55,7 @@ export const PermohonanIndexTemplate: FC<PermohonanIndexTemplateProps> = ({
 
       {/* Table Section */}
       <section aria-label="Tabel Permohonan Pengadaan">
-        <PermohonanTable items={items} />
+        <PermohonanTable items={items} isLoading={isLoading} />
       </section>
     </DashboardShellTemplate>
   );

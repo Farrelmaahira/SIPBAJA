@@ -61,7 +61,7 @@ export const PpPengajuanReview: FC<PpReviewProps> = ({
   useEffect(() => {
     if (!initialDetail && id) {
       api
-        .get<{ detail?: any; data?: any }>(`${basePath}/pengajuan/${id}/review`)
+        .get<{ detail?: any; data?: any }>(`/v1${basePath}/pengajuan/${id}/review`)
         .then((res) => {
           setDetail(res.data.detail || res.data.data || res.data);
         })
@@ -94,7 +94,7 @@ export const PpPengajuanReview: FC<PpReviewProps> = ({
   const handleApprove = async () => {
     setSubmitting(true);
     try {
-      await api.post(`${basePath}/pengajuan/${pengadaan.id || id}/approve`);
+      await api.post(`/v1${basePath}/pengajuan/${pengadaan.id || id}/approve`);
       setConfirmApproveOpen(false);
       navigate(`${basePath}/pengajuan`);
     } catch (err) {
@@ -108,7 +108,7 @@ export const PpPengajuanReview: FC<PpReviewProps> = ({
     setSubmitting(true);
     setRejectError('');
     try {
-      await api.post(`${basePath}/pengajuan/${pengadaan.id || id}/reject`, { alasan });
+      await api.post(`/v1${basePath}/pengajuan/${pengadaan.id || id}/reject`, { alasan });
       setRejectOpen(false);
       navigate(`${basePath}/pengajuan`);
     } catch (err: unknown) {

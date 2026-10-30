@@ -25,9 +25,21 @@ export interface PermohonanTableItem {
 
 export interface PermohonanTableProps {
   items?: PermohonanTableItem[];
+  isLoading?: boolean;
 }
 
-export const PermohonanTable: FC<PermohonanTableProps> = ({ items = [] }) => {
+export const PermohonanTable: FC<PermohonanTableProps> = ({ items = [], isLoading = false }) => {
+  if (isLoading) {
+    return (
+      <div className="bg-white rounded-[20px] border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.05)] p-12 text-center">
+        <div className="flex flex-col items-center justify-center gap-2">
+          <div className="w-8 h-8 border-3 border-[#0E7C5A] border-t-transparent rounded-full animate-spin" />
+          <p className="text-xs text-[#5F6F6A]">Memuat daftar permohonan pengadaan...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!items || items.length === 0) {
     return (
       <div className="bg-white rounded-[20px] border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.05)] p-12 text-center">

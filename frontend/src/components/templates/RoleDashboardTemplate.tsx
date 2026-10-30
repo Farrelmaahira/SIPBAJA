@@ -14,6 +14,7 @@ export interface RoleDashboardTemplateProps {
   roleTitle?: string;
   roleDescription?: string;
   user?: RoleDashboardUser | null;
+  isLoading?: boolean;
   children?: ReactNode;
 }
 
@@ -21,6 +22,7 @@ export const RoleDashboardTemplate: FC<RoleDashboardTemplateProps> = ({
   roleTitle = 'Dashboard',
   roleDescription = 'Sistem Informasi Pengadaan Barang dan Jasa (SIPBAJA)',
   user = {},
+  isLoading = false,
   children,
 }) => {
   const displayName = user?.nama || user?.name || roleTitle;
@@ -79,24 +81,31 @@ export const RoleDashboardTemplate: FC<RoleDashboardTemplateProps> = ({
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
-          <div className="p-4 rounded-xl bg-[#F7FAF9] border border-[#E4EBE8]">
-            <p className="text-xs font-medium text-[#5F6F6A]">Peran Sistem</p>
-            <p className="text-sm font-semibold text-[#14201C] mt-1">{userRole}</p>
+        {isLoading ? (
+          <div className="py-12 flex flex-col items-center justify-center gap-2">
+            <div className="w-8 h-8 border-3 border-[#0E7C5A] border-t-transparent rounded-full animate-spin" />
+            <p className="text-xs text-[#5F6F6A]">Memuat informasi dashboard...</p>
           </div>
-          <div className="p-4 rounded-xl bg-[#F7FAF9] border border-[#E4EBE8]">
-            <p className="text-xs font-medium text-[#5F6F6A]">Unit / Bagian</p>
-            <p className="text-sm font-semibold text-[#14201C] mt-1">
-              {unitName ?? 'Semua Unit / Kampus'}
-            </p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
+            <div className="p-4 rounded-xl bg-[#F7FAF9] border border-[#E4EBE8]">
+              <p className="text-xs font-medium text-[#5F6F6A]">Peran Sistem</p>
+              <p className="text-sm font-semibold text-[#14201C] mt-1">{userRole}</p>
+            </div>
+            <div className="p-4 rounded-xl bg-[#F7FAF9] border border-[#E4EBE8]">
+              <p className="text-xs font-medium text-[#5F6F6A]">Unit / Bagian</p>
+              <p className="text-sm font-semibold text-[#14201C] mt-1">
+                {unitName ?? 'Semua Unit / Kampus'}
+              </p>
+            </div>
+            <div className="p-4 rounded-xl bg-[#F7FAF9] border border-[#E4EBE8]">
+              <p className="text-xs font-medium text-[#5F6F6A]">Email Terdaftar</p>
+              <p className="text-sm font-semibold text-[#14201C] mt-1">
+                {user?.email || '-'}
+              </p>
+            </div>
           </div>
-          <div className="p-4 rounded-xl bg-[#F7FAF9] border border-[#E4EBE8]">
-            <p className="text-xs font-medium text-[#5F6F6A]">Email Terdaftar</p>
-            <p className="text-sm font-semibold text-[#14201C] mt-1">
-              {user?.email || '-'}
-            </p>
-          </div>
-        </div>
+        )}
 
         {children && <div className="mt-6 pt-6 border-t border-[#E4EBE8]">{children}</div>}
       </section>

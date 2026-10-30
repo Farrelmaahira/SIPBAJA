@@ -43,7 +43,7 @@ export const PpProfilIndex: FC<PpProfilProps> = ({
   useEffect(() => {
     let isMounted = true;
     api
-      .get<{ user?: any }>(`${basePath}/profil`)
+      .get<{ user?: any }>(`/v1${basePath}/profil`)
       .then((res) => {
         if (!isMounted) return;
         if (res.data.user) setUser(res.data.user);

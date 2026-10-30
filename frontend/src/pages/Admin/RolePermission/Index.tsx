@@ -23,7 +23,7 @@ export const RolePermissionIndex: FC = () => {
   const [checked, setChecked] = useState<number[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -132,7 +132,14 @@ export const RolePermissionIndex: FC = () => {
         />
       </div>
 
-      {roleId ? (
+      {isLoading ? (
+        <div className="bg-white border border-[#E4EBE8] rounded-[20px] py-12 px-6 text-center">
+          <div className="flex flex-col items-center justify-center gap-2">
+            <div className="w-6 h-6 border-2 border-[#0E7C5A] border-t-transparent rounded-full animate-spin" />
+            <p className="text-xs text-[#5F6F6A]">Memuat hak akses peran...</p>
+          </div>
+        </div>
+      ) : roleId ? (
         <PermissionMatrix
           groupedPermissions={groupedPermissions}
           checked={checked}

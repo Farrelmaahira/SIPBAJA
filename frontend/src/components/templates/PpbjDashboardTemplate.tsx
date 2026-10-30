@@ -30,6 +30,7 @@ export interface PpbjDashboardTemplateProps {
   onSearchChange?: (query: string) => void;
   items?: PpbjTabbedTableItem[];
   counts?: PpbjTabbedTableCounts;
+  isLoading?: boolean;
 }
 
 export const PpbjDashboardTemplate: FC<PpbjDashboardTemplateProps> = ({
@@ -41,6 +42,7 @@ export const PpbjDashboardTemplate: FC<PpbjDashboardTemplateProps> = ({
   onSearchChange,
   items = [],
   counts = { permohonan: 0, pengadaan: 0, termin: 0 },
+  isLoading = false,
 }) => {
   const displayName = user?.nama || user?.name || 'Petugas PPBJ';
 
@@ -162,6 +164,7 @@ export const PpbjDashboardTemplate: FC<PpbjDashboardTemplateProps> = ({
           onSearchChange={onSearchChange}
           items={items}
           counts={counts}
+          isLoading={isLoading}
         />
       </section>
     </DashboardShellTemplate>

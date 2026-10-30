@@ -5,7 +5,7 @@ import RoleDashboardTemplate from '../../components/templates/RoleDashboardTempl
 
 export const PerlengkapanDashboard: FC = () => {
   const { user } = useAuth();
-  const [, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -30,6 +30,7 @@ export const PerlengkapanDashboard: FC = () => {
       roleTitle="Dashboard Perlengkapan"
       roleDescription="Pencatatan penerimaan barang, dokumentasi fisik, dan berita acara penerimaan."
       user={user}
+      isLoading={isLoading}
     />
   );
 };

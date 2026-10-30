@@ -110,7 +110,7 @@ export const PpkDashboard: FC = () => {
   const [pengajuanTerbaru, setPengajuanTerbaru] = useState<PengajuanTerbaruPpkItem[]>([]);
   const [recentNotifications, setRecentNotifications] = useState<any[]>([]);
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState<number>(0);
-  const [, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -463,7 +463,23 @@ export const PpkDashboard: FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F0F4F2] text-xs">
-              {rows.map((row) => (
+              {isLoading ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-[#8A9A95]">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <div className="w-6 h-6 border-2 border-[#0E7C5A] border-t-transparent rounded-full animate-spin" />
+                      <p className="text-xs text-[#5F6F6A]">Memuat pengajuan terbaru PPK...</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : rows.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-8 text-center text-[#8A9A95]">
+                    Belum ada pengajuan masuk.
+                  </td>
+                </tr>
+              ) : (
+                rows.map((row) => (
                 <tr key={row.id} className="hover:bg-[#FAFDFB] transition">
                   <td className="py-4 px-6 font-bold text-[#0E7C5A]">{row.nomor_surat}</td>
                   <td className="py-4 px-4 font-bold text-[#14201C]">{row.judul}</td>
@@ -478,7 +494,7 @@ export const PpkDashboard: FC = () => {
                     />
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>

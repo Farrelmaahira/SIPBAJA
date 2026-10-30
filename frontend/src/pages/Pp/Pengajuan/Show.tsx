@@ -95,7 +95,7 @@ export const PpPengajuanShow: FC<PpShowProps> = ({
   useEffect(() => {
     if (!initialDetail && id) {
       api
-        .get<{ detail?: any; data?: any }>(`${basePath}/pengajuan/${id}`)
+        .get<{ detail?: any; data?: any }>(`/v1${basePath}/pengajuan/${id}`)
         .then((res) => {
           setDetail(res.data.detail || res.data.data || res.data);
         })

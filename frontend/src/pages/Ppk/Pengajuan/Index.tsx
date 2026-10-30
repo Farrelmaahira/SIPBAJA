@@ -76,7 +76,7 @@ export const PpkPengajuanIndex: FC = () => {
   const [items, setItems] = useState<any[]>([]);
   const [recentNotifications, setRecentNotifications] = useState<any[]>([]);
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState<number>(0);
-  const [, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchPengajuan = async (q = search, statuses = selectedStatuses) => {
     setIsLoading(true);
@@ -292,7 +292,23 @@ export const PpkPengajuanIndex: FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F0F4F2] text-xs">
-              {allRows.map((row) => (
+              {isLoading ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-[#8A9A95]">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <div className="w-6 h-6 border-2 border-[#0E7C5A] border-t-transparent rounded-full animate-spin" />
+                      <p className="text-xs text-[#5F6F6A]">Memuat data pengajuan PPK...</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : allRows.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-8 text-center text-[#8A9A95]">
+                    Tidak ada pengajuan ditemukan.
+                  </td>
+                </tr>
+              ) : (
+                allRows.map((row) => (
                 <tr key={row.id} className="hover:bg-[#FAFDFB] transition">
                   <td className="py-4 px-6 font-bold text-[#0E7C5A]">{row.nomor_surat}</td>
                   <td className="py-4 px-4 font-bold text-[#14201C]">{row.judul}</td>
@@ -304,7 +320,7 @@ export const PpkPengajuanIndex: FC = () => {
                     <RowActionMenu viewHref={getDetailHref(row)} />
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>

@@ -16,7 +16,7 @@ export const PpbjDashboard: FC = () => {
   const [permohonanMasuk, setPermohonanMasuk] = useState<PpbjPermohonanItem[]>([]);
   const [pengadaanBerjalan, setPengadaanBerjalan] = useState<PpbjPengadaanItem[]>([]);
   const [terminKontrak, setTerminKontrak] = useState<PpbjTerminItem[]>([]);
-  const [, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -77,6 +77,7 @@ export const PpbjDashboard: FC = () => {
       onSearchChange={setSearchQuery}
       items={filteredItems}
       counts={counts}
+      isLoading={isLoading}
     />
   );
 };

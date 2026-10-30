@@ -6,7 +6,7 @@ import PermohonanIndexTemplate from '../../../components/templates/PermohonanInd
 export const PpbjPermohonanIndex: FC = () => {
   const { user } = useAuth();
   const [items, setItems] = useState<any[]>([]);
-  const [, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -40,7 +40,7 @@ export const PpbjPermohonanIndex: FC = () => {
     };
   }, []);
 
-  return <PermohonanIndexTemplate user={user} items={items} />;
+  return <PermohonanIndexTemplate user={user} items={items} isLoading={isLoading} />;
 };
 
 export default PpbjPermohonanIndex;

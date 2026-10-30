@@ -54,7 +54,7 @@ export const PermohonanIndex: FC = () => {
     total?: number;
   }>({});
   const [currentPage, setCurrentPage] = useState(1);
-  const [, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchPermohonan = async (
     searchQuery = search,
@@ -191,7 +191,16 @@ export const PermohonanIndex: FC = () => {
               </tr>
             </thead>
             <tbody>
-              {permohonanList.length === 0 ? (
+              {isLoading ? (
+                <tr>
+                  <td colSpan={COLS.length} className="py-12 px-4 text-center">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <div className="w-6 h-6 border-2 border-[#0E7C5A] border-t-transparent rounded-full animate-spin" />
+                      <p className="text-xs text-[#5F6F6A]">Memuat daftar permohonan...</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : permohonanList.length === 0 ? (
                 <tr>
                   <td colSpan={COLS.length} className="py-12 px-4 text-center">
                     <p className="text-sm font-semibold text-[#14201C]">

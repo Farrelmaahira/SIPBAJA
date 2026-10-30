@@ -5,7 +5,7 @@ import RoleDashboardTemplate from '../../components/templates/RoleDashboardTempl
 
 export const KeuanganDashboard: FC = () => {
   const { user } = useAuth();
-  const [, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -30,6 +30,7 @@ export const KeuanganDashboard: FC = () => {
       roleTitle="Dashboard Keuangan"
       roleDescription="Pemrosesan pembayaran termin yang telah disetujui lengkap oleh PPK dan Bidang 2."
       user={user}
+      isLoading={isLoading}
     />
   );
 };

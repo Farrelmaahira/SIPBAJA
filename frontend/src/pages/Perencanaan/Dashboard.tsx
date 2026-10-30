@@ -68,7 +68,7 @@ export const PerencanaanDashboard: FC = () => {
   const [recentNotifications, setRecentNotifications] = useState<any[]>([]);
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState<number>(0);
   const [viewMode, setViewMode] = useState<'bulan' | 'tahun'>('tahun');
-  const [, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -387,7 +387,23 @@ export const PerencanaanDashboard: FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F0F4F2] text-xs">
-              {permohonanTerbaru.map((item, idx) => (
+              {isLoading ? (
+                <tr>
+                  <td colSpan={6} className="py-12 text-center text-[#8A9A95]">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <div className="w-6 h-6 border-2 border-[#0E7C5A] border-t-transparent rounded-full animate-spin" />
+                      <p className="text-xs text-[#5F6F6A]">Memuat permohonan masuk terbaru...</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : permohonanTerbaru.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-[#8A9A95]">
+                    Belum ada permohonan masuk.
+                  </td>
+                </tr>
+              ) : (
+                permohonanTerbaru.map((item, idx) => (
                 <tr key={item.id} className="hover:bg-[#F9FBFA] transition-colors">
                   <td className="py-4 px-4 font-bold text-[#0E7C5A]">
                     <Link
@@ -416,7 +432,7 @@ export const PerencanaanDashboard: FC = () => {
                     />
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>
