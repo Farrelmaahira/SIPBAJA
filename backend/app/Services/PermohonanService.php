@@ -27,18 +27,18 @@ class PermohonanService
             $bulan = str_pad((string) $sekarang->month, 2, '0', STR_PAD_LEFT);
 
             // Tentukan nomor surat: gunakan input jika ada, atau buat nomor acuan jika tidak disediakan
-            $nomorSurat = !empty($data['nomor_surat'])
+            $nomorSurat = ! empty($data['nomor_surat'])
                 ? trim($data['nomor_surat'])
                 : sprintf('PRM/%s/%s/%s', $tahun, $bulan, strtoupper(Str::random(5)));
 
             // Tentukan ringkasan tujuan: gunakan input jika ada, atau buat dari judul pengadaan
-            $ringkasanTujuan = !empty($data['ringkasan_tujuan'])
+            $ringkasanTujuan = ! empty($data['ringkasan_tujuan'])
                 ? trim($data['ringkasan_tujuan'])
-                : 'Permohonan pengadaan untuk ' . trim($data['judul']);
+                : 'Permohonan pengadaan untuk '.trim($data['judul']);
 
             // Pastikan unit_id tersedia
             $unitId = $user->unit_id;
-            if (!$unitId) {
+            if (! $unitId) {
                 $defaultUnit = Unit::firstOrCreate(['nama' => 'Jurusan Teknik Informatika']);
                 $user->update(['unit_id' => $defaultUnit->id]);
                 $unitId = $defaultUnit->id;
@@ -60,7 +60,7 @@ class PermohonanService
             // 2. Simpan fisik berkas ke direktori lokal privat dengan nama ter-hash
             $namaAsli = $file->getClientOriginalName();
             $extension = $file->getClientOriginalExtension() ?: 'pdf';
-            $namaHash = Str::uuid()->toString() . '.' . $extension;
+            $namaHash = Str::uuid()->toString().'.'.$extension;
             $pathSimpan = 'dokumen/permohonan';
 
             Storage::disk('local')->putFileAs($pathSimpan, $file, $namaHash);
@@ -122,7 +122,7 @@ class PermohonanService
         abort_unless($isReviewer || ($user->unit_id && $user->unit_id === $permohonan->unit_id), 403, 'Akses tidak diizinkan untuk unit lain.');
 
         $dokumen = $permohonan->Dokumen()->where('tipe_dokumen', 'surat_permohonan')->latest('versi')->firstOrFail();
-        $path = 'dokumen/permohonan/' . $dokumen->nama_hash;
+        $path = 'dokumen/permohonan/'.$dokumen->nama_hash;
 
         abort_unless(Storage::disk('local')->exists($path), 404, 'Berkas dokumen tidak ditemukan di server.');
 

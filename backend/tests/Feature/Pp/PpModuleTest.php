@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Pp;
 
-use App\Models\ApprovalPengadaan;
 use App\Models\JenisPengadaan;
 use App\Models\LevelPengadaan;
 use App\Models\Mak;
