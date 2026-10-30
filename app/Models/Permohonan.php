@@ -21,6 +21,7 @@ class Permohonan extends Model
         'estimasi_anggaran',
         'revisi_ke',
         'status',
+        'created_at',
     ];
 
     protected function casts(): array
@@ -55,5 +56,10 @@ class Permohonan extends Model
     public function Approvals(): HasMany
     {
         return $this->hasMany(ApprovalPermohonan::class, 'permohonan_id');
+    }
+
+    public function Dokumen(): HasMany
+    {
+        return $this->hasMany(Dokumen::class, 'ref_id')->where('ref_type', 'permohonan');
     }
 }

@@ -1,16 +1,29 @@
 import { Plus } from 'lucide-react';
 
 export default function HeroBanner({
-    userName = 'Administrator',
+    // Configurable props
+    eyebrow = 'Dashboard Administrator',
+    title = 'Selamat datang',
+    description = 'Kelola akun pengguna, unit kerja, dan konfigurasi master data pengadaan.',
+    ctaLabel = 'Tambah Pengguna',
+    ctaIcon: CtaIcon = Plus,
+    ctaVariant = 'primary',
+    onCta,
+    // Legacy alias kept for AdminDashboardTemplate backward compatibility
+    userName,
     onAddUser,
     className = '',
 }) {
+    // Legacy prop aliases
+    const resolvedTitle = userName ? `Selamat datang, ${userName}` : title;
+    const resolvedOnCta = onCta ?? onAddUser;
+
     return (
         <section
             className={`relative overflow-hidden bg-[#0E7C5A] text-white rounded-[24px] p-6 md:p-8 min-h-[148px] flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-[0_4px_20px_rgba(14,124,90,0.15)] ${className}`}
             aria-labelledby="hero-title"
         >
-            {/* Decorative concentric circles on the right */}
+            {/* Decorative concentric circles — structural identity, not trend-stacking */}
             <div
                 className="absolute -right-16 -top-16 w-[260px] h-[260px] rounded-full border border-white/10 pointer-events-none hidden sm:block"
                 aria-hidden="true"
@@ -20,33 +33,43 @@ export default function HeroBanner({
                 aria-hidden="true"
             />
 
-            {/* Left Content */}
             <div className="relative z-10 max-w-xl">
                 <p className="text-[11px] font-bold text-white/75 tracking-wider uppercase mb-1">
-                    Dashboard Administrator
+                    {eyebrow}
                 </p>
                 <h1
                     id="hero-title"
                     className="text-xl md:text-2xl font-bold tracking-tight text-white"
                 >
-                    Selamat datang, {userName}
+                    {resolvedTitle}
                 </h1>
                 <p className="text-xs md:text-sm text-white/80 mt-1 leading-relaxed">
-                    Kelola akun pengguna, unit kerja, dan konfigurasi master data pengadaan.
+                    {description}
                 </p>
             </div>
 
-            {/* Right Action CTA */}
-            <div className="relative z-10 shrink-0">
-                <button
-                    type="button"
-                    onClick={onAddUser}
-                    className="inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-2.5 rounded-xl bg-white text-[#0E7C5A] hover:bg-[#EEF5F2] active:bg-[#D6EFE4] text-sm font-semibold transition-colors duration-150 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E7C5A] cursor-pointer"
-                >
-                    <Plus className="w-5 h-5 text-[#0E7C5A]" />
-                    <span>Tambah Pengguna</span>
-                </button>
-            </div>
+            {resolvedOnCta && (
+                <div className="relative z-10 shrink-0">
+                    <button
+                        type="button"
+                        onClick={resolvedOnCta}
+                        className={`inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors duration-150 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E7C5A] cursor-pointer ${
+                            ctaVariant === 'translucent'
+                                ? 'bg-white/15 text-white hover:bg-white/25 border border-white/20'
+                                : 'bg-white text-[#0E7C5A] hover:bg-[#EEF5F2] active:bg-[#D6EFE4]'
+                        }`}
+                    >
+                        {CtaIcon && (
+                            <CtaIcon
+                                className={`w-5 h-5 ${
+                                    ctaVariant === 'translucent' ? 'text-white' : 'text-[#0E7C5A]'
+                                }`}
+                            />
+                        )}
+                        <span>{ctaLabel}</span>
+                    </button>
+                </div>
+            )}
         </section>
     );
 }

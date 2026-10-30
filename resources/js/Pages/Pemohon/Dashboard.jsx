@@ -1,16 +1,42 @@
-import { Head, usePage } from '@inertiajs/react';
-import RoleDashboardTemplate from '../../components/templates/RoleDashboardTemplate';
+import { Head } from '@inertiajs/react';
+import usePemohonDashboard from '../../hooks/usePemohonDashboard';
+import PemohonDashboardTemplate from '../../components/templates/PemohonDashboardTemplate';
 
-export default function Dashboard() {
-    const { auth } = usePage().props;
+export default function Dashboard({
+    auth,
+    ringkasan,
+    permohonanAktif,
+    statistikBulanan,
+    tahunAktif,
+}) {
+    const {
+        ringkasan: ringkasanData,
+        permohonanAktif: listPermohonan,
+        chartData,
+        tahunAktif: activeYear,
+        gantiTahun,
+    } = usePemohonDashboard({
+        ringkasan,
+        permohonanAktif,
+        statistikBulanan,
+        tahunAktif,
+    });
+
+    const handleBuatPermohonan = () => {
+        router.visit('/pemohon/permohonan/create');
+    };
 
     return (
         <>
             <Head title="Dashboard Pemohon - SIPBAJA" />
-            <RoleDashboardTemplate
-                roleTitle="Dashboard Pemohon"
-                roleDescription="Pengajuan permohonan pengadaan barang dan jasa serta pemantauan status permohonan unit Anda."
+            <PemohonDashboardTemplate
                 user={auth?.user}
+                ringkasan={ringkasanData}
+                permohonanAktif={listPermohonan}
+                chartData={chartData}
+                tahunAktif={activeYear}
+                gantiTahun={gantiTahun}
+                onBuatPermohonan={handleBuatPermohonan}
             />
         </>
     );
