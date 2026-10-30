@@ -1,4 +1,4 @@
-import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
+import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import api from '../services/api';
 import { namaBulan } from '../utils/formatPermohonan';
 
@@ -84,6 +84,21 @@ export function useBidang2Dashboard({
     () => initialTahunAktif ?? new Date().getFullYear()
   );
   const [isLoadingYear, setIsLoadingYear] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (initialStatistikBulanan) {
+      setStatistikBulanan(initialStatistikBulanan);
+    }
+    if (initialTahunAktif) {
+      setTahunAktif(initialTahunAktif);
+    }
+    if (initialTotalDisetujui !== undefined && initialTotalDisetujui !== null) {
+      setTotalDisetujui(initialTotalDisetujui);
+    }
+    if (initialTotalDitolak !== undefined && initialTotalDitolak !== null) {
+      setTotalDitolak(initialTotalDitolak);
+    }
+  }, [initialStatistikBulanan, initialTahunAktif, initialTotalDisetujui, initialTotalDitolak]);
 
   /**
    * Fetch updated annual metrics and monthly statistics for Bidang 2 from the API.

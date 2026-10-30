@@ -128,7 +128,7 @@ export const PermohonanRow: FC<PermohonanRowProps> = ({
 
               {hasDokumen && (
                 <a
-                  href={`/pemohon/permohonan/${resolvedPermohonan.id}/dokumen`}
+                  href={`/api/v1/pemohon/permohonan/${resolvedPermohonan.id}/dokumen`}
                   target="_blank"
                   rel="noreferrer"
                   onClick={() => setMenuOpen(false)}

@@ -144,7 +144,7 @@ export const DetailPermohonanModal: FC<DetailPermohonanModalProps> = ({
                   </span>
                 </div>
                 <a
-                  href={`/pemohon/permohonan/${permohonan.id}/dokumen`}
+                  href={`/api/v1/pemohon/permohonan/${permohonan.id}/dokumen`}
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0E7C5A] text-white text-xs font-semibold hover:bg-[#0B6348] transition-colors shrink-0"

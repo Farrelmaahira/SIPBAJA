@@ -8,6 +8,7 @@ import {
   Lock,
   Info,
   CheckCircle2,
+  AlertCircle,
 } from 'lucide-react';
 import DashboardShellTemplate from './DashboardShellTemplate';
 import StatusPill from '../atoms/StatusPill';
@@ -48,7 +49,9 @@ export interface PermohonanShowTemplateProps {
     error?: string;
   };
   errors?: Record<string, string>;
-  onSubmitToReviewer?: () => void;
+  onSaveDraft?: (data: any) => Promise<void> | void;
+  onDeleteDraft?: (paketId: number | string) => Promise<void> | void;
+  onSubmitToReviewer?: () => Promise<void> | void;
 }
 
 export const PermohonanShowTemplate: FC<PermohonanShowTemplateProps> = ({
@@ -56,6 +59,8 @@ export const PermohonanShowTemplate: FC<PermohonanShowTemplateProps> = ({
   permohonan = {},
   isLoading = false,
   flash = {},
+  onSaveDraft,
+  onDeleteDraft,
   onSubmitToReviewer,
 }) => {
   const navItems = [
@@ -127,6 +132,12 @@ export const PermohonanShowTemplate: FC<PermohonanShowTemplateProps> = ({
           <div className="p-4 rounded-2xl bg-[#EBF7F2] border border-[#D0EAE0] flex items-center gap-3 text-sm font-semibold text-[#0E7C5A]">
             <CheckCircle2 className="w-5 h-5 shrink-0" />
             <span>{flash.success}</span>
+          </div>
+        )}
+        {flash.error && (
+          <div className="p-4 rounded-2xl bg-[#FEF3F2] border border-[#FECDCA] flex items-center gap-3 text-sm font-semibold text-[#B42318]">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <span>{flash.error}</span>
           </div>
         )}
 
@@ -308,6 +319,7 @@ export const PermohonanShowTemplate: FC<PermohonanShowTemplateProps> = ({
               sisaAnggaran={permohonan.sisaAnggaran}
               availableMak={permohonan.availableMak || []}
               referenceData={permohonan.referenceData || {}}
+              onSubmit={onSaveDraft}
             />
           )}
         </section>
@@ -351,6 +363,7 @@ export const PermohonanShowTemplate: FC<PermohonanShowTemplateProps> = ({
           <PermohonanShowPaketList
             paketList={permohonan.paketList || []}
             sudahDikunci={isLocked}
+            onDelete={onDeleteDraft}
           />
         </section>
         </>

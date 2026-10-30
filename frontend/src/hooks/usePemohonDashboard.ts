@@ -1,4 +1,4 @@
-import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
+import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import api from '../services/api';
 import { namaBulan } from '../utils/formatPermohonan';
 
@@ -69,6 +69,15 @@ export function usePemohonDashboard({
     () => initialTahunAktif ?? new Date().getFullYear()
   );
   const [isLoadingYear, setIsLoadingYear] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (initialStatistikBulanan) {
+      setStatistikBulanan(initialStatistikBulanan);
+    }
+    if (initialTahunAktif) {
+      setTahunAktif(initialTahunAktif);
+    }
+  }, [initialStatistikBulanan, initialTahunAktif]);
 
   /**
    * Switch the active calendar year and asynchronously fetch monthly statistics from the API.
