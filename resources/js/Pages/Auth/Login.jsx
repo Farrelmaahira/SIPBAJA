@@ -3,6 +3,7 @@ import { Head, useForm } from '@inertiajs/react';
 import LoginTemplate from '../../components/templates/LoginTemplate';
 
 export default function Login() {
+    const [showPassword, setShowPassword] = useState(false);
     const { data, setData, post, processing, errors } = useForm({
         login: '',
         password: '',
