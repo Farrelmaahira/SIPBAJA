@@ -7,24 +7,24 @@ export type PpbjTabKey = 'permohonan' | 'pengadaan' | 'termin';
 
 export interface PpbjTabbedTableItem {
   id: number | string;
-  nomorSurat?: string;
-  judul?: string;
-  unitNama?: string;
+  nomorSurat?: string | null;
+  judul?: string | null;
+  unitNama?: string | null;
   makList?: string[];
-  estimasiAnggaran?: number | string;
-  status?: string;
-  makNama?: string;
-  levelNama?: string;
-  metodeNama?: string;
-  nominal?: number | string;
-  ppkNama?: string;
-  kontrakNomor?: string;
-  kontrakTipe?: string;
-  terminKe?: number | string;
-  nominalRencana?: number | string;
-  tanggalJatuhTempo?: string;
-  reminderTanggal?: string;
-  pembayaranStatus?: string;
+  estimasiAnggaran?: number | string | null;
+  status?: string | null;
+  makNama?: string | null;
+  levelNama?: string | null;
+  metodeNama?: string | null;
+  nominal?: number | string | null;
+  ppkNama?: string | null;
+  kontrakNomor?: string | null;
+  kontrakTipe?: string | null;
+  terminKe?: number | string | null;
+  nominalRencana?: number | string | null;
+  tanggalJatuhTempo?: string | null;
+  reminderTanggal?: string | null;
+  pembayaranStatus?: string | null;
   [key: string]: unknown;
 }
 

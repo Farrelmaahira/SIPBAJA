@@ -5,22 +5,22 @@ import { formatRupiah, formatTanggal, labelStatusPermohonan } from '../../utils/
 
 export interface PermohonanRowData {
   id?: number | string;
-  nomor_surat?: string;
-  judul?: string;
-  created_at?: string;
-  estimasi_anggaran?: number | string;
-  status?: string;
+  nomor_surat?: string | null;
+  judul?: string | null;
+  created_at?: string | null;
+  estimasi_anggaran?: number | string | null;
+  status?: string | null;
   dokumen?: Array<{ id?: number | string; [key: string]: unknown }>;
   [key: string]: unknown;
 }
 
 export interface PermohonanRowProps {
   permohonan?: PermohonanRowData;
-  nomorSurat?: string;
-  judul?: string;
-  tanggal?: string;
-  nilaiPengajuan?: number | string;
-  status?: string;
+  nomorSurat?: string | null;
+  judul?: string | null;
+  tanggal?: string | null;
+  nilaiPengajuan?: number | string | null;
+  status?: string | null;
   onDetail?: (permohonan: PermohonanRowData) => void;
 }
 
@@ -90,7 +90,7 @@ export const PermohonanRow: FC<PermohonanRowProps> = ({
           {displayNomorSurat}
         </button>
       </td>
-      <td className="py-3.5 px-4 text-sm text-[#14201C] max-w-xs truncate" title={displayJudul}>
+      <td className="py-3.5 px-4 text-sm text-[#14201C] max-w-xs truncate" title={displayJudul || undefined}>
         {displayJudul}
       </td>
       <td className="py-3.5 px-4 text-sm text-[#5F6F6A] whitespace-nowrap">

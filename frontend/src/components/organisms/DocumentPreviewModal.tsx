@@ -15,6 +15,10 @@ export interface DocumentPreviewModalProps {
   isOpen?: boolean;
   onClose: () => void;
   document?: DocumentPreviewData | null;
+  category?: string;
+  filename?: string;
+  size?: string;
+  label?: string;
 }
 
 export const DocumentPreviewModal: FC<DocumentPreviewModalProps> = ({
@@ -22,13 +26,17 @@ export const DocumentPreviewModal: FC<DocumentPreviewModalProps> = ({
   isOpen,
   onClose,
   document,
+  category,
+  filename: propFilename,
+  size: propSize,
+  label: propLabel,
 }) => {
-  const visible = Boolean(open || isOpen) && Boolean(document);
+  const visible = Boolean(open || isOpen) && Boolean(document || propFilename || category);
   if (!visible) return null;
 
-  const label = document?.label || document?.category || 'Pratinjau Dokumen';
-  const filename = document?.filename || 'Dokumen_Pengadaan_SIPBAJA.pdf';
-  const size = document?.size || document?.meta || 'PDF • 1.2 MB';
+  const label = propLabel || category || document?.label || document?.category || 'Pratinjau Dokumen';
+  const filename = propFilename || document?.filename || 'Dokumen_Pengadaan_SIPBAJA.pdf';
+  const size = propSize || document?.size || document?.meta || 'PDF • 1.2 MB';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-[2px] p-4">

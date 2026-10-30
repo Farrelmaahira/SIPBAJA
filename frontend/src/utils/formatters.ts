@@ -48,3 +48,6 @@ export function formatTanggalIndo(
     return String(dateString);
   }
 }
+
+export const formatTanggal = formatTanggalIndo;
+

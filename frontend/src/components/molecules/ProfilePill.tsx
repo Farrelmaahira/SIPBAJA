@@ -7,7 +7,8 @@ export interface ProfilePillUser {
   nama?: string;
   role?: string | { nama?: string } | any;
   email?: string;
-  [key: string]: unknown;
+  unit?: { nama?: string };
+  unit_kerja?: { nama?: string };
 }
 
 export interface ProfilePillProps {

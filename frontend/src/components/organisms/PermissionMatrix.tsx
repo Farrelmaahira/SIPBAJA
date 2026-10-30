@@ -7,8 +7,10 @@ export interface MatrixPermission {
   [key: string]: unknown;
 }
 
+export type GroupedPermissions = Record<string, MatrixPermission[]>;
+
 export interface PermissionMatrixProps {
-  groupedPermissions?: Record<string, MatrixPermission[]>;
+  groupedPermissions?: GroupedPermissions;
   checked?: number[];
   onToggle?: (id: number) => void;
 }

@@ -1,13 +1,76 @@
-import { useState, type FC, type ReactNode, type FormEvent } from 'react';
+import type { FC, ReactNode } from 'react';
 import { Routes, Route, Navigate, Outlet, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { getRoleDashboardPath } from '../utils/role';
 import { ProtectedRoute } from './ProtectedRoute';
 import { RoleRoute } from './RoleRoute';
 
+// Auth Pages
+import Login from '../pages/Auth/Login';
+
+// Admin Pages
+import AdminDashboard from '../pages/Admin/Dashboard';
+import PenggunaIndex from '../pages/Admin/Pengguna/Index';
+import UnitKerjaIndex from '../pages/Admin/UnitKerja/Index';
+import MakIndex from '../pages/Admin/Mak/Index';
+import RoleIndex from '../pages/Admin/Role/Index';
+import RolePermissionIndex from '../pages/Admin/RolePermission/Index';
+
+// Pemohon Pages
+import PemohonDashboard from '../pages/Pemohon/Dashboard';
+import PemohonPermohonanIndex from '../pages/Pemohon/Permohonan/Index';
+import PemohonPermohonanCreate from '../pages/Pemohon/Permohonan/Create';
+
+// Perencanaan Pages
+import PerencanaanDashboard from '../pages/Perencanaan/Dashboard';
+import PerencanaanPengajuanIndex from '../pages/Perencanaan/Pengajuan/Index';
+import PerencanaanPengajuanShow from '../pages/Perencanaan/Pengajuan/Show';
+import PerencanaanJenisMakIndex from '../pages/Perencanaan/JenisMak/Index';
+import PerencanaanRkaklIndex from '../pages/Perencanaan/Rkakl/Index';
+import PerencanaanNotifikasiIndex from '../pages/Perencanaan/Notifikasi/Index';
+import PerencanaanProfilIndex from '../pages/Perencanaan/Profil/Index';
+
+// Bidang 2 Pages
+import Bidang2Dashboard from '../pages/Bidang2/Dashboard';
+import Bidang2PengajuanIndex from '../pages/Bidang2/Pengajuan/Index';
+import Bidang2RkaklIndex from '../pages/Bidang2/Rkakl/Index';
+
+// PPBJ Pages
+import PpbjDashboard from '../pages/Ppbj/Dashboard';
+import PpbjPermohonanIndex from '../pages/Ppbj/Permohonan/Index';
+import PpbjPermohonanShow from '../pages/Ppbj/Permohonan/Show';
+
+// PP Pages
+import PpDashboard from '../pages/Pp/Dashboard';
+import PpPengajuanIndex from '../pages/Pp/Pengajuan/Index';
+import PpPengajuanShow from '../pages/Pp/Pengajuan/Show';
+import PpPengajuanReview from '../pages/Pp/Pengajuan/Review';
+import PpNotifikasiIndex from '../pages/Pp/Notifikasi/Index';
+import PpProfilIndex from '../pages/Pp/Profil/Index';
+
+// PPK Pages
+import PpkDashboard from '../pages/Ppk/Dashboard';
+import PpkPengajuanIndex from '../pages/Ppk/Pengajuan/Index';
+import PpkPengajuanShow from '../pages/Ppk/Pengajuan/Show';
+import PpkPengajuanReview from '../pages/Ppk/Pengajuan/Review';
+import PpkPengajuanPembayaran from '../pages/Ppk/Pengajuan/Pembayaran';
+import PpkNotifikasiIndex from '../pages/Ppk/Notifikasi/Index';
+import PpkProfilIndex from '../pages/Ppk/Profil/Index';
+
+// Perlengkapan & Keuangan Pages
+import PerlengkapanDashboard from '../pages/Perlengkapan/Dashboard';
+import KeuanganDashboard from '../pages/Keuangan/Dashboard';
+
+// Error Pages
+import Error403 from '../pages/Errors/403';
+import Error404 from '../pages/Errors/404';
+import Error419 from '../pages/Errors/419';
+import Error429 from '../pages/Errors/429';
+import Error500 from '../pages/Errors/500';
+import Error503 from '../pages/Errors/503';
+
 export { ProtectedRoute } from './ProtectedRoute';
 export { RoleRoute } from './RoleRoute';
-
 
 export interface GuestRouteProps {
   children?: ReactNode;
@@ -93,192 +156,104 @@ export const PlaceholderPage: FC<PlaceholderPageProps> = ({
   );
 };
 
-export const LoginPage: FC = () => {
-  const { login, isLoading } = useAuth();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setIsSubmitting(true);
-    try {
-      await login(username, password);
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('Gagal masuk. Periksa kembali username dan password Anda.');
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 max-w-md w-full">
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-slate-900">SIPBAJA</h1>
-          <p className="text-slate-600 text-sm mt-1">Sistem Informasi Pengadaan Barang dan Jasa</p>
-        </div>
-
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Username / Email
-            </label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Masukkan username atau email"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Masukkan password"
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={isSubmitting || isLoading}
-            className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
-          >
-            {isSubmitting ? 'Memproses...' : 'Masuk'}
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-};
-
-export const NotFoundPage: FC = () => {
-  return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-slate-800">
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-8 max-w-md w-full text-center">
-        <h1 className="text-5xl font-black text-slate-900 mb-2">404</h1>
-        <h2 className="text-lg font-semibold text-slate-800 mb-2">Halaman Tidak Ditemukan</h2>
-        <p className="text-sm text-slate-500 mb-6">
-          Halaman yang Anda tuju tidak tersedia atau telah dipindahkan.
-        </p>
-        <Link
-          to="/"
-          className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          Kembali ke Beranda
-        </Link>
-      </div>
-    </div>
-  );
-};
+export const LoginPage = Login;
+export const NotFoundPage = Error404;
 
 export const AppRoutes: FC = () => {
   return (
     <Routes>
       {/* Guest / Public Route: / redirects to dashboard if authenticated */}
       <Route element={<GuestRoute />}>
-        <Route path="/" element={<LoginPage />} />
+        <Route path="/" element={<Login />} />
+        <Route path="/login" element={<Login />} />
       </Route>
 
       {/* Protected Routes: requires authenticated user */}
       <Route element={<ProtectedRoute />}>
         {/* Admin Routes */}
         <Route element={<RoleRoute allowedRoles={['Admin']} />}>
-          <Route path="/admin/dashboard" element={<PlaceholderPage title="Admin Dashboard" role="Admin" />} />
-          <Route path="/admin/pengguna" element={<PlaceholderPage title="Kelola Pengguna" role="Admin" />} />
-          <Route path="/admin/unit-kerja" element={<PlaceholderPage title="Kelola Unit Kerja" role="Admin" />} />
-          <Route path="/admin/mak" element={<PlaceholderPage title="Kelola MAK" role="Admin" />} />
-          <Route path="/admin/role" element={<PlaceholderPage title="Kelola Role" role="Admin" />} />
-          <Route path="/admin/role-permission" element={<PlaceholderPage title="Role & Permission" role="Admin" />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/pengguna" element={<PenggunaIndex />} />
+          <Route path="/admin/unit-kerja" element={<UnitKerjaIndex />} />
+          <Route path="/admin/mak" element={<MakIndex />} />
+          <Route path="/admin/role" element={<RoleIndex />} />
+          <Route path="/admin/role-permission" element={<RolePermissionIndex />} />
         </Route>
 
         {/* Pemohon Routes */}
         <Route element={<RoleRoute allowedRoles={['Pemohon']} />}>
-          <Route path="/pemohon/dashboard" element={<PlaceholderPage title="Pemohon Dashboard" role="Pemohon" />} />
-          <Route path="/pemohon/permohonan" element={<PlaceholderPage title="Daftar Permohonan" role="Pemohon" />} />
-          <Route path="/pemohon/permohonan/create" element={<PlaceholderPage title="Buat Permohonan" role="Pemohon" />} />
+          <Route path="/pemohon/dashboard" element={<PemohonDashboard />} />
+          <Route path="/pemohon/permohonan" element={<PemohonPermohonanIndex />} />
+          <Route path="/pemohon/permohonan/create" element={<PemohonPermohonanCreate />} />
         </Route>
 
         {/* Perencanaan Routes */}
         <Route element={<RoleRoute allowedRoles={['Perencanaan']} />}>
-          <Route path="/perencanaan/dashboard" element={<PlaceholderPage title="Perencanaan Dashboard" role="Perencanaan" />} />
-          <Route path="/perencanaan/pengajuan" element={<PlaceholderPage title="Daftar Pengajuan" role="Perencanaan" />} />
-          <Route path="/perencanaan/pengajuan/:id" element={<PlaceholderPage title="Detail Pengajuan" role="Perencanaan" />} />
-          <Route path="/perencanaan/jenis-mak" element={<PlaceholderPage title="Jenis MAK" role="Perencanaan" />} />
-          <Route path="/perencanaan/rkakl" element={<PlaceholderPage title="RKAKL" role="Perencanaan" />} />
-          <Route path="/perencanaan/notifikasi" element={<PlaceholderPage title="Notifikasi Perencanaan" role="Perencanaan" />} />
-          <Route path="/perencanaan/profil" element={<PlaceholderPage title="Profil Perencanaan" role="Perencanaan" />} />
+          <Route path="/perencanaan/dashboard" element={<PerencanaanDashboard />} />
+          <Route path="/perencanaan/pengajuan" element={<PerencanaanPengajuanIndex />} />
+          <Route path="/perencanaan/pengajuan/:id" element={<PerencanaanPengajuanShow />} />
+          <Route path="/perencanaan/jenis-mak" element={<PerencanaanJenisMakIndex />} />
+          <Route path="/perencanaan/rkakl" element={<PerencanaanRkaklIndex />} />
+          <Route path="/perencanaan/notifikasi" element={<PerencanaanNotifikasiIndex />} />
+          <Route path="/perencanaan/profil" element={<PerencanaanProfilIndex />} />
         </Route>
 
         {/* Bidang 2 Routes */}
         <Route element={<RoleRoute allowedRoles={['Bidang 2', 'bidang-2']} />}>
-          <Route path="/bidang-2/dashboard" element={<PlaceholderPage title="Bidang 2 Dashboard" role="Bidang 2" />} />
-          <Route path="/bidang-2/pengajuan" element={<PlaceholderPage title="Pengajuan Bidang 2" role="Bidang 2" />} />
-          <Route path="/bidang-2/rkakl" element={<PlaceholderPage title="RKAKL Bidang 2" role="Bidang 2" />} />
+          <Route path="/bidang-2/dashboard" element={<Bidang2Dashboard />} />
+          <Route path="/bidang-2/pengajuan" element={<Bidang2PengajuanIndex />} />
+          <Route path="/bidang-2/rkakl" element={<Bidang2RkaklIndex />} />
         </Route>
 
         {/* PPBJ Routes */}
         <Route element={<RoleRoute allowedRoles={['PPBJ']} />}>
-          <Route path="/ppbj/dashboard" element={<PlaceholderPage title="PPBJ Dashboard" role="PPBJ" />} />
-          <Route path="/ppbj/permohonan" element={<PlaceholderPage title="Daftar Permohonan PPBJ" role="PPBJ" />} />
-          <Route path="/ppbj/permohonan/:id" element={<PlaceholderPage title="Detail Permohonan PPBJ" role="PPBJ" />} />
+          <Route path="/ppbj/dashboard" element={<PpbjDashboard />} />
+          <Route path="/ppbj/permohonan" element={<PpbjPermohonanIndex />} />
+          <Route path="/ppbj/permohonan/:id" element={<PpbjPermohonanShow />} />
         </Route>
 
         {/* PP Routes */}
         <Route element={<RoleRoute allowedRoles={['PP']} />}>
-          <Route path="/pp/dashboard" element={<PlaceholderPage title="PP Dashboard" role="PP" />} />
-          <Route path="/pp/pengajuan" element={<PlaceholderPage title="Daftar Pengajuan PP" role="PP" />} />
-          <Route path="/pp/pengajuan/:id" element={<PlaceholderPage title="Detail Pengajuan PP" role="PP" />} />
-          <Route path="/pp/pengajuan/:id/review" element={<PlaceholderPage title="Review Pengajuan PP" role="PP" />} />
-          <Route path="/pp/notifikasi" element={<PlaceholderPage title="Notifikasi PP" role="PP" />} />
-          <Route path="/pp/profil" element={<PlaceholderPage title="Profil PP" role="PP" />} />
+          <Route path="/pp/dashboard" element={<PpDashboard />} />
+          <Route path="/pp/pengajuan" element={<PpPengajuanIndex />} />
+          <Route path="/pp/pengajuan/:id" element={<PpPengajuanShow />} />
+          <Route path="/pp/pengajuan/:id/review" element={<PpPengajuanReview />} />
+          <Route path="/pp/notifikasi" element={<PpNotifikasiIndex />} />
+          <Route path="/pp/profil" element={<PpProfilIndex />} />
         </Route>
 
         {/* PPK Routes */}
         <Route element={<RoleRoute allowedRoles={['PPK']} />}>
-          <Route path="/ppk/dashboard" element={<PlaceholderPage title="PPK Dashboard" role="PPK" />} />
-          <Route path="/ppk/pengajuan" element={<PlaceholderPage title="Daftar Pengajuan PPK" role="PPK" />} />
-          <Route path="/ppk/pengajuan/:id" element={<PlaceholderPage title="Detail Pengajuan PPK" role="PPK" />} />
-          <Route path="/ppk/pengajuan/:id/review" element={<PlaceholderPage title="Review Pengajuan PPK" role="PPK" />} />
-          <Route path="/ppk/pengajuan/:id/pembayaran" element={<PlaceholderPage title="Pembayaran Pengajuan PPK" role="PPK" />} />
-          <Route path="/ppk/notifikasi" element={<PlaceholderPage title="Notifikasi PPK" role="PPK" />} />
-          <Route path="/ppk/profil" element={<PlaceholderPage title="Profil PPK" role="PPK" />} />
+          <Route path="/ppk/dashboard" element={<PpkDashboard />} />
+          <Route path="/ppk/pengajuan" element={<PpkPengajuanIndex />} />
+          <Route path="/ppk/pengajuan/:id" element={<PpkPengajuanShow />} />
+          <Route path="/ppk/pengajuan/:id/review" element={<PpkPengajuanReview />} />
+          <Route path="/ppk/pengajuan/:id/pembayaran" element={<PpkPengajuanPembayaran />} />
+          <Route path="/ppk/notifikasi" element={<PpkNotifikasiIndex />} />
+          <Route path="/ppk/profil" element={<PpkProfilIndex />} />
         </Route>
 
         {/* Perlengkapan Routes */}
         <Route element={<RoleRoute allowedRoles={['Perlengkapan']} />}>
-          <Route path="/perlengkapan/dashboard" element={<PlaceholderPage title="Perlengkapan Dashboard" role="Perlengkapan" />} />
+          <Route path="/perlengkapan/dashboard" element={<PerlengkapanDashboard />} />
         </Route>
 
         {/* Keuangan Routes */}
         <Route element={<RoleRoute allowedRoles={['Keuangan']} />}>
-          <Route path="/keuangan/dashboard" element={<PlaceholderPage title="Keuangan Dashboard" role="Keuangan" />} />
+          <Route path="/keuangan/dashboard" element={<KeuanganDashboard />} />
         </Route>
       </Route>
 
+      {/* Explicit Error Pages */}
+      <Route path="/errors/403" element={<Error403 />} />
+      <Route path="/errors/404" element={<Error404 />} />
+      <Route path="/errors/419" element={<Error419 />} />
+      <Route path="/errors/429" element={<Error429 />} />
+      <Route path="/errors/500" element={<Error500 />} />
+      <Route path="/errors/503" element={<Error503 />} />
+
       {/* 404 Catch-All */}
-      <Route path="*" element={<NotFoundPage />} />
+      <Route path="*" element={<Error404 />} />
     </Routes>
   );
 };

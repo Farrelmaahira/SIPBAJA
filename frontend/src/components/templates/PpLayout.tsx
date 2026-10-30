@@ -4,6 +4,8 @@ import PpTopbar, { type BreadcrumbItem, type PpTopbarUser } from '../organisms/P
 import { useAuth } from '../../hooks/useAuth';
 import type { NotificationItem } from '../organisms/NotificationDropdown';
 
+export type { PpNavItem } from '../organisms/PpSidebar';
+
 export interface PpLayoutProps {
   children?: ReactNode;
   activeRoute?: string;

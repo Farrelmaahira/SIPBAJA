@@ -62,11 +62,11 @@ function ErrorState() {
 
 export interface PermohonanOrganismItem extends PermohonanRowData {
   id?: number | string;
-  nomor_surat?: string;
-  judul?: string;
-  created_at?: string;
-  estimasi_anggaran?: number | string;
-  status?: string;
+  nomor_surat?: string | null;
+  judul?: string | null;
+  created_at?: string | null;
+  estimasi_anggaran?: number | string | null;
+  status?: string | null;
 }
 
 export interface PermohonanTableOrganismProps {

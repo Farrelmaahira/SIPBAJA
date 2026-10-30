@@ -15,6 +15,7 @@ export interface TolakPengadaanModalProps {
   pengadaan?: TolakPengadaanData | null;
   isSubmitting?: boolean;
   errorMessage?: string;
+  error?: string;
 }
 
 export const TolakPengadaanModal: FC<TolakPengadaanModalProps> = ({
@@ -24,8 +25,10 @@ export const TolakPengadaanModal: FC<TolakPengadaanModalProps> = ({
   pengadaan,
   isSubmitting = false,
   errorMessage = '',
+  error = '',
 }) => {
   const [alasan, setAlasan] = useState<string>('');
+  const displayError = errorMessage || error;
 
   if (!isOpen || !pengadaan) return null;
 
@@ -80,8 +83,8 @@ export const TolakPengadaanModal: FC<TolakPengadaanModalProps> = ({
               <span>Alasan dikirim ke PPBJ sebagai dasar revisi dokumen pengadaan.</span>
               <span>{alasan.length}/500</span>
             </div>
-            {errorMessage && (
-              <p className="text-xs text-[#E5484D] font-medium mt-1">{errorMessage}</p>
+            {displayError && (
+              <p className="text-xs text-[#E5484D] font-medium mt-1">{displayError}</p>
             )}
           </div>
 

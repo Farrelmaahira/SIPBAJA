@@ -5,16 +5,16 @@ import { formatRupiah, formatTanggal, labelStatusPermohonan } from '../../utils/
 
 export interface Bidang2PermohonanItem {
   id?: number | string;
-  nomor_surat?: string;
-  judul?: string;
-  status?: string;
-  ringkasan_tujuan?: string;
+  nomor_surat?: string | null;
+  judul?: string | null;
+  status?: string | null;
+  ringkasan_tujuan?: string | null;
   unit?: {
     id?: number;
     nama?: string;
-  };
-  created_at?: string;
-  estimasi_anggaran?: number | string;
+  } | null;
+  created_at?: string | null;
+  estimasi_anggaran?: number | string | null;
   [key: string]: unknown;
 }
 
@@ -47,7 +47,7 @@ export const Bidang2PermohonanRow: FC<Bidang2PermohonanRowProps> = ({ permohonan
         </button>
       </td>
       <td className="py-4 px-4 max-w-xs">
-        <p className="text-xs font-semibold text-[#14201C] truncate" title={permohonan.judul}>
+        <p className="text-xs font-semibold text-[#14201C] truncate" title={permohonan.judul || undefined}>
           {permohonan.judul}
         </p>
         <p className="text-[11px] text-[#5F6F6A] mt-0.5 truncate">

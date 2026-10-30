@@ -130,8 +130,8 @@ const STATUS_CONFIG: Record<string, StatusTheme> = {
 };
 
 export interface StatusPillProps {
-  status?: string;
-  label?: string;
+  status?: string | null;
+  label?: string | null;
 }
 
 export const StatusPill: FC<StatusPillProps> = ({ status = 'aktif', label }) => {

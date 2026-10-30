@@ -2,10 +2,11 @@ import { useState, useEffect, type FC } from 'react';
 import { X } from 'lucide-react';
 
 export interface FilterStatusOption {
-  key: string;
+  key?: string;
+  value?: string;
   label: string;
-  pillClass: string;
-  dotClass: string;
+  pillClass?: string;
+  dotClass?: string;
 }
 
 export const STATUS_OPTIONS: FilterStatusOption[] = [
@@ -45,7 +46,8 @@ export interface FilterPengajuanModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedStatuses?: string[];
-  onApply: (statuses: string[]) => void;
+  onApply?: (statuses: string[]) => void;
+  onApplyFilter?: (statuses: string[]) => void;
   options?: FilterStatusOption[];
 }
 
@@ -54,9 +56,11 @@ export const FilterPengajuanModal: FC<FilterPengajuanModalProps> = ({
   onClose,
   selectedStatuses = [],
   onApply,
+  onApplyFilter,
   options = STATUS_OPTIONS,
 }) => {
   const [tempStatuses, setTempStatuses] = useState<string[]>(selectedStatuses);
+  const handleApplyAction = onApply || onApplyFilter || (() => {});
 
   useEffect(() => {
     setTempStatuses(selectedStatuses);
@@ -74,12 +78,12 @@ export const FilterPengajuanModal: FC<FilterPengajuanModalProps> = ({
 
   const handleReset = () => {
     setTempStatuses([]);
-    onApply([]);
+    handleApplyAction([]);
     onClose();
   };
 
   const handleApply = () => {
-    onApply(tempStatuses);
+    handleApplyAction(tempStatuses);
     onClose();
   };
 
@@ -103,22 +107,23 @@ export const FilterPengajuanModal: FC<FilterPengajuanModalProps> = ({
           </p>
           <div className="space-y-3">
             {options.map((opt) => {
-              const isChecked = tempStatuses.includes(opt.key);
+              const optKey = opt.key || opt.value || '';
+              const isChecked = tempStatuses.includes(optKey);
               return (
                 <label
-                  key={opt.key}
+                  key={optKey}
                   className="flex items-center gap-3 cursor-pointer select-none group"
                 >
                   <input
                     type="checkbox"
                     checked={isChecked}
-                    onChange={() => toggleStatus(opt.key)}
+                    onChange={() => toggleStatus(optKey)}
                     className="w-4 h-4 rounded border-[#CFDBD5] text-[#0E7C5A] focus:ring-[#0E7C5A] cursor-pointer"
                   />
                   <span
-                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${opt.pillClass}`}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${opt.pillClass || 'bg-slate-100 text-slate-800'}`}
                   >
-                    <span className={`w-1.5 h-1.5 rounded-full ${opt.dotClass}`} />
+                    <span className={`w-1.5 h-1.5 rounded-full ${opt.dotClass || 'bg-slate-500'}`} />
                     {opt.label}
                   </span>
                 </label>

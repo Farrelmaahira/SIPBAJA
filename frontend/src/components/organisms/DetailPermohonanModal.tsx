@@ -5,17 +5,13 @@ import { formatRupiah, formatTanggal, labelStatusPermohonan } from '../../utils/
 
 export interface PermohonanDetailData {
   id?: number | string;
-  nomor_surat?: string;
-  judul?: string;
-  estimasi_anggaran?: number | string;
-  created_at?: string;
-  status?: string;
-  ringkasan_tujuan?: string;
-  dokumen?: Array<{
-    id?: number | string;
-    nama_asli?: string;
-    [key: string]: unknown;
-  }>;
+  nomor_surat?: string | null;
+  judul?: string | null;
+  estimasi_anggaran?: number | string | null;
+  created_at?: string | null;
+  status?: string | null;
+  ringkasan_tujuan?: string | null;
+  dokumen?: Array<any>;
   [key: string]: unknown;
 }
 
