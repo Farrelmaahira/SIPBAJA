@@ -1,11 +1,13 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Perencanaan;
+
+use App\Http\Controllers\Controller;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class DashboardPerlengkapanController extends Controller
+class DashboardPerencanaanController extends Controller
 {
     public function __invoke(Request $request): JsonResponse
     {

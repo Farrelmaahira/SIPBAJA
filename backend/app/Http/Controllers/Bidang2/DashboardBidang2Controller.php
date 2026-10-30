@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Bidang2;
+
+use App\Http\Controllers\Controller;
 
 use App\Services\DashboardBidang2Service;
 use Illuminate\Http\JsonResponse;

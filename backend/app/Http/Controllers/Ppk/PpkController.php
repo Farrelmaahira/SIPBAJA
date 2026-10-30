@@ -1,24 +1,24 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Ppk;
+
+use App\Http\Controllers\Controller;
 
 use App\Http\Requests\ReviewPengadaanRequest;
+use App\Http\Requests\TolakPermohonanRequest;
 use App\Models\Notification;
 use App\Models\Pengadaan;
-use App\Services\PpService;
+use App\Services\PpkService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class PpController extends Controller
+class PpkController extends Controller
 {
-    public function __construct(private PpService $ppService) {}
+    public function __construct(private PpkService $ppkService) {}
 
-    /**
-     * Tampilan Halaman Dashboard PP.
-     */
     public function dashboard(): JsonResponse
     {
-        $dashboardData = $this->ppService->getDashboardData();
+        $data = $this->ppkService->getDashboardData();
         $recentNotifications = Notification::where('user_id', auth()->id())
             ->orderByDesc('created_at')
             ->limit(5)
@@ -28,17 +28,13 @@ class PpController extends Controller
             ->count();
 
         return response()->json([
-            'stats' => $dashboardData['stats'],
-            'chart' => $dashboardData['chart'],
-            'pengadaanPerluReview' => $dashboardData['pengadaan_perlu_review'],
+            'stats' => $data['stats'],
+            'pengajuanTerbaru' => $data['pengajuan_terbaru'],
             'recentNotifications' => $recentNotifications,
             'unreadNotificationsCount' => $unreadCount,
         ]);
     }
 
-    /**
-     * Tampilan Halaman List Pengajuan dengan pencarian & filter status.
-     */
     public function index(Request $request): JsonResponse
     {
         $filters = [
@@ -46,7 +42,7 @@ class PpController extends Controller
             'statuses' => $request->query('statuses', []),
         ];
 
-        $pengajuan = $this->ppService->paginatePengadaan($filters, 10);
+        $pengajuan = $this->ppkService->paginatePengadaan($filters, 10);
         $recentNotifications = Notification::where('user_id', auth()->id())
             ->orderByDesc('created_at')
             ->limit(5)
@@ -63,12 +59,9 @@ class PpController extends Controller
         ]);
     }
 
-    /**
-     * Tampilan Halaman Review Dokumen Pengadaan.
-     */
     public function review(Pengadaan $pengadaan): JsonResponse
     {
-        $detail = $this->ppService->getDetailPengadaan($pengadaan);
+        $detail = $this->ppkService->getDetailPengadaan($pengadaan);
         $recentNotifications = Notification::where('user_id', auth()->id())
             ->orderByDesc('created_at')
             ->limit(5)
@@ -84,36 +77,27 @@ class PpController extends Controller
         ]);
     }
 
-    /**
-     * Aksi Persetujuan Dokumen Pengadaan oleh PP.
-     */
     public function approve(Pengadaan $pengadaan): JsonResponse
     {
-        $this->ppService->approve($pengadaan, auth()->user());
+        $this->ppkService->approvePengadaan($pengadaan, auth()->user());
 
         return response()->json([
-            'message' => 'Dokumen pengadaan berhasil disetujui dan diteruskan ke PPK.',
+            'message' => 'Dokumen pengadaan berhasil disetujui oleh PPK.',
         ]);
     }
 
-    /**
-     * Aksi Penolakan / Permintaan Revisi Dokumen Pengadaan oleh PP.
-     */
     public function reject(ReviewPengadaanRequest $request, Pengadaan $pengadaan): JsonResponse
     {
-        $this->ppService->reject($pengadaan, auth()->user(), $request->validated('alasan'));
+        $this->ppkService->rejectPengadaan($pengadaan, auth()->user(), $request->validated('alasan'));
 
         return response()->json([
-            'message' => 'Dokumen pengadaan berhasil ditolak dan dikembalikan ke PPBJ untuk direvisi.',
+            'message' => 'Dokumen pengadaan ditolak dan dikembalikan ke PPBJ.',
         ]);
     }
 
-    /**
-     * Tampilan Halaman Rekap Pengajuan (Detail Siklus 5 Tahap).
-     */
-    public function show(Pengadaan $pengadaan): JsonResponse
+    public function pembayaran(Pengadaan $pengadaan): JsonResponse
     {
-        $detail = $this->ppService->getDetailPengadaan($pengadaan);
+        $detail = $this->ppkService->getDetailPengadaan($pengadaan);
         $recentNotifications = Notification::where('user_id', auth()->id())
             ->orderByDesc('created_at')
             ->limit(5)
@@ -129,13 +113,49 @@ class PpController extends Controller
         ]);
     }
 
-    /**
-     * Tampilan Halaman Semua Notifikasi.
-     */
+    public function approvePembayaran(Request $request, Pengadaan $pengadaan): JsonResponse
+    {
+        $filename = $request->input('filename', "Memo_Persetujuan_{$pengadaan->Permohonan?->nomor_surat}.pdf");
+        $catatan = $request->input('catatan');
+
+        $this->ppkService->approvePembayaran($pengadaan, auth()->user(), $filename, $catatan);
+
+        return response()->json([
+            'message' => 'Dokumen pembayaran beserta Memo Persetujuan berhasil disetujui.',
+        ]);
+    }
+
+    public function rejectPembayaran(TolakPermohonanRequest $request, Pengadaan $pengadaan): JsonResponse
+    {
+        $this->ppkService->rejectPembayaran($pengadaan, auth()->user(), $request->validated('alasan'));
+
+        return response()->json([
+            'message' => 'Dokumen pembayaran telah ditolak beserta catatan revisi.',
+        ]);
+    }
+
+    public function show(Pengadaan $pengadaan): JsonResponse
+    {
+        $detail = $this->ppkService->getDetailPengadaan($pengadaan);
+        $recentNotifications = Notification::where('user_id', auth()->id())
+            ->orderByDesc('created_at')
+            ->limit(5)
+            ->get();
+        $unreadCount = Notification::where('user_id', auth()->id())
+            ->whereNull('read_at')
+            ->count();
+
+        return response()->json([
+            'detail' => $detail,
+            'recentNotifications' => $recentNotifications,
+            'unreadNotificationsCount' => $unreadCount,
+        ]);
+    }
+
     public function notifikasi(Request $request): JsonResponse
     {
         $tab = $request->query('tab', 'semua');
-        $notifData = $this->ppService->getNotifications(auth()->user(), $tab);
+        $notifData = $this->ppkService->getNotifications(auth()->user(), $tab);
 
         return response()->json([
             'notifications' => $notifData['notifications'],
@@ -144,21 +164,15 @@ class PpController extends Controller
         ]);
     }
 
-    /**
-     * Aksi Tandai Semua Notifikasi Telah Dibaca.
-     */
     public function markAllRead(): JsonResponse
     {
-        $this->ppService->markAllNotificationsRead(auth()->user());
+        $this->ppkService->markAllNotificationsRead(auth()->user());
 
         return response()->json([
             'message' => 'Semua notifikasi telah ditandai dibaca.',
         ]);
     }
 
-    /**
-     * Aksi Tandai Satu Notifikasi Telah Dibaca.
-     */
     public function markOneRead(Notification $notification): JsonResponse
     {
         if ($notification->user_id === auth()->id() && is_null($notification->read_at)) {
@@ -170,9 +184,6 @@ class PpController extends Controller
         ]);
     }
 
-    /**
-     * Tampilan Halaman Profil Pengguna PP.
-     */
     public function profil(): JsonResponse
     {
         $user = auth()->user()->load(['Role', 'Unit']);
