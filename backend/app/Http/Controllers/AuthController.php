@@ -4,38 +4,45 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Auth\LoginRequest;
 use App\Services\AuthService;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class AuthController extends Controller
 {
-    public function show(): Response
+    public function show(): JsonResponse
     {
-        return Inertia::render('Auth/Login');
+        return response()->json(['message' => 'Please login via POST /api/v1/login']);
     }
 
-    public function store(LoginRequest $request, AuthService $authService): RedirectResponse
+    public function store(LoginRequest $request, AuthService $authService): JsonResponse
     {
         $validated = $request->validated();
         $remember = (bool) ($validated['remember'] ?? false);
 
         $user = $authService->attemptLogin($validated['login'], $validated['password'], $request->ip(), $remember);
-        $role = str_replace(' ', '', strtolower($user->Role->nama));
-        $route = $role.'.dashboard';
-        $request->session()->regenerate();
+        $role = str_replace(' ', '', strtolower($user->Role->nama ?? ''));
 
-        return redirect()->intended(route($route));
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
+
+        return response()->json([
+            'user' => $user->load('Role'),
+            'role' => $role,
+        ], 200);
     }
 
-    public function destroy(): RedirectResponse
+    public function destroy(Request $request): Response
     {
-        Auth::logout();
+        Auth::guard('web')->logout();
 
-        request()->session()->invalidate();
-        request()->session()->regenerateToken();
+        if ($request->hasSession()) {
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
 
-        return redirect()->route('login');
+        return response()->noContent();
     }
 }
