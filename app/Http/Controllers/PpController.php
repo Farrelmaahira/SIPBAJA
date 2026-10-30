@@ -70,11 +70,6 @@ class PpController extends Controller
      */
     public function review(Pengadaan $pengadaan): Response
     {
-        // Pastikan level pengadaan memang butuh review PP
-        if (! $pengadaan->Level || ! $pengadaan->Level->perlu_review_pp) {
-            abort(403, 'Pengadaan ini tidak memerlukan review Pejabat Pengadaan.');
-        }
-
         $detail = $this->ppService->getDetailPengadaan($pengadaan);
         $recentNotifications = Notification::where('user_id', auth()->id())
             ->orderByDesc('created_at')
@@ -96,10 +91,6 @@ class PpController extends Controller
      */
     public function approve(Pengadaan $pengadaan): RedirectResponse
     {
-        if ($pengadaan->status !== 'menunggu_persetujuan') {
-            return back()->with('error', 'Status pengadaan saat ini tidak dapat disetujui.');
-        }
-
         $this->ppService->approve($pengadaan, auth()->user());
 
         return redirect()->route('pp.pengajuan.index')
@@ -111,10 +102,6 @@ class PpController extends Controller
      */
     public function reject(ReviewPengadaanRequest $request, Pengadaan $pengadaan): RedirectResponse
     {
-        if ($pengadaan->status !== 'menunggu_persetujuan') {
-            return back()->with('error', 'Status pengadaan saat ini tidak dapat ditolak.');
-        }
-
         $this->ppService->reject($pengadaan, auth()->user(), $request->validated('alasan'));
 
         return redirect()->route('pp.pengajuan.index')
@@ -165,6 +152,18 @@ class PpController extends Controller
         $this->ppService->markAllNotificationsRead(auth()->user());
 
         return back()->with('success', 'Semua notifikasi telah ditandai dibaca.');
+    }
+
+    /**
+     * Aksi Tandai Satu Notifikasi Telah Dibaca.
+     */
+    public function markOneRead(Notification $notification): RedirectResponse
+    {
+        if ($notification->user_id === auth()->id() && is_null($notification->read_at)) {
+            $notification->update(['read_at' => now()]);
+        }
+
+        return back();
     }
 
     /**
