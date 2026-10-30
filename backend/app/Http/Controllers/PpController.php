@@ -6,6 +6,7 @@ use App\Http\Requests\ReviewPengadaanRequest;
 use App\Models\Notification;
 use App\Models\Pengadaan;
 use App\Services\PpService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -18,7 +19,7 @@ class PpController extends Controller
     /**
      * Tampilan Halaman Dashboard PP.
      */
-    public function dashboard(): Response
+    public function dashboard(): JsonResponse
     {
         $dashboardData = $this->ppService->getDashboardData();
         $recentNotifications = Notification::where('user_id', auth()->id())
@@ -29,7 +30,7 @@ class PpController extends Controller
             ->whereNull('read_at')
             ->count();
 
-        return Inertia::render('Pp/Dashboard', [
+        return response()->json([
             'stats' => $dashboardData['stats'],
             'chart' => $dashboardData['chart'],
             'pengadaanPerluReview' => $dashboardData['pengadaan_perlu_review'],

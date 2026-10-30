@@ -4,9 +4,8 @@ namespace App\Http\Controllers\PPBJ;
 
 use App\Http\Controllers\Controller;
 use App\Services\PpbjDashboardService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class DashboardPpbjController extends Controller
 {
@@ -14,8 +13,8 @@ class DashboardPpbjController extends Controller
         private readonly PpbjDashboardService $ppbjDashboardService
     ) {}
 
-    public function __invoke(Request $request): Response
+    public function __invoke(Request $request): JsonResponse
     {
-        return Inertia::render('Ppbj/Dashboard', $this->ppbjDashboardService->getDashboardData());
+        return response()->json($this->ppbjDashboardService->getDashboardData());
     }
 }

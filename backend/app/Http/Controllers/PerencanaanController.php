@@ -10,6 +10,7 @@ use App\Models\Notification;
 use App\Models\Permohonan;
 use App\Models\User;
 use App\Services\PerencanaanService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -19,7 +20,7 @@ class PerencanaanController extends Controller
 {
     public function __construct(private PerencanaanService $perencanaanService) {}
 
-    public function dashboard(): Response
+    public function dashboard(): JsonResponse
     {
         $data = $this->perencanaanService->getDashboardData();
         $recentNotifications = Notification::where('user_id', auth()->id())
@@ -30,7 +31,7 @@ class PerencanaanController extends Controller
             ->whereNull('read_at')
             ->count();
 
-        return Inertia::render('Perencanaan/Dashboard', [
+        return response()->json([
             'stats' => $data['stats'],
             'permohonanTerbaru' => $data['permohonan_terbaru'],
             'recentNotifications' => $recentNotifications,

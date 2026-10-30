@@ -3,10 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Services\DashboardBidang2Service;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class DashboardBidang2Controller extends Controller
 {
@@ -14,7 +13,7 @@ class DashboardBidang2Controller extends Controller
         protected DashboardBidang2Service $dashboardService
     ) {}
 
-    public function __invoke(Request $request): Response
+    public function __invoke(Request $request): JsonResponse
     {
         $tahun = (int) $request->input('tahun', Carbon::now()->year);
 
@@ -22,7 +21,7 @@ class DashboardBidang2Controller extends Controller
         $riwayatTerbaru = $this->dashboardService->riwayatTerbaru(5);
         $statistik = $this->dashboardService->statistikBulanan($tahun);
 
-        return Inertia::render('Bidang2/Dashboard', [
+        return response()->json([
             'ringkasan' => $ringkasan,
             'riwayatTerbaru' => $riwayatTerbaru,
             'statistikBulanan' => $statistik['bulanan'],

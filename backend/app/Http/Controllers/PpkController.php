@@ -7,6 +7,7 @@ use App\Http\Requests\TolakPermohonanRequest;
 use App\Models\Notification;
 use App\Models\Pengadaan;
 use App\Services\PpkService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -16,7 +17,7 @@ class PpkController extends Controller
 {
     public function __construct(private PpkService $ppkService) {}
 
-    public function dashboard(): Response
+    public function dashboard(): JsonResponse
     {
         $data = $this->ppkService->getDashboardData();
         $recentNotifications = Notification::where('user_id', auth()->id())
@@ -27,7 +28,7 @@ class PpkController extends Controller
             ->whereNull('read_at')
             ->count();
 
-        return Inertia::render('Ppk/Dashboard', [
+        return response()->json([
             'stats' => $data['stats'],
             'pengajuanTerbaru' => $data['pengajuan_terbaru'],
             'recentNotifications' => $recentNotifications,

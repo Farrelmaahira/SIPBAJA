@@ -3,17 +3,17 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 
 class DashboardAdminController extends Controller
 {
     /**
      * Handle the incoming request.
      */
-    public function __invoke(Request $request)
+    public function __invoke(Request $request): JsonResponse
     {
-        return Inertia::render('Admin/Dashboard', [
+        return response()->json([
             'stats' => [
                 ['label' => 'Total Pengguna', 'value' => 24, 'unit' => 'Akun', 'variant' => 'primary'],
                 ['label' => 'Unit Terdaftar', 'value' => 8, 'unit' => 'Unit', 'variant' => 'info'],

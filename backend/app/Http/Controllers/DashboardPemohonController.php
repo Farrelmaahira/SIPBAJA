@@ -4,8 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\FilterStatistikRequest;
 use App\Services\DashboardPemohonService;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\Http\JsonResponse;
 
 class DashboardPemohonController extends Controller
 {
@@ -13,12 +12,12 @@ class DashboardPemohonController extends Controller
         private DashboardPemohonService $dashboardService,
     ) {}
 
-    public function __invoke(FilterStatistikRequest $request): Response
+    public function __invoke(FilterStatistikRequest $request): JsonResponse
     {
         $user = $request->user();
         $tahun = $request->tahun();
 
-        return Inertia::render('Pemohon/Dashboard', [
+        return response()->json([
             'ringkasan' => $this->dashboardService->ringkasan($user),
             'permohonanAktif' => $this->dashboardService->permohonanAktif($user),
             'statistikBulanan' => $this->dashboardService->statistikPerBulan($user, $tahun),
