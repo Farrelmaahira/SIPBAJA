@@ -48,6 +48,9 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('bidang-2')->name('bidang2.')->middleware('role:Bidang 2')->group(function () {
         Route::get('dashboard', DashboardBidang2Controller::class)->name('dashboard');
+        Route::get('pengajuan', [PengajuanBidang2Controller::class, 'index'])->name('pengajuan.index');
+        Route::get('rkakl', [RkaklBidang2Controller::class, 'index'])->name('rkakl.index');
+        Route::get('permohonan/{permohonan}/dokumen', [PermohonanPemohonController::class, 'downloadDokumen'])->name('permohonan.dokumen.download');
     });
 
     Route::prefix('ppbj')->name('ppbj.')->middleware('role:PPBJ')->group(function () {
