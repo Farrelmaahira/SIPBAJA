@@ -1,6 +1,6 @@
 # SIPBAJA (Sistem Informasi Pengadaan Barang dan Jasa)
 
-SIPBAJA adalah aplikasi web monolitik terpusat berbasis **Laravel 13 + React (Inertia.js)** yang mendigitalkan seluruh alur pengadaan barang dan jasa di lingkungan kampus. Sistem ini menyelesaikan kendala fragmentasi dokumen, lambatnya pelacakan manual antar-unit, kepatuhan batas nominal pengadaan, serta memastikan penegakan aturan persetujuan bertingkat (*tiered approval*) dan verifikasi ganda (*dual approval*) sebelum pembayaran dapat dicairkan.
+SIPBAJA adalah sistem informasi pengadaan barang dan jasa berbasis monorepo dengan arsitektur **Laravel 13 RESTful API Backend** dan **React 19 + TypeScript Standalone SPA Frontend**. Sistem ini mendigitalkan seluruh alur pengadaan barang dan jasa di lingkungan kampus untuk menyelesaikan fragmentasi dokumen, transparansi pelacakan antar-unit, kepatuhan batas nominal, serta penegakan persetujuan bertingkat (*tiered approval*) dan verifikasi ganda (*dual approval*).
 
 ---
 
@@ -23,62 +23,114 @@ SIPBAJA adalah aplikasi web monolitik terpusat berbasis **Laravel 13 + React (In
 
 | Lapisan | Teknologi | Keterangan |
 |---|---|---|
-| **Backend Framework** | Laravel 13 | Monolitik via Inertia protocol |
-| **Bahasa Pemrograman** | PHP 8.5.x (min. PHP 8.3) | Standar PSR-12, constructor promotion, strict typing |
-| **Frontend Framework** | React 19 + Inertia.js 3.x | Single Page Application tanpa REST API terpisah |
+| **Arsitektur** | Monorepo (`backend/` + `frontend/`) | Independen, API-driven via RESTful JSON |
+| **Backend Framework** | Laravel 13 | RESTful API controller & Laravel Sanctum SPA Auth |
+| **Bahasa Backend** | PHP 8.5.x (min. PHP 8.3) | Standar PSR-12, constructor promotion, strict typing |
+| **Frontend Framework** | React 19 + TypeScript | Single Page Application (SPA) |
+| **HTTP Client** | Axios | Session-based cookie auth via Laravel Sanctum |
 | **Styling** | Tailwind CSS v4 | Berdasarkan *SIPBAJA Design System* (Emerald `#0E7C5A`) |
+| **Icons** | Lucide React | Icon set resmi |
 | **Database (Dev)** | SQLite | Cepat untuk pengembangan lokal dan CI |
 | **Database (Target Prod)** | PostgreSQL 18 | Relasional murni, kompatibel dengan SQLite tanpa DB triggers |
-| **Build Tool** | Vite 8 + Laravel Vite Plugin | Hot module replacement & asset bundling |
+| **Build Tool Frontend** | Vite 8 | Fast build & HMR |
 
 ---
 
 ## Prasyarat Sistem
 
-Sebelum memulai instalasi, pastikan dependensi berikut telah terpasang pada komputer Anda:
-
 - **PHP**: `^8.3` (Disarankan PHP 8.5.x) dengan ekstensi `pdo`, `pdo_sqlite`, `pdo_pgsql`, `mbstring`, `openssl`, `tokenizer`, `xml`, `ctype`, `json`, `curl`.
 - **Composer**: `v2.x`
-- **Node.js**: `v20.x` atau `v22.x` (LTS)
+- **Node.js**: `v20.x`, `v22.x`, atau `v24.x` (LTS)
 - **NPM**: `v10.x` atau lebih baru
 - **Git**
 
 ---
 
-## Langkah Instalasi
+## Struktur Monorepo
 
-Jalankan perintah berikut secara berurutan di terminal:
-
-```bash
-# 1. Clone repositori
-git clone https://github.com/Farrelmaahira/SIPBAJA.git
-cd SIPBAJA
-
-# 2. Pasang dependensi PHP
-composer install
-
-# 3. Salin file environment
-cp .env.example .env
-
-# 4. Generate Application Key
-php artisan key:generate
-
-# 5. Siapkan database SQLite dan jalankan migrasi
-touch database/database.sqlite
-php artisan migrate --seed
-
-# 6. Pasang dependensi Node.js
-npm install
-
-# 7. Build asset frontend
-npm run build
+```text
+sipbaja/
+├── backend/                   # Laravel 13 RESTful API (PHP)
+│   ├── app/
+│   │   ├── Http/
+│   │   │   ├── Controllers/   # REST API Controllers (return JsonResponse)
+│   │   │   ├── Middleware/    # Sanctum & Role-based Access Middleware
+│   │   │   └── Requests/      # Form Requests & validasi input
+│   │   ├── Models/            # Eloquent Models
+│   │   ├── Policies/          # Policy & Gate otorisasi
+│   │   └── Services/          # PUSAT LOGIKA BISNIS: transaksi & kalkulasi
+│   ├── config/                # Konfigurasi Laravel, CORS, Sanctum
+│   ├── database/              # Migrasi, seeders, factories, SQLite db
+│   ├── routes/                # API routes (routes/api.php)
+│   └── tests/                 # PHPUnit Feature & Unit tests
+├── frontend/                  # React 19 + TypeScript + Vite SPA
+│   ├── src/
+│   │   ├── components/        # Atomic Design
+│   │   │   ├── atoms/         # Komponen dasar (Button, Input, Badge, Pill)
+│   │   │   ├── molecules/     # FormField, SearchBar, StatCard
+│   │   │   ├── organisms/     # Modul kompleks (Sidebar, Topbar, TableCard)
+│   │   │   └── templates/     # Layout template halaman (murni presentasional)
+│   │   ├── hooks/             # Custom React Hooks
+│   │   ├── pages/             # Komponen halaman (Pages)
+│   │   ├── services/          # Modul API client Axios
+│   │   ├── types/             # Tipe TypeScript bersama
+│   │   └── utils/             # Helper fungsi murni (format mata uang, tanggal)
+│   ├── package.json
+│   ├── tsconfig.json
+│   └── vite.config.ts
+├── docs/                      # Dokumentasi teknis, PRD, Database, Rules
+└── .agents/                   # Konfigurasi AI agent skills & rules
 ```
 
 ---
 
-## Konfigurasi (.env)
+## Langkah Instalasi & Menjalankan Aplikasi
 
-Pastikan variabel penting pada berkas `.env` disesuaikan:
+Perintah dijalankan dari subdirektori masing-masing (`backend/` dan `frontend/`).
+
+### 1. Menyiapkan Backend (Laravel API)
+
+```bash
+cd backend
+
+# Pasang dependensi PHP
+composer install
+
+# Salin file environment
+cp .env.example .env
+
+# Generate Application Key
+php artisan key:generate
+
+# Migrasi dan seed database awal
+touch database/database.sqlite
+php artisan migrate --seed
+
+# Jalankan server backend (port 8000)
+php artisan serve
+```
+
+### 2. Menyiapkan Frontend (React + TypeScript)
+
+Di terminal terpisah:
+
+```bash
+cd frontend
+
+# Pasang dependensi Node.js
+npm install
+
+# Jalankan server dev Vite (port 5173)
+npm run dev
+```
+
+Aplikasi dapat diakses melalui peramban di: **`http://localhost:5173`** (Frontend) dengan backend API berjalan di **`http://localhost:8000`**.
+
+---
+
+## Konfigurasi Environment Backend (`backend/.env`)
+
+Pastikan variabel berikut terkonfigurasi dengan benar di `backend/.env`:
 
 ```env
 APP_NAME=SIPBAJA
@@ -87,138 +139,51 @@ APP_KEY=base64:...
 APP_DEBUG=true
 APP_URL=http://localhost:8000
 
+FRONTEND_URL=http://localhost:5173
+SANCTUM_STATEFUL_DOMAINS=localhost:5173
+
 # Konfigurasi Database Lokal (SQLite)
 DB_CONNECTION=sqlite
-# DB_DATABASE=/path/to/database/database.sqlite
 
-# Atau Target Produksi (PostgreSQL)
-# DB_CONNECTION=pgsql
-# DB_HOST=127.0.0.1
-# DB_PORT=5432
-# DB_DATABASE=sipbaja
-# DB_USERNAME=postgres
-# DB_PASSWORD=secret
-
-# Session & Storage
-SESSION_DRIVER=database
+# Session
+SESSION_DRIVER=file
 SESSION_LIFETIME=60
-FILESYSTEM_DISK=local
-```
-
-> **Catatan:** Migrasi dan query dilarang menggunakan fitur PostgreSQL-spesifik (seperti JSONB operators, arrays, DB triggers) agar tetap 100% kompatibel dengan SQLite.
-
----
-
-## Cara Penggunaan
-
-### Menjalankan Server Pengembangan
-
-Jalankan server backend dan Vite frontend secara bersamaan:
-
-```bash
-# Menjalankan artisan serve dan vite dev secara paralel
-composer run dev
-```
-
-Atau jalankan di dua terminal terpisah:
-
-```bash
-# Terminal 1: Backend Laravel
-php artisan serve
-
-# Terminal 2: Vite Dev Server
-npm run dev
-```
-
-Buka peramban di `http://localhost:8000`.
-
-### Rute & Endpoint Halaman Utama
-
-Aplikasi SIPBAJA menggunakan arsitektur monolitik Inertia.js (bukan public REST API). Seluruh rute dilindungi oleh middleware `auth` dan `role`:
-
-| Endpoint / URL | Method | Peran Akses | Deskripsi |
-|---|---|---|---|
-| `/` | `GET` | Guest | Halaman Login SIPBAJA |
-| `/login` | `POST` | Guest | Proses autentikasi pengguna |
-| `/logout` | `POST` | Auth | Mengakhiri sesi login |
-| `/admin/dashboard` | `GET` | Admin | Dashboard Admin & statistik sistem |
-| `/admin/pengguna` | `GET/POST/PUT/DELETE` | Admin | Manajemen akun pengguna |
-| `/admin/unit-kerja` | `GET/POST/PUT/DELETE` | Admin | Manajemen referensi unit/jurusan |
-| `/admin/mak` | `GET/POST/PUT/DELETE` | Admin | Pemetaan 4 MAK ke PPK penanggung jawab |
-| `/admin/role-permission` | `GET/PUT` | Admin | Pengaturan matrix izin hak akses dinamis |
-| `/pemohon/dashboard` | `GET` | Pemohon | Dashboard & monitoring permohonan unit |
-| `/perencanaan/dashboard` | `GET` | Perencanaan | Verifikasi anggaran & penentuan MAK |
-| `/bidang-2/dashboard` | `GET` | Bidang 2 | Persetujuan awal permohonan & approval pembayaran |
-| `/ppbj/dashboard` | `GET` | PPBJ | Pemaketan pengadaan, kontrak, & jadwal termin |
-| `/pp/dashboard` | `GET` | PP | Review dokumen pengadaan nominal 50–200 juta |
-| `/ppk/dashboard` | `GET` | PPK | Review & penandatanganan berkas dan approval termin |
-| `/perlengkapan/dashboard`| `GET` | Perlengkapan | Pencatatan penerimaan barang & berita acara |
-| `/keuangan/dashboard` | `GET` | Keuangan | Realisasi pembayaran setelah disetujui PPK & Bidang 2 |
-
----
-
-## Struktur Direktori
-
-Struktur kode mengikuti prinsip pemisahan ketat (Service Layer & Atomic Design):
-
-```text
-sipbaja/
-├── app/
-│   ├── Http/
-│   │   ├── Controllers/       # Controller tipis: delegasi ke Service & render Inertia
-│   │   ├── Middleware/        # Middleware autentikasi & role check
-│   │   └── Requests/          # Dedicated Form Request class & validasi bahasa Indonesia
-│   ├── Models/                # Eloquent Models & relasi data
-│   ├── Policies/              # Otorisasi hak akses data (misal: batasan per unit_id)
-│   └── Services/              # PUSAT LOGIKA BISNIS: transaksi tulis, kalkulasi, kueri data
-├── database/
-│   ├── factories/             # Factory untuk kebutuhan testing
-│   ├── migrations/            # Skema tabel database (migrasi baru untuk setiap perubahan)
-│   └── seeders/               # Seed peran, MAK, level pengadaan, dan user awal
-├── docs/                      # Dokumentasi PRD, Database, Design System, & Rules
-├── resources/
-│   ├── js/
-│   │   ├── components/        # Atomic Design
-│   │   │   ├── atoms/         # Komponen dasar (Button, Input, Badge, Pill)
-│   │   │   ├── molecules/     # Gabungan atom (FormField, SearchBar, StatCard)
-│   │   │   ├── organisms/     # Modul kompleks (Sidebar, Topbar, TableCard)
-│   │   │   └── templates/     # Tata letak halaman (murni presentasional)
-│   │   ├── hooks/             # Custom React Hooks untuk stateful UI (search, filter, sort)
-│   │   ├── utils/             # Fungsi murni (formatting mata uang, tanggal, normalisasi)
-│   │   ├── Pages/             # Halaman utama Inertia (perekat template, hook, & props)
-│   │   └── app.jsx            # Entry point Inertia React
-│   └── views/
-│       └── app.blade.php      # Root template HTML
-├── routes/
-│   └── web.php                # Definisi rute aplikasi
-└── tests/
-    ├── Feature/               # Feature testing (HTTP endpoint, alur peran, approval)
-    └── Unit/                  # Unit testing (Service logic & validasi kalkulasi)
 ```
 
 ---
 
 ## Pengujian (Testing)
 
-Pengujian menggunakan PHPUnit untuk memastikan integritas logika bisnis dan hak akses peran:
+### Backend (PHPUnit)
 
 ```bash
+cd backend
+
 # Menjalankan seluruh test suite
 php artisan test
 
-# Menjalankan pengujian secara ringkas
+# Menjalankan secara ringkas
 php artisan test --compact
 
-# Menjalankan pengujian spesifik per berkas
-php artisan test tests/Feature/AuthTest.php
-
-# Menjalankan pengujian dengan filter nama method
-php artisan test --filter=test_user_can_login
+# Menjalankan test tertentu
+php artisan test --filter=ExampleTest
 ```
 
-Sebelum menyelesaikan perubahan kode PHP, format kode dengan Laravel Pint:
+### Frontend (TypeScript & Build Check)
 
 ```bash
+cd frontend
+
+# Pengecekan tipe data TypeScript
+npx tsc -b
+
+# Build bundle produksi
+npm run build
+```
+
+Format kode PHP menggunakan Laravel Pint sebelum commit:
+```bash
+cd backend
 vendor/bin/pint --format agent
 ```
 
@@ -228,11 +193,8 @@ vendor/bin/pint --format agent
 
 Setiap pengembang atau agen AI wajib mematuhi panduan pada [DEVELOPMENT_RULES.md](file:///d:/Farrel/PROJECTS/sipbaja/docs/DEVELOPMENT_RULES.md):
 
-1. **Arsitektur Service Layer:** Dilarang meletakkan logika bisnis atau kueri Eloquent langsung di Controller, Model, atau React Component. Semua logika tulis dan mutasi database wajib berada di `app/Services/` dalam transaksi DB jika menyentuh lebih dari satu tabel.
-2. **Validasi & Otorisasi:** Input data wajib menggunakan Form Request di `app/Http/Requests/` dengan pesan Bahasa Indonesia. Otorisasi kepemilikan data dibatasi via Policy/Gate (mis. pembatasan permohonan per `unit_id`).
-3. **Database & Migrasi:** Skema tabel adalah mutlak mengacu pada [DATABASE_SIPBAJA.md](file:///d:/Farrel/PROJECTS/sipbaja/docs/DATABASE_SIPBAJA.md). Jangan mengedit migrasi lama; selalu buat file migrasi baru untuk setiap perubahan skema. Dilarang menggunakan trigger database.
-4. **Desain & UI:** Mengikuti [DESIGN.md](file:///d:/Farrel/PROJECTS/sipbaja/docs/DESIGN.md) (warna brand `#0E7C5A`, Plus Jakarta Sans, card-based, tanpa gradien). Template React bersifat presentasional; dilarang meletakkan `useState` logika filter/data bisnis di dalam template.
-5. **Git & Commit:**
-   - Gunakan branch fitur untuk setiap penambahan (`feat/nama-fitur` atau `fix/nama-bug`).
-   - Format pesan commit mengacu pada Conventional Commits (`feat: ...`, `fix: ...`, `refactor: ...`).
-   - Pastikan seluruh test lulus (`php artisan test`) dan linter rapi (`vendor/bin/pint`) sebelum membuat Pull Request.
+1. **Monorepo Perintah Subdirektori:** Jalankan perintah langsung dari `backend/` atau `frontend/`.
+2. **Arsitektur Service Layer:** Dilarang meletakkan logika bisnis di Controller. Logika tulis dan mutasi database wajib berada di `backend/app/Services/`.
+3. **Controller RESTful:** Controller backend hanya menerima request, memanggil service, dan mengembalikan `JsonResponse`.
+4. **Validasi & Otorisasi:** Input data divalidasi via Form Request (`backend/app/Http/Requests/`) dengan pesan Bahasa Indonesia.
+5. **Frontend Atomic Design & TypeScript:** Komponen ditempatkan sesuai hierarki (atoms, molecules, organisms, templates) dengan strict TypeScript typing.
