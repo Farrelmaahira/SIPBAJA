@@ -5,6 +5,7 @@ import ProfilePill from '../molecules/ProfilePill';
 export default function DashboardTopbar({
     onMenuClick,
     user,
+    showSearch,
     searchValue = '',
     onSearchChange,
     searchPlaceholder = '',
@@ -17,6 +18,8 @@ export default function DashboardTopbar({
     profileFallbackRole,
     profileFallbackEmail,
 }) {
+    const shouldShowSearch = showSearch !== undefined ? showSearch : Boolean(onSearchChange);
+
     return (
         <header className="flex items-center justify-between gap-4 pb-6">
             <div className="flex items-center gap-3 flex-1">
@@ -29,14 +32,16 @@ export default function DashboardTopbar({
                     <Menu className="w-5 h-5" />
                 </button>
 
-                <div className="flex-1 max-w-md">
-                    <SearchBar
-                        value={searchValue}
-                        onChange={onSearchChange}
-                        placeholder={searchPlaceholder}
-                        id={searchId}
-                    />
-                </div>
+                {shouldShowSearch && (
+                    <div className="flex-1 max-w-md">
+                        <SearchBar
+                            value={searchValue}
+                            onChange={onSearchChange}
+                            placeholder={searchPlaceholder}
+                            id={searchId}
+                        />
+                    </div>
+                )}
             </div>
 
             <div className="flex items-center gap-3">

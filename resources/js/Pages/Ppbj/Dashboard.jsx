@@ -1,16 +1,46 @@
 import { Head, usePage } from '@inertiajs/react';
-import RoleDashboardTemplate from '../../components/templates/RoleDashboardTemplate';
+import usePpbjDashboard from '../../hooks/usePpbjDashboard';
+import PpbjDashboardTemplate from '../../components/templates/PpbjDashboardTemplate';
 
-export default function Dashboard() {
+export default function Dashboard({
+    stats = [],
+    permohonanMasuk = [],
+    pengadaanBerjalan = [],
+    terminKontrak = [],
+}) {
     const { auth } = usePage().props;
+
+    const {
+        activeTab,
+        setActiveTab,
+        searchQuery,
+        setSearchQuery,
+        filteredItems,
+    } = usePpbjDashboard({
+        permohonanMasuk,
+        pengadaanBerjalan,
+        terminKontrak,
+        stats,
+    });
+
+    const counts = {
+        permohonan: permohonanMasuk.length,
+        pengadaan: pengadaanBerjalan.length,
+        termin: terminKontrak.length,
+    };
 
     return (
         <>
             <Head title="Dashboard PPBJ - SIPBAJA" />
-            <RoleDashboardTemplate
-                roleTitle="Dashboard PPBJ"
-                roleDescription="Penyusunan paket pengadaan, penentuan metode pengadaan, dan penerbitan kontrak per termin."
+            <PpbjDashboardTemplate
                 user={auth?.user}
+                stats={stats}
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                items={filteredItems}
+                counts={counts}
             />
         </>
     );

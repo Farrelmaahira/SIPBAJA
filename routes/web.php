@@ -1,20 +1,21 @@
 <?php
 
+use App\Http\Controllers\Admin\DashboardAdminController;
 use App\Http\Controllers\Admin\MakController;
 use App\Http\Controllers\Admin\PenggunaController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\RolePermissionController;
 use App\Http\Controllers\Admin\UnitKerjaController;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\DashboardAdminController;
 use App\Http\Controllers\DashboardBidang2Controller;
 use App\Http\Controllers\DashboardKeuanganController;
 use App\Http\Controllers\DashboardPemohonController;
 use App\Http\Controllers\DashboardPerencanaanController;
 use App\Http\Controllers\DashboardPerlengkapanController;
-use App\Http\Controllers\DashboardPpbjController;
 use App\Http\Controllers\DashboardPpController;
 use App\Http\Controllers\DashboardPpkController;
+use App\Http\Controllers\PPBJ\DashboardPpbjController;
+use App\Http\Controllers\PPBJ\PermohonanController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -47,6 +48,10 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('ppbj')->name('ppbj.')->middleware('role:PPBJ')->group(function () {
         Route::get('dashboard', DashboardPpbjController::class)->name('dashboard');
+        Route::resource('permohonan', PermohonanController::class);
+        Route::post('permohonan/{id}/pengadaan/draft', [PermohonanController::class, 'storeDraft'])->name('permohonan.pengadaan.draft');
+        Route::delete('pengadaan/{id}', [PermohonanController::class, 'destroyDraft'])->name('pengadaan.destroy');
+        Route::post('permohonan/{id}/pengadaan/submit', [PermohonanController::class, 'submitReviewer'])->name('permohonan.pengadaan.submit');
     });
 
     Route::prefix('pp')->name('pp.')->middleware('role:PP')->group(function () {
@@ -65,5 +70,5 @@ Route::middleware('auth')->group(function () {
         Route::get('dashboard', DashboardKeuanganController::class)->name('dashboard');
     });
 
-    Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
+    Route::match(['get', 'post'], '/logout', [AuthController::class, 'destroy'])->name('logout');
 });

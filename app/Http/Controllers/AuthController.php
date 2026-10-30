@@ -19,8 +19,9 @@ class AuthController extends Controller
     public function store(LoginRequest $request, AuthService $authService): RedirectResponse
     {
         $validated = $request->validated();
+        $remember = (bool) ($validated['remember'] ?? false);
 
-        $user = $authService->attemptLogin($validated['login'], $validated['password'], $request->ip());
+        $user = $authService->attemptLogin($validated['login'], $validated['password'], $request->ip(), $remember);
         $role = str_replace(' ', '', strtolower($user->Role->nama));
         $route = $role.'.dashboard';
         $request->session()->regenerate();

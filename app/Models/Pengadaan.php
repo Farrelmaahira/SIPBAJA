@@ -38,6 +38,11 @@ class Pengadaan extends Model
         return $this->belongsTo(Permohonan::class, 'permohonan_id');
     }
 
+    public function PermohonanMak(): BelongsTo
+    {
+        return $this->belongsTo(PermohonanMak::class, 'permohonan_mak_id');
+    }
+
     public function Jenis(): BelongsTo
     {
         return $this->belongsTo(JenisPengadaan::class, 'jenis_id');
@@ -71,5 +76,10 @@ class Pengadaan extends Model
     public function Approvals(): HasMany
     {
         return $this->hasMany(ApprovalPengadaan::class, 'pengadaan_id');
+    }
+
+    public function Dokumen(): HasMany
+    {
+        return $this->hasMany(Dokumen::class, 'ref_id')->where('ref_type', 'pengadaan');
     }
 }

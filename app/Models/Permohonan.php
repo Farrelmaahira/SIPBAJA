@@ -28,6 +28,7 @@ class Permohonan extends Model
         return [
             'estimasi_anggaran' => 'decimal:2',
             'revisi_ke' => 'integer',
+            'created_at' => 'datetime',
         ];
     }
 
