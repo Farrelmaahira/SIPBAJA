@@ -14,8 +14,11 @@ use App\Http\Controllers\DashboardPerencanaanController;
 use App\Http\Controllers\DashboardPerlengkapanController;
 use App\Http\Controllers\DashboardPpController;
 use App\Http\Controllers\DashboardPpkController;
+use App\Http\Controllers\PengajuanBidang2Controller;
+use App\Http\Controllers\PermohonanPemohonController;
 use App\Http\Controllers\PPBJ\DashboardPpbjController;
 use App\Http\Controllers\PPBJ\PermohonanController;
+use App\Http\Controllers\RkaklBidang2Controller;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {

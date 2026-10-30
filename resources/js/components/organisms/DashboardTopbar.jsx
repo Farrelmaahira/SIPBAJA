@@ -19,6 +19,36 @@ export default function DashboardTopbar({
     profileFallbackRole,
     profileFallbackEmail,
 }) {
+    const [notifOpen, setNotifOpen] = useState(false);
+    const notifRef = useRef(null);
+
+    useEffect(() => {
+        function handleClickOutside(e) {
+            if (notifRef.current && !notifRef.current.contains(e.target)) {
+                setNotifOpen(false);
+            }
+        }
+        function handleKeyDown(e) {
+            if (e.key === 'Escape') setNotifOpen(false);
+        }
+        if (notifOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+            document.addEventListener('keydown', handleKeyDown);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [notifOpen]);
+
+    const handleBellClick = (e) => {
+        if (onNotificationClick) {
+            onNotificationClick(e);
+        } else {
+            setNotifOpen((prev) => !prev);
+        }
+    };
+
     const shouldShowSearch = showSearch !== undefined ? showSearch : Boolean(onSearchChange);
 
     return (
