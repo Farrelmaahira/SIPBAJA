@@ -39,6 +39,9 @@ export interface LoginCredentials {
 export interface AuthResponse {
   user: User;
   role: string;
+  token?: string;
+  token_type?: string;
+  expires_at?: string;
 }
 
 export interface AuthContextValue {
