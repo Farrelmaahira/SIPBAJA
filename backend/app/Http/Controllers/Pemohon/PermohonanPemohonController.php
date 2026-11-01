@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Pemohon;
 
 use App\Http\Controllers\Controller;
-
 use App\Http\Requests\SimpanPermohonanRequest;
 use App\Models\Permohonan;
 use App\Services\PermohonanService;

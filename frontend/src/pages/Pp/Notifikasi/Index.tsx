@@ -57,7 +57,7 @@ export const PpNotifikasiIndex: FC<PpNotifikasiProps> = ({
         };
         unreadCount?: number;
         unreadNotificationsCount?: number;
-      }>(`/v1${basePath}/notifikasi`, {
+      }>('/v1/notifications', {
         params: { tab },
       });
 
@@ -86,7 +86,7 @@ export const PpNotifikasiIndex: FC<PpNotifikasiProps> = ({
 
   const handleMarkAllRead = async () => {
     try {
-      await api.post(`/v1${basePath}/notifikasi/read-all`);
+      await api.post('/v1/notifications/read-all');
       setItems((prev) => prev.map((item) => ({ ...item, read_at: new Date().toISOString() })));
       setUnreadCount(0);
     } catch (err) {
@@ -97,7 +97,7 @@ export const PpNotifikasiIndex: FC<PpNotifikasiProps> = ({
   const handleMarkOneRead = async (item: PpNotificationItem) => {
     if (!item.read_at && item.id) {
       try {
-        await api.post(`/v1${basePath}/notifikasi/${item.id}/read`);
+        await api.post(`/v1/notifications/${item.id}/read`);
         setItems((prev) =>
           prev.map((i) => (i.id === item.id ? { ...i, read_at: new Date().toISOString() } : i))
         );

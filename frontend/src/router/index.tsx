@@ -170,6 +170,18 @@ export const AppRoutes: FC = () => {
 
       {/* Protected Routes: requires authenticated user */}
       <Route element={<ProtectedRoute />}>
+        {/* Centralized Notifications Route */}
+        <Route
+          path="/notifikasi"
+          element={
+            <PpNotifikasiIndex
+              basePath=""
+              roleTitle="Notifikasi"
+              roleSubtitle="Pemberitahuan Sistem"
+            />
+          }
+        />
+
         {/* Admin Routes */}
         <Route element={<RoleRoute allowedRoles={['Admin']} />}>
           <Route path="/admin/dashboard" element={<AdminDashboard />} />

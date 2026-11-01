@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\ApprovalPengadaan;
 use App\Models\Dokumen;
-use App\Models\Notification;
 use App\Models\Pengadaan;
 use App\Models\StatusHistory;
 use App\Models\User;
@@ -207,14 +206,13 @@ class PpService
 
             // 4. Kirim notifikasi ke PPK penanggung jawab
             if ($pengadaan->ppk_id) {
-                Notification::create([
-                    'user_id' => $pengadaan->ppk_id,
-                    'channel' => 'in_app',
-                    'judul' => 'Pengadaan Membutuhkan Penandatanganan',
-                    'pesan' => "Pengadaan '{$pengadaan->Permohonan?->judul}' telah disetujui PP dan diteruskan untuk penandatanganan PPK.",
-                    'ref_type' => 'pengadaan',
-                    'ref_id' => $pengadaan->id,
-                ]);
+                app(NotificationService::class)->send(
+                    user: $pengadaan->ppk_id,
+                    judul: 'Pengadaan Membutuhkan Penandatanganan',
+                    pesan: "Pengadaan '{$pengadaan->Permohonan?->judul}' telah disetujui PP dan diteruskan untuk penandatanganan PPK.",
+                    refType: 'pengadaan',
+                    refId: $pengadaan->id,
+                );
             }
 
             return $pengadaan;
@@ -262,14 +260,13 @@ class PpService
             // 4. Kirim notifikasi ke PPBJ pembuat paket
             $ppbjUser = User::whereHas('Role', fn ($q) => $q->where('nama', 'PPBJ'))->first();
             if ($ppbjUser) {
-                Notification::create([
-                    'user_id' => $ppbjUser->id,
-                    'channel' => 'in_app',
-                    'judul' => 'Dokumen Pengadaan Perlu Revisi',
-                    'pesan' => "Dokumen pengadaan '{$pengadaan->Permohonan?->judul}' dikembalikan oleh PP: {$alasan}",
-                    'ref_type' => 'pengadaan',
-                    'ref_id' => $pengadaan->id,
-                ]);
+                app(NotificationService::class)->send(
+                    user: $ppbjUser->id,
+                    judul: 'Dokumen Pengadaan Perlu Revisi',
+                    pesan: "Dokumen pengadaan '{$pengadaan->Permohonan?->judul}' dikembalikan oleh PP: {$alasan}",
+                    refType: 'pengadaan',
+                    refId: $pengadaan->id,
+                );
             }
 
             return $pengadaan;
@@ -283,26 +280,7 @@ class PpService
      */
     public function getNotifications(User $user, ?string $tab = 'semua'): array
     {
-        $query = Notification::where('user_id', $user->id);
-
-        if ($tab === 'pengingat') {
-            $query->where('judul', 'like', '%pengingat%');
-        } elseif ($tab === 'status') {
-            $query->where(function ($q) {
-                $q->where('judul', 'like', '%status%')
-                    ->orWhere('judul', 'like', '%disetujui%')
-                    ->orWhere('judul', 'like', '%ditolak%');
-            });
-        }
-
-        $notifications = $query->orderByDesc('created_at')->paginate(10)->withQueryString();
-        $unreadCount = Notification::where('user_id', $user->id)->whereNull('read_at')->count();
-
-        return [
-            'notifications' => $notifications,
-            'unread_count' => $unreadCount,
-            'active_tab' => $tab ?? 'semua',
-        ];
+        return app(NotificationService::class)->getNotifications($user, $tab);
     }
 
     /**
@@ -310,8 +288,6 @@ class PpService
      */
     public function markAllNotificationsRead(User $user): void
     {
-        Notification::where('user_id', $user->id)
-            ->whereNull('read_at')
-            ->update(['read_at' => Carbon::now()]);
+        app(NotificationService::class)->markAllAsRead($user);
     }
 }

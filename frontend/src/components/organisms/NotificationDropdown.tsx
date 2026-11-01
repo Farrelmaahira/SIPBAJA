@@ -1,6 +1,7 @@
-import { useState, type FC } from 'react';
+import { useState, useEffect, type FC } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCheck, Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { CheckCheck, Clock, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import api from '../../services/api';
 
 export interface NotificationItem {
   id: number | string;
@@ -27,31 +28,99 @@ export const NotificationDropdown: FC<NotificationDropdownProps> = ({
   onClose,
   notifications = [],
   unreadCount = 0,
-  notifikasiHref = '/pp/notifikasi',
+  notifikasiHref = '/notifikasi',
   onMarkAllRead,
 }) => {
   const [tab, setTab] = useState<'semua' | 'pengingat' | 'status'>('semua');
+  const [items, setItems] = useState<NotificationItem[]>(notifications);
+  const [currentUnreadCount, setCurrentUnreadCount] = useState<number>(unreadCount);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const fetchNotificationsFromApi = async (selectedTab = tab) => {
+    setIsLoading(true);
+    try {
+      if (selectedTab === 'semua') {
+        const res = await api.get<{
+          recentNotifications?: NotificationItem[];
+          unreadNotificationsCount?: number;
+          unreadCount?: number;
+        }>('/v1/notifications/summary');
+
+        if (res.data.recentNotifications) {
+          setItems(res.data.recentNotifications);
+        }
+        const unread = res.data.unreadNotificationsCount ?? res.data.unreadCount;
+        if (unread !== undefined) {
+          setCurrentUnreadCount(unread);
+        }
+      } else {
+        const res = await api.get<{
+          notifications?: { data?: NotificationItem[] };
+          unreadCount?: number;
+          unreadNotificationsCount?: number;
+        }>('/v1/notifications', {
+          params: { tab: selectedTab, per_page: 5 },
+        });
+
+        if (res.data.notifications?.data) {
+          setItems(res.data.notifications.data);
+        }
+        const unread = res.data.unreadCount ?? res.data.unreadNotificationsCount;
+        if (unread !== undefined) {
+          setCurrentUnreadCount(unread);
+        }
+      }
+    } catch (err) {
+      console.error('Gagal mengambil data notifikasi:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      void fetchNotificationsFromApi(tab);
+    }
+  }, [isOpen, tab]);
+
+  useEffect(() => {
+    if (notifications.length > 0) {
+      setItems(notifications);
+    }
+  }, [notifications]);
+
+  useEffect(() => {
+    if (unreadCount !== undefined) {
+      setCurrentUnreadCount(unreadCount);
+    }
+  }, [unreadCount]);
 
   if (!isOpen) return null;
 
-  const filtered = notifications.filter((item) => {
-    if (tab === 'pengingat') return item.judul?.toLowerCase().includes('pengingat');
-    if (tab === 'status') {
-      const j = item.judul?.toLowerCase() || '';
-      return (
-        j.includes('status') ||
-        j.includes('disetujui') ||
-        j.includes('ditolak') ||
-        j.includes('verifikasi') ||
-        j.includes('dikembalikan')
-      );
+  const handleMarkAllRead = async () => {
+    try {
+      await api.post('/v1/notifications/read-all');
+      setItems((prev) => prev.map((item) => ({ ...item, read_at: new Date().toISOString() })));
+      setCurrentUnreadCount(0);
+      if (onMarkAllRead) {
+        onMarkAllRead();
+      }
+    } catch (err) {
+      console.error('Gagal menandai semua notifikasi telah dibaca:', err);
     }
-    return true;
-  });
+  };
 
-  const handleMarkAllRead = () => {
-    if (onMarkAllRead) {
-      onMarkAllRead();
+  const handleMarkOneRead = async (item: NotificationItem) => {
+    if (!item.read_at && item.id) {
+      try {
+        await api.post(`/v1/notifications/${item.id}/read`);
+        setItems((prev) =>
+          prev.map((i) => (i.id === item.id ? { ...i, read_at: new Date().toISOString() } : i))
+        );
+        setCurrentUnreadCount((prev) => Math.max(0, prev - 1));
+      } catch (err) {
+        console.error('Gagal menandai notifikasi telah dibaca:', err);
+      }
     }
   };
 
@@ -83,16 +152,14 @@ export const NotificationDropdown: FC<NotificationDropdownProps> = ({
       <div className="p-5 pb-3.5 border-b border-[#F0F4F2]">
         <div className="flex items-start justify-between">
           <div>
-            <h4 className="text-[17px] font-bold text-[#14201C] leading-tight">
-              Notifikasi
-            </h4>
+            <h4 className="text-[17px] font-bold text-[#14201C] leading-tight">Notifikasi</h4>
             <p className="text-xs text-[#8A9A95] mt-0.5">
-              {unreadCount} belum dibaca
+              {currentUnreadCount} belum dibaca
             </p>
           </div>
           <button
             type="button"
-            onClick={handleMarkAllRead}
+            onClick={() => void handleMarkAllRead()}
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0E7C5A] hover:underline cursor-pointer mt-0.5"
           >
             <CheckCheck className="w-4 h-4" />
@@ -139,18 +206,24 @@ export const NotificationDropdown: FC<NotificationDropdownProps> = ({
       </div>
 
       <div className="max-h-[380px] overflow-y-auto p-3 space-y-2">
-        {filtered.length === 0 ? (
+        {isLoading && items.length === 0 ? (
+          <div className="py-8 text-center text-xs text-[#8A9A95] flex items-center justify-center gap-2">
+            <Loader2 className="w-4 h-4 animate-spin text-[#0E7C5A]" />
+            <span>Memuat notifikasi...</span>
+          </div>
+        ) : items.length === 0 ? (
           <div className="py-8 text-center text-xs text-[#8A9A95]">
             Tidak ada notifikasi pada kategori ini.
           </div>
         ) : (
-          filtered.map((item) => {
+          items.map((item) => {
             const isUnread = !item.read_at;
             return (
               <div
                 key={item.id}
-                className={`flex items-start gap-3.5 p-3.5 rounded-2xl transition-colors ${
-                  isUnread ? 'bg-[#EAF6F1]' : 'bg-white hover:bg-[#F8FAF9]'
+                onClick={() => void handleMarkOneRead(item)}
+                className={`flex items-start gap-3.5 p-3.5 rounded-2xl transition-colors cursor-pointer ${
+                  isUnread ? 'bg-[#EAF6F1] hover:bg-[#DDF3E8]' : 'bg-white hover:bg-[#F8FAF9]'
                 }`}
               >
                 {getIcon(item)}
@@ -174,7 +247,7 @@ export const NotificationDropdown: FC<NotificationDropdownProps> = ({
                             month: 'short',
                             year: 'numeric',
                           })
-                        : '2 jam lalu')}
+                        : 'Baru saja')}
                   </span>
                 </div>
               </div>
