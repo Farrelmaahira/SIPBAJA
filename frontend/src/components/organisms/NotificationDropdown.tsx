@@ -172,33 +172,30 @@ export const NotificationDropdown: FC<NotificationDropdownProps> = ({
           <button
             type="button"
             onClick={() => setTab('semua')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer border ${
-              tab === 'semua'
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer border ${tab === 'semua'
                 ? 'bg-[#EAF6F1] text-[#0E7C5A] border-[#0E7C5A]'
                 : 'bg-white text-[#5F6F6A] border-[#E4EBE8] hover:bg-[#F4F7F5]'
-            }`}
+              }`}
           >
             Semua
           </button>
           <button
             type="button"
             onClick={() => setTab('pengingat')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer border ${
-              tab === 'pengingat'
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer border ${tab === 'pengingat'
                 ? 'bg-[#EAF6F1] text-[#0E7C5A] border-[#0E7C5A]'
                 : 'bg-white text-[#5F6F6A] border-[#E4EBE8] hover:bg-[#F4F7F5]'
-            }`}
+              }`}
           >
             Pengingat
           </button>
           <button
             type="button"
             onClick={() => setTab('status')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer border ${
-              tab === 'status'
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer border ${tab === 'status'
                 ? 'bg-[#EAF6F1] text-[#0E7C5A] border-[#0E7C5A]'
                 : 'bg-white text-[#5F6F6A] border-[#E4EBE8] hover:bg-[#F4F7F5]'
-            }`}
+              }`}
           >
             Status
           </button>
@@ -222,9 +219,8 @@ export const NotificationDropdown: FC<NotificationDropdownProps> = ({
               <div
                 key={item.id}
                 onClick={() => void handleMarkOneRead(item)}
-                className={`flex items-start gap-3.5 p-3.5 rounded-2xl transition-colors cursor-pointer ${
-                  isUnread ? 'bg-[#EAF6F1] hover:bg-[#DDF3E8]' : 'bg-white hover:bg-[#F8FAF9]'
-                }`}
+                className={`flex items-start gap-3.5 p-3.5 rounded-2xl transition-colors cursor-pointer ${isUnread ? 'bg-[#EAF6F1] hover:bg-[#DDF3E8]' : 'bg-white hover:bg-[#F8FAF9]'
+                  }`}
               >
                 {getIcon(item)}
                 <div className="flex-1 min-w-0">
@@ -243,10 +239,10 @@ export const NotificationDropdown: FC<NotificationDropdownProps> = ({
                     {item.waktu ||
                       (item.created_at
                         ? new Date(item.created_at).toLocaleDateString('id-ID', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric',
-                          })
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                        })
                         : 'Baru saja')}
                   </span>
                 </div>
