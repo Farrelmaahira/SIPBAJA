@@ -45,14 +45,14 @@ Rules:
 
 ---
 
-## 4. Architecture: Service Layer (mandatory)
+## 4. Architecture: Service Layer & API Controllers (mandatory)
 
 Business logic lives ONLY in Service classes. No exceptions, including authentication.
 
 Request flow:
 
 ```
-React Page (Axios)  ->  API Controller  ->  Service  ->  Model
+React Page (Axios)  ->  API Controller (Role-based Folder)  ->  Service  ->  Model
 ```
 
 What belongs where:
@@ -61,7 +61,43 @@ What belongs where:
 - Controllers must NOT contain business logic or direct Eloquent queries. A controller method that decides, calculates, or queries beyond reading for display is a violation.
 - This pattern applies to EVERY feature, without exception.
 
-Rules:
+### 4.1 Controller Organization by Role (Mandatory Foldering)
+Every new or existing controller MUST be placed in its role/domain subdirectory inside `backend/app/Http/Controllers/`. Never place role controllers directly in the root controller directory:
+- `backend/app/Http/Controllers/Admin/`: Modul Admin (Pengguna, Unit Kerja, MAK, Role, Role-Permission, Dashboard).
+- `backend/app/Http/Controllers/Auth/`: Autentikasi dan sesi (Login, Logout).
+- `backend/app/Http/Controllers/Bidang2/`: Pengawasan Wakil Direktur II (Dashboard, Pengajuan, RKAKL).
+- `backend/app/Http/Controllers/Keuangan/`: Pencairan dan verifikasi realisasi belanja (Dashboard).
+- `backend/app/Http/Controllers/Pemohon/`: Pengajuan dan tracking unit jurusan/bagian (Dashboard, Permohonan).
+- `backend/app/Http/Controllers/Perencanaan/`: Verifikasi permohonan, penetapan MAK, RKAKL (Dashboard, Pengajuan, Jenis MAK, RKAKL, Notifikasi).
+- `backend/app/Http/Controllers/Perlengkapan/`: Inventaris dan sarana prasarana (Dashboard).
+- `backend/app/Http/Controllers/Pp/`: Pejabat Pengadaan (Dashboard, Review Pengadaan, Approval, Notifikasi).
+- `backend/app/Http/Controllers/PPBJ/`: Pengelola Pengadaan Barang dan Jasa (Dashboard, Permohonan, Draft Paket, Submit Reviewer).
+- `backend/app/Http/Controllers/Ppk/`: Pejabat Pembuat Komitmen (Dashboard, Review Pengadaan, Approval Pembayaran, Notifikasi).
+- `backend/app/Http/Controllers/Controller.php`: Hanya base controller yang berada di root.
+
+Controllers must use the appropriate namespace (e.g., `namespace App\Http\Controllers\Admin;`) and import `use App\Http\Controllers\Controller;`.
+
+### 4.2 API Contract Compliance
+Every API endpoint created or modified MUST strictly comply with the API Contract in `docs/API_CONTRACT.md`:
+- **Routing & Prefix:** All endpoints must be registered under the `/api/v1/` prefix in `backend/routes/api.php` and protected by `auth:sanctum` (plus role middleware where applicable).
+- **Authentication Support:** Must support both Sanctum Bearer token (`Authorization: Bearer <token>`) and stateful session cookies with CSRF protection.
+- **Success Response Standards:**
+  - Single resource / mutation: JSON containing `message` and/or `data` / entity object (HTTP 200 or 201).
+  - Deletions: HTTP 204 No Content or `{ "message": "..." }`.
+  - Collections: Must adhere to the paginated or list schema defined in `docs/API_CONTRACT.md`.
+- **Error Response Standards:**
+  - 422: Form validation errors with Indonesian error messages (`{ "message": "...", "errors": { "field": ["pesan error"] } }`).
+  - 422: Business constraint / relation integrity errors (`{ "message": "Deskripsi kesalahan aturan bisnis" }`).
+  - 401: Unauthenticated access (`{ "message": "Unauthenticated." }`).
+  - 403: Role or permission forbidden (`{ "message": "Akses ditolak untuk peran Anda." }`).
+  - 404: Model or resource not found (`{ "message": "No query results for model [...]" }`).
+  - 429: Rate-limited request (`{ "message": "Terlalu banyak percobaan..." }`).
+- **Synchronous Updates:** If an endpoint contract is added or modified, update:
+  1. `docs/API_CONTRACT.md`
+  2. `docs/SIPBAJA_API.postman_collection.json`
+  3. Frontend TypeScript types in `frontend/src/types/api.ts`
+
+### 4.3 General Architecture Rules
 - Controllers handle only: input, validation call, calling a Service, returning `JsonResponse` or HTTP response (e.g. 200, 201, 204), never Inertia renders or redirects.
 - ALL business logic and ALL write queries live in Service classes.
 - Controllers must NOT contain business logic or direct Eloquent queries.
@@ -132,6 +168,8 @@ Domain terms stay in Indonesian (`Permohonan`, `Pengadaan`, `Kontrak`, `Pembayar
 - Do NOT add packages.
 - Do NOT invent business rules.
 - Do NOT put business logic in controllers, React components, Blade views, or Models.
+- Do NOT place role controllers directly in the root of `backend/app/Http/Controllers/`; always place them into their designated role subdirectory (e.g. `Admin/`, `Pemohon/`, `Perencanaan/`).
+- Do NOT create, return, or alter API endpoints that violate the specifications in `docs/API_CONTRACT.md`.
 - Do NOT use DB triggers.
 - Do NOT edit old migrations.
 - Do NOT refactor or "clean up" code outside the scope of the current task.
