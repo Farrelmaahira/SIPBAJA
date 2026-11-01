@@ -1,6 +1,6 @@
 {
   "info": {
-    "_postman_id": "d28dbce7-4b64-4de1-b750-87d208149d87",
+    "_postman_id": "0fbca51a-bb65-418b-be7b-c11496badc41",
     "name": "SIPBAJA RESTful API Collection",
     "description": "Koleksi API SIPBAJA (Sistem Informasi Pengadaan Barang dan Jasa) berbasis Laravel 11 RESTful API dengan otentikasi Laravel Sanctum dan role-based access control.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -9,6 +9,11 @@
     {
       "key": "baseUrl",
       "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
       "type": "string"
     },
     {
@@ -26,6 +31,12 @@
           "// Set header standar untuk setiap request",
           "pm.request.headers.upsert({key: 'Accept', value: 'application/json'});",
           "pm.request.headers.upsert({key: 'Referer', value: pm.collectionVariables.get('baseUrl')});",
+          "",
+          "// Sertakan Bearer Token jika ada",
+          "let token = pm.collectionVariables.get('token');",
+          "if (token) {",
+          "    pm.request.headers.upsert({key: 'Authorization', value: 'Bearer ' + token});",
+          "}",
           "",
           "// Sertakan token CSRF jika ada",
           "let xsrfToken = pm.collectionVariables.get('xsrfToken');",
@@ -110,7 +121,7 @@
                 "login"
               ]
             },
-            "description": "Login sebagai Admin (admin@pnj.ac.id). Session cookie akan otomatis disimpan oleh Postman Cookie Jar.",
+            "description": "Login sebagai Admin (admin@pnj.ac.id). Token Bearer akan disimpan otomatis ke variabel collection {token}.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"login\": \"admin@pnj.ac.id\",\n  \"password\": \"password123\",\n  \"remember\": true\n}",
@@ -121,7 +132,22 @@
               }
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let res = pm.response.json();",
+                  "if (res && res.token) {",
+                  "    pm.collectionVariables.set('token', res.token);",
+                  "    console.log('Bearer token saved to collection variable:', res.token);",
+                  "}"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Login - Pemohon",
@@ -150,7 +176,7 @@
                 "login"
               ]
             },
-            "description": "Login sebagai Pemohon (jurusan@pnj.ac.id). Session cookie akan otomatis disimpan oleh Postman Cookie Jar.",
+            "description": "Login sebagai Pemohon (jurusan@pnj.ac.id). Token Bearer akan disimpan otomatis ke variabel collection {token}.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"login\": \"jurusan@pnj.ac.id\",\n  \"password\": \"password123\",\n  \"remember\": true\n}",
@@ -161,7 +187,22 @@
               }
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let res = pm.response.json();",
+                  "if (res && res.token) {",
+                  "    pm.collectionVariables.set('token', res.token);",
+                  "    console.log('Bearer token saved to collection variable:', res.token);",
+                  "}"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Login - Perencanaan",
@@ -190,7 +231,7 @@
                 "login"
               ]
             },
-            "description": "Login sebagai Perencanaan (perencanaan@pnj.ac.id). Session cookie akan otomatis disimpan oleh Postman Cookie Jar.",
+            "description": "Login sebagai Perencanaan (perencanaan@pnj.ac.id). Token Bearer akan disimpan otomatis ke variabel collection {token}.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"login\": \"perencanaan@pnj.ac.id\",\n  \"password\": \"password123\",\n  \"remember\": true\n}",
@@ -201,7 +242,22 @@
               }
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let res = pm.response.json();",
+                  "if (res && res.token) {",
+                  "    pm.collectionVariables.set('token', res.token);",
+                  "    console.log('Bearer token saved to collection variable:', res.token);",
+                  "}"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Login - Bidang 2",
@@ -230,7 +286,7 @@
                 "login"
               ]
             },
-            "description": "Login sebagai Bidang 2 (bidang2@pnj.ac.id). Session cookie akan otomatis disimpan oleh Postman Cookie Jar.",
+            "description": "Login sebagai Bidang 2 (bidang2@pnj.ac.id). Token Bearer akan disimpan otomatis ke variabel collection {token}.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"login\": \"bidang2@pnj.ac.id\",\n  \"password\": \"password123\",\n  \"remember\": true\n}",
@@ -241,7 +297,22 @@
               }
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let res = pm.response.json();",
+                  "if (res && res.token) {",
+                  "    pm.collectionVariables.set('token', res.token);",
+                  "    console.log('Bearer token saved to collection variable:', res.token);",
+                  "}"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Login - PPBJ",
@@ -270,7 +341,7 @@
                 "login"
               ]
             },
-            "description": "Login sebagai PPBJ (ppbj@pnj.ac.id). Session cookie akan otomatis disimpan oleh Postman Cookie Jar.",
+            "description": "Login sebagai PPBJ (ppbj@pnj.ac.id). Token Bearer akan disimpan otomatis ke variabel collection {token}.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"login\": \"ppbj@pnj.ac.id\",\n  \"password\": \"password123\",\n  \"remember\": true\n}",
@@ -281,7 +352,22 @@
               }
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let res = pm.response.json();",
+                  "if (res && res.token) {",
+                  "    pm.collectionVariables.set('token', res.token);",
+                  "    console.log('Bearer token saved to collection variable:', res.token);",
+                  "}"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Login - PP (Pejabat Pengadaan)",
@@ -310,7 +396,7 @@
                 "login"
               ]
             },
-            "description": "Login sebagai PP (Pejabat Pengadaan) (pp@pnj.ac.id). Session cookie akan otomatis disimpan oleh Postman Cookie Jar.",
+            "description": "Login sebagai PP (Pejabat Pengadaan) (pp@pnj.ac.id). Token Bearer akan disimpan otomatis ke variabel collection {token}.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"login\": \"pp@pnj.ac.id\",\n  \"password\": \"password123\",\n  \"remember\": true\n}",
@@ -321,7 +407,22 @@
               }
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let res = pm.response.json();",
+                  "if (res && res.token) {",
+                  "    pm.collectionVariables.set('token', res.token);",
+                  "    console.log('Bearer token saved to collection variable:', res.token);",
+                  "}"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Login - PPK (Pejabat Pembuat Komitmen)",
@@ -350,7 +451,7 @@
                 "login"
               ]
             },
-            "description": "Login sebagai PPK (Pejabat Pembuat Komitmen) (ppk@pnj.ac.id). Session cookie akan otomatis disimpan oleh Postman Cookie Jar.",
+            "description": "Login sebagai PPK (Pejabat Pembuat Komitmen) (ppk@pnj.ac.id). Token Bearer akan disimpan otomatis ke variabel collection {token}.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"login\": \"ppk@pnj.ac.id\",\n  \"password\": \"password123\",\n  \"remember\": true\n}",
@@ -361,7 +462,22 @@
               }
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let res = pm.response.json();",
+                  "if (res && res.token) {",
+                  "    pm.collectionVariables.set('token', res.token);",
+                  "    console.log('Bearer token saved to collection variable:', res.token);",
+                  "}"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Login - Perlengkapan",
@@ -390,7 +506,7 @@
                 "login"
               ]
             },
-            "description": "Login sebagai Perlengkapan (perlengkapan@pnj.ac.id). Session cookie akan otomatis disimpan oleh Postman Cookie Jar.",
+            "description": "Login sebagai Perlengkapan (perlengkapan@pnj.ac.id). Token Bearer akan disimpan otomatis ke variabel collection {token}.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"login\": \"perlengkapan@pnj.ac.id\",\n  \"password\": \"password123\",\n  \"remember\": true\n}",
@@ -401,7 +517,22 @@
               }
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let res = pm.response.json();",
+                  "if (res && res.token) {",
+                  "    pm.collectionVariables.set('token', res.token);",
+                  "    console.log('Bearer token saved to collection variable:', res.token);",
+                  "}"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Login - Keuangan",
@@ -430,7 +561,7 @@
                 "login"
               ]
             },
-            "description": "Login sebagai Keuangan (keuangan@pnj.ac.id). Session cookie akan otomatis disimpan oleh Postman Cookie Jar.",
+            "description": "Login sebagai Keuangan (keuangan@pnj.ac.id). Token Bearer akan disimpan otomatis ke variabel collection {token}.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"login\": \"keuangan@pnj.ac.id\",\n  \"password\": \"password123\",\n  \"remember\": true\n}",
@@ -441,7 +572,22 @@
               }
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let res = pm.response.json();",
+                  "if (res && res.token) {",
+                  "    pm.collectionVariables.set('token', res.token);",
+                  "    console.log('Bearer token saved to collection variable:', res.token);",
+                  "}"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Get Authenticated User",
@@ -490,9 +636,21 @@
                 "logout"
               ]
             },
-            "description": "Mengakhiri sesi autentikasi dan menghapus cookie session."
+            "description": "Mengakhiri sesi autentikasi dan mencabut bearer token."
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('token', '');",
+                  "console.log('Bearer token cleared.');"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
