@@ -5,12 +5,10 @@ namespace App\Services;
 use App\Models\ApprovalPermohonan;
 use App\Models\Dokumen;
 use App\Models\Mak;
-use App\Models\Notification;
 use App\Models\Permohonan;
 use App\Models\PermohonanMak;
 use App\Models\StatusHistory;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
@@ -349,33 +347,11 @@ class PerencanaanService
      */
     public function getNotifications(User $user, ?string $tab = 'semua'): array
     {
-        $query = Notification::where('user_id', $user->id);
-
-        if ($tab === 'pengingat') {
-            $query->where('judul', 'like', '%pengingat%');
-        } elseif ($tab === 'status') {
-            $query->where(function ($q) {
-                $q->where('judul', 'like', '%status%')
-                    ->orWhere('judul', 'like', '%disetujui%')
-                    ->orWhere('judul', 'like', '%ditolak%')
-                    ->orWhere('judul', 'like', '%verifikasi%');
-            });
-        }
-
-        $notifications = $query->orderByDesc('created_at')->paginate(10)->withQueryString();
-        $unreadCount = Notification::where('user_id', $user->id)->whereNull('read_at')->count();
-
-        return [
-            'notifications' => $notifications,
-            'unread_count' => $unreadCount,
-            'active_tab' => $tab ?? 'semua',
-        ];
+        return app(NotificationService::class)->getNotifications($user, $tab);
     }
 
     public function markAllNotificationsRead(User $user): void
     {
-        Notification::where('user_id', $user->id)
-            ->whereNull('read_at')
-            ->update(['read_at' => Carbon::now()]);
+        app(NotificationService::class)->markAllAsRead($user);
     }
 }

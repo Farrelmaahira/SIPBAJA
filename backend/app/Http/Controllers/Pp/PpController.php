@@ -3,17 +3,19 @@
 namespace App\Http\Controllers\Pp;
 
 use App\Http\Controllers\Controller;
-
 use App\Http\Requests\ReviewPengadaanRequest;
-use App\Models\Notification;
 use App\Models\Pengadaan;
+use App\Services\NotificationService;
 use App\Services\PpService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class PpController extends Controller
 {
-    public function __construct(private PpService $ppService) {}
+    public function __construct(
+        private PpService $ppService,
+        private NotificationService $notificationService
+    ) {}
 
     /**
      * Tampilan Halaman Dashboard PP.
@@ -21,20 +23,14 @@ class PpController extends Controller
     public function dashboard(): JsonResponse
     {
         $dashboardData = $this->ppService->getDashboardData();
-        $recentNotifications = Notification::where('user_id', auth()->id())
-            ->orderByDesc('created_at')
-            ->limit(5)
-            ->get();
-        $unreadCount = Notification::where('user_id', auth()->id())
-            ->whereNull('read_at')
-            ->count();
+        $notifData = $this->notificationService->getRecentAndUnreadCount(auth()->id());
 
         return response()->json([
             'stats' => $dashboardData['stats'],
             'chart' => $dashboardData['chart'],
             'pengadaanPerluReview' => $dashboardData['pengadaan_perlu_review'],
-            'recentNotifications' => $recentNotifications,
-            'unreadNotificationsCount' => $unreadCount,
+            'recentNotifications' => $notifData['recentNotifications'],
+            'unreadNotificationsCount' => $notifData['unreadNotificationsCount'],
         ]);
     }
 
@@ -49,19 +45,13 @@ class PpController extends Controller
         ];
 
         $pengajuan = $this->ppService->paginatePengadaan($filters, 10);
-        $recentNotifications = Notification::where('user_id', auth()->id())
-            ->orderByDesc('created_at')
-            ->limit(5)
-            ->get();
-        $unreadCount = Notification::where('user_id', auth()->id())
-            ->whereNull('read_at')
-            ->count();
+        $notifData = $this->notificationService->getRecentAndUnreadCount(auth()->id());
 
         return response()->json([
             'pengajuan' => $pengajuan,
             'filters' => $filters,
-            'recentNotifications' => $recentNotifications,
-            'unreadNotificationsCount' => $unreadCount,
+            'recentNotifications' => $notifData['recentNotifications'],
+            'unreadNotificationsCount' => $notifData['unreadNotificationsCount'],
         ]);
     }
 
@@ -71,18 +61,12 @@ class PpController extends Controller
     public function review(Pengadaan $pengadaan): JsonResponse
     {
         $detail = $this->ppService->getDetailPengadaan($pengadaan);
-        $recentNotifications = Notification::where('user_id', auth()->id())
-            ->orderByDesc('created_at')
-            ->limit(5)
-            ->get();
-        $unreadCount = Notification::where('user_id', auth()->id())
-            ->whereNull('read_at')
-            ->count();
+        $notifData = $this->notificationService->getRecentAndUnreadCount(auth()->id());
 
         return response()->json([
             'detail' => $detail,
-            'recentNotifications' => $recentNotifications,
-            'unreadNotificationsCount' => $unreadCount,
+            'recentNotifications' => $notifData['recentNotifications'],
+            'unreadNotificationsCount' => $notifData['unreadNotificationsCount'],
         ]);
     }
 
@@ -116,59 +100,12 @@ class PpController extends Controller
     public function show(Pengadaan $pengadaan): JsonResponse
     {
         $detail = $this->ppService->getDetailPengadaan($pengadaan);
-        $recentNotifications = Notification::where('user_id', auth()->id())
-            ->orderByDesc('created_at')
-            ->limit(5)
-            ->get();
-        $unreadCount = Notification::where('user_id', auth()->id())
-            ->whereNull('read_at')
-            ->count();
+        $notifData = $this->notificationService->getRecentAndUnreadCount(auth()->id());
 
         return response()->json([
             'detail' => $detail,
-            'recentNotifications' => $recentNotifications,
-            'unreadNotificationsCount' => $unreadCount,
-        ]);
-    }
-
-    /**
-     * Tampilan Halaman Semua Notifikasi.
-     */
-    public function notifikasi(Request $request): JsonResponse
-    {
-        $tab = $request->query('tab', 'semua');
-        $notifData = $this->ppService->getNotifications(auth()->user(), $tab);
-
-        return response()->json([
-            'notifications' => $notifData['notifications'],
-            'unreadCount' => $notifData['unread_count'],
-            'activeTab' => $notifData['active_tab'],
-        ]);
-    }
-
-    /**
-     * Aksi Tandai Semua Notifikasi Telah Dibaca.
-     */
-    public function markAllRead(): JsonResponse
-    {
-        $this->ppService->markAllNotificationsRead(auth()->user());
-
-        return response()->json([
-            'message' => 'Semua notifikasi telah ditandai dibaca.',
-        ]);
-    }
-
-    /**
-     * Aksi Tandai Satu Notifikasi Telah Dibaca.
-     */
-    public function markOneRead(Notification $notification): JsonResponse
-    {
-        if ($notification->user_id === auth()->id() && is_null($notification->read_at)) {
-            $notification->update(['read_at' => now()]);
-        }
-
-        return response()->json([
-            'message' => 'Notifikasi ditandai dibaca.',
+            'recentNotifications' => $notifData['recentNotifications'],
+            'unreadNotificationsCount' => $notifData['unreadNotificationsCount'],
         ]);
     }
 
@@ -178,18 +115,12 @@ class PpController extends Controller
     public function profil(): JsonResponse
     {
         $user = auth()->user()->load(['Role', 'Unit']);
-        $recentNotifications = Notification::where('user_id', auth()->id())
-            ->orderByDesc('created_at')
-            ->limit(5)
-            ->get();
-        $unreadCount = Notification::where('user_id', auth()->id())
-            ->whereNull('read_at')
-            ->count();
+        $notifData = $this->notificationService->getRecentAndUnreadCount(auth()->id());
 
         return response()->json([
             'user' => $user,
-            'recentNotifications' => $recentNotifications,
-            'unreadNotificationsCount' => $unreadCount,
+            'recentNotifications' => $notifData['recentNotifications'],
+            'unreadNotificationsCount' => $notifData['unreadNotificationsCount'],
         ]);
     }
 }

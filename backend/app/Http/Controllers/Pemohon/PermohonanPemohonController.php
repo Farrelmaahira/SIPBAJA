@@ -16,7 +16,8 @@ class PermohonanPemohonController extends Controller
 {
     public function __construct(
         private PermohonanService $permohonanService,
-    ) {}
+    ) {
+    }
 
     /**
      * Menampilkan formulir pembuatan permohonan baru untuk Pemohon.

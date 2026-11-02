@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect, type FC, type ChangeEvent, type MouseEvent } from 'react';
-import { Menu, Bell, CheckCircle2 } from 'lucide-react';
+import { Menu, Bell } from 'lucide-react';
 import SearchBar from '../molecules/SearchBar';
 import ProfilePill, { type ProfilePillUser } from '../molecules/ProfilePill';
+import NotificationDropdown from './NotificationDropdown';
+import { useNotifications } from '../../hooks/useNotifications';
 
 export interface DashboardTopbarProps {
   onMenuClick?: () => void;
@@ -38,6 +40,7 @@ export const DashboardTopbar: FC<DashboardTopbarProps> = ({
 }) => {
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
+  const { unreadCount } = useNotifications();
 
   useEffect(() => {
     function handleClickOutside(e: globalThis.MouseEvent) {
@@ -103,7 +106,7 @@ export const DashboardTopbar: FC<DashboardTopbarProps> = ({
               aria-expanded={notifOpen}
             >
               <Bell className="w-5 h-5" />
-              {hasUnread && (
+              {(hasUnread || unreadCount > 0) && (
                 <span
                   className="absolute top-2.5 right-2.5 w-2.5 h-2.5 rounded-full bg-[#E5484D] border-2 border-white ring-1 ring-white"
                   aria-hidden="true"
@@ -111,23 +114,12 @@ export const DashboardTopbar: FC<DashboardTopbarProps> = ({
               )}
             </button>
 
-            {notifOpen && (
-              <div className="absolute right-0 mt-2 w-80 rounded-2xl bg-white border border-[#E4EBE8] shadow-xl py-3 z-50">
-                <div className="flex items-center justify-between px-4 pb-2.5 border-b border-[#F2F4F7]">
-                  <h4 className="text-sm font-bold text-[#1D2939]">Notifikasi</h4>
-                  <span className="text-[11px] text-[#0E7C5A] font-semibold">Tandai sudah dibaca</span>
-                </div>
-                <div className="p-4 text-center">
-                  <div className="w-10 h-10 rounded-full bg-[#E4F6EC] text-[#0E7C5A] flex items-center justify-center mx-auto mb-2">
-                    <CheckCircle2 className="w-5 h-5" />
-                  </div>
-                  <p className="text-xs font-semibold text-[#1D2939]">Semua Beres!</p>
-                  <p className="text-[11px] text-[#667085] mt-0.5">
-                    Tidak ada notifikasi atau pembaruan status baru saat ini.
-                  </p>
-                </div>
-              </div>
-            )}
+            <NotificationDropdown
+              isOpen={notifOpen}
+              onClose={() => setNotifOpen(false)}
+              unreadCount={unreadCount}
+              notifikasiHref="/notifikasi"
+            />
           </div>
         )}
 

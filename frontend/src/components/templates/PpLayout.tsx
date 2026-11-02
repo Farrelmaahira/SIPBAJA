@@ -2,7 +2,7 @@ import { useState, type FC, type ReactNode } from 'react';
 import PpSidebar, { type PpNavItem } from '../organisms/PpSidebar';
 import PpTopbar, { type BreadcrumbItem, type PpTopbarUser } from '../organisms/PpTopbar';
 import { useAuth } from '../../hooks/useAuth';
-import type { NotificationItem } from '../organisms/NotificationDropdown';
+import type { NotificationItem } from '../../types/notification';
 
 export type { PpNavItem } from '../organisms/PpSidebar';
 
@@ -30,8 +30,8 @@ export interface PpLayoutProps {
 export const PpLayout: FC<PpLayoutProps> = ({
   children,
   activeRoute = 'dashboard',
-  notifications = [],
-  unreadCount = 0,
+  notifications,
+  unreadCount,
   breadcrumb = null,
   pendingCount = 4,
   navItems = null,
@@ -48,8 +48,6 @@ export const PpLayout: FC<PpLayoutProps> = ({
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const effectiveUser = user || (auth.user as PpTopbarUser | null);
-  const effectiveNotifs = notifications;
-  const effectiveUnread = unreadCount;
 
   return (
     <div className="flex min-h-screen bg-[#F3F6F5] text-[#14201C] font-sans antialiased">
@@ -64,12 +62,12 @@ export const PpLayout: FC<PpLayoutProps> = ({
 
       {/* Main Area */}
       <div className="flex-1 flex flex-col min-w-0 px-4 sm:px-8 py-5 max-w-[1360px] mx-auto w-full">
-        {/* Topbar */}
+        {/* Topbar (automatically consumes NotificationContext if notifications/unreadCount not provided) */}
         <PpTopbar
           onMenuClick={() => setMobileOpen(true)}
           user={effectiveUser}
-          notifications={effectiveNotifs}
-          unreadCount={effectiveUnread}
+          notifications={notifications}
+          unreadCount={unreadCount}
           breadcrumb={breadcrumb}
           roleInitials={roleInitials}
           roleTitle={roleTitle}

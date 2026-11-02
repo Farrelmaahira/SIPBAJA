@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect, type FC, type ReactNode } from 'react';
 import { Menu, Bell, ChevronDown, User as UserIcon, LogOut, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import NotificationDropdown, { type NotificationItem } from './NotificationDropdown';
+import NotificationDropdown from './NotificationDropdown';
 import LogoutModal from './LogoutModal';
+import { useNotifications } from '../../hooks/useNotifications';
+import type { NotificationItem } from '../../types/notification';
 
 export interface BreadcrumbItem {
   label: ReactNode;
@@ -34,8 +36,8 @@ export interface PpTopbarProps {
 export const PpTopbar: FC<PpTopbarProps> = ({
   onMenuClick,
   user,
-  notifications = [],
-  unreadCount = 0,
+  notifications: propNotifications,
+  unreadCount: propUnreadCount,
   breadcrumb = null,
   roleInitials = 'PP',
   roleTitle = null,
@@ -50,6 +52,12 @@ export const PpTopbar: FC<PpTopbarProps> = ({
 
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+
+  const { recentNotifications, unreadCount: contextUnreadCount } = useNotifications();
+
+  const unreadCount = propUnreadCount !== undefined ? propUnreadCount : contextUnreadCount;
+  const notifications =
+    propNotifications && propNotifications.length > 0 ? propNotifications : recentNotifications;
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -175,47 +183,28 @@ export const PpTopbar: FC<PpTopbarProps> = ({
               <ChevronDown className="w-3.5 h-3.5 text-[#8A9A95] ml-0.5" />
             </button>
 
-            {/* Modal Profil Popover */}
             {profileOpen && (
-              <div className="absolute right-0 mt-2 w-60 rounded-[24px] bg-white border border-[#E4EBE8] shadow-[0_16px_40px_rgba(13,51,38,0.14)] py-2 z-50 animate-scale-up">
-                <div className="flex items-center gap-3.5 px-4 py-3.5 border-b border-[#F0F4F2]">
-                  <div className="w-11 h-11 rounded-full bg-[#0E7C5A] text-white font-bold text-xs flex items-center justify-center shrink-0">
-                    {roleInitials}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-bold text-[#14201C] truncate">
-                      {displayName}
-                    </p>
-                    <p className="text-xs text-[#8A9A95] truncate mt-0.5">
-                      {displayRole}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="py-1 border-b border-[#F0F4F2]">
-                  <Link
-                    to={profileHref}
-                    onClick={() => setProfileOpen(false)}
-                    className="flex items-center gap-3 px-4 py-2.5 text-xs font-medium text-[#5F6F6A] hover:text-[#14201C] hover:bg-[#F4F7F5] transition-colors"
-                  >
-                    <UserIcon className="w-4 h-4 text-[#5F6F6A]" />
-                    <span>Profil Saya</span>
-                  </Link>
-                </div>
-
-                <div className="pt-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setProfileOpen(false);
-                      setLogoutOpen(true);
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-[#D92D20] hover:bg-[#FEE4E2]/50 transition-colors cursor-pointer text-left"
-                  >
-                    <LogOut className="w-4 h-4 text-[#D92D20]" />
-                    <span>Keluar</span>
-                  </button>
-                </div>
+              <div className="absolute right-0 top-12 w-48 rounded-2xl bg-white border border-[#E4EBE8] shadow-lg py-1.5 z-50 animate-scale-up">
+                <Link
+                  to={profileHref}
+                  onClick={() => setProfileOpen(false)}
+                  className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-[#14201C] hover:bg-[#F4F7F5] transition-colors"
+                >
+                  <UserIcon className="w-4 h-4 text-[#8A9A95]" />
+                  Profil Saya
+                </Link>
+                <div className="my-1 border-t border-[#F0F4F2]" />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProfileOpen(false);
+                    setLogoutOpen(true);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-[#D92D20] hover:bg-[#FEE4E2]/40 transition-colors cursor-pointer text-left"
+                >
+                  <LogOut className="w-4 h-4 text-[#D92D20]" />
+                  Keluar
+                </button>
               </div>
             )}
           </div>
@@ -223,10 +212,7 @@ export const PpTopbar: FC<PpTopbarProps> = ({
       </header>
 
       {/* Logout Confirmation Modal */}
-      <LogoutModal
-        isOpen={logoutOpen}
-        onClose={() => setLogoutOpen(false)}
-      />
+      <LogoutModal isOpen={logoutOpen} onClose={() => setLogoutOpen(false)} />
     </>
   );
 };

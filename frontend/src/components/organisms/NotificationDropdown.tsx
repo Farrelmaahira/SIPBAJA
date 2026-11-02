@@ -1,16 +1,10 @@
-import { useState, type FC } from 'react';
+import { useState, useMemo, type FC } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCheck, Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { CheckCheck, Clock, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { useNotifications } from '../../hooks/useNotifications';
+import type { NotificationItem } from '../../types/notification';
 
-export interface NotificationItem {
-  id: number | string;
-  judul?: string;
-  pesan?: string;
-  waktu?: string;
-  read_at?: string | null;
-  created_at?: string;
-  [key: string]: unknown;
-}
+export type { NotificationItem };
 
 export interface NotificationDropdownProps {
   isOpen: boolean;
@@ -25,33 +19,63 @@ export interface NotificationDropdownProps {
 export const NotificationDropdown: FC<NotificationDropdownProps> = ({
   isOpen,
   onClose,
-  notifications = [],
-  unreadCount = 0,
-  notifikasiHref = '/pp/notifikasi',
+  notifications: propNotifications,
+  unreadCount: propUnreadCount,
+  notifikasiHref = '/notifikasi',
   onMarkAllRead,
 }) => {
   const [tab, setTab] = useState<'semua' | 'pengingat' | 'status'>('semua');
+  const {
+    recentNotifications,
+    unreadCount: contextUnreadCount,
+    markAsRead,
+    markAllAsRead,
+    isLoading,
+  } = useNotifications();
+
+  const currentUnreadCount = propUnreadCount !== undefined ? propUnreadCount : contextUnreadCount;
+  const baseItems = propNotifications && propNotifications.length > 0 ? propNotifications : recentNotifications;
+
+  const items = useMemo(() => {
+    if (tab === 'pengingat') {
+      return baseItems.filter((item) => item.judul?.toLowerCase().includes('pengingat'));
+    }
+    if (tab === 'status') {
+      return baseItems.filter((item) => {
+        const j = item.judul?.toLowerCase() || '';
+        return (
+          j.includes('status') ||
+          j.includes('disetujui') ||
+          j.includes('ditolak') ||
+          j.includes('dikembalikan') ||
+          j.includes('verifikasi') ||
+          j.includes('penandatanganan')
+        );
+      });
+    }
+    return baseItems;
+  }, [baseItems, tab]);
 
   if (!isOpen) return null;
 
-  const filtered = notifications.filter((item) => {
-    if (tab === 'pengingat') return item.judul?.toLowerCase().includes('pengingat');
-    if (tab === 'status') {
-      const j = item.judul?.toLowerCase() || '';
-      return (
-        j.includes('status') ||
-        j.includes('disetujui') ||
-        j.includes('ditolak') ||
-        j.includes('verifikasi') ||
-        j.includes('dikembalikan')
-      );
+  const handleMarkAllRead = async () => {
+    try {
+      await markAllAsRead();
+      if (onMarkAllRead) {
+        onMarkAllRead();
+      }
+    } catch (err) {
+      console.error('Gagal menandai semua notifikasi telah dibaca:', err);
     }
-    return true;
-  });
+  };
 
-  const handleMarkAllRead = () => {
-    if (onMarkAllRead) {
-      onMarkAllRead();
+  const handleMarkOneRead = async (item: NotificationItem) => {
+    if (!item.read_at && item.id) {
+      try {
+        await markAsRead(item.id);
+      } catch (err) {
+        console.error('Gagal menandai notifikasi telah dibaca:', err);
+      }
     }
   };
 
@@ -83,16 +107,14 @@ export const NotificationDropdown: FC<NotificationDropdownProps> = ({
       <div className="p-5 pb-3.5 border-b border-[#F0F4F2]">
         <div className="flex items-start justify-between">
           <div>
-            <h4 className="text-[17px] font-bold text-[#14201C] leading-tight">
-              Notifikasi
-            </h4>
+            <h4 className="text-[17px] font-bold text-[#14201C] leading-tight">Notifikasi</h4>
             <p className="text-xs text-[#8A9A95] mt-0.5">
-              {unreadCount} belum dibaca
+              {currentUnreadCount} belum dibaca
             </p>
           </div>
           <button
             type="button"
-            onClick={handleMarkAllRead}
+            onClick={() => void handleMarkAllRead()}
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0E7C5A] hover:underline cursor-pointer mt-0.5"
           >
             <CheckCheck className="w-4 h-4" />
@@ -139,18 +161,24 @@ export const NotificationDropdown: FC<NotificationDropdownProps> = ({
       </div>
 
       <div className="max-h-[380px] overflow-y-auto p-3 space-y-2">
-        {filtered.length === 0 ? (
+        {isLoading && baseItems.length === 0 ? (
+          <div className="py-8 text-center text-xs text-[#8A9A95] flex items-center justify-center gap-2">
+            <Loader2 className="w-4 h-4 animate-spin text-[#0E7C5A]" />
+            <span>Memuat notifikasi...</span>
+          </div>
+        ) : items.length === 0 ? (
           <div className="py-8 text-center text-xs text-[#8A9A95]">
             Tidak ada notifikasi pada kategori ini.
           </div>
         ) : (
-          filtered.map((item) => {
+          items.map((item) => {
             const isUnread = !item.read_at;
             return (
               <div
                 key={item.id}
-                className={`flex items-start gap-3.5 p-3.5 rounded-2xl transition-colors ${
-                  isUnread ? 'bg-[#EAF6F1]' : 'bg-white hover:bg-[#F8FAF9]'
+                onClick={() => void handleMarkOneRead(item)}
+                className={`flex items-start gap-3.5 p-3.5 rounded-2xl transition-colors cursor-pointer ${
+                  isUnread ? 'bg-[#EAF6F1] hover:bg-[#DDF3E8]' : 'bg-white hover:bg-[#F8FAF9]'
                 }`}
               >
                 {getIcon(item)}
@@ -168,13 +196,14 @@ export const NotificationDropdown: FC<NotificationDropdownProps> = ({
                   </p>
                   <span className="text-[11px] text-[#8A9A95] mt-1.5 inline-block">
                     {item.waktu ||
+                      item.waktu_relatif ||
                       (item.created_at
                         ? new Date(item.created_at).toLocaleDateString('id-ID', {
                             day: 'numeric',
                             month: 'short',
                             year: 'numeric',
                           })
-                        : '2 jam lalu')}
+                        : 'Baru saja')}
                   </span>
                 </div>
               </div>

@@ -11,6 +11,7 @@ use App\Http\Controllers\Bidang2\DashboardBidang2Controller;
 use App\Http\Controllers\Bidang2\PengajuanBidang2Controller;
 use App\Http\Controllers\Bidang2\RkaklBidang2Controller;
 use App\Http\Controllers\Keuangan\DashboardKeuanganController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Pemohon\DashboardPemohonController;
 use App\Http\Controllers\Pemohon\PermohonanPemohonController;
 use App\Http\Controllers\Perencanaan\PerencanaanController;
@@ -33,6 +34,27 @@ Route::prefix('v1')->group(function () {
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('logout', [AuthController::class, 'destroy'])->name('api.logout');
+
+        // Centralized Notification Routes
+        Route::prefix('notifications')->group(function () {
+            Route::get('/', [NotificationController::class, 'index'])->name('api.notifications.index');
+            Route::post('/', [NotificationController::class, 'store'])->name('api.notifications.store');
+            Route::get('summary', [NotificationController::class, 'summary'])->name('api.notifications.summary');
+            Route::get('unread-count', [NotificationController::class, 'unreadCount'])->name('api.notifications.unreadCount');
+            Route::post('read-all', [NotificationController::class, 'markAllRead'])->name('api.notifications.readAll');
+            Route::post('{notification}/read', [NotificationController::class, 'markOneRead'])->name('api.notifications.readOne');
+            Route::delete('{notification}', [NotificationController::class, 'destroy'])->name('api.notifications.destroy');
+        });
+
+        Route::prefix('notifikasi')->group(function () {
+            Route::get('/', [NotificationController::class, 'index'])->name('api.notifikasi.index');
+            Route::post('/', [NotificationController::class, 'store'])->name('api.notifikasi.store');
+            Route::get('summary', [NotificationController::class, 'summary'])->name('api.notifikasi.summary');
+            Route::get('unread-count', [NotificationController::class, 'unreadCount'])->name('api.notifikasi.unreadCount');
+            Route::post('read-all', [NotificationController::class, 'markAllRead'])->name('api.notifikasi.readAll');
+            Route::post('{notification}/read', [NotificationController::class, 'markOneRead'])->name('api.notifikasi.readOne');
+            Route::delete('{notification}', [NotificationController::class, 'destroy'])->name('api.notifikasi.destroy');
+        });
 
         // Admin Routes
         Route::prefix('admin')->middleware('role:Admin')->group(function () {
@@ -70,9 +92,9 @@ Route::prefix('v1')->group(function () {
             Route::delete('jenis-mak/{mak}', [PerencanaanController::class, 'destroyMak'])->name('api.perencanaan.mak.destroy');
             Route::get('rkakl', [PerencanaanController::class, 'rkakl'])->name('api.perencanaan.rkakl.index');
             Route::post('rkakl', [PerencanaanController::class, 'storeRkakl'])->name('api.perencanaan.rkakl.store');
-            Route::get('notifikasi', [PerencanaanController::class, 'notifikasi'])->name('api.perencanaan.notifikasi.index');
-            Route::post('notifikasi/read-all', [PerencanaanController::class, 'markAllRead'])->name('api.perencanaan.notifikasi.readAll');
-            Route::post('notifikasi/{notification}/read', [PerencanaanController::class, 'markOneRead'])->name('api.perencanaan.notifikasi.readOne');
+            Route::get('notifikasi', [NotificationController::class, 'index'])->name('api.perencanaan.notifikasi.index');
+            Route::post('notifikasi/read-all', [NotificationController::class, 'markAllRead'])->name('api.perencanaan.notifikasi.readAll');
+            Route::post('notifikasi/{notification}/read', [NotificationController::class, 'markOneRead'])->name('api.perencanaan.notifikasi.readOne');
             Route::get('profil', [PerencanaanController::class, 'profil'])->name('api.perencanaan.profil.index');
         });
 
@@ -101,9 +123,9 @@ Route::prefix('v1')->group(function () {
             Route::post('pengajuan/{pengadaan}/approve', [PpController::class, 'approve'])->name('api.pp.pengajuan.approve');
             Route::post('pengajuan/{pengadaan}/reject', [PpController::class, 'reject'])->name('api.pp.pengajuan.reject');
             Route::get('pengajuan/{pengadaan}', [PpController::class, 'show'])->name('api.pp.pengajuan.show');
-            Route::get('notifikasi', [PpController::class, 'notifikasi'])->name('api.pp.notifikasi.index');
-            Route::post('notifikasi/read-all', [PpController::class, 'markAllRead'])->name('api.pp.notifikasi.readAll');
-            Route::post('notifikasi/{notification}/read', [PpController::class, 'markOneRead'])->name('api.pp.notifikasi.readOne');
+            Route::get('notifikasi', [NotificationController::class, 'index'])->name('api.pp.notifikasi.index');
+            Route::post('notifikasi/read-all', [NotificationController::class, 'markAllRead'])->name('api.pp.notifikasi.readAll');
+            Route::post('notifikasi/{notification}/read', [NotificationController::class, 'markOneRead'])->name('api.pp.notifikasi.readOne');
             Route::get('profil', [PpController::class, 'profil'])->name('api.pp.profil.index');
         });
 
@@ -118,9 +140,9 @@ Route::prefix('v1')->group(function () {
             Route::post('pengajuan/{pengadaan}/pembayaran/approve', [PpkController::class, 'approvePembayaran'])->name('api.ppk.pengajuan.pembayaran.approve');
             Route::post('pengajuan/{pengadaan}/pembayaran/reject', [PpkController::class, 'rejectPembayaran'])->name('api.ppk.pengajuan.pembayaran.reject');
             Route::get('pengajuan/{pengadaan}', [PpkController::class, 'show'])->name('api.ppk.pengajuan.show');
-            Route::get('notifikasi', [PpkController::class, 'notifikasi'])->name('api.ppk.notifikasi.index');
-            Route::post('notifikasi/read-all', [PpkController::class, 'markAllRead'])->name('api.ppk.notifikasi.readAll');
-            Route::post('notifikasi/{notification}/read', [PpkController::class, 'markOneRead'])->name('api.ppk.notifikasi.readOne');
+            Route::get('notifikasi', [NotificationController::class, 'index'])->name('api.ppk.notifikasi.index');
+            Route::post('notifikasi/read-all', [NotificationController::class, 'markAllRead'])->name('api.ppk.notifikasi.readAll');
+            Route::post('notifikasi/{notification}/read', [NotificationController::class, 'markOneRead'])->name('api.ppk.notifikasi.readOne');
             Route::get('profil', [PpkController::class, 'profil'])->name('api.ppk.profil.index');
         });
 
