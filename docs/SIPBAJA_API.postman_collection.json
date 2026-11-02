@@ -3657,6 +3657,235 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "11. Notifikasi Terpusat (Centralized Notifications)",
+      "description": "Modul Notifikasi Terpusat untuk seluruh pengguna terautentikasi (semua role). Tersedia di /api/v1/notifications dan alias /api/v1/notifikasi.",
+      "item": [
+        {
+          "name": "Notifikasi - List (Terpaginasi)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications?tab=semua&per_page=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications"
+              ],
+              "query": [
+                {
+                  "key": "tab",
+                  "value": "semua",
+                  "description": "Filter tab: semua | pengingat | status"
+                },
+                {
+                  "key": "per_page",
+                  "value": "10",
+                  "description": "Jumlah item per halaman"
+                }
+              ]
+            },
+            "description": "Mengambil daftar notifikasi terpaginasi milik pengguna terautentikasi."
+          },
+          "response": []
+        },
+        {
+          "name": "Notifikasi - Ringkasan (Summary Topbar)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/summary?limit=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "summary"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "description": "Batas notifikasi terbaru yang diambil"
+                }
+              ]
+            },
+            "description": "Mengambil ringkasan notifikasi terbaru beserta unreadNotificationsCount untuk header / topbar."
+          },
+          "response": []
+        },
+        {
+          "name": "Notifikasi - Hitung Belum Dibaca (Unread Count)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/unread-count",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "unread-count"
+              ]
+            },
+            "description": "Mengambil jumlah notifikasi yang belum dibaca."
+          },
+          "response": []
+        },
+        {
+          "name": "Notifikasi - Kirim Notifikasi Baru (Store)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": 1,\n  \"judul\": \"Pengingat Dokumen\",\n  \"pesan\": \"Ada dokumen permohonan baru yang memerlukan verifikasi.\",\n  \"channel\": \"in_app\",\n  \"ref_type\": \"permohonan\",\n  \"ref_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications"
+              ]
+            },
+            "description": "Mengirim / membuat notifikasi baru."
+          },
+          "response": []
+        },
+        {
+          "name": "Notifikasi - Mark All Read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/read-all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "read-all"
+              ]
+            },
+            "description": "Menandai seluruh notifikasi milik pengguna terautentikasi sebagai telah dibaca."
+          },
+          "response": []
+        },
+        {
+          "name": "Notifikasi - Mark One Read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/:notification/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                ":notification",
+                "read"
+              ],
+              "variable": [
+                {
+                  "key": "notification",
+                  "value": "{{notificationId}}",
+                  "description": "ID notifikasi"
+                }
+              ]
+            },
+            "description": "Menandai satu notifikasi milik pengguna terautentikasi sebagai telah dibaca."
+          },
+          "response": []
+        },
+        {
+          "name": "Notifikasi - Hapus (Delete)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/:notification",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                ":notification"
+              ]
+            },
+            "description": "Menghapus satu notifikasi milik pengguna terautentikasi."
+          },
+          "response": []
+        }
+      ]
     }
   ]
 }
