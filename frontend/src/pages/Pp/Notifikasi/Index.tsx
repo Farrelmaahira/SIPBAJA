@@ -1,27 +1,22 @@
-import { useState, useEffect, type FC } from 'react';
+import { useEffect, useMemo, type FC, type MouseEvent } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowLeft,
   Clock,
   CheckCircle2,
   XCircle,
+  Loader2,
+  Trash2,
 } from 'lucide-react';
-import api from '../../../services/api';
 import PpLayout, { type PpNavItem } from '../../../components/templates/PpLayout';
+import { useNotifications } from '../../../hooks/useNotifications';
+import type { NotificationItem } from '../../../types/notification';
 
-export interface PpNotificationItem {
-  id: number;
-  judul?: string;
-  pesan?: string;
-  read_at?: string | null;
-  waktu_relatif?: string;
-  created_at?: string;
-  [key: string]: unknown;
-}
+export type { NotificationItem as PpNotificationItem };
 
 export interface PpNotifikasiProps {
   notifications?: {
-    data?: PpNotificationItem[];
+    data?: NotificationItem[];
     total?: number;
   };
   unreadCount?: number;
@@ -34,81 +29,47 @@ export interface PpNotifikasiProps {
 }
 
 export const PpNotifikasiIndex: FC<PpNotifikasiProps> = ({
-  notifications: initialNotifications,
-  unreadCount: initialUnreadCount = 0,
-  activeTab: initialActiveTab = 'semua',
   basePath = '/pp',
   roleInitials = 'PP',
   roleTitle = null,
   roleSubtitle = null,
   navItems = null,
 }) => {
-  const [activeTab, setActiveTab] = useState(initialActiveTab);
-  const [items, setItems] = useState<PpNotificationItem[]>(initialNotifications?.data || []);
-  const [totalCount, setTotalCount] = useState<number>(initialNotifications?.total || 0);
-  const [unreadCount, setUnreadCount] = useState<number>(initialUnreadCount);
-
-  const fetchNotifications = async (tab = activeTab) => {
-    try {
-      const res = await api.get<{
-        notifications?: {
-          data?: PpNotificationItem[];
-          total?: number;
-        };
-        unreadCount?: number;
-        unreadNotificationsCount?: number;
-      }>('/v1/notifications', {
-        params: { tab },
-      });
-
-      const notifs = res.data.notifications;
-      if (notifs?.data) {
-        setItems(notifs.data);
-        setTotalCount(notifs.total || notifs.data.length);
-      }
-      if (res.data.unreadCount !== undefined) {
-        setUnreadCount(res.data.unreadCount);
-      } else if (res.data.unreadNotificationsCount !== undefined) {
-        setUnreadCount(res.data.unreadNotificationsCount);
-      }
-    } catch (err) {
-      console.error('Failed to fetch notifications:', err);
-    }
-  };
+  const {
+    notifications,
+    unreadCount,
+    totalCount,
+    activeTab,
+    setActiveTab,
+    fetchList,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+    isLoading,
+  } = useNotifications();
 
   useEffect(() => {
-    fetchNotifications(activeTab);
-  }, [basePath, activeTab]);
+    void fetchList(activeTab);
+  }, [fetchList, activeTab]);
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
   };
 
-  const handleMarkAllRead = async () => {
-    try {
-      await api.post('/v1/notifications/read-all');
-      setItems((prev) => prev.map((item) => ({ ...item, read_at: new Date().toISOString() })));
-      setUnreadCount(0);
-    } catch (err) {
-      console.error('Failed to mark all as read:', err);
-    }
-  };
-
-  const handleMarkOneRead = async (item: PpNotificationItem) => {
+  const handleMarkOneRead = (item: NotificationItem) => {
     if (!item.read_at && item.id) {
-      try {
-        await api.post(`/v1/notifications/${item.id}/read`);
-        setItems((prev) =>
-          prev.map((i) => (i.id === item.id ? { ...i, read_at: new Date().toISOString() } : i))
-        );
-        setUnreadCount((c) => Math.max(0, c - 1));
-      } catch (err) {
-        console.error('Failed to mark notification as read:', err);
-      }
+      void markAsRead(item.id);
     }
   };
 
-  const getIcon = (item: PpNotificationItem) => {
+  const handleDelete = (e: MouseEvent, item: NotificationItem) => {
+    e.stopPropagation();
+    if (confirm('Apakah Anda yakin ingin menghapus notifikasi ini?')) {
+      void deleteNotification(item.id);
+    }
+  };
+
+  const getIcon = (item: NotificationItem) => {
     const j = item.judul?.toLowerCase() || '';
     if (j.includes('pengingat')) {
       return (
@@ -131,19 +92,43 @@ export const PpNotifikasiIndex: FC<PpNotifikasiProps> = ({
     );
   };
 
-  const hariIni = items.slice(0, 2);
-  const kemarin = items.slice(2, 5);
-  const sebelumnya = items.slice(5);
+  // Group notifications into Hari Ini, Kemarin, and Sebelumnya
+  const { hariIni, kemarin, sebelumnya } = useMemo(() => {
+    const today: NotificationItem[] = [];
+    const yesterday: NotificationItem[] = [];
+    const earlier: NotificationItem[] = [];
 
-  const renderItem = (item: PpNotificationItem) => {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const startOfYesterday = startOfToday - 86400000;
+
+    notifications.forEach((item) => {
+      if (!item.created_at) {
+        earlier.push(item);
+        return;
+      }
+      const itemTime = new Date(item.created_at).getTime();
+      if (itemTime >= startOfToday) {
+        today.push(item);
+      } else if (itemTime >= startOfYesterday) {
+        yesterday.push(item);
+      } else {
+        earlier.push(item);
+      }
+    });
+
+    return { hariIni: today, kemarin: yesterday, sebelumnya: earlier };
+  }, [notifications]);
+
+  const renderItem = (item: NotificationItem) => {
     const isUnread = !item.read_at;
     return (
       <div
         key={item.id}
         onClick={() => handleMarkOneRead(item)}
-        className={`flex items-start gap-3 p-3 rounded-xl transition-colors ${
+        className={`group flex items-start gap-3 p-3.5 rounded-xl transition-colors cursor-pointer ${
           isUnread
-            ? 'bg-[#EBF7F1] cursor-pointer hover:bg-[#DDF3E6]'
+            ? 'bg-[#EBF7F1] hover:bg-[#DDF3E6]'
             : 'bg-white hover:bg-[#F5F8F6]'
         }`}
       >
@@ -157,22 +142,34 @@ export const PpNotifikasiIndex: FC<PpNotifikasiProps> = ({
             >
               {item.judul}
             </p>
-            {isUnread && (
-              <span className="w-2 h-2 rounded-full bg-[#16825C] mt-1.5 shrink-0" />
-            )}
+            <div className="flex items-center gap-2">
+              {isUnread && (
+                <span className="w-2 h-2 rounded-full bg-[#16825C] shrink-0" />
+              )}
+              <button
+                type="button"
+                onClick={(e) => handleDelete(e, item)}
+                className="opacity-0 group-hover:opacity-100 p-1 rounded-md text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all cursor-pointer"
+                title="Hapus notifikasi"
+                aria-label="Hapus notifikasi"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
-          <p className="text-xs text-[#3F4E47] mt-0.5 leading-4">
+          <p className="text-xs text-[#3F4E47] mt-0.5 leading-relaxed">
             {item.pesan}
           </p>
-          <span className="text-xs text-[#6B7A73] mt-1 inline-block">
-            {item.waktu_relatif ||
+          <span className="text-xs text-[#6B7A73] mt-1.5 inline-block">
+            {item.waktu ||
+              item.waktu_relatif ||
               (item.created_at
                 ? new Date(item.created_at).toLocaleDateString('id-ID', {
                     day: '2-digit',
                     month: 'short',
                     year: 'numeric',
                   })
-                : '2 jam lalu')}
+                : 'Baru saja')}
           </span>
         </div>
       </div>
@@ -187,9 +184,9 @@ export const PpNotifikasiIndex: FC<PpNotifikasiProps> = ({
       roleTitle={roleTitle}
       roleSubtitle={roleSubtitle}
       navItems={navItems}
-      profileHref={`${basePath}/profil`}
-      notifikasiHref={`${basePath}/notifikasi`}
-      readAllHref={`${basePath}/notifikasi/read-all`}
+      profileHref={basePath ? `${basePath}/profil` : '/profil'}
+      notifikasiHref={basePath ? `${basePath}/notifikasi` : '/notifikasi'}
+      readAllHref={basePath ? `${basePath}/notifikasi/read-all` : '/notifikasi/read-all'}
     >
       {/* Hero Banner */}
       <div className="relative overflow-hidden rounded-[24px] bg-gradient-to-br from-[#0A5C42] to-[#17A373] p-6 sm:px-9 sm:py-8 text-white shadow-[0_10px_24px_rgba(13,51,38,0.14)] mb-6">
@@ -207,7 +204,7 @@ export const PpNotifikasiIndex: FC<PpNotifikasiProps> = ({
           </div>
 
           <Link
-            to={`${basePath}/dashboard`}
+            to={basePath ? `${basePath}/dashboard` : '/'}
             className="inline-flex items-center gap-2 px-5 py-3.5 rounded-[14px] bg-white/16 hover:bg-white/25 border border-white/35 text-white text-sm font-semibold transition-colors shrink-0 self-start sm:self-auto"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -237,7 +234,7 @@ export const PpNotifikasiIndex: FC<PpNotifikasiProps> = ({
                   : 'bg-white border-[#E3EAE6] text-[#3F4E47] font-medium hover:bg-[#F5F8F6]'
               }`}
             >
-              Semua · {totalCount || items.length}
+              Semua · {totalCount || notifications.length}
             </button>
             <button
               type="button"
@@ -248,7 +245,7 @@ export const PpNotifikasiIndex: FC<PpNotifikasiProps> = ({
                   : 'bg-white border-[#E3EAE6] text-[#3F4E47] font-medium hover:bg-[#F5F8F6]'
               }`}
             >
-              Pengingat · 3
+              Pengingat
             </button>
             <button
               type="button"
@@ -259,13 +256,13 @@ export const PpNotifikasiIndex: FC<PpNotifikasiProps> = ({
                   : 'bg-white border-[#E3EAE6] text-[#3F4E47] font-medium hover:bg-[#F5F8F6]'
               }`}
             >
-              Status · 5
+              Status
             </button>
           </div>
 
           <button
             type="button"
-            onClick={handleMarkAllRead}
+            onClick={() => void markAllAsRead()}
             className="px-5 py-3 rounded-xl bg-white border border-[#E3EAE6] shadow-2xs text-sm font-semibold text-[#0E1B16] hover:bg-[#F5F8F6] transition-colors cursor-pointer self-start sm:self-auto"
           >
             Tandai semua dibaca
@@ -274,7 +271,12 @@ export const PpNotifikasiIndex: FC<PpNotifikasiProps> = ({
 
         <div className="h-px bg-[#E3EAE6] w-full" />
 
-        {items.length === 0 ? (
+        {isLoading && notifications.length === 0 ? (
+          <div className="py-12 text-center text-xs text-[#6B7A73] flex items-center justify-center gap-2">
+            <Loader2 className="w-4 h-4 animate-spin text-[#0E7C5A]" />
+            <span>Memuat notifikasi...</span>
+          </div>
+        ) : notifications.length === 0 ? (
           <div className="py-12 text-center text-xs text-[#6B7A73]">
             Tidak ada notifikasi pada kategori ini.
           </div>
@@ -305,6 +307,10 @@ export const PpNotifikasiIndex: FC<PpNotifikasiProps> = ({
                 </p>
                 <div className="flex flex-col gap-1">{sebelumnya.map(renderItem)}</div>
               </div>
+            )}
+
+            {hariIni.length === 0 && kemarin.length === 0 && sebelumnya.length === 0 && (
+              <div className="flex flex-col gap-1">{notifications.map(renderItem)}</div>
             )}
           </div>
         )}
