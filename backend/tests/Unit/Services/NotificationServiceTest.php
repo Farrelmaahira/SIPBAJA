@@ -142,4 +142,3 @@ class NotificationServiceTest extends TestCase
         $this->assertEquals(0, $this->notificationService->getUnreadCount($this->user));
     }
 }
-
