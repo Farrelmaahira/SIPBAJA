@@ -61,11 +61,29 @@ const STATUS_CONFIG: Record<string, StatusTheme> = {
     dot: 'bg-[#2F6FED]',
     defaultLabel: 'Pending',
   },
+  menunggu_persetujuan: {
+    bg: 'bg-[#E8F0FF]',
+    text: 'text-[#1F55C7]',
+    dot: 'bg-[#2F6FED]',
+    defaultLabel: 'Menunggu Persetujuan',
+  },
   menunggu_verifikasi: {
     bg: 'bg-[#E8F0FF]',
     text: 'text-[#1F55C7]',
     dot: 'bg-[#2F6FED]',
-    defaultLabel: 'Menunggu Verifikasi',
+    defaultLabel: 'Menunggu Persetujuan',
+  },
+  sedang_diproses: {
+    bg: 'bg-[#FEF3C7]',
+    text: 'text-[#B45309]',
+    dot: 'bg-[#D97706]',
+    defaultLabel: 'Sedang Diproses',
+  },
+  proses_pengadaan: {
+    bg: 'bg-[#FEF3C7]',
+    text: 'text-[#B45309]',
+    dot: 'bg-[#D97706]',
+    defaultLabel: 'Sedang Diproses',
   },
   menunggu: {
     bg: 'bg-[#E8F0FF]',

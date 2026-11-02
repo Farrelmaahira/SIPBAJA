@@ -1,12 +1,24 @@
 import type { FC } from 'react';
 import { ShieldCheck, CheckCircle2 } from 'lucide-react';
 
-export const PanduanPengajuanCard: FC = () => {
-  const checklistItems = [
-    'Judul sesuai kebutuhan pengadaan',
-    'Estimasi anggaran sesuai RAB',
-    'Surat permohonan berformat PDF dan terbaca jelas',
-  ];
+export interface PanduanPengajuanCardProps {
+  mode?: 'create' | 'revisi';
+}
+
+export const PanduanPengajuanCard: FC<PanduanPengajuanCardProps> = ({ mode = 'create' }) => {
+  const isRevisi = mode === 'revisi';
+
+  const checklistItems = isRevisi
+    ? [
+        'Semua poin catatan revisi sudah diperbaiki',
+        'Estimasi anggaran sesuai RAB',
+        'Surat permohonan berformat PDF dan terbaca jelas',
+      ]
+    : [
+        'Judul sesuai kebutuhan pengadaan',
+        'Estimasi anggaran sesuai RAB',
+        'Surat permohonan berformat PDF dan terbaca jelas',
+      ];
 
   return (
     <div className="rounded-2xl border border-[#A3D9C9]/50 bg-[#F2F9F6] p-6 shadow-sm">
@@ -15,7 +27,9 @@ export const PanduanPengajuanCard: FC = () => {
           <ShieldCheck className="w-5 h-5 stroke-[2]" />
         </div>
         <div>
-          <h3 className="text-sm font-bold text-[#1D2939]">Sebelum Mengirim</h3>
+          <h3 className="text-sm font-bold text-[#1D2939]">
+            {isRevisi ? 'Sebelum Mengajukan Ulang' : 'Sebelum Mengirim'}
+          </h3>
           <p className="text-xs text-[#667085] mt-0.5">Pastikan data sudah benar</p>
         </div>
       </div>

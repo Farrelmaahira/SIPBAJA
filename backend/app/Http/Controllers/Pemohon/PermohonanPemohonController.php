@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Pemohon;
 
 use App\Http\Controllers\Controller;
-
+use App\Http\Requests\RevisiPermohonanRequest;
 use App\Http\Requests\SimpanPermohonanRequest;
 use App\Models\Permohonan;
 use App\Services\PermohonanService;
@@ -32,8 +32,8 @@ class PermohonanPemohonController extends Controller
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
-        $status = $request->query('status');
-        $search = $request->query('search');
+        $status = $request->input('status');
+        $search = $request->input('search');
 
         $permohonanList = $this->permohonanService->daftarPermohonan($user, $status, $search);
 
@@ -47,12 +47,30 @@ class PermohonanPemohonController extends Controller
     }
 
     /**
-     * Mengunduh berkas surat permohonan.
+     * Menampilkan detail lengkap permohonan pengadaan untuk Pemohon.
+     */
+    public function show(Request $request, Permohonan $permohonan): JsonResponse
+    {
+        $user = $request->user();
+        $detail = $this->permohonanService->detailPermohonan($user, $permohonan);
+
+        return response()->json([
+            'permohonan' => $detail,
+        ]);
+    }
+
+    /**
+     * Mengunduh atau menampilkan pratinjau berkas surat permohonan.
      */
     public function downloadDokumen(Request $request, Permohonan $permohonan): StreamedResponse
     {
         $user = $request->user();
         $info = $this->permohonanService->ambilDokumen($user, $permohonan);
+
+        $disposition = $request->query('disposition', 'attachment');
+        if ($disposition === 'inline') {
+            return Storage::disk('local')->response($info['path'], $info['nama_asli']);
+        }
 
         return Storage::disk('local')->download($info['path'], $info['nama_asli']);
     }
@@ -72,5 +90,22 @@ class PermohonanPemohonController extends Controller
             'message' => 'Permohonan pengadaan berhasil dikirim dan masuk antrean verifikasi.',
             'permohonan' => $permohonan,
         ], 201);
+    }
+
+    /**
+     * Memperbarui permohonan yang ditolak dan mengajukan ulang melalui PermohonanService.
+     */
+    public function update(RevisiPermohonanRequest $request, Permohonan $permohonan): JsonResponse
+    {
+        $user = $request->user();
+        $validated = $request->validated();
+        $file = $request->file('file_dokumen');
+
+        $updatedPermohonan = $this->permohonanService->revisiPermohonan($user, $permohonan, $validated, $file);
+
+        return response()->json([
+            'message' => 'Permohonan pengadaan berhasil diperbaiki dan diajukan ulang.',
+            'permohonan' => $updatedPermohonan,
+        ], 200);
     }
 }

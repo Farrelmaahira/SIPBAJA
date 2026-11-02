@@ -396,28 +396,120 @@ Prefix Rute: `/api/v1/pemohon`
 ---
 
 #### 2. Daftar & Detail Permohonan
-- **Method & URL:** `GET /api/v1/pemohon/permohonan?status={status}&search={search}`
-  - Parameter `status`: `semua`, `menunggu_verifikasi`, `disetujui`, `ditolak`.
+- **Method & URL:** `GET /api/v1/pemohon/permohonan?status={status}&search={search}&page={page}`
+  - Parameter `status` (opsional): status tunggal, format dipisah koma (contoh: `menunggu_persetujuan,sedang_diproses`), atau array. Pilihan status: `semua`, `menunggu_persetujuan`, `menunggu_verifikasi`, `sedang_diproses`, `disetujui`, `ditolak`.
+  - Parameter `search` (opsional): kata kunci pencarian nomor surat atau judul pengadaan.
+  - Parameter `page` (opsional): nomor halaman paginasi (default 1).
   - **Success Response (200 OK):**
     ```json
     {
-      "permohonanList": [
-        {
-          "id": 1,
-          "nomor_surat": "042/TI/PNJ/2026",
-          "judul": "Pengadaan Laptop Lab",
-          "estimasi_anggaran": 45000000,
-          "status": "menunggu_verifikasi",
-          "created_at": "2026-11-01T10:00:00.000000Z"
-        }
-      ],
+      "permohonanList": {
+        "current_page": 1,
+        "data": [
+          {
+            "id": 1,
+            "unit_id": 2,
+            "created_by": 5,
+            "nomor_surat": "01010-FF-11",
+            "judul": "Pengadaan Komputer Lab",
+            "ringkasan_tujuan": "Kebutuhan praktikum mahasiswa",
+            "estimasi_anggaran": 185000000,
+            "revisi_ke": 0,
+            "status": "menunggu_bidang2",
+            "created_at": "2026-10-12T10:00:00.000000Z",
+            "dokumen": []
+          }
+        ],
+        "from": 1,
+        "last_page": 24,
+        "per_page": 10,
+        "to": 10,
+        "total": 238
+      },
       "filters": { "status": "semua", "search": "" }
     }
     ```
 
 ---
 
-#### 3. Submit Permohonan Baru (Multipart)
+#### 3. Detail Lengkap Permohonan
+- **Method & URL:** `GET /api/v1/pemohon/permohonan/{permohonanId}`
+- **Success Response (200 OK):**
+  ```json
+  {
+    "permohonan": {
+      "id": 1,
+      "nomor_surat": "111-FFF-111",
+      "judul": "Pengadaan Komputer Lab",
+      "ringkasan_tujuan": "Kebutuhan praktikum mahasiswa",
+      "estimasi_anggaran": 185000000,
+      "revisi_ke": 0,
+      "status": "menunggu_bidang2",
+      "created_at": "2026-10-12T10:00:00.000000Z",
+      "unit_id": 2,
+      "unit_nama": "Jurusan Teknik Informatika & Komputer",
+      "created_by": 5,
+      "pembuat_nama": "Admin Jurusan",
+      "dokumen": {
+        "id": 1,
+        "nama_asli": "Surat_Permohonan_Pengadaan_Komputer.pdf",
+        "ukuran_bytes": 8388608,
+        "mime_type": "application/pdf",
+        "download_url": "/api/v1/pemohon/permohonan/1/dokumen"
+      },
+      "catatan_penolakan": null,
+      "timeline_stages": [
+        {
+          "tahap": "permohonan",
+          "label": "Permohonan",
+          "status": "active",
+          "keterangan": "Menunggu persetujuan"
+        },
+        {
+          "tahap": "pengadaan",
+          "label": "Pengadaan",
+          "status": "pending",
+          "keterangan": "Menunggu proses pengadaan"
+        },
+        {
+          "tahap": "pembelian",
+          "label": "Pembelian Barang",
+          "status": "pending",
+          "keterangan": "Menunggu pembelian barang"
+        },
+        {
+          "tahap": "penerimaan",
+          "label": "Penerimaan Barang",
+          "status": "pending",
+          "keterangan": "Menunggu barang diterima"
+        },
+        {
+          "tahap": "selesai",
+          "label": "Selesai",
+          "status": "pending",
+          "keterangan": "Menunggu penyelesaian"
+        }
+      ],
+      "history": [
+        {
+          "id": 1,
+          "status_lama": null,
+          "status_baru": "diajukan",
+          "deskripsi": "Permohonan diajukan oleh Jurusan Teknik Informatika & Komputer",
+          "actor_nama": "Admin Jurusan",
+          "actor_role": "Pemohon",
+          "waktu": "12-10-2026 10:00"
+        }
+      ]
+    }
+  }
+  ```
+- **Error Response (403 Forbidden):** Akses ditolak untuk unit lain (`{ "message": "Akses tidak diizinkan untuk unit lain." }`).
+- **Error Response (404 Not Found):** Permohonan tidak ditemukan.
+
+---
+
+#### 4. Submit Permohonan Baru (Multipart)
 - **Method & URL:** `POST /api/v1/pemohon/permohonan`
 - **Content-Type:** `multipart/form-data`
 - **Form Data:**
@@ -450,10 +542,40 @@ Prefix Rute: `/api/v1/pemohon`
 
 ---
 
-#### 4. Unduh Berkas Dokumen Permohonan
+#### 5. Unduh Berkas Dokumen Permohonan
 - **Method & URL:** `GET /api/v1/pemohon/permohonan/{permohonanId}/dokumen`
 - **Success Response (200 OK):** File binary stream (`application/pdf`) dengan header `Content-Disposition: attachment; filename="Surat_Permohonan.pdf"`.
 - **Error Response (403 Forbidden):** Jika bukan pemilik dokumen atau unit tidak cocok.
+
+---
+
+#### 6. Submit Revisi Permohonan (Multipart)
+- **Method & URL:** `POST /api/v1/pemohon/permohonan/{permohonanId}/revisi`
+- **Akses:** Terotentikasi (`role:Pemohon`, kepemilikan unit kerja)
+- **Content-Type:** `multipart/form-data`
+- **Form Data:**
+  - `judul`: string, required, max: 255.
+  - `estimasi_anggaran`: numeric, required, min: 1.
+  - `ringkasan_tujuan`: string, optional, max: 1000.
+  - `file_dokumen`: file (PDF), optional, max: 10240 KB (10 MB). Jika diunggah, berkas versi baru disimpan tanpa menghapus riwayat berkas sebelumnya. Jika tidak diunggah, berkas aktif saat ini dipertahankan.
+- **Success Response (200 OK):**
+  ```json
+  {
+    "message": "Permohonan pengadaan berhasil diperbaiki dan diajukan ulang.",
+    "permohonan": {
+      "id": 1,
+      "nomor_surat": "01014-FF-11",
+      "judul": "Pengadaan Printer Laboratorium Perbaikan",
+      "ringkasan_tujuan": "Perbaikan spesifikasi",
+      "estimasi_anggaran": 26500000,
+      "revisi_ke": 1,
+      "status": "diajukan"
+    }
+  }
+  ```
+- **Error Responses:**
+  - `403 Forbidden`: Jika permohonan milik unit lain.
+  - `422 Unprocessable Content`: Jika status permohonan bukan `ditolak` atau validasi isian gagal.
 
 ---
 

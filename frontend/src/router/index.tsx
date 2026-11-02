@@ -20,6 +20,8 @@ import RolePermissionIndex from '../pages/Admin/RolePermission/Index';
 import PemohonDashboard from '../pages/Pemohon/Dashboard';
 import PemohonPermohonanIndex from '../pages/Pemohon/Permohonan/Index';
 import PemohonPermohonanCreate from '../pages/Pemohon/Permohonan/Create';
+import PemohonPermohonanShow from '../pages/Pemohon/Permohonan/Show';
+import PemohonPermohonanEdit from '../pages/Pemohon/Permohonan/Edit';
 
 // Perencanaan Pages
 import PerencanaanDashboard from '../pages/Perencanaan/Dashboard';
@@ -185,6 +187,8 @@ export const AppRoutes: FC = () => {
           <Route path="/pemohon/dashboard" element={<PemohonDashboard />} />
           <Route path="/pemohon/permohonan" element={<PemohonPermohonanIndex />} />
           <Route path="/pemohon/permohonan/create" element={<PemohonPermohonanCreate />} />
+          <Route path="/pemohon/permohonan/:id" element={<PemohonPermohonanShow />} />
+          <Route path="/pemohon/permohonan/:id/edit" element={<PemohonPermohonanEdit />} />
         </Route>
 
         {/* Perencanaan Routes */}

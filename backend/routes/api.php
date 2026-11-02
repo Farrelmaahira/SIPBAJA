@@ -50,7 +50,9 @@ Route::prefix('v1')->group(function () {
             Route::get('dashboard', DashboardPemohonController::class)->name('api.pemohon.dashboard');
             Route::get('permohonan', [PermohonanPemohonController::class, 'index'])->name('api.pemohon.permohonan.index');
             Route::get('permohonan/create', [PermohonanPemohonController::class, 'create'])->name('api.pemohon.permohonan.create');
+            Route::get('permohonan/{permohonan}', [PermohonanPemohonController::class, 'show'])->name('api.pemohon.permohonan.show');
             Route::post('permohonan', [PermohonanPemohonController::class, 'store'])->name('api.pemohon.permohonan.store');
+            Route::post('permohonan/{permohonan}/revisi', [PermohonanPemohonController::class, 'update'])->name('api.pemohon.permohonan.revisi');
             Route::get('permohonan/{permohonan}/dokumen', [PermohonanPemohonController::class, 'downloadDokumen'])->name('api.pemohon.permohonan.dokumen.download');
         });
 

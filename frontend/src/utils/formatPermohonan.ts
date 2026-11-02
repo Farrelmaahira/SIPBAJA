@@ -43,9 +43,14 @@ export function labelStatusPermohonan(status: string | null | undefined): Status
   const map: Record<string, StatusPermohonanInfo> = {
     diajukan: { label: 'Diajukan', variant: 'neutral' },
     menunggu_bidang2: { label: 'Menunggu Persetujuan', variant: 'info' },
+    menunggu_persetujuan: { label: 'Menunggu Persetujuan', variant: 'info' },
+    menunggu_verifikasi: { label: 'Menunggu Persetujuan', variant: 'info' },
+    sedang_diproses: { label: 'Sedang Diproses', variant: 'warning' },
+    proses_pengadaan: { label: 'Sedang Diproses', variant: 'warning' },
+    diproses: { label: 'Sedang Diproses', variant: 'warning' },
     disetujui: { label: 'Disetujui', variant: 'success' },
+    selesai: { label: 'Disetujui', variant: 'success' },
     ditolak: { label: 'Ditolak', variant: 'danger' },
-    proses_pengadaan: { label: 'Proses Pengadaan', variant: 'warning' },
   };
-  return map[status ?? ''] ?? { label: status ?? '-', variant: 'neutral' };
+  return map[status ?? ''] ?? { label: status ? status.replace(/_/g, ' ') : '-', variant: 'neutral' };
 }
