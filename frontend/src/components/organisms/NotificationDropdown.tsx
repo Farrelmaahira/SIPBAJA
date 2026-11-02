@@ -1,17 +1,10 @@
-import { useState, useEffect, type FC } from 'react';
+import { useState, useMemo, type FC } from 'react';
 import { Link } from 'react-router-dom';
 import { CheckCheck, Clock, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
-import api from '../../services/api';
+import { useNotifications } from '../../hooks/useNotifications';
+import type { NotificationItem } from '../../types/notification';
 
-export interface NotificationItem {
-  id: number | string;
-  judul?: string;
-  pesan?: string;
-  waktu?: string;
-  read_at?: string | null;
-  created_at?: string;
-  [key: string]: unknown;
-}
+export type { NotificationItem };
 
 export interface NotificationDropdownProps {
   isOpen: boolean;
@@ -26,82 +19,48 @@ export interface NotificationDropdownProps {
 export const NotificationDropdown: FC<NotificationDropdownProps> = ({
   isOpen,
   onClose,
-  notifications = [],
-  unreadCount = 0,
+  notifications: propNotifications,
+  unreadCount: propUnreadCount,
   notifikasiHref = '/notifikasi',
   onMarkAllRead,
 }) => {
   const [tab, setTab] = useState<'semua' | 'pengingat' | 'status'>('semua');
-  const [items, setItems] = useState<NotificationItem[]>(notifications);
-  const [currentUnreadCount, setCurrentUnreadCount] = useState<number>(unreadCount);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const {
+    recentNotifications,
+    unreadCount: contextUnreadCount,
+    markAsRead,
+    markAllAsRead,
+    isLoading,
+  } = useNotifications();
 
-  const fetchNotificationsFromApi = async (selectedTab = tab) => {
-    setIsLoading(true);
-    try {
-      if (selectedTab === 'semua') {
-        const res = await api.get<{
-          recentNotifications?: NotificationItem[];
-          unreadNotificationsCount?: number;
-          unreadCount?: number;
-        }>('/v1/notifications/summary');
+  const currentUnreadCount = propUnreadCount !== undefined ? propUnreadCount : contextUnreadCount;
+  const baseItems = propNotifications && propNotifications.length > 0 ? propNotifications : recentNotifications;
 
-        if (res.data.recentNotifications) {
-          setItems(res.data.recentNotifications);
-        }
-        const unread = res.data.unreadNotificationsCount ?? res.data.unreadCount;
-        if (unread !== undefined) {
-          setCurrentUnreadCount(unread);
-        }
-      } else {
-        const res = await api.get<{
-          notifications?: { data?: NotificationItem[] };
-          unreadCount?: number;
-          unreadNotificationsCount?: number;
-        }>('/v1/notifications', {
-          params: { tab: selectedTab, per_page: 5 },
-        });
-
-        if (res.data.notifications?.data) {
-          setItems(res.data.notifications.data);
-        }
-        const unread = res.data.unreadCount ?? res.data.unreadNotificationsCount;
-        if (unread !== undefined) {
-          setCurrentUnreadCount(unread);
-        }
-      }
-    } catch (err) {
-      console.error('Gagal mengambil data notifikasi:', err);
-    } finally {
-      setIsLoading(false);
+  const items = useMemo(() => {
+    if (tab === 'pengingat') {
+      return baseItems.filter((item) => item.judul?.toLowerCase().includes('pengingat'));
     }
-  };
-
-  useEffect(() => {
-    if (isOpen) {
-      void fetchNotificationsFromApi(tab);
+    if (tab === 'status') {
+      return baseItems.filter((item) => {
+        const j = item.judul?.toLowerCase() || '';
+        return (
+          j.includes('status') ||
+          j.includes('disetujui') ||
+          j.includes('ditolak') ||
+          j.includes('dikembalikan') ||
+          j.includes('verifikasi') ||
+          j.includes('penandatanganan')
+        );
+      });
     }
-  }, [isOpen, tab]);
-
-  useEffect(() => {
-    if (notifications.length > 0) {
-      setItems(notifications);
-    }
-  }, [notifications]);
-
-  useEffect(() => {
-    if (unreadCount !== undefined) {
-      setCurrentUnreadCount(unreadCount);
-    }
-  }, [unreadCount]);
+    return baseItems;
+  }, [baseItems, tab]);
 
   if (!isOpen) return null;
 
   const handleMarkAllRead = async () => {
     try {
-      await api.post('/v1/notifications/read-all');
-      setItems((prev) => prev.map((item) => ({ ...item, read_at: new Date().toISOString() })));
-      setCurrentUnreadCount(0);
+      await markAllAsRead();
       if (onMarkAllRead) {
         onMarkAllRead();
       }
@@ -113,11 +72,7 @@ export const NotificationDropdown: FC<NotificationDropdownProps> = ({
   const handleMarkOneRead = async (item: NotificationItem) => {
     if (!item.read_at && item.id) {
       try {
-        await api.post(`/v1/notifications/${item.id}/read`);
-        setItems((prev) =>
-          prev.map((i) => (i.id === item.id ? { ...i, read_at: new Date().toISOString() } : i))
-        );
-        setCurrentUnreadCount((prev) => Math.max(0, prev - 1));
+        await markAsRead(item.id);
       } catch (err) {
         console.error('Gagal menandai notifikasi telah dibaca:', err);
       }
@@ -172,30 +127,33 @@ export const NotificationDropdown: FC<NotificationDropdownProps> = ({
           <button
             type="button"
             onClick={() => setTab('semua')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer border ${tab === 'semua'
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer border ${
+              tab === 'semua'
                 ? 'bg-[#EAF6F1] text-[#0E7C5A] border-[#0E7C5A]'
                 : 'bg-white text-[#5F6F6A] border-[#E4EBE8] hover:bg-[#F4F7F5]'
-              }`}
+            }`}
           >
             Semua
           </button>
           <button
             type="button"
             onClick={() => setTab('pengingat')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer border ${tab === 'pengingat'
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer border ${
+              tab === 'pengingat'
                 ? 'bg-[#EAF6F1] text-[#0E7C5A] border-[#0E7C5A]'
                 : 'bg-white text-[#5F6F6A] border-[#E4EBE8] hover:bg-[#F4F7F5]'
-              }`}
+            }`}
           >
             Pengingat
           </button>
           <button
             type="button"
             onClick={() => setTab('status')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer border ${tab === 'status'
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer border ${
+              tab === 'status'
                 ? 'bg-[#EAF6F1] text-[#0E7C5A] border-[#0E7C5A]'
                 : 'bg-white text-[#5F6F6A] border-[#E4EBE8] hover:bg-[#F4F7F5]'
-              }`}
+            }`}
           >
             Status
           </button>
@@ -203,7 +161,7 @@ export const NotificationDropdown: FC<NotificationDropdownProps> = ({
       </div>
 
       <div className="max-h-[380px] overflow-y-auto p-3 space-y-2">
-        {isLoading && items.length === 0 ? (
+        {isLoading && baseItems.length === 0 ? (
           <div className="py-8 text-center text-xs text-[#8A9A95] flex items-center justify-center gap-2">
             <Loader2 className="w-4 h-4 animate-spin text-[#0E7C5A]" />
             <span>Memuat notifikasi...</span>
@@ -219,8 +177,9 @@ export const NotificationDropdown: FC<NotificationDropdownProps> = ({
               <div
                 key={item.id}
                 onClick={() => void handleMarkOneRead(item)}
-                className={`flex items-start gap-3.5 p-3.5 rounded-2xl transition-colors cursor-pointer ${isUnread ? 'bg-[#EAF6F1] hover:bg-[#DDF3E8]' : 'bg-white hover:bg-[#F8FAF9]'
-                  }`}
+                className={`flex items-start gap-3.5 p-3.5 rounded-2xl transition-colors cursor-pointer ${
+                  isUnread ? 'bg-[#EAF6F1] hover:bg-[#DDF3E8]' : 'bg-white hover:bg-[#F8FAF9]'
+                }`}
               >
                 {getIcon(item)}
                 <div className="flex-1 min-w-0">
@@ -237,12 +196,13 @@ export const NotificationDropdown: FC<NotificationDropdownProps> = ({
                   </p>
                   <span className="text-[11px] text-[#8A9A95] mt-1.5 inline-block">
                     {item.waktu ||
+                      item.waktu_relatif ||
                       (item.created_at
                         ? new Date(item.created_at).toLocaleDateString('id-ID', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                        })
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                          })
                         : 'Baru saja')}
                   </span>
                 </div>

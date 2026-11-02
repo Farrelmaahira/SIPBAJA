@@ -1,6 +1,7 @@
 import type { FC, ReactNode } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { NotificationProvider } from '../contexts/NotificationContext';
 
 export interface ProtectedRouteProps {
   children?: ReactNode;
@@ -25,7 +26,11 @@ export const ProtectedRoute: FC<ProtectedRouteProps> = ({ children }) => {
     return <Navigate to="/" state={{ from: location }} replace />;
   }
 
-  return children ? <>{children}</> : <Outlet />;
+  return (
+    <NotificationProvider>
+      {children ? <>{children}</> : <Outlet />}
+    </NotificationProvider>
+  );
 };
 
 export default ProtectedRoute;

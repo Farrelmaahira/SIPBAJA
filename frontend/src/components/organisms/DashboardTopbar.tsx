@@ -3,7 +3,7 @@ import { Menu, Bell } from 'lucide-react';
 import SearchBar from '../molecules/SearchBar';
 import ProfilePill, { type ProfilePillUser } from '../molecules/ProfilePill';
 import NotificationDropdown from './NotificationDropdown';
-import api from '../../services/api';
+import { useNotifications } from '../../hooks/useNotifications';
 
 export interface DashboardTopbarProps {
   onMenuClick?: () => void;
@@ -39,24 +39,8 @@ export const DashboardTopbar: FC<DashboardTopbarProps> = ({
   profileFallbackEmail,
 }) => {
   const [notifOpen, setNotifOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState<number>(0);
   const notifRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    let isMounted = true;
-    api
-      .get<{ unreadCount?: number }>('/v1/notifications/unread-count')
-      .then((res) => {
-        if (isMounted && res.data.unreadCount !== undefined) {
-          setUnreadCount(res.data.unreadCount);
-        }
-      })
-      .catch(() => {});
-
-    return () => {
-      isMounted = false;
-    };
-  }, [notifOpen]);
+  const { unreadCount } = useNotifications();
 
   useEffect(() => {
     function handleClickOutside(e: globalThis.MouseEvent) {
@@ -134,7 +118,6 @@ export const DashboardTopbar: FC<DashboardTopbarProps> = ({
               isOpen={notifOpen}
               onClose={() => setNotifOpen(false)}
               unreadCount={unreadCount}
-              onMarkAllRead={() => setUnreadCount(0)}
               notifikasiHref="/notifikasi"
             />
           </div>
