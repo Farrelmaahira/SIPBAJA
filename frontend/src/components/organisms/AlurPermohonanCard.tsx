@@ -10,47 +10,92 @@ export interface AlurStep {
   isActive: boolean;
 }
 
-export const AlurPermohonanCard: FC = () => {
-  const steps: AlurStep[] = [
-    {
-      stepNumber: 1,
-      title: 'Isi Formulir',
-      badge: 'Anda di sini',
-      badgeVariant: 'success',
-      description: 'Lengkapi data dan unggah surat permohonan',
-      isActive: true,
-    },
-    {
-      stepNumber: 2,
-      title: null,
-      badge: '• Menunggu Persetujuan',
-      badgeVariant: 'info',
-      description: 'Tim memeriksa kelengkapan dokumen',
-      isActive: false,
-    },
-    {
-      stepNumber: 3,
-      title: null,
-      badge: '• Proses Pengadaan',
-      badgeVariant: 'warning',
-      description: 'Permohonan masuk ke proses pengadaan',
-      isActive: false,
-    },
-    {
-      stepNumber: 4,
-      title: null,
-      badge: '• Selesai',
-      badgeVariant: 'success',
-      description: 'Anda menerima hasil permohonan',
-      isActive: false,
-    },
-  ];
+export interface AlurPermohonanCardProps {
+  mode?: 'create' | 'revisi';
+}
+
+export const AlurPermohonanCard: FC<AlurPermohonanCardProps> = ({ mode = 'create' }) => {
+  const isRevisi = mode === 'revisi';
+
+  const steps: AlurStep[] = isRevisi
+    ? [
+        {
+          stepNumber: 1,
+          title: 'Perbaiki Data',
+          badge: 'Anda di sini',
+          badgeVariant: 'success',
+          description: 'Sesuaikan data dengan catatan revisi',
+          isActive: true,
+        },
+        {
+          stepNumber: 2,
+          title: null,
+          badge: '• Menunggu Verifikasi',
+          badgeVariant: 'info',
+          description: 'Tim memeriksa kelengkapan dokumen',
+          isActive: false,
+        },
+        {
+          stepNumber: 3,
+          title: null,
+          badge: '• Sedang Diproses',
+          badgeVariant: 'warning',
+          description: 'Permohonan masuk ke proses pengadaan',
+          isActive: false,
+        },
+        {
+          stepNumber: 4,
+          title: null,
+          badge: '• Disetujui',
+          badgeVariant: 'success',
+          description: 'Anda menerima hasil permohonan',
+          isActive: false,
+        },
+      ]
+    : [
+        {
+          stepNumber: 1,
+          title: 'Isi Formulir',
+          badge: 'Anda di sini',
+          badgeVariant: 'success',
+          description: 'Lengkapi data dan unggah surat permohonan',
+          isActive: true,
+        },
+        {
+          stepNumber: 2,
+          title: null,
+          badge: '• Menunggu Persetujuan',
+          badgeVariant: 'info',
+          description: 'Tim memeriksa kelengkapan dokumen',
+          isActive: false,
+        },
+        {
+          stepNumber: 3,
+          title: null,
+          badge: '• Proses Pengadaan',
+          badgeVariant: 'warning',
+          description: 'Permohonan masuk ke proses pengadaan',
+          isActive: false,
+        },
+        {
+          stepNumber: 4,
+          title: null,
+          badge: '• Selesai',
+          badgeVariant: 'success',
+          description: 'Anda menerima hasil permohonan',
+          isActive: false,
+        },
+      ];
 
   return (
     <div className="bg-white rounded-2xl border border-[#E4EBE8] p-6 shadow-sm">
       <div className="mb-5 pb-3 border-b border-[#F2F4F7]">
         <h3 className="text-base font-bold text-[#1D2939]">Alur Permohonan</h3>
-        <p className="text-xs text-[#667085] mt-0.5">Perjalanan permohonan setelah dikirim</p>
+        <p className="text-xs text-[#667085] mt-0.5">
+          {isRevisi
+            ? 'Perjalanan permohonan setelah diajukan ulang'
+            : 'Perjalanan permohonan setelah dikirim'}
+        </p>
       </div>
 
       <div className="pt-1">
