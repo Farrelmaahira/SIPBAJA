@@ -11,15 +11,19 @@ use App\Models\Permohonan;
 use App\Models\User;
 use App\Services\NotificationService;
 use App\Services\PerencanaanService;
+use App\Services\PermohonanService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PerencanaanController extends Controller
 {
     public function __construct(
         private PerencanaanService $perencanaanService,
-        private NotificationService $notificationService
+        private NotificationService $notificationService,
+        private PermohonanService $permohonanService
     ) {}
 
     public function dashboard(): JsonResponse
@@ -63,6 +67,19 @@ class PerencanaanController extends Controller
             'recentNotifications' => $notifData['recentNotifications'],
             'unreadNotificationsCount' => $notifData['unreadNotificationsCount'],
         ]);
+    }
+
+    public function downloadDokumen(Request $request, Permohonan $permohonan): StreamedResponse
+    {
+        $user = $request->user();
+        $info = $this->permohonanService->ambilDokumen($user, $permohonan);
+
+        $disposition = $request->query('disposition', 'attachment');
+        if ($disposition === 'inline') {
+            return Storage::disk('local')->response($info['path'], $info['nama_asli']);
+        }
+
+        return Storage::disk('local')->download($info['path'], $info['nama_asli']);
     }
 
     public function approve(VerifikasiPermohonanRequest $request, Permohonan $permohonan): JsonResponse

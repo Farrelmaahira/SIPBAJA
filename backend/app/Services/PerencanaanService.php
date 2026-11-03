@@ -103,11 +103,23 @@ class PerencanaanService
             ->where('ref_id', $permohonan->id)
             ->get();
 
+        $dokumen = $permohonan->Dokumen()->where('tipe_dokumen', 'surat_permohonan')->latest('versi')->first()
+            ?? Dokumen::where('ref_type', 'permohonan')->where('ref_id', $permohonan->id)->latest('id')->first();
+
+        $dokumenInfo = $dokumen ? [
+            'id' => $dokumen->id,
+            'nama_asli' => $dokumen->nama_asli,
+            'ukuran_bytes' => (int) ($dokumen->ukuran_bytes ?? 0),
+            'mime_type' => $dokumen->mime_type ?? 'application/pdf',
+            'download_url' => "/api/v1/perencanaan/pengajuan/{$permohonan->id}/dokumen",
+        ] : null;
+
         return [
             'permohonan' => $permohonan,
             'maks' => $maks,
             'selected_mak_ids' => $selectedMakIds,
             'dokumen_permohonan' => $dokumenPermohonan,
+            'dokumen' => $dokumenInfo,
         ];
     }
 

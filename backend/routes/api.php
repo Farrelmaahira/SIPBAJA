@@ -83,6 +83,7 @@ Route::prefix('v1')->group(function () {
             Route::get('dashboard', [PerencanaanController::class, 'dashboard'])->name('api.perencanaan.dashboard');
             Route::get('pengajuan', [PerencanaanController::class, 'index'])->name('api.perencanaan.pengajuan.index');
             Route::get('pengajuan/{permohonan}', [PerencanaanController::class, 'show'])->name('api.perencanaan.pengajuan.show');
+            Route::get('pengajuan/{permohonan}/dokumen', [PerencanaanController::class, 'downloadDokumen'])->name('api.perencanaan.pengajuan.dokumen.download');
             Route::post('pengajuan/{permohonan}/approve', [PerencanaanController::class, 'approve'])->name('api.perencanaan.pengajuan.approve');
             Route::post('pengajuan/{permohonan}/reject', [PerencanaanController::class, 'reject'])->name('api.perencanaan.pengajuan.reject');
             Route::post('pengajuan/{permohonan}/kirim-pengadaan', [PerencanaanController::class, 'kirimPengadaan'])->name('api.perencanaan.pengajuan.kirimPengadaan');
