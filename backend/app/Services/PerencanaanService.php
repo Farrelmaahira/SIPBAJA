@@ -99,8 +99,7 @@ class PerencanaanService
         $maks = Mak::with('Ppk')->orderBy('id')->get();
         $selectedMakIds = $permohonan->PermohonanMak->pluck('mak_id')->toArray();
 
-        $dokumenPermohonan = Dokumen::where('ref_type', 'permohonan')
-            ->where('ref_id', $permohonan->id)
+        $dokumenPermohonan = Dokumen::where('ref_type', 'permohonan')->where('ref_id', $permohonan->id)
             ->get();
 
         $dokumen = $permohonan->Dokumen()->where('tipe_dokumen', 'surat_permohonan')->latest('versi')->first()

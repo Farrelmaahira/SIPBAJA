@@ -5,6 +5,7 @@ import {
   FileText,
   Eye,
   Download,
+  Loader2,
   CheckCircle2,
   XCircle,
   Building2,
@@ -48,6 +49,8 @@ export const PerencanaanPengajuanShow: FC<PerencanaanShowProps> = ({
   const [detail, setDetail] = useState<any>(initialDetail || {});
   const [makSelects, setMakSelects] = useState<number[]>([1]);
   const [previewDoc, setPreviewDoc] = useState<any>(null);
+  const [isViewingDoc, setIsViewingDoc] = useState(false);
+  const [isDownloadingDoc, setIsDownloadingDoc] = useState(false);
   const [approveModalOpen, setApproveModalOpen] = useState(false);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [alasanPenolakan, setAlasanPenolakan] = useState('');
@@ -117,15 +120,47 @@ export const PerencanaanPengajuanShow: FC<PerencanaanShowProps> = ({
     dokumen?.download_url ||
     (permohonan.id ? `/api/v1/perencanaan/pengajuan/${permohonan.id}/dokumen` : null);
 
-  const handleLihatTabBaru = () => {
-    if (dokumenUrl) {
-      window.open(`${dokumenUrl}?disposition=inline`, '_blank', 'noopener,noreferrer');
+  const handleLihatTabBaru = async () => {
+    if (!dokumenUrl) return;
+    setIsViewingDoc(true);
+    try {
+      const res = await api.get<Blob>(`${dokumenUrl}?disposition=inline`, {
+        responseType: 'blob',
+      });
+      const blob = new Blob([res.data], { type: 'application/pdf' });
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank');
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+    } catch (err) {
+      console.error('Gagal membuka pratinjau dokumen:', err);
+    } finally {
+      setIsViewingDoc(false);
     }
   };
 
-  const handleUnduhDokumen = () => {
-    if (dokumenUrl) {
-      window.open(dokumenUrl, '_blank', 'noopener,noreferrer');
+  const handleUnduhDokumen = async () => {
+    if (!dokumenUrl) return;
+    setIsDownloadingDoc(true);
+    try {
+      const res = await api.get<Blob>(dokumenUrl, {
+        responseType: 'blob',
+      });
+      const contentType = res.headers['content-type'];
+      const blob = new Blob([res.data], {
+        type: typeof contentType === 'string' ? contentType : 'application/pdf',
+      });
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = dokumenNama;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+    } catch (err) {
+      console.error('Gagal mengunduh dokumen:', err);
+    } finally {
+      setIsDownloadingDoc(false);
     }
   };
 
@@ -375,23 +410,31 @@ export const PerencanaanPengajuanShow: FC<PerencanaanShowProps> = ({
               <button
                 type="button"
                 onClick={handleLihatTabBaru}
-                disabled={!dokumenUrl}
+                disabled={!dokumenUrl || isViewingDoc}
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-[#E4EBE8] text-xs font-bold text-[#14201C] hover:bg-[#F8FAF9] disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
                 title="Buka dokumen di tab baru"
               >
-                <Eye className="w-3.5 h-3.5 text-[#5F6F6A]" />
-                <span>Lihat</span>
+                {isViewingDoc ? (
+                  <Loader2 className="w-3.5 h-3.5 text-[#0E7C5A] animate-spin" />
+                ) : (
+                  <Eye className="w-3.5 h-3.5 text-[#5F6F6A]" />
+                )}
+                <span>{isViewingDoc ? 'Memuat...' : 'Lihat'}</span>
               </button>
 
               <button
                 type="button"
                 onClick={handleUnduhDokumen}
-                disabled={!dokumenUrl}
+                disabled={!dokumenUrl || isDownloadingDoc}
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0E7C5A] hover:bg-[#0A5C43] text-white text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed shadow-xs transition-colors cursor-pointer"
                 title="Unduh berkas dokumen"
               >
-                <Download className="w-3.5 h-3.5" />
-                <span>Unduh</span>
+                {isDownloadingDoc ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Download className="w-3.5 h-3.5" />
+                )}
+                <span>{isDownloadingDoc ? 'Mengunduh...' : 'Unduh'}</span>
               </button>
             </div>
           </div>
