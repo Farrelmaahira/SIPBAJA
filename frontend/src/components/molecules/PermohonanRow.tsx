@@ -36,15 +36,16 @@ export const PermohonanRow: FC<PermohonanRowProps> = ({
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const { label, variant } = labelStatusPermohonan(status ?? permohonan?.status);
+  const rawStatus = String(status ?? permohonan?.status ?? 'diajukan');
+  const { label } = labelStatusPermohonan(rawStatus);
   const resolvedPermohonan: PermohonanRowData = permohonan || {
     nomor_surat: nomorSurat,
     judul,
     created_at: tanggal,
     estimasi_anggaran: nilaiPengajuan,
-    status,
+    status: rawStatus,
   };
-  const hasDokumen = Boolean(resolvedPermohonan.dokumen?.[0]);
+  const hasDokumen = Boolean(resolvedPermohonan.dokumen?.[0] || resolvedPermohonan.id);
 
   useEffect(() => {
     function handleClickOutside(e: globalThis.MouseEvent) {
@@ -99,8 +100,8 @@ export const PermohonanRow: FC<PermohonanRowProps> = ({
       <td className="py-3.5 px-4 text-sm font-medium text-[#14201C] whitespace-nowrap">
         {formatRupiah(displayNilai)}
       </td>
-      <td className="py-3.5 px-4">
-        <StatusPill status={variant} label={label} />
+      <td className="py-3.5 px-4 whitespace-nowrap">
+        <StatusPill status={rawStatus} label={label} />
       </td>
       <td className="py-3.5 px-4 text-right relative">
         <div className="relative inline-block" ref={menuRef}>
