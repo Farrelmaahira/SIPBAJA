@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   FileText,
   Eye,
+  Download,
   CheckCircle2,
   XCircle,
   Building2,
@@ -77,21 +78,56 @@ export const PerencanaanPengajuanShow: FC<PerencanaanShowProps> = ({
     rawStatus === 'diajukan' || rawStatus === 'menunggu_verifikasi'
       ? 'verifikasi'
       : rawStatus === 'pengadaan' || rawStatus === 'disetujui'
-      ? 'pengadaan'
-      : 'diteruskan';
+        ? 'pengadaan'
+        : 'diteruskan';
 
   const maksList =
     detail.maks && detail.maks.length >= 4
       ? detail.maks.map((m: any, idx: number) => ({
-          id: m.id,
-          label: m.nama.includes('-') ? m.nama : `${521211 + idx * 1000} - ${m.nama}`,
-        }))
+        id: m.id,
+        label: m.nama.includes('-') ? m.nama : `${521211 + idx * 1000} - ${m.nama}`,
+      }))
       : DEFAULT_MAKS;
 
   const nomorSurat = permohonan.nomor_surat || '111-FFF-111';
   const judul = permohonan.judul || 'Pengadaan Komputer';
   const unitNama = permohonan.unit?.nama || 'Jurusan Teknik Informatika & Komputer';
   const nominal = permohonan.estimasi_anggaran || permohonan.nominal || 100000000;
+
+  const formatBytes = (bytes?: number): string => {
+    if (!bytes || bytes <= 0) return '0 KB';
+    const mb = bytes / (1024 * 1024);
+    if (mb >= 1) return `${mb.toFixed(1)} MB`;
+    const kb = bytes / 1024;
+    return `${Math.round(kb)} KB`;
+  };
+
+  const dokumen =
+    detail.dokumen ||
+    (Array.isArray(detail.dokumen_permohonan) && detail.dokumen_permohonan[0]) ||
+    permohonan.dokumen ||
+    null;
+  const dokumenNama =
+    dokumen?.nama_asli ||
+    (mode === 'pengadaan'
+      ? 'Dokumen_Pengadaan_Komputer_TIK.pdf'
+      : 'Surat_Permohonan_Pengadaan.pdf');
+  const dokumenUkuran = dokumen?.ukuran_bytes ? formatBytes(dokumen.ukuran_bytes) : '8 MB';
+  const dokumenUrl =
+    dokumen?.download_url ||
+    (permohonan.id ? `/api/v1/perencanaan/pengajuan/${permohonan.id}/dokumen` : null);
+
+  const handleLihatTabBaru = () => {
+    if (dokumenUrl) {
+      window.open(`${dokumenUrl}?disposition=inline`, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  const handleUnduhDokumen = () => {
+    if (dokumenUrl) {
+      window.open(dokumenUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
 
   const formatCurrency = (val?: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -329,28 +365,33 @@ export const PerencanaanPengajuanShow: FC<PerencanaanShowProps> = ({
                 <FileText className="w-5 h-5" />
               </div>
               <div className="min-w-0">
-                <p className="text-xs font-bold text-[#14201C] truncate">
-                  {mode === 'pengadaan'
-                    ? 'Dokumen_Pengadaan_Komputer_TIK.pdf'
-                    : 'Surat_Permohonan_Pengadaan.pdf'}
+                <p className="text-xs font-bold text-[#14201C] truncate" title={dokumenNama}>
+                  {dokumenNama}
                 </p>
-                <p className="text-[11px] text-[#8A9A95]">PDF • 8 MB</p>
+                <p className="text-[11px] text-[#8A9A95]">PDF • {dokumenUkuran}</p>
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <button
                 type="button"
-                onClick={() =>
-                  setPreviewDoc({
-                    label: 'Surat Permohonan',
-                    filename: 'Surat_Permohonan_Pengadaan.pdf',
-                    size: 'PDF • 8 MB',
-                  })
-                }
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-[#E4EBE8] text-xs font-bold text-[#14201C] hover:bg-[#F8FAF9] transition-colors cursor-pointer"
+                onClick={handleLihatTabBaru}
+                disabled={!dokumenUrl}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-[#E4EBE8] text-xs font-bold text-[#14201C] hover:bg-[#F8FAF9] disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                title="Buka dokumen di tab baru"
               >
                 <Eye className="w-3.5 h-3.5 text-[#5F6F6A]" />
                 <span>Lihat</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleUnduhDokumen}
+                disabled={!dokumenUrl}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0E7C5A] hover:bg-[#0A5C43] text-white text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed shadow-xs transition-colors cursor-pointer"
+                title="Unduh berkas dokumen"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Unduh</span>
               </button>
             </div>
           </div>
