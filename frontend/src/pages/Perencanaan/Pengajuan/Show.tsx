@@ -12,9 +12,9 @@ import {
   Hash,
   Tag,
   Plus,
-  Send,
   ChevronDown,
   X,
+  Trash2,
 } from 'lucide-react';
 import api from '../../../services/api';
 import PpLayout from '../../../components/templates/PpLayout';
@@ -46,7 +46,6 @@ export const PerencanaanPengajuanShow: FC<PerencanaanShowProps> = ({
 
   const [detail, setDetail] = useState<any>(initialDetail || {});
   const [makSelects, setMakSelects] = useState<number[]>([1]);
-  const [singleMakId, setSingleMakId] = useState<number>(1);
   const [previewDoc, setPreviewDoc] = useState<any>(null);
   const [approveModalOpen, setApproveModalOpen] = useState(false);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
@@ -63,7 +62,6 @@ export const PerencanaanPengajuanShow: FC<PerencanaanShowProps> = ({
           setDetail(fetchedDetail);
           if (fetchedDetail.selected_mak_ids?.length) {
             setMakSelects(fetchedDetail.selected_mak_ids);
-            setSingleMakId(fetchedDetail.selected_mak_ids[0]);
           }
         })
         .catch((err) => {
@@ -120,6 +118,12 @@ export const PerencanaanPengajuanShow: FC<PerencanaanShowProps> = ({
     setMakSelects((prev) => [...prev, nextUnused]);
   };
 
+  const handleRemoveMakDropdown = (idx: number) => {
+    if (makSelects.length > 1) {
+      setMakSelects((prev) => prev.filter((_, i) => i !== idx));
+    }
+  };
+
   const handleMakDropdownChange = (idx: number, val: string) => {
     const numVal = Number(val);
     setMakSelects((prev) => prev.map((item, i) => (i === idx ? numVal : item)));
@@ -158,20 +162,6 @@ export const PerencanaanPengajuanShow: FC<PerencanaanShowProps> = ({
       navigate('/perencanaan/pengajuan');
     } catch (err) {
       console.error('Failed to reject permohonan:', err);
-    } finally {
-      setProcessing(false);
-    }
-  };
-
-  const handleKirimPengadaan = async () => {
-    setProcessing(true);
-    try {
-      await api.post(`/v1/perencanaan/pengajuan/${permohonan.id || id}/kirim-pengadaan`, {
-        mak_id: singleMakId,
-      });
-      navigate('/perencanaan/pengajuan');
-    } catch (err) {
-      console.error('Failed to send to pengadaan:', err);
     } finally {
       setProcessing(false);
     }
@@ -424,19 +414,32 @@ export const PerencanaanPengajuanShow: FC<PerencanaanShowProps> = ({
                 </label>
 
                 {makSelects.map((selectedId, idx) => (
-                  <div key={idx} className="relative">
-                    <select
-                      value={selectedId}
-                      onChange={(e) => handleMakDropdownChange(idx, e.target.value)}
-                      className="w-full appearance-none px-4 py-3 pr-9 rounded-xl border border-[#E4EBE8] bg-white text-xs font-medium text-[#14201C] focus:outline-none focus:border-[#0E7C5A] transition cursor-pointer"
-                    >
-                      {maksList.map((m: any) => (
-                        <option key={m.id} value={m.id}>
-                          {m.label}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="w-4 h-4 text-[#8A9A95] absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <div key={idx} className="flex items-center gap-2">
+                    <div className="relative flex-1">
+                      <select
+                        value={selectedId}
+                        onChange={(e) => handleMakDropdownChange(idx, e.target.value)}
+                        className="w-full appearance-none px-4 py-3 pr-9 rounded-xl border border-[#E4EBE8] bg-white text-xs font-medium text-[#14201C] focus:outline-none focus:border-[#0E7C5A] transition cursor-pointer"
+                      >
+                        {maksList.map((m: any) => (
+                          <option key={m.id} value={m.id}>
+                            {m.label}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="w-4 h-4 text-[#8A9A95] absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    </div>
+                    {makSelects.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveMakDropdown(idx)}
+                        className="w-10 h-10 rounded-xl border border-[#FECDCA] bg-[#FEE4E2]/60 hover:bg-[#FEE4E2] text-[#D92D20] flex items-center justify-center shrink-0 transition-colors cursor-pointer"
+                        title="Hapus Jenis MAK"
+                        aria-label="Hapus Jenis MAK"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 ))}
 
@@ -472,43 +475,34 @@ export const PerencanaanPengajuanShow: FC<PerencanaanShowProps> = ({
           ) : (
             <div className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)]">
               <div className="pb-4 mb-4 border-b border-[#F0F4F2]">
-                <h3 className="text-base font-bold text-[#14201C]">Jenis MAK</h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-base font-bold text-[#14201C]">Jenis MAK</h3>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#E4F6EC] text-[#0B7A4E]">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Tersimpan
+                  </span>
+                </div>
                 <p className="text-xs text-[#8A9A95] mt-0.5">
-                  Tentukan atau ubah Jenis MAK sebelum mengirim pengadaan
+                  Mata Anggaran Kegiatan telah ditetapkan untuk permohonan ini
                 </p>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-[#14201C] mb-2">
-                  Jenis MAK <span className="text-red-500">*</span>
+              <div className="space-y-2.5">
+                <label className="block text-xs font-bold text-[#14201C]">
+                  MAK Ditetapkan
                 </label>
-                <div className="relative">
-                  <Tag className="w-4 h-4 text-[#0E7C5A] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <select
-                    value={singleMakId}
-                    onChange={(e) => setSingleMakId(Number(e.target.value))}
-                    className="w-full appearance-none pl-10 pr-9 py-3 rounded-xl border border-[#E4EBE8] bg-white text-xs font-bold text-[#14201C] focus:outline-none focus:border-[#0E7C5A] transition cursor-pointer"
-                  >
-                    {maksList.map((m: any) => (
-                      <option key={m.id} value={m.id}>
-                        {m.label}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-[#8A9A95] absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
-              </div>
-
-              <div className="pt-5 mt-5 border-t border-[#F0F4F2]">
-                <button
-                  type="button"
-                  disabled={processing}
-                  onClick={handleKirimPengadaan}
-                  className="w-full py-3 px-4 rounded-xl bg-[#0E7C5A] hover:bg-[#0A5C43] disabled:opacity-50 text-xs font-bold text-white transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
-                >
-                  <Send className="w-4 h-4" />
-                  <span>{processing ? 'Mengirim...' : 'Kirim Pengadaan'}</span>
-                </button>
+                {makSelects.map((selectedId, idx) => {
+                  const makItem = maksList.find((m: any) => m.id === selectedId);
+                  return (
+                    <div
+                      key={idx}
+                      className="flex items-center gap-3 p-3.5 rounded-xl bg-[#F4F7F5] border border-[#E4EBE8] text-xs font-semibold text-[#14201C]"
+                    >
+                      <Tag className="w-4 h-4 text-[#0E7C5A] shrink-0" />
+                      <span className="truncate">{makItem?.label || `MAK ID: ${selectedId}`}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

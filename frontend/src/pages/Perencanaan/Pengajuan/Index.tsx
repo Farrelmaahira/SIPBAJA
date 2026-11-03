@@ -48,7 +48,7 @@ export const PerencanaanPengajuanIndex: FC = () => {
   const [totalCount, setTotalCount] = useState<number>(0);
   const [recentNotifications, setRecentNotifications] = useState<any[]>([]);
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState<number>(0);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   const fetchPengajuan = async (q = searchQuery, statuses = selectedStatuses) => {
     setIsLoading(true);
@@ -115,8 +115,8 @@ export const PerencanaanPengajuanIndex: FC = () => {
     });
   };
 
-  const getStatusBadge = (status?: string, idx = 0) => {
-    if (status === 'diajukan' || status === 'menunggu_verifikasi' || idx === 0) {
+  const getStatusBadge = (status?: string) => {
+    if (status === 'diajukan' || status === 'menunggu_verifikasi') {
       return (
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#E8F0FF] text-[#2F68D6]">
           <span className="w-1.5 h-1.5 rounded-full bg-[#2F68D6]" />
@@ -124,7 +124,7 @@ export const PerencanaanPengajuanIndex: FC = () => {
         </span>
       );
     }
-    if (status === 'pengadaan' || idx === 1) {
+    if (status === 'pengadaan') {
       return (
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#F3E8FF] text-[#7E22CE]">
           <span className="w-1.5 h-1.5 rounded-full bg-[#7E22CE]" />
@@ -206,11 +206,10 @@ export const PerencanaanPengajuanIndex: FC = () => {
             <button
               type="button"
               onClick={() => setFilterModalOpen(true)}
-              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                selectedStatuses.length > 0
-                  ? 'bg-[#E8F5EF] text-[#0E7C5A] border-[#0E7C5A]'
-                  : 'bg-white text-[#14201C] border-[#E4EBE8] hover:bg-[#F4F7F5]'
-              }`}
+              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${selectedStatuses.length > 0
+                ? 'bg-[#E8F5EF] text-[#0E7C5A] border-[#0E7C5A]'
+                : 'bg-white text-[#14201C] border-[#E4EBE8] hover:bg-[#F4F7F5]'
+                }`}
             >
               <Filter className="w-3.5 h-3.5" />
               <span>Filter</span>
@@ -267,7 +266,7 @@ export const PerencanaanPengajuanIndex: FC = () => {
                   </td>
                 </tr>
               ) : (
-                items.map((item, idx) => (
+                items.map((item) => (
                   <tr key={item.id} className="hover:bg-[#F9FBFA] transition-colors">
                     <td className="py-4 px-4 font-bold text-[#0E7C5A]">
                       <Link
@@ -287,7 +286,7 @@ export const PerencanaanPengajuanIndex: FC = () => {
                       {formatCurrency(item.estimasi_anggaran)}
                     </td>
                     <td className="py-4 px-4">
-                      {getStatusBadge(item.status, idx)}
+                      {getStatusBadge(item.status)}
                     </td>
                     <td className="py-4 px-4 text-center">
                       <RowActionMenu

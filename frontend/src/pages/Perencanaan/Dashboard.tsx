@@ -27,7 +27,7 @@ export const PERENCANAAN_NAV_ITEMS = [
     label: 'List Pengajuan',
     icon: FileText,
     href: '/perencanaan/pengajuan',
-    badge: 4,
+    badge: null,
   },
   {
     key: 'mak',
@@ -283,22 +283,20 @@ export const PerencanaanDashboard: FC = () => {
               <button
                 type="button"
                 onClick={() => setViewMode('bulan')}
-                className={`px-3.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
-                  viewMode === 'bulan'
-                    ? 'bg-white text-[#0E7C5A] border border-[#0E7C5A]/30 shadow-2xs'
-                    : 'text-[#5F6F6A] hover:text-[#14201C]'
-                }`}
+                className={`px-3.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${viewMode === 'bulan'
+                  ? 'bg-white text-[#0E7C5A] border border-[#0E7C5A]/30 shadow-2xs'
+                  : 'text-[#5F6F6A] hover:text-[#14201C]'
+                  }`}
               >
                 Bulan
               </button>
               <button
                 type="button"
                 onClick={() => setViewMode('tahun')}
-                className={`px-3.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
-                  viewMode === 'tahun'
-                    ? 'bg-white text-[#0E7C5A] border border-[#0E7C5A]/30 shadow-2xs'
-                    : 'text-[#5F6F6A] hover:text-[#14201C]'
-                }`}
+                className={`px-3.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${viewMode === 'tahun'
+                  ? 'bg-white text-[#0E7C5A] border border-[#0E7C5A]/30 shadow-2xs'
+                  : 'text-[#5F6F6A] hover:text-[#14201C]'
+                  }`}
               >
                 Tahun
               </button>
@@ -404,35 +402,35 @@ export const PerencanaanDashboard: FC = () => {
                 </tr>
               ) : (
                 permohonanTerbaru.map((item, idx) => (
-                <tr key={item.id} className="hover:bg-[#F9FBFA] transition-colors">
-                  <td className="py-4 px-4 font-bold text-[#0E7C5A]">
-                    <Link
-                      to={`/perencanaan/pengajuan/${item.id}`}
-                      className="hover:underline"
-                    >
-                      {item.nomor_surat || '-'}
-                    </Link>
-                  </td>
-                  <td className="py-4 px-4 font-bold text-[#14201C]">
-                    {item.judul || '-'}
-                  </td>
-                  <td className="py-4 px-4 text-[#5F6F6A]">
-                    {formatDate(item.created_at)}
-                  </td>
-                  <td className="py-4 px-4 font-bold text-[#14201C]">
-                    {formatCurrency(item.estimasi_anggaran)}
-                  </td>
-                  <td className="py-4 px-4">
-                    {getStatusBadge(item.status, idx)}
-                  </td>
-                  <td className="py-4 px-4 text-center">
-                    <RowActionMenu
-                      item={item}
-                      viewHref={`/perencanaan/pengajuan/${item.id}`}
-                    />
-                  </td>
-                </tr>
-              )))}
+                  <tr key={item.id} className="hover:bg-[#F9FBFA] transition-colors">
+                    <td className="py-4 px-4 font-bold text-[#0E7C5A]">
+                      <Link
+                        to={`/perencanaan/pengajuan/${item.id}`}
+                        className="hover:underline"
+                      >
+                        {item.nomor_surat || '-'}
+                      </Link>
+                    </td>
+                    <td className="py-4 px-4 font-bold text-[#14201C]">
+                      {item.judul || '-'}
+                    </td>
+                    <td className="py-4 px-4 text-[#5F6F6A]">
+                      {formatDate(item.created_at)}
+                    </td>
+                    <td className="py-4 px-4 font-bold text-[#14201C]">
+                      {formatCurrency(item.estimasi_anggaran)}
+                    </td>
+                    <td className="py-4 px-4">
+                      {getStatusBadge(item.status, idx)}
+                    </td>
+                    <td className="py-4 px-4 text-center">
+                      <RowActionMenu
+                        item={item}
+                        viewHref={`/perencanaan/pengajuan/${item.id}`}
+                      />
+                    </td>
+                  </tr>
+                )))}
             </tbody>
           </table>
         </div>
