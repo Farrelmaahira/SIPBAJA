@@ -60,3 +60,4 @@ export interface PerencanaanPengajuanDetailResponse {
   recentNotifications?: unknown[];
   unreadNotificationsCount?: number;
 }
+

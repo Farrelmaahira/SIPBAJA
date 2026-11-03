@@ -109,3 +109,4 @@ export const PerencanaanVerifikasiMakCard: FC<PerencanaanVerifikasiMakCardProps>
 };
 
 export default PerencanaanVerifikasiMakCard;
+
