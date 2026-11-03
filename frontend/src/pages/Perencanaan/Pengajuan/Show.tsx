@@ -20,7 +20,6 @@ import {
 } from 'lucide-react';
 import api from '../../../services/api';
 import PpLayout from '../../../components/templates/PpLayout';
-import DocumentPreviewModal from '../../../components/organisms/DocumentPreviewModal';
 import { PERENCANAAN_NAV_ITEMS } from '../Dashboard';
 
 const DEFAULT_MAKS = [
@@ -48,7 +47,6 @@ export const PerencanaanPengajuanShow: FC<PerencanaanShowProps> = ({
 
   const [detail, setDetail] = useState<any>(initialDetail || {});
   const [makSelects, setMakSelects] = useState<number[]>([1]);
-  const [previewDoc, setPreviewDoc] = useState<any>(null);
   const [isViewingDoc, setIsViewingDoc] = useState(false);
   const [isDownloadingDoc, setIsDownloadingDoc] = useState(false);
   const [approveModalOpen, setApproveModalOpen] = useState(false);
@@ -671,14 +669,6 @@ export const PerencanaanPengajuanShow: FC<PerencanaanShowProps> = ({
           </form>
         </div>
       )}
-
-      <DocumentPreviewModal
-        isOpen={Boolean(previewDoc)}
-        onClose={() => setPreviewDoc(null)}
-        category={previewDoc?.label}
-        filename={previewDoc?.filename}
-        size={previewDoc?.size}
-      />
     </PpLayout>
   );
 };
