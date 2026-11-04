@@ -1,6 +1,6 @@
 import type { FC, FormEvent } from 'react';
 import { Pencil } from 'lucide-react';
-import PpLayout from './PpLayout';
+import AppLayout from './AppLayout';
 import { PERENCANAAN_NAV_ITEMS } from '../../pages/Perencanaan/Dashboard';
 import RkaklActiveCard from '../organisms/RkaklActiveCard';
 import RkaklHistoryCard from '../organisms/RkaklHistoryCard';
@@ -44,7 +44,7 @@ export const PerencanaanRkaklTemplate: FC<PerencanaanRkaklTemplateProps> = ({
   onSelectHistoryDoc,
 }) => {
   return (
-    <PpLayout
+    <AppLayout
       activeRoute="rkakl"
       navItems={PERENCANAAN_NAV_ITEMS}
       roleInitials="PR"
@@ -128,7 +128,7 @@ export const PerencanaanRkaklTemplate: FC<PerencanaanRkaklTemplateProps> = ({
         filename={activeFilename}
         size="PDF • Dokumen Acuan Pagu"
       />
-    </PpLayout>
+    </AppLayout>
   );
 };
 

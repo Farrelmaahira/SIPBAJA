@@ -1,7 +1,7 @@
 import { useEffect, type FC } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import PpLayout from '../../../components/templates/PpLayout';
+import AppLayout, { type AppNavItem } from '../../../components/templates/AppLayout';
 import NotificationListCard from '../../../components/organisms/NotificationListCard';
 import { useNotifications } from '../../../hooks/useNotifications';
 import type { NotificationItem } from '../../../types/notification';
@@ -12,6 +12,7 @@ export interface PerencanaanNotifikasiProps {
   roleInitials?: string;
   roleTitle?: string | null;
   roleSubtitle?: string | null;
+  navItems?: AppNavItem[] | null;
 }
 
 export const PerencanaanNotifikasiIndex: FC<PerencanaanNotifikasiProps> = ({
@@ -19,6 +20,7 @@ export const PerencanaanNotifikasiIndex: FC<PerencanaanNotifikasiProps> = ({
   roleInitials = 'PR',
   roleTitle = 'Perencanaan',
   roleSubtitle = 'Unit Perencanaan',
+  navItems = PERENCANAAN_NAV_ITEMS,
 }) => {
   const {
     notifications,
@@ -54,13 +56,14 @@ export const PerencanaanNotifikasiIndex: FC<PerencanaanNotifikasiProps> = ({
   };
 
   return (
-    <PpLayout
-      activeRoute="dashboard"
+    <AppLayout
+      activeRoute="notifikasi"
       unreadCount={unreadCount}
       roleInitials={roleInitials}
       roleTitle={roleTitle}
       roleSubtitle={roleSubtitle}
-      navItems={PERENCANAAN_NAV_ITEMS}
+      navItems={navItems}
+      basePath={basePath}
       profileHref={`${basePath}/profil`}
       notifikasiHref={`${basePath}/notifikasi`}
       readAllHref={`${basePath}/notifikasi/read-all`}
@@ -111,7 +114,7 @@ export const PerencanaanNotifikasiIndex: FC<PerencanaanNotifikasiProps> = ({
         onMarkOneRead={handleMarkOneRead}
         onDeleteNotification={handleDelete}
       />
-    </PpLayout>
+    </AppLayout>
   );
 };
 

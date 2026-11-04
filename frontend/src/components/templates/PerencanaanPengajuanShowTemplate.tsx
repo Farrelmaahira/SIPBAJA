@@ -14,7 +14,7 @@ import {
   Clock,
   Layers,
 } from 'lucide-react';
-import PpLayout from './PpLayout';
+import AppLayout from './AppLayout';
 import StatusPill from '../atoms/StatusPill';
 import DokumenListCard from '../organisms/DokumenListCard';
 import PerencanaanVerifikasiMakCard from '../organisms/PerencanaanVerifikasiMakCard';
@@ -101,7 +101,7 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
 
   if (isLoading || !permohonan) {
     return (
-      <PpLayout
+      <AppLayout
         activeRoute="pengajuan"
         notifications={recentNotifications as any}
         unreadCount={unreadNotificationsCount}
@@ -125,14 +125,14 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
             <div className="h-96 bg-white rounded-[22px] border border-gray-100" />
           </div>
         </div>
-      </PpLayout>
+      </AppLayout>
     );
   }
 
   const selectedMaksData = maksList.filter((m) => selectedMakIds.includes(m.id));
 
   return (
-    <PpLayout
+    <AppLayout
       activeRoute="pengajuan"
       notifications={recentNotifications as any}
       unreadCount={unreadNotificationsCount}
@@ -491,7 +491,7 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
           </div>
         </div>
       )}
-    </PpLayout>
+    </AppLayout>
   );
 };
 

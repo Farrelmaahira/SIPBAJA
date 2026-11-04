@@ -1,7 +1,7 @@
 import { useState, useEffect, type FC } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import PpLayout from '../../../components/templates/PpLayout';
+import AppLayout, { type AppNavItem } from '../../../components/templates/AppLayout';
 import UserProfileSection from '../../../components/organisms/UserProfileSection';
 import LogoutModal from '../../../components/organisms/LogoutModal';
 import { useAuth } from '../../../hooks/useAuth';
@@ -14,6 +14,7 @@ export interface PerencanaanProfilProps {
   roleInitials?: string;
   roleTitle?: string | null;
   roleSubtitle?: string | null;
+  navItems?: AppNavItem[] | null;
 }
 
 export const PerencanaanProfilIndex: FC<PerencanaanProfilProps> = ({
@@ -22,6 +23,7 @@ export const PerencanaanProfilIndex: FC<PerencanaanProfilProps> = ({
   roleInitials = 'PR',
   roleTitle = 'Perencanaan',
   roleSubtitle = 'Unit Perencanaan',
+  navItems = PERENCANAAN_NAV_ITEMS,
 }) => {
   const navigate = useNavigate();
   const { user: authUser, logout } = useAuth();
@@ -63,12 +65,13 @@ export const PerencanaanProfilIndex: FC<PerencanaanProfilProps> = ({
   const effectiveUser = user || authUser;
 
   return (
-    <PpLayout
+    <AppLayout
       activeRoute="dashboard"
       roleInitials={roleInitials}
       roleTitle={roleTitle}
       roleSubtitle={roleSubtitle}
-      navItems={PERENCANAAN_NAV_ITEMS}
+      navItems={navItems}
+      basePath={basePath}
       profileHref={`${basePath}/profil`}
       notifikasiHref={`${basePath}/notifikasi`}
       readAllHref={`${basePath}/notifikasi/read-all`}
@@ -123,7 +126,7 @@ export const PerencanaanProfilIndex: FC<PerencanaanProfilProps> = ({
         onClose={() => setLogoutOpen(false)}
         onConfirm={handleConfirmLogout}
       />
-    </PpLayout>
+    </AppLayout>
   );
 };
 

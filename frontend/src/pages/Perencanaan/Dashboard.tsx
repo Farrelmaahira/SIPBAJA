@@ -11,7 +11,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import api from '../../services/api';
-import PpLayout from '../../components/templates/PpLayout';
+import AppLayout from '../../components/templates/AppLayout';
 import RowActionMenu from '../../components/organisms/RowActionMenu';
 
 export const PERENCANAAN_NAV_ITEMS = [
@@ -148,7 +148,7 @@ export const PerencanaanDashboard: FC = () => {
   };
 
   return (
-    <PpLayout
+    <AppLayout
       activeRoute="dashboard"
       navItems={PERENCANAAN_NAV_ITEMS}
       roleInitials="PR"
@@ -435,7 +435,7 @@ export const PerencanaanDashboard: FC = () => {
           </table>
         </div>
       </div>
-    </PpLayout>
+    </AppLayout>
   );
 };
 

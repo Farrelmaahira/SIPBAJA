@@ -1,6 +1,6 @@
 import type { FC, FormEvent } from 'react';
 import { Plus, Search } from 'lucide-react';
-import PpLayout from './PpLayout';
+import AppLayout from './AppLayout';
 import JenisMakTable from '../organisms/JenisMakTable';
 import JenisMakFormModal from '../organisms/JenisMakFormModal';
 import HapusJenisMakModal from '../organisms/HapusJenisMakModal';
@@ -67,7 +67,7 @@ export const PerencanaanJenisMakTemplate: FC<PerencanaanJenisMakTemplateProps> =
   onConfirmDelete,
 }) => {
   return (
-    <PpLayout
+    <AppLayout
       activeRoute="mak"
       navItems={PERENCANAAN_NAV_ITEMS}
       roleInitials="PR"
@@ -164,7 +164,7 @@ export const PerencanaanJenisMakTemplate: FC<PerencanaanJenisMakTemplateProps> =
         onClose={onCloseDeleteModal}
         onConfirm={onConfirmDelete}
       />
-    </PpLayout>
+    </AppLayout>
   );
 };
 

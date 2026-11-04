@@ -81,19 +81,17 @@ export const NotificationListCard: FC<NotificationListCardProps> = ({
       <div
         key={item.id}
         onClick={() => onMarkOneRead(item)}
-        className={`group flex items-start gap-3.5 p-4 rounded-xl border border-transparent transition-all cursor-pointer ${
-          isUnread
+        className={`group flex items-start gap-3.5 p-4 rounded-xl border border-transparent transition-all cursor-pointer ${isUnread
             ? 'bg-[#F2F9F6] border-[#D1EADB] hover:bg-[#EAF6F1]'
             : 'bg-white hover:bg-[#F9FBFA] border-[#F0F4F2]'
-        }`}
+          }`}
       >
         {getIcon(item)}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <p
-              className={`text-xs sm:text-sm leading-5 text-[#14201C] ${
-                isUnread ? 'font-bold' : 'font-medium'
-              }`}
+              className={`text-xs sm:text-sm leading-5 text-[#14201C] ${isUnread ? 'font-bold' : 'font-medium'
+                }`}
             >
               {item.judul}
             </p>
@@ -123,10 +121,10 @@ export const NotificationListCard: FC<NotificationListCardProps> = ({
               item.waktu_relatif ||
               (item.created_at
                 ? new Date(item.created_at).toLocaleDateString('id-ID', {
-                    day: '2-digit',
-                    month: 'short',
-                    year: 'numeric',
-                  })
+                  day: '2-digit',
+                  month: 'short',
+                  year: 'numeric',
+                })
                 : 'Baru saja')}
           </span>
         </div>
@@ -141,33 +139,30 @@ export const NotificationListCard: FC<NotificationListCardProps> = ({
           <button
             type="button"
             onClick={() => onTabChange('semua')}
-            className={`px-3.5 py-1.5 rounded-full text-xs transition-all cursor-pointer border ${
-              activeTab === 'semua'
+            className={`px-3.5 py-1.5 rounded-full text-xs transition-all cursor-pointer border ${activeTab === 'semua'
                 ? 'bg-[#EAF6F1] text-[#0E7C5A] border-[#0E7C5A] font-bold'
                 : 'bg-white border-[#E4EBE8] text-[#5F6F6A] font-medium hover:bg-[#F9FBFA]'
-            }`}
+              }`}
           >
             Semua &bull; {totalCount || notifications.length}
           </button>
           <button
             type="button"
             onClick={() => onTabChange('pengingat')}
-            className={`px-3.5 py-1.5 rounded-full text-xs transition-all cursor-pointer border ${
-              activeTab === 'pengingat'
+            className={`px-3.5 py-1.5 rounded-full text-xs transition-all cursor-pointer border ${activeTab === 'pengingat'
                 ? 'bg-[#EAF6F1] text-[#0E7C5A] border-[#0E7C5A] font-bold'
                 : 'bg-white border-[#E4EBE8] text-[#5F6F6A] font-medium hover:bg-[#F9FBFA]'
-            }`}
+              }`}
           >
             Pengingat
           </button>
           <button
             type="button"
             onClick={() => onTabChange('status')}
-            className={`px-3.5 py-1.5 rounded-full text-xs transition-all cursor-pointer border ${
-              activeTab === 'status'
+            className={`px-3.5 py-1.5 rounded-full text-xs transition-all cursor-pointer border ${activeTab === 'status'
                 ? 'bg-[#EAF6F1] text-[#0E7C5A] border-[#0E7C5A] font-bold'
                 : 'bg-white border-[#E4EBE8] text-[#5F6F6A] font-medium hover:bg-[#F9FBFA]'
-            }`}
+              }`}
           >
             Status
           </button>

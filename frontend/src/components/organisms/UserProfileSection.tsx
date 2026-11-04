@@ -5,10 +5,10 @@ export interface UserProfileData {
   id?: number | string;
   nama?: string;
   email?: string;
-  role?: string | { nama?: string; [key: string]: unknown };
-  Role?: { nama?: string; [key: string]: unknown };
-  unit?: string | { nama?: string; [key: string]: unknown };
-  Unit?: { nama?: string; [key: string]: unknown };
+  role?: string | { nama?: string;[key: string]: unknown };
+  Role?: { nama?: string;[key: string]: unknown };
+  unit?: string | { nama?: string;[key: string]: unknown };
+  Unit?: { nama?: string;[key: string]: unknown };
   [key: string]: unknown;
 }
 

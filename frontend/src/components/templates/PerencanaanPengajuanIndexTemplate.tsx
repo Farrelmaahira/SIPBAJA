@@ -1,7 +1,7 @@
 import type { FC, FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { Filter, Search, Loader2, FileText } from 'lucide-react';
-import PpLayout from './PpLayout';
+import AppLayout from './AppLayout';
 import FilterPengajuanModal from '../organisms/FilterPengajuanModal';
 import RowActionMenu from '../organisms/RowActionMenu';
 import { PERENCANAAN_NAV_ITEMS } from '../../pages/Perencanaan/Dashboard';
@@ -92,7 +92,7 @@ export const PerencanaanPengajuanIndexTemplate: FC<PerencanaanPengajuanIndexTemp
   };
 
   return (
-    <PpLayout
+    <AppLayout
       activeRoute="pengajuan"
       navItems={PERENCANAAN_NAV_ITEMS}
       roleInitials="PR"
@@ -246,7 +246,7 @@ export const PerencanaanPengajuanIndexTemplate: FC<PerencanaanPengajuanIndexTemp
         onApply={onApplyFilter}
         selectedStatuses={selectedStatuses}
       />
-    </PpLayout>
+    </AppLayout>
   );
 };
 

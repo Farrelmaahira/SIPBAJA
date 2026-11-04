@@ -49,19 +49,18 @@ export const RkaklHistoryCard: FC<RkaklHistoryCardProps> = ({
               item.meta ||
               (item.updated_at
                 ? `PDF • Versi ${item.versi ?? '-'} • ${new Date(item.updated_at).toLocaleDateString('id-ID', {
-                    day: '2-digit',
-                    month: 'short',
-                    year: 'numeric',
-                  })}`
+                  day: '2-digit',
+                  month: 'short',
+                  year: 'numeric',
+                })}`
                 : `PDF • Arsip Versi ${item.versi ?? '-'}`);
 
             return (
               <div
                 key={String(item.id)}
                 onClick={() => onSelectHistoryDoc?.(item)}
-                className={`p-3 rounded-xl border border-[#E4EBE8] bg-[#FAFCFB] flex items-center justify-between text-xs transition-colors ${
-                  onSelectHistoryDoc ? 'cursor-pointer hover:border-[#0E7C5A] hover:bg-white' : ''
-                }`}
+                className={`p-3 rounded-xl border border-[#E4EBE8] bg-[#FAFCFB] flex items-center justify-between text-xs transition-colors ${onSelectHistoryDoc ? 'cursor-pointer hover:border-[#0E7C5A] hover:bg-white' : ''
+                  }`}
               >
                 <div className="min-w-0 pr-2">
                   <p className="font-semibold text-[#14201C] truncate" title={displayName}>
