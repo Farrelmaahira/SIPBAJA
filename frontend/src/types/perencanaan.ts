@@ -1,4 +1,7 @@
 import type { PermohonanItem } from './permohonan';
+import type { DokumenItem } from './dokumen';
+
+export type { DokumenItem };
 
 export interface PerencanaanMakItem {
   id: number;
@@ -12,13 +15,7 @@ export interface PerencanaanMakItem {
   } | null;
 }
 
-export interface DokumenPermohonanDetail {
-  id: number | string;
-  nama_asli: string;
-  ukuran_bytes?: number | null;
-  mime_type?: string | null;
-  download_url?: string | null;
-}
+export type DokumenPermohonanDetail = DokumenItem;
 
 export interface ApprovalHistoryItem {
   id: number | string;

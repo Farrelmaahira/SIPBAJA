@@ -52,8 +52,11 @@ export const perencanaanService = {
     downloadUrl: string,
     disposition: 'inline' | 'attachment' = 'attachment'
   ): Promise<{ blob: Blob; contentType?: string }> {
-    const url = disposition === 'inline' ? `${downloadUrl}?disposition=inline` : downloadUrl;
-    const response = await api.get<Blob>(url, { responseType: 'blob' });
+    const normalizedUrl = downloadUrl.replace(/^\/api(?=\/)/, '');
+    const separator = normalizedUrl.includes('?') ? '&' : '?';
+    const finalUrl = disposition === 'inline' ? `${normalizedUrl}${separator}disposition=inline` : normalizedUrl;
+
+    const response = await api.get<Blob>(finalUrl, { responseType: 'blob' });
     const rawContentType = response.headers['content-type'];
     const contentType = typeof rawContentType === 'string' ? rawContentType : 'application/pdf';
     return {
