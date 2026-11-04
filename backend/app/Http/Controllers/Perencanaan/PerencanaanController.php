@@ -72,7 +72,8 @@ class PerencanaanController extends Controller
     public function downloadDokumen(Request $request, Permohonan $permohonan): StreamedResponse
     {
         $user = $request->user();
-        $info = $this->permohonanService->ambilDokumen($user, $permohonan);
+        $dokumenId = $request->filled('dokumen_id') ? $request->integer('dokumen_id') : null;
+        $info = $this->permohonanService->ambilDokumen($user, $permohonan, $dokumenId);
 
         $disposition = $request->query('disposition', 'attachment');
         if ($disposition === 'inline') {

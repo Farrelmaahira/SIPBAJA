@@ -100,7 +100,20 @@ class PerencanaanService
         $selectedMakIds = $permohonan->PermohonanMak->pluck('mak_id')->toArray();
 
         $dokumenPermohonan = Dokumen::where('ref_type', 'permohonan')->where('ref_id', $permohonan->id)
-            ->get();
+            ->orderBy('id')
+            ->get()
+            ->map(function ($doc) use ($permohonan) {
+                return [
+                    'id' => $doc->id,
+                    'nama_asli' => $doc->nama_asli,
+                    'tipe_dokumen' => $doc->tipe_dokumen,
+                    'ukuran_bytes' => (int) ($doc->ukuran_bytes ?? 0),
+                    'mime_type' => $doc->mime_type ?? 'application/pdf',
+                    'versi' => $doc->versi,
+                    'created_at' => is_string($doc->created_at) ? $doc->created_at : $doc->created_at?->toISOString(),
+                    'download_url' => "/api/v1/perencanaan/pengajuan/{$permohonan->id}/dokumen?dokumen_id={$doc->id}",
+                ];
+            });
 
         $dokumen = $permohonan->Dokumen()->where('tipe_dokumen', 'surat_permohonan')->latest('versi')->first()
             ?? Dokumen::where('ref_type', 'permohonan')->where('ref_id', $permohonan->id)->latest('id')->first();
