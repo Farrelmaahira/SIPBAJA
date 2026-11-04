@@ -166,3 +166,28 @@ export interface PerencanaanProfilResponse {
     [key: string]: unknown;
   };
 }
+
+export interface PerencanaanDashboardStats {
+  total?: number;
+  diajukan?: number;
+  selesai?: number;
+  ditolak?: number;
+}
+
+export interface PermohonanTerbaruItem {
+  id: number;
+  nomor_surat?: string;
+  judul?: string;
+  created_at?: string;
+  estimasi_anggaran?: number;
+  status?: string;
+  [key: string]: unknown;
+}
+
+export interface PerencanaanDashboardResponse {
+  stats?: PerencanaanDashboardStats;
+  permohonanTerbaru?: PermohonanTerbaruItem[];
+  recentNotifications?: unknown[];
+  unreadNotificationsCount?: number;
+}
+

@@ -6,6 +6,7 @@ import type {
   JenisMakResponse,
   RkaklResponse,
   PerencanaanProfilResponse,
+  PerencanaanDashboardResponse,
 } from '../types/perencanaan';
 
 export const perencanaanService = {
@@ -135,6 +136,17 @@ export const perencanaanService = {
     const response = await api.post<ApiMessageResponse>('/v1/perencanaan/rkakl', {
       filename,
     });
+    return response.data;
+  },
+
+  /**
+   * Mengambil data statistik dan permohonan terbaru untuk dashboard Perencanaan.
+   */
+  async getDashboardData(signal?: AbortSignal): Promise<PerencanaanDashboardResponse> {
+    const response = await api.get<PerencanaanDashboardResponse>(
+      '/v1/perencanaan/dashboard',
+      { signal }
+    );
     return response.data;
   },
 
