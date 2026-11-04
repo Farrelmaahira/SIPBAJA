@@ -95,6 +95,8 @@ Route::prefix('v1')->group(function () {
             Route::post('jenis-mak', [PerencanaanMakController::class, 'store'])->name('api.perencanaan.mak.store');
             Route::put('jenis-mak/{mak}', [PerencanaanMakController::class, 'update'])->name('api.perencanaan.mak.update');
             Route::delete('jenis-mak/{mak}', [PerencanaanMakController::class, 'destroy'])->name('api.perencanaan.mak.destroy');
+            Route::get('rkakl/dokumen', [PerencanaanRkaklController::class, 'downloadDokumen'])->name('api.perencanaan.rkakl.dokumen.latest');
+            Route::get('rkakl/dokumen/{dokumen}', [PerencanaanRkaklController::class, 'downloadDokumen'])->name('api.perencanaan.rkakl.dokumen.download');
             Route::get('rkakl', [PerencanaanRkaklController::class, 'index'])->name('api.perencanaan.rkakl.index');
             Route::post('rkakl', [PerencanaanRkaklController::class, 'store'])->name('api.perencanaan.rkakl.store');
             Route::get('notifikasi', [NotificationController::class, 'index'])->name('api.perencanaan.notifikasi.index');

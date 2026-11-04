@@ -109,25 +109,30 @@ export const DokumenListCard: FC<DokumenListCardProps> = ({
         <div className="space-y-3.5">
           {safeList.map((doc, idx) => {
             const isExpanded = expandedId === doc.id;
+            const isRkaklDoc =
+              doc.tipe_dokumen === 'rkakl' ||
+              doc.tipe_dokumen === 'RKAKL' ||
+              (doc.nama_asli && doc.nama_asli.toLowerCase().includes('rkakl'));
             const isPermohonanDoc =
               doc.tipe_dokumen === 'surat_permohonan' ||
-              doc.tipe_dokumen === 'permohonan' ||
-              (safeList.length === 1 && !doc.tipe_dokumen);
+              doc.tipe_dokumen === 'permohonan';
+            const isPdf =
+              doc.mime_type === 'application/pdf' ||
+              (doc.nama_asli && doc.nama_asli.toLowerCase().endsWith('.pdf'));
+            const canPreviewIframe = isPermohonanDoc || isRkaklDoc || isPdf || safeList.length === 1;
             const hasDownloadUrl = Boolean(doc.download_url);
             const displaySize = doc.ukuran_bytes ? formatBytes(doc.ukuran_bytes) : '-';
             const isViewingThis = isViewingId === doc.id;
             const isDownloadingThis = isDownloadingId === doc.id;
-            const isPdf =
-              doc.mime_type === 'application/pdf' ||
-              (doc.nama_asli && doc.nama_asli.toLowerCase().endsWith('.pdf'));
 
             // Preview URL priority: blob URL if matches current doc, or direct download_url with inline disposition
             const activePreviewSrc =
               previewBlobUrl && previewDocId === doc.id
                 ? previewBlobUrl
                 : doc.download_url
-                  ? `${doc.download_url.replace(/^\/api(?=\/)/, '')}${doc.download_url.includes('?') ? '&' : '?'
-                  }disposition=inline`
+                  ? `${doc.download_url.replace(/^\/api(?=\/)/, '')}${
+                      doc.download_url.includes('?') ? '&' : '?'
+                    }disposition=inline`
                   : null;
 
             return (
@@ -223,16 +228,18 @@ export const DokumenListCard: FC<DokumenListCardProps> = ({
                 {/* Accordion Content */}
                 {isExpanded && (
                   <div className="border-t border-[#E4EBE8] p-4 bg-[#F7FAF9]">
-                    {isPermohonanDoc ? (
-                      /* Live Iframe for Surat Permohonan */
+                    {canPreviewIframe ? (
+                      /* Live Iframe for Documents */
                       <div className="space-y-3">
                         <div className="flex items-center justify-between text-xs text-[#5F6F6A] px-1">
                           <span className="font-semibold text-[#14201C] flex items-center gap-1.5">
                             <FileCheck2 className="w-4 h-4 text-[#0E7C5A]" />
-                            Pratinjau Surat Permohonan
+                            {isRkaklDoc ? 'Pratinjau Dokumen RKAKL' : 'Pratinjau Surat Permohonan'}
                           </span>
                           <span className="text-[11px] text-[#8A9A95]">
-                            {nomorSurat ? `No. ${nomorSurat}` : ''}
+                            {isRkaklDoc
+                              ? (doc.versi ? `Versi ${doc.versi}` : 'Acuan Pagu')
+                              : (nomorSurat ? `No. ${nomorSurat}` : '')}
                           </span>
                         </div>
 
@@ -240,7 +247,7 @@ export const DokumenListCard: FC<DokumenListCardProps> = ({
                           <div className="h-[480px] flex flex-col items-center justify-center gap-3 bg-white rounded-xl border border-[#E4EBE8]">
                             <Loader2 className="w-7 h-7 text-[#0E7C5A] animate-spin" />
                             <p className="text-xs font-medium text-[#5F6F6A]">
-                              Memuat pratinjau isi surat permohonan...
+                              Memuat pratinjau isi dokumen...
                             </p>
                           </div>
                         ) : activePreviewSrc ? (
@@ -249,6 +256,40 @@ export const DokumenListCard: FC<DokumenListCardProps> = ({
                             title={`Pratinjau isi ${doc.nama_asli}`}
                             className="w-full h-[520px] rounded-xl border border-[#E4EBE8] bg-white shadow-xs"
                           />
+                        ) : isRkaklDoc ? (
+                          /* Fallback Mockup Dokumen RKAKL */
+                          <div className="bg-white rounded-xl border border-[#E4EBE8] shadow-2xs p-6 sm:p-8 max-w-xl mx-auto space-y-5">
+                            <div className="flex items-center gap-3 pb-4 border-b-2 border-[#0E7C5A]">
+                              <div className="w-10 h-10 rounded-lg bg-[#0E7C5A] text-white flex items-center justify-center shrink-0">
+                                <FileText className="w-5 h-5" />
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold text-[#14201C] uppercase tracking-wide">
+                                  RKA-K/L TAHUN ANGGARAN 2026
+                                </p>
+                                <p className="text-[11px] text-[#5F6F6A]">
+                                  Pengadaan Barang &amp; Jasa Politeknik Negeri Jakarta
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-xs space-y-1.5 text-[#14201C]">
+                              <div className="flex gap-2">
+                                <span className="w-24 text-[#5F6F6A]">Nama Berkas</span>
+                                <span className="font-semibold">: {doc.nama_asli}</span>
+                              </div>
+                              <div className="flex gap-2">
+                                <span className="w-24 text-[#5F6F6A]">Versi Dokumen</span>
+                                <span>: Versi {doc.versi ?? 1}</span>
+                              </div>
+                              <div className="flex gap-2">
+                                <span className="w-24 text-[#5F6F6A]">Status</span>
+                                <span className="font-bold text-[#0E7C5A]">: Aktif Digunakan</span>
+                              </div>
+                            </div>
+                            <p className="text-xs text-[#5F6F6A] leading-relaxed">
+                              Dokumen acuan pagu anggaran yang telah disahkan untuk proses verifikasi mata anggaran kegiatan (MAK) di lingkungan kampus.
+                            </p>
+                          </div>
                         ) : (
                           /* Fallback Mockup Dokumen Berkop Resmi */
                           <div className="bg-white rounded-xl border border-[#E4EBE8] shadow-2xs p-6 sm:p-8 max-w-xl mx-auto space-y-5">

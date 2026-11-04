@@ -70,7 +70,7 @@ export const PerencanaanRkaklIndex: FC = () => {
         download_url:
           (activeDoc.download_url as string) ||
           (activeDoc.id
-            ? `/api/v1/dokumen/${activeDoc.id}/download`
+            ? `/api/v1/perencanaan/rkakl/dokumen/${activeDoc.id}`
             : '/api/v1/perencanaan/rkakl/dokumen'),
       },
     ];
@@ -146,7 +146,7 @@ export const PerencanaanRkaklIndex: FC = () => {
 
   const handleSelectHistoryDoc = async (doc: RkaklHistoryItem) => {
     const docUrl =
-      (doc.download_url as string) || (doc.id ? `/api/v1/dokumen/${doc.id}/download` : null);
+      (doc.download_url as string) || (doc.id ? `/api/v1/perencanaan/rkakl/dokumen/${doc.id}` : null);
     if (!docUrl) return;
 
     try {
