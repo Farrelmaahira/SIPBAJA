@@ -126,9 +126,8 @@ export const DokumenListCard: FC<DokumenListCardProps> = ({
               previewBlobUrl && previewDocId === doc.id
                 ? previewBlobUrl
                 : doc.download_url
-                  ? `${doc.download_url.replace(/^\/api(?=\/)/, '')}${
-                      doc.download_url.includes('?') ? '&' : '?'
-                    }disposition=inline`
+                  ? `${doc.download_url.replace(/^\/api(?=\/)/, '')}${doc.download_url.includes('?') ? '&' : '?'
+                  }disposition=inline`
                   : null;
 
             return (
@@ -143,11 +142,10 @@ export const DokumenListCard: FC<DokumenListCardProps> = ({
                     onClick={() => toggleExpand(doc.id)}
                   >
                     <div
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                        isPdf
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isPdf
                           ? 'bg-[#FEE4E2] text-[#D92D20]'
                           : 'bg-[#E8F0FF] text-[#2F68D6]'
-                      }`}
+                        }`}
                     >
                       <FileText className="w-5 h-5" />
                     </div>

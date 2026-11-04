@@ -14,7 +14,11 @@ use App\Http\Controllers\Keuangan\DashboardKeuanganController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Pemohon\DashboardPemohonController;
 use App\Http\Controllers\Pemohon\PermohonanPemohonController;
-use App\Http\Controllers\Perencanaan\PerencanaanController;
+use App\Http\Controllers\Perencanaan\DashboardPerencanaanController;
+use App\Http\Controllers\Perencanaan\PengajuanPerencanaanController;
+use App\Http\Controllers\Perencanaan\PerencanaanMakController;
+use App\Http\Controllers\Perencanaan\PerencanaanProfilController;
+use App\Http\Controllers\Perencanaan\PerencanaanRkaklController;
 use App\Http\Controllers\Perlengkapan\DashboardPerlengkapanController;
 use App\Http\Controllers\Pp\PpController;
 use App\Http\Controllers\PPBJ\DashboardPpbjController;
@@ -80,23 +84,23 @@ Route::prefix('v1')->group(function () {
 
         // Perencanaan Routes
         Route::prefix('perencanaan')->middleware('role:Perencanaan')->group(function () {
-            Route::get('dashboard', [PerencanaanController::class, 'dashboard'])->name('api.perencanaan.dashboard');
-            Route::get('pengajuan', [PerencanaanController::class, 'index'])->name('api.perencanaan.pengajuan.index');
-            Route::get('pengajuan/{permohonan}', [PerencanaanController::class, 'show'])->name('api.perencanaan.pengajuan.show');
-            Route::get('pengajuan/{permohonan}/dokumen', [PerencanaanController::class, 'downloadDokumen'])->name('api.perencanaan.pengajuan.dokumen.download');
-            Route::post('pengajuan/{permohonan}/approve', [PerencanaanController::class, 'approve'])->name('api.perencanaan.pengajuan.approve');
-            Route::post('pengajuan/{permohonan}/reject', [PerencanaanController::class, 'reject'])->name('api.perencanaan.pengajuan.reject');
-            Route::post('pengajuan/{permohonan}/kirim-pengadaan', [PerencanaanController::class, 'kirimPengadaan'])->name('api.perencanaan.pengajuan.kirimPengadaan');
-            Route::get('jenis-mak', [PerencanaanController::class, 'jenisMak'])->name('api.perencanaan.mak.index');
-            Route::post('jenis-mak', [PerencanaanController::class, 'storeMak'])->name('api.perencanaan.mak.store');
-            Route::put('jenis-mak/{mak}', [PerencanaanController::class, 'updateMak'])->name('api.perencanaan.mak.update');
-            Route::delete('jenis-mak/{mak}', [PerencanaanController::class, 'destroyMak'])->name('api.perencanaan.mak.destroy');
-            Route::get('rkakl', [PerencanaanController::class, 'rkakl'])->name('api.perencanaan.rkakl.index');
-            Route::post('rkakl', [PerencanaanController::class, 'storeRkakl'])->name('api.perencanaan.rkakl.store');
+            Route::get('dashboard', DashboardPerencanaanController::class)->name('api.perencanaan.dashboard');
+            Route::get('pengajuan', [PengajuanPerencanaanController::class, 'index'])->name('api.perencanaan.pengajuan.index');
+            Route::get('pengajuan/{permohonan}', [PengajuanPerencanaanController::class, 'show'])->name('api.perencanaan.pengajuan.show');
+            Route::get('pengajuan/{permohonan}/dokumen', [PengajuanPerencanaanController::class, 'downloadDokumen'])->name('api.perencanaan.pengajuan.dokumen.download');
+            Route::post('pengajuan/{permohonan}/approve', [PengajuanPerencanaanController::class, 'approve'])->name('api.perencanaan.pengajuan.approve');
+            Route::post('pengajuan/{permohonan}/reject', [PengajuanPerencanaanController::class, 'reject'])->name('api.perencanaan.pengajuan.reject');
+            Route::post('pengajuan/{permohonan}/kirim-pengadaan', [PengajuanPerencanaanController::class, 'kirimPengadaan'])->name('api.perencanaan.pengajuan.kirimPengadaan');
+            Route::get('jenis-mak', [PerencanaanMakController::class, 'index'])->name('api.perencanaan.mak.index');
+            Route::post('jenis-mak', [PerencanaanMakController::class, 'store'])->name('api.perencanaan.mak.store');
+            Route::put('jenis-mak/{mak}', [PerencanaanMakController::class, 'update'])->name('api.perencanaan.mak.update');
+            Route::delete('jenis-mak/{mak}', [PerencanaanMakController::class, 'destroy'])->name('api.perencanaan.mak.destroy');
+            Route::get('rkakl', [PerencanaanRkaklController::class, 'index'])->name('api.perencanaan.rkakl.index');
+            Route::post('rkakl', [PerencanaanRkaklController::class, 'store'])->name('api.perencanaan.rkakl.store');
             Route::get('notifikasi', [NotificationController::class, 'index'])->name('api.perencanaan.notifikasi.index');
             Route::post('notifikasi/read-all', [NotificationController::class, 'markAllRead'])->name('api.perencanaan.notifikasi.readAll');
             Route::post('notifikasi/{notification}/read', [NotificationController::class, 'markOneRead'])->name('api.perencanaan.notifikasi.readOne');
-            Route::get('profil', [PerencanaanController::class, 'profil'])->name('api.perencanaan.profil.index');
+            Route::get('profil', [PerencanaanProfilController::class, 'index'])->name('api.perencanaan.profil.index');
         });
 
         // Bidang 2 Routes
