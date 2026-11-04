@@ -371,8 +371,8 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
                     </span>
                     <span
                       className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${app.keputusan === 'disetujui'
-                          ? 'bg-[#E4F6EC] text-[#0B7A4E]'
-                          : 'bg-[#FDECEC] text-[#B42318]'
+                        ? 'bg-[#E4F6EC] text-[#0B7A4E]'
+                        : 'bg-[#FDECEC] text-[#B42318]'
                         }`}
                     >
                       {app.keputusan}

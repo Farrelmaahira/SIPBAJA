@@ -2,46 +2,58 @@ import type { FC, FormEvent } from 'react';
 import { Pencil } from 'lucide-react';
 import AppLayout from './AppLayout';
 import { PERENCANAAN_NAV_ITEMS } from '../../pages/Perencanaan/Dashboard';
-import RkaklActiveCard from '../organisms/RkaklActiveCard';
+import DokumenListCard from '../organisms/DokumenListCard';
 import RkaklHistoryCard from '../organisms/RkaklHistoryCard';
 import RkaklReplaceModal from '../organisms/RkaklReplaceModal';
-import DocumentPreviewModal from '../organisms/DocumentPreviewModal';
+import type { DokumenItem } from '../../types/dokumen';
 import type { RkaklHistoryItem } from '../../types/perencanaan';
 
 export interface PerencanaanRkaklTemplateProps {
   activeFilename: string;
   activeVersion: number | string;
+  activeDokumenList: DokumenItem[];
   historyList: RkaklHistoryItem[];
   isLoading?: boolean;
   replaceModalOpen: boolean;
-  fullPreviewOpen: boolean;
   selectedFile: string;
   processing?: boolean;
   onOpenReplaceModal: () => void;
   onCloseReplaceModal: () => void;
-  onOpenFullPreview: () => void;
-  onCloseFullPreview: () => void;
   onFileChange: (fileName: string) => void;
   onReplaceSubmit: (e: FormEvent) => void;
   onSelectHistoryDoc?: (doc: RkaklHistoryItem) => void;
+
+  // Document action & preview props
+  onViewDokumen?: (doc: DokumenItem) => void;
+  onDownloadDokumen?: (doc: DokumenItem) => void;
+  isViewingDocId?: number | string | null;
+  isDownloadingDocId?: number | string | null;
+  previewBlobUrl?: string | null;
+  previewDocId?: number | string | null;
+  isLoadingPreview?: boolean;
 }
 
 export const PerencanaanRkaklTemplate: FC<PerencanaanRkaklTemplateProps> = ({
-  activeFilename,
-  activeVersion,
+  activeFilename: _activeFilename,
+  activeVersion: _activeVersion,
+  activeDokumenList,
   historyList,
   isLoading = false,
   replaceModalOpen,
-  fullPreviewOpen,
   selectedFile,
   processing = false,
   onOpenReplaceModal,
   onCloseReplaceModal,
-  onOpenFullPreview,
-  onCloseFullPreview,
   onFileChange,
   onReplaceSubmit,
   onSelectHistoryDoc,
+  onViewDokumen,
+  onDownloadDokumen,
+  isViewingDocId,
+  isDownloadingDocId,
+  previewBlobUrl,
+  previewDocId,
+  isLoadingPreview = false,
 }) => {
   return (
     <AppLayout
@@ -89,14 +101,20 @@ export const PerencanaanRkaklTemplate: FC<PerencanaanRkaklTemplateProps> = ({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        {/* Left Column (2 cols): Dokumen RKAKL Aktif Live Preview */}
+        {/* Left Column (2 cols): Dokumen RKAKL Aktif via DokumenListCard */}
         <div className="lg:col-span-2">
-          <RkaklActiveCard
-            filename={activeFilename}
-            version={activeVersion}
-            isLoading={isLoading}
-            onOpenReplaceModal={onOpenReplaceModal}
-            onOpenFullPreview={onOpenFullPreview}
+          <DokumenListCard
+            title="Dokumen RKAKL Aktif"
+            dokumenList={activeDokumenList}
+            judul="RKA-K/L Tahun Anggaran 2026"
+            unitNama="POLITEKNIK NEGERI JAKARTA"
+            onViewNewTab={onViewDokumen}
+            onDownload={onDownloadDokumen}
+            isViewingId={isViewingDocId}
+            isDownloadingId={isDownloadingDocId}
+            previewBlobUrl={previewBlobUrl}
+            previewDocId={previewDocId}
+            isLoadingPreview={isLoadingPreview}
           />
         </div>
 
@@ -119,18 +137,8 @@ export const PerencanaanRkaklTemplate: FC<PerencanaanRkaklTemplateProps> = ({
         onFileChange={onFileChange}
         onSubmit={onReplaceSubmit}
       />
-
-      {/* Document Preview Modal */}
-      <DocumentPreviewModal
-        isOpen={fullPreviewOpen}
-        onClose={onCloseFullPreview}
-        category="Dokumen RKAKL"
-        filename={activeFilename}
-        size="PDF • Dokumen Acuan Pagu"
-      />
     </AppLayout>
   );
 };
 
 export default PerencanaanRkaklTemplate;
-
