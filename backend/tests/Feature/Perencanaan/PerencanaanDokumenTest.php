@@ -69,4 +69,50 @@ class PerencanaanDokumenTest extends TestCase
         $detailResponse->assertOk();
         $detailResponse->assertJsonPath('detail.dokumen_permohonan.1.download_url', "/api/v1/perencanaan/pengajuan/{$permohonan->id}/dokumen?dokumen_id={$doc2->id}");
     }
+
+    public function test_perencanaan_can_upload_rkakl_file_with_uuid_hash(): void
+    {
+        Storage::fake('local');
+        $role = Role::create(['nama' => 'Perencanaan']);
+        $user = User::factory()->create(['role_id' => $role->id]);
+
+        $file = UploadedFile::fake()->create('RKAKL_2026_Final.pdf', 200, 'application/pdf');
+
+        $response = $this->actingAs($user)->post('/api/v1/perencanaan/rkakl', [
+            'file' => $file,
+        ]);
+
+        $response->assertOk();
+        $latestDoc = Dokumen::where('ref_type', 'rkakl')->orderByDesc('versi')->first();
+
+        $this->assertNotNull($latestDoc);
+        $this->assertEquals('RKAKL_2026_Final.pdf', $latestDoc->nama_asli);
+        $this->assertStringNotContainsString('dokumen/', $latestDoc->nama_hash);
+        $this->assertMatchesRegularExpression('/^[a-f0-9\-]+\.pdf$/i', $latestDoc->nama_hash);
+        Storage::disk('local')->assertExists('dokumen/rkakl/'.$latestDoc->nama_hash);
+
+        // Download check
+        $dlResponse = $this->actingAs($user)->get('/api/v1/perencanaan/rkakl/dokumen/'.$latestDoc->id);
+        $dlResponse->assertOk();
+        $this->assertStringContainsString('RKAKL_2026_Final.pdf', (string) $dlResponse->headers->get('content-disposition'));
+    }
+
+    public function test_ambil_dokumen_rkakl_generates_authentic_rkakl_pdf_without_copying_permohonan(): void
+    {
+        Storage::fake('local');
+        $role = Role::create(['nama' => 'Perencanaan']);
+        $user = User::factory()->create(['role_id' => $role->id]);
+
+        // Put a permohonan file in local disk
+        Storage::disk('local')->put('dokumen/permohonan/sample_permohonan.pdf', 'SURAT_PERMOHONAN_CONTENT');
+
+        $response = $this->actingAs($user)->get('/api/v1/perencanaan/rkakl/dokumen');
+        $response->assertOk();
+
+        // The content streamed MUST be authentic RKAKL PDF, NOT the permohonan content!
+        $content = $response->streamedContent();
+        $this->assertStringNotContainsString('SURAT_PERMOHONAN_CONTENT', $content);
+        $this->assertStringContainsString('POLITEKNIK NEGERI JAKARTA', $content);
+        $this->assertStringContainsString('RKA-K/L', $content);
+    }
 }

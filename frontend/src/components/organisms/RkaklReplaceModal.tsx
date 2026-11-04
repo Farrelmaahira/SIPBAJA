@@ -6,7 +6,7 @@ export interface RkaklReplaceModalProps {
   selectedFile: string;
   processing?: boolean;
   onClose: () => void;
-  onFileChange: (fileName: string) => void;
+  onFileChange: (file: File) => void;
   onSubmit: (e: FormEvent) => void;
 }
 
@@ -25,7 +25,7 @@ export const RkaklReplaceModal: FC<RkaklReplaceModalProps> = ({
   const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      onFileChange(file.name);
+      onFileChange(file);
     }
   };
 

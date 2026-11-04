@@ -132,9 +132,25 @@ export const perencanaanService = {
   /**
    * Memperbarui / mengganti dokumen RKAKL dengan berkas versi baru.
    */
-  async replaceRkakl(filename: string): Promise<ApiMessageResponse> {
+  async replaceRkakl(file: File | string): Promise<ApiMessageResponse> {
+    if (file instanceof File) {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('filename', file.name);
+      const response = await api.post<ApiMessageResponse>(
+        '/v1/perencanaan/rkakl',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      return response.data;
+    }
+
     const response = await api.post<ApiMessageResponse>('/v1/perencanaan/rkakl', {
-      filename,
+      filename: file,
     });
     return response.data;
   },

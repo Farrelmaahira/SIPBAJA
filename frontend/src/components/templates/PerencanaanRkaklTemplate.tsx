@@ -19,7 +19,7 @@ export interface PerencanaanRkaklTemplateProps {
   processing?: boolean;
   onOpenReplaceModal: () => void;
   onCloseReplaceModal: () => void;
-  onFileChange: (fileName: string) => void;
+  onFileChange: (file: File) => void;
   onReplaceSubmit: (e: FormEvent) => void;
   onSelectHistoryDoc?: (doc: RkaklHistoryItem) => void;
 

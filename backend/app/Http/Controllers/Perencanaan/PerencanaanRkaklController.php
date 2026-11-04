@@ -39,8 +39,13 @@ class PerencanaanRkaklController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $filename = $request->input('filename', 'RKAKL_TA_2026_Satker_Politeknik_v4.pdf');
-        $this->perencanaanService->replaceRkakl(auth()->user(), $filename);
+        $request->validate([
+            'file' => 'nullable|file|mimes:pdf|max:15360',
+            'filename' => 'nullable|string|max:255',
+        ]);
+
+        $fileToUpload = $request->file('file') ?: $request->input('filename', 'RKAKL_TA_2026_Satker_Politeknik_v4.pdf');
+        $this->perencanaanService->replaceRkakl(auth()->user(), $fileToUpload);
 
         return response()->json([
             'message' => 'Dokumen RKAKL berhasil diperbarui dengan versi terbaru.',

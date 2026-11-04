@@ -10,7 +10,8 @@ export const PerencanaanRkaklIndex: FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   const [replaceModalOpen, setReplaceModalOpen] = useState(false);
-  const [selectedFile, setSelectedFile] = useState('RKAKL_TA_2026_Satker_Politeknik_v4.pdf');
+  const [selectedFileObj, setSelectedFileObj] = useState<File | null>(null);
+  const [selectedFileName, setSelectedFileName] = useState('');
   const [processing, setProcessing] = useState(false);
 
   // Document action & preview states
@@ -161,12 +162,15 @@ export const PerencanaanRkaklIndex: FC = () => {
 
   const handleReplaceSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!selectedFile) return;
+    const fileToUpload = selectedFileObj || selectedFileName;
+    if (!fileToUpload) return;
 
     setProcessing(true);
     try {
-      await perencanaanService.replaceRkakl(selectedFile);
+      await perencanaanService.replaceRkakl(fileToUpload);
       setReplaceModalOpen(false);
+      setSelectedFileObj(null);
+      setSelectedFileName('');
       await fetchRkakl();
     } catch (err) {
       console.error('Failed to update RKAKL:', err);
@@ -183,11 +187,18 @@ export const PerencanaanRkaklIndex: FC = () => {
       historyList={historyList}
       isLoading={isLoading}
       replaceModalOpen={replaceModalOpen}
-      selectedFile={selectedFile}
+      selectedFile={selectedFileName}
       processing={processing}
-      onOpenReplaceModal={() => setReplaceModalOpen(true)}
+      onOpenReplaceModal={() => {
+        setSelectedFileObj(null);
+        setSelectedFileName('');
+        setReplaceModalOpen(true);
+      }}
       onCloseReplaceModal={() => setReplaceModalOpen(false)}
-      onFileChange={(fileName) => setSelectedFile(fileName)}
+      onFileChange={(file) => {
+        setSelectedFileObj(file);
+        setSelectedFileName(file.name);
+      }}
       onReplaceSubmit={handleReplaceSubmit}
       onSelectHistoryDoc={handleSelectHistoryDoc}
       onViewDokumen={handleViewDokumen}
