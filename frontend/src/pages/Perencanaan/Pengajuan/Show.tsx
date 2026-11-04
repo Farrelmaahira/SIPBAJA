@@ -1,8 +1,9 @@
-import { useState, useEffect, type FC, type FormEvent } from 'react';
+import { useState, useEffect, useMemo, type FC, type FormEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import perencanaanService from '../../../services/perencanaanService';
 import PerencanaanPengajuanShowTemplate from '../../../components/templates/PerencanaanPengajuanShowTemplate';
 import type { PerencanaanPengajuanDetail } from '../../../types/perencanaan';
+import type { DokumenItem } from '../../../types/dokumen';
 
 export interface PerencanaanShowProps {
   initialDetail?: PerencanaanPengajuanDetail | null;
@@ -21,8 +22,11 @@ export const PerencanaanPengajuanShow: FC<PerencanaanShowProps> = ({
   const [detail, setDetail] = useState<PerencanaanPengajuanDetail | null>(initialDetail);
   const [isLoading, setIsLoading] = useState<boolean>(!initialDetail);
   const [selectedMakIds, setSelectedMakIds] = useState<number[]>([]);
-  const [isViewingDoc, setIsViewingDoc] = useState(false);
-  const [isDownloadingDoc, setIsDownloadingDoc] = useState(false);
+  const [isViewingDocId, setIsViewingDocId] = useState<number | string | null>(null);
+  const [isDownloadingDocId, setIsDownloadingDocId] = useState<number | string | null>(null);
+  const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
+  const [previewDocId, setPreviewDocId] = useState<number | string | null>(null);
+  const [isLoadingPreview, setIsLoadingPreview] = useState<boolean>(false);
   const [approveModalOpen, setApproveModalOpen] = useState(false);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [alasanPenolakan, setAlasanPenolakan] = useState('');
@@ -135,34 +139,94 @@ export const PerencanaanPengajuanShow: FC<PerencanaanShowProps> = ({
     }
   };
 
-  const dokumenUrl =
-    detail?.dokumen?.download_url ||
-    (permohonan?.id ? `/api/v1/perencanaan/pengajuan/${permohonan.id}/dokumen` : null);
+  const allDocuments: DokumenItem[] = useMemo(() => {
+    const list: DokumenItem[] = [];
+    if (Array.isArray(detail?.dokumen_permohonan) && detail.dokumen_permohonan.length > 0) {
+      list.push(...detail.dokumen_permohonan);
+    } else if (detail?.dokumen) {
+      list.push(detail.dokumen);
+    } else if (permohonan?.id) {
+      list.push({
+        id: permohonan.id,
+        nama_asli: `Surat_Permohonan_${permohonan.nomor_surat || 'SIPBAJA'}.pdf`,
+        tipe_dokumen: 'surat_permohonan',
+        download_url: `/api/v1/perencanaan/pengajuan/${permohonan.id}/dokumen`,
+      });
+    }
+    return list;
+  }, [detail, permohonan]);
 
-  const handleViewDokumen = async () => {
-    if (!dokumenUrl) return;
-    setIsViewingDoc(true);
+  // Preload preview blob for the surat_permohonan document
+  useEffect(() => {
+    const targetDoc =
+      allDocuments.find(
+        (d) => d.tipe_dokumen === 'surat_permohonan' || d.tipe_dokumen === 'permohonan'
+      ) || allDocuments[0];
+
+    if (!targetDoc?.download_url) return;
+
+    let isMounted = true;
+    setIsLoadingPreview(true);
+    setPreviewDocId(targetDoc.id);
+
+    perencanaanService
+      .fetchDokumenBlob(targetDoc.download_url, 'inline')
+      .then(({ blob }) => {
+        if (!isMounted) return;
+        const blobUrl = URL.createObjectURL(blob);
+        setPreviewBlobUrl(blobUrl);
+      })
+      .catch((err) => {
+        console.error('Gagal memuat pratinjau inline dokumen:', err);
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsLoadingPreview(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+      if (previewBlobUrl) {
+        URL.revokeObjectURL(previewBlobUrl);
+      }
+    };
+  }, [allDocuments]);
+
+  const handleViewDokumen = async (doc: DokumenItem) => {
+    const targetUrl =
+      doc.download_url ||
+      (permohonan?.id ? `/v1/perencanaan/pengajuan/${permohonan.id}/dokumen` : null);
+    if (!targetUrl) return;
+
+    setIsViewingDocId(doc.id);
     try {
-      const { blob } = await perencanaanService.fetchDokumenBlob(dokumenUrl, 'inline');
+      const { blob } = await perencanaanService.fetchDokumenBlob(targetUrl, 'inline');
       const blobUrl = URL.createObjectURL(blob);
       window.open(blobUrl, '_blank');
       setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
     } catch (err) {
       console.error('Gagal membuka dokumen:', err);
     } finally {
-      setIsViewingDoc(false);
+      setIsViewingDocId(null);
     }
   };
 
-  const handleDownloadDokumen = async () => {
-    if (!dokumenUrl) return;
-    setIsDownloadingDoc(true);
+  const handleDownloadDokumen = async (doc: DokumenItem) => {
+    const targetUrl =
+      doc.download_url ||
+      (permohonan?.id ? `/v1/perencanaan/pengajuan/${permohonan.id}/dokumen` : null);
+    if (!targetUrl) return;
+
+    setIsDownloadingDocId(doc.id);
     try {
-      const { blob } = await perencanaanService.fetchDokumenBlob(dokumenUrl, 'attachment');
+      const { blob } = await perencanaanService.fetchDokumenBlob(targetUrl, 'attachment');
       const blobUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = blobUrl;
-      link.download = detail?.dokumen?.nama_asli || `Dokumen_Permohonan_${permohonan?.nomor_surat || 'SIPBAJA'}.pdf`;
+      link.download =
+        doc.nama_asli ||
+        `Dokumen_Permohonan_${permohonan?.nomor_surat || 'SIPBAJA'}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -170,13 +234,14 @@ export const PerencanaanPengajuanShow: FC<PerencanaanShowProps> = ({
     } catch (err) {
       console.error('Gagal mengunduh dokumen:', err);
     } finally {
-      setIsDownloadingDoc(false);
+      setIsDownloadingDocId(null);
     }
   };
 
   return (
     <PerencanaanPengajuanShowTemplate
       detail={detail}
+      dokumenList={allDocuments}
       isLoading={isLoading}
       mode={mode}
       maksList={maksList}
@@ -188,8 +253,11 @@ export const PerencanaanPengajuanShow: FC<PerencanaanShowProps> = ({
       onRejectClick={() => setRejectModalOpen(true)}
       onViewDokumen={handleViewDokumen}
       onDownloadDokumen={handleDownloadDokumen}
-      isViewingDoc={isViewingDoc}
-      isDownloadingDoc={isDownloadingDoc}
+      isViewingDocId={isViewingDocId}
+      isDownloadingDocId={isDownloadingDocId}
+      previewBlobUrl={previewBlobUrl}
+      previewDocId={previewDocId}
+      isLoadingPreview={isLoadingPreview}
       processing={processing}
       approveModalOpen={approveModalOpen}
       rejectModalOpen={rejectModalOpen}

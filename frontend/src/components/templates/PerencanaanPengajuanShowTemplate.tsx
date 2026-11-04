@@ -16,14 +16,16 @@ import {
 } from 'lucide-react';
 import PpLayout from './PpLayout';
 import StatusPill from '../atoms/StatusPill';
-import PerencanaanDokumenCard from '../organisms/PerencanaanDokumenCard';
+import DokumenListCard from '../organisms/DokumenListCard';
 import PerencanaanVerifikasiMakCard from '../organisms/PerencanaanVerifikasiMakCard';
 import type { PerencanaanPengajuanDetail, PerencanaanMakItem } from '../../types/perencanaan';
+import type { DokumenItem } from '../../types/dokumen';
 import { formatRupiah, formatTanggalIndo } from '../../utils/formatters';
 import { PERENCANAAN_NAV_ITEMS } from '../../pages/Perencanaan/Dashboard';
 
 export interface PerencanaanPengajuanShowTemplateProps {
   detail?: PerencanaanPengajuanDetail | null;
+  dokumenList?: DokumenItem[];
   isLoading?: boolean;
   mode: 'verifikasi' | 'pengadaan' | 'diteruskan';
   maksList: PerencanaanMakItem[];
@@ -33,10 +35,13 @@ export interface PerencanaanPengajuanShowTemplateProps {
   onChangeMak: (index: number, makId: number) => void;
   onApproveClick: () => void;
   onRejectClick: () => void;
-  onViewDokumen: () => void;
-  onDownloadDokumen: () => void;
-  isViewingDoc?: boolean;
-  isDownloadingDoc?: boolean;
+  onViewDokumen: (doc: DokumenItem) => void;
+  onDownloadDokumen: (doc: DokumenItem) => void;
+  isViewingDocId?: number | string | null;
+  isDownloadingDocId?: number | string | null;
+  previewBlobUrl?: string | null;
+  previewDocId?: number | string | null;
+  isLoadingPreview?: boolean;
   processing?: boolean;
 
   // Modals
@@ -57,6 +62,7 @@ export interface PerencanaanPengajuanShowTemplateProps {
 
 export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTemplateProps> = ({
   detail,
+  dokumenList,
   isLoading = false,
   mode,
   maksList,
@@ -68,8 +74,11 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
   onRejectClick,
   onViewDokumen,
   onDownloadDokumen,
-  isViewingDoc = false,
-  isDownloadingDoc = false,
+  isViewingDocId = null,
+  isDownloadingDocId = null,
+  previewBlobUrl = null,
+  previewDocId = null,
+  isLoadingPreview = false,
   processing = false,
 
   approveModalOpen,
@@ -267,16 +276,23 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
       {/* Main Review Section: Dokumen & Verifikasi MAK */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div className="lg:col-span-2">
-          <PerencanaanDokumenCard
-            dokumen={detail.dokumen || (detail.dokumen_permohonan && detail.dokumen_permohonan[0])}
+          <DokumenListCard
+            dokumenList={
+              dokumenList ||
+              detail.dokumen_permohonan ||
+              (detail.dokumen ? [detail.dokumen] : [])
+            }
             nomorSurat={permohonan.nomor_surat}
             judul={permohonan.judul}
             unitNama={unitNama}
-            tanggal={permohonan.created_at}
+            tanggal={formatTanggalIndo(permohonan.created_at)}
             onViewNewTab={onViewDokumen}
             onDownload={onDownloadDokumen}
-            isViewing={isViewingDoc}
-            isDownloading={isDownloadingDoc}
+            isViewingId={isViewingDocId}
+            isDownloadingId={isDownloadingDocId}
+            previewBlobUrl={previewBlobUrl}
+            previewDocId={previewDocId}
+            isLoadingPreview={isLoadingPreview}
           />
         </div>
 
@@ -354,11 +370,10 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
                       {app.Actor?.Role?.nama || app.Actor?.nama || app.tahap}
                     </span>
                     <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                        app.keputusan === 'disetujui'
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${app.keputusan === 'disetujui'
                           ? 'bg-[#E4F6EC] text-[#0B7A4E]'
                           : 'bg-[#FDECEC] text-[#B42318]'
-                      }`}
+                        }`}
                     >
                       {app.keputusan}
                     </span>
