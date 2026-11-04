@@ -100,11 +100,10 @@ export const AppSidebar: FC<AppSidebarProps> = ({
               <Link
                 key={item.key}
                 to={item.href}
-                className={`relative flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[13px] transition-all duration-150 ${
-                  isActive
+                className={`relative flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[13px] transition-all duration-150 ${isActive
                     ? 'bg-[#E8F5EF] text-[#0E7C5A] font-bold'
                     : 'text-[#5F6F6A] font-medium hover:bg-[#F4F7F5] hover:text-[#14201C]'
-                }`}
+                  }`}
               >
                 {isActive && (
                   <span
@@ -114,19 +113,17 @@ export const AppSidebar: FC<AppSidebarProps> = ({
                 )}
                 <div className="flex items-center gap-3">
                   <Icon
-                    className={`w-[18px] h-[18px] ${
-                      isActive ? 'text-[#0E7C5A]' : 'text-[#5F6F6A]'
-                    }`}
+                    className={`w-[18px] h-[18px] ${isActive ? 'text-[#0E7C5A]' : 'text-[#5F6F6A]'
+                      }`}
                   />
                   <span>{item.label}</span>
                 </div>
                 {item.badge !== null && item.badge !== undefined && (
                   <span
-                    className={`w-5 h-5 rounded-full text-[11px] font-bold flex items-center justify-center ${
-                      isActive
+                    className={`w-5 h-5 rounded-full text-[11px] font-bold flex items-center justify-center ${isActive
                         ? 'bg-[#0E7C5A] text-white'
                         : 'bg-[#EEF2F0] text-[#5F6F6A]'
-                    }`}
+                      }`}
                   >
                     {item.badge}
                   </span>

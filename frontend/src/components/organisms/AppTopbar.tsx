@@ -147,11 +147,11 @@ export const AppTopbar: FC<AppTopbarProps> = ({
     roleInitials ||
     (effectiveUser?.nama
       ? effectiveUser.nama
-          .split(' ')
-          .map((n) => n[0])
-          .slice(0, 2)
-          .join('')
-          .toUpperCase()
+        .split(' ')
+        .map((n) => n[0])
+        .slice(0, 2)
+        .join('')
+        .toUpperCase()
       : defaultConfig.initials);
 
   const displayName = roleTitle || effectiveUser?.nama || defaultConfig.title;
