@@ -1,5 +1,5 @@
 import type { FC, FormEvent } from 'react';
-import { Pencil } from 'lucide-react';
+import { Pencil, Upload } from 'lucide-react';
 import AppLayout from './AppLayout';
 import { PERENCANAAN_NAV_ITEMS } from '../../pages/Perencanaan/Dashboard';
 import DokumenListCard from '../organisms/DokumenListCard';
@@ -86,8 +86,17 @@ export const PerencanaanRkaklTemplate: FC<PerencanaanRkaklTemplateProps> = ({
             onClick={onOpenReplaceModal}
             className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white hover:bg-[#F1F7F4] text-[#0E7C5A] text-xs font-bold shadow-sm transition-colors cursor-pointer shrink-0 self-start sm:self-auto"
           >
-            <Pencil className="w-3.5 h-3.5" />
-            <span>Ganti Dokumen</span>
+            {activeDokumenList.length > 0 ? (
+              <>
+                <Pencil className="w-3.5 h-3.5" />
+                <span>Ganti Dokumen</span>
+              </>
+            ) : (
+              <>
+                <Upload className="w-3.5 h-3.5" />
+                <span>Unggah Dokumen</span>
+              </>
+            )}
           </button>
         </div>
         <div
@@ -106,8 +115,12 @@ export const PerencanaanRkaklTemplate: FC<PerencanaanRkaklTemplateProps> = ({
           <DokumenListCard
             title="Dokumen RKAKL Aktif"
             dokumenList={activeDokumenList}
-            judul="RKA-K/L Tahun Anggaran 2026"
-            unitNama="POLITEKNIK NEGERI JAKARTA"
+            judul={activeDokumenList.length > 0 ? 'RKA-K/L Tahun Anggaran 2026' : undefined}
+            unitNama={activeDokumenList.length > 0 ? 'POLITEKNIK NEGERI JAKARTA' : undefined}
+            emptyTitle="Belum Ada Dokumen RKAKL Aktif"
+            emptyDescription="Dokumen RKAKL acuan belum tersedia. Silakan unggah berkas PDF RKAKL untuk dijadikan acuan verifikasi anggaran permohonan."
+            emptyActionLabel="Unggah Dokumen RKAKL"
+            onEmptyAction={onOpenReplaceModal}
             onViewNewTab={onViewDokumen}
             onDownload={onDownloadDokumen}
             isViewingId={isViewingDocId}
@@ -133,6 +146,8 @@ export const PerencanaanRkaklTemplate: FC<PerencanaanRkaklTemplateProps> = ({
         isOpen={replaceModalOpen}
         selectedFile={selectedFile}
         processing={processing}
+        title={activeDokumenList.length > 0 ? 'Ganti Dokumen RKAKL' : 'Unggah Dokumen RKAKL'}
+        submitLabel={activeDokumenList.length > 0 ? 'Perbarui Dokumen' : 'Unggah Dokumen'}
         onClose={onCloseReplaceModal}
         onFileChange={onFileChange}
         onSubmit={onReplaceSubmit}

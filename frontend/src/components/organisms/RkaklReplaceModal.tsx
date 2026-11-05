@@ -8,6 +8,8 @@ export interface RkaklReplaceModalProps {
   onClose: () => void;
   onFileChange: (file: File) => void;
   onSubmit: (e: FormEvent) => void;
+  title?: string;
+  submitLabel?: string;
 }
 
 export const RkaklReplaceModal: FC<RkaklReplaceModalProps> = ({
@@ -17,6 +19,8 @@ export const RkaklReplaceModal: FC<RkaklReplaceModalProps> = ({
   onClose,
   onFileChange,
   onSubmit,
+  title = 'Ganti Dokumen RKAKL',
+  submitLabel = 'Perbarui Dokumen',
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -36,7 +40,7 @@ export const RkaklReplaceModal: FC<RkaklReplaceModalProps> = ({
         className="bg-white rounded-[24px] border border-[#E3EAE6] shadow-xl w-full max-w-[480px] p-6 flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-150"
       >
         <div className="flex items-center justify-between pb-3 border-b border-[#F0F4F2]">
-          <h3 className="text-base font-bold text-[#14201C]">Ganti Dokumen RKAKL</h3>
+          <h3 className="text-base font-bold text-[#14201C]">{title}</h3>
           <button
             type="button"
             onClick={onClose}
@@ -85,7 +89,7 @@ export const RkaklReplaceModal: FC<RkaklReplaceModalProps> = ({
             className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold rounded-xl bg-[#0E7C5A] hover:bg-[#0A5C43] text-white transition-colors cursor-pointer disabled:opacity-50"
           >
             {processing && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-            <span>{processing ? 'Menyimpan...' : 'Perbarui Dokumen'}</span>
+            <span>{processing ? 'Menyimpan...' : submitLabel}</span>
           </button>
         </div>
       </form>

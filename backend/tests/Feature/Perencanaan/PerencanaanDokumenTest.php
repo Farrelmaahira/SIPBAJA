@@ -103,6 +103,19 @@ class PerencanaanDokumenTest extends TestCase
         $role = Role::create(['nama' => 'Perencanaan']);
         $user = User::factory()->create(['role_id' => $role->id]);
 
+        // Create an RKAKL document record in DB
+        Dokumen::create([
+            'ref_type' => 'rkakl',
+            'ref_id' => 1,
+            'tipe_dokumen' => 'rkakl',
+            'versi' => 1,
+            'nama_asli' => 'RKAKL_2026.pdf',
+            'nama_hash' => 'sample_hash.pdf',
+            'mime_type' => 'application/pdf',
+            'ukuran_bytes' => 1024,
+            'uploaded_by' => $user->id,
+        ]);
+
         // Put a permohonan file in local disk
         Storage::disk('local')->put('dokumen/permohonan/sample_permohonan.pdf', 'SURAT_PERMOHONAN_CONTENT');
 
@@ -114,5 +127,23 @@ class PerencanaanDokumenTest extends TestCase
         $this->assertStringNotContainsString('SURAT_PERMOHONAN_CONTENT', $content);
         $this->assertStringContainsString('POLITEKNIK NEGERI JAKARTA', $content);
         $this->assertStringContainsString('RKA-K/L', $content);
+    }
+
+    public function test_rkakl_index_and_download_when_no_documents_exist(): void
+    {
+        $role = Role::create(['nama' => 'Perencanaan']);
+        $user = User::factory()->create(['role_id' => $role->id]);
+
+        $response = $this->actingAs($user)->getJson('/api/v1/perencanaan/rkakl');
+        $response->assertOk();
+        $response->assertJson([
+            'rkakl' => [
+                'active_doc' => null,
+                'history' => [],
+            ],
+        ]);
+
+        $dlResponse = $this->actingAs($user)->get('/api/v1/perencanaan/rkakl/dokumen');
+        $dlResponse->assertNotFound();
     }
 }

@@ -340,9 +340,10 @@ class PerencanaanService
             ->get();
 
         if ($docs->isEmpty()) {
-            $actor = User::whereHas('role', fn ($q) => $q->where('nama', 'Perencanaan'))->first() ?? User::first();
-            $created = $this->replaceRkakl($actor, 'RKAKL_TA_2026_Satker_Politeknik_v3.pdf');
-            $docs = collect([$created]);
+            return [
+                'active_doc' => null,
+                'history' => [],
+            ];
         }
 
         $docs = $docs->map(function ($doc) {
@@ -369,8 +370,7 @@ class PerencanaanService
         }
 
         if (! $dokumen) {
-            $actor = User::whereHas('role', fn ($q) => $q->where('nama', 'Perencanaan'))->first() ?? User::first();
-            $dokumen = $this->replaceRkakl($actor, 'RKAKL_TA_2026_Satker_Politeknik_v3.pdf');
+            abort(404, 'Dokumen RKAKL belum tersedia.');
         }
 
         $namaHash = basename($dokumen->nama_hash);
@@ -430,7 +430,7 @@ class PerencanaanService
     public function replaceRkakl(User $actor, UploadedFile|string $file = 'RKAKL_TA_2026_Satker_Politeknik_v4.pdf'): Dokumen
     {
         return DB::transaction(function () use ($actor, $file) {
-            $lastVersion = Dokumen::where('ref_type', 'rkakl')->max('versi') ?? 3;
+            $lastVersion = Dokumen::where('ref_type', 'rkakl')->max('versi') ?? 0;
             $newVersion = $lastVersion + 1;
 
             if ($file instanceof UploadedFile) {

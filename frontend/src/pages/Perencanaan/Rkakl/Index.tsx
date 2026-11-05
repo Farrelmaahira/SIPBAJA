@@ -45,29 +45,21 @@ export const PerencanaanRkaklIndex: FC = () => {
   const activeFilename =
     activeDoc?.nama_asli ||
     (activeDoc?.path ? activeDoc.path.split('/').pop() : '') ||
-    'RKAKL_TA_2026_Satker_Politeknik_v3.pdf';
+    '';
 
-  const activeVersion = activeDoc?.versi ?? 3;
+  const activeVersion = activeDoc?.versi ?? '';
 
   const activeDokumenList: DokumenItem[] = useMemo(() => {
     if (!activeDoc) {
-      return [
-        {
-          id: 'rkakl-active',
-          nama_asli: activeFilename,
-          tipe_dokumen: 'rkakl',
-          versi: Number(activeVersion),
-          download_url: '/api/v1/perencanaan/rkakl/dokumen',
-        },
-      ];
+      return [];
     }
     return [
       {
         id: (activeDoc.id as number | string) || 'rkakl-active',
-        nama_asli: activeFilename,
+        nama_asli: activeFilename || 'Dokumen_RKAKL.pdf',
         tipe_dokumen: 'rkakl',
-        versi: activeDoc.versi ?? Number(activeVersion),
-        ukuran_bytes: (activeDoc.ukuran_bytes as number) || 4800000,
+        versi: activeDoc.versi,
+        ukuran_bytes: activeDoc.ukuran_bytes as number | undefined,
         download_url:
           (activeDoc.download_url as string) ||
           (activeDoc.id
@@ -75,12 +67,17 @@ export const PerencanaanRkaklIndex: FC = () => {
             : '/api/v1/perencanaan/rkakl/dokumen'),
       },
     ];
-  }, [activeDoc, activeFilename, activeVersion]);
+  }, [activeDoc, activeFilename]);
 
   // Preload preview blob for the active RKAKL document
   useEffect(() => {
     const doc = activeDokumenList[0];
-    if (!doc?.download_url) return;
+    if (!doc?.download_url) {
+      setPreviewBlobUrl(null);
+      setPreviewDocId(null);
+      setIsLoadingPreview(false);
+      return;
+    }
 
     let isMounted = true;
     setIsLoadingPreview(true);
