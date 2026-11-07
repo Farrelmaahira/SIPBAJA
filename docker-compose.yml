@@ -1,0 +1,23 @@
+# docker-compose.yml
+# To reset data entirely: docker compose down -v && docker compose up -d
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: sipbaja_dev
+      POSTGRES_USER: sipbaja
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sipbaja -d sipbaja_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:
+
