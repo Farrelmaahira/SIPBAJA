@@ -27,8 +27,15 @@ Success criteria:
 | Language | PHP 8.5.11 |
 | Frontend | React 19 + TypeScript + React Router v7 + Tailwind CSS v4 |
 | HTTP Client | Axios (SPA session via Sanctum cookie auth) |
-| DB (development) | SQLite |
+| DB (development) | SQLite / PostgreSQL 18 via Docker Compose |
 | DB (production target) | PostgreSQL 18 |
+
+### Local Database (Docker Compose)
+
+Run `docker compose up -d` from the project root to start PostgreSQL.
+Credentials: host `127.0.0.1`, port `5432`, db `sipbaja_dev`, user `sipbaja`, password `secret`.
+
+To reset data: `docker compose down -v && docker compose up -d`, then run `php artisan --working-dir=backend migrate:fresh --seed`.
 
 Rules:
 - Do NOT add any package or library without user approval.

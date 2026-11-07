@@ -5,6 +5,16 @@
     "description": "Koleksi API SIPBAJA (Sistem Informasi Pengadaan Barang dan Jasa) berbasis Laravel 11 RESTful API dengan otentikasi Laravel Sanctum dan role-based access control.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
   "variable": [
     {
       "key": "baseUrl",
@@ -30,16 +40,17 @@
         "exec": [
           "// Set header standar untuk setiap request",
           "pm.request.headers.upsert({key: 'Accept', value: 'application/json'});",
-          "pm.request.headers.upsert({key: 'Referer', value: pm.collectionVariables.get('baseUrl')});",
+          "let baseUrl = pm.variables.get('baseUrl') || 'http://localhost:8000';",
+          "pm.request.headers.upsert({key: 'Referer', value: baseUrl});",
           "",
-          "// Sertakan Bearer Token jika ada",
-          "let token = pm.collectionVariables.get('token');",
-          "if (token) {",
+          "// Sertakan Bearer Token jika ada dan belum diisi oleh Postman Auth",
+          "let token = pm.variables.get('token');",
+          "if (token && !pm.request.headers.has('Authorization')) {",
           "    pm.request.headers.upsert({key: 'Authorization', value: 'Bearer ' + token});",
           "}",
           "",
           "// Sertakan token CSRF jika ada",
-          "let xsrfToken = pm.collectionVariables.get('xsrfToken');",
+          "let xsrfToken = pm.variables.get('xsrfToken');",
           "if (xsrfToken) {",
           "    pm.request.headers.upsert({key: 'X-XSRF-TOKEN', value: xsrfToken});",
           "}"
@@ -86,8 +97,9 @@
                   "let cookie = pm.cookies.get('XSRF-TOKEN');",
                   "if (cookie) {",
                   "    let decoded = decodeURIComponent(cookie);",
+                  "    pm.environment.set('xsrfToken', decoded);",
                   "    pm.collectionVariables.set('xsrfToken', decoded);",
-                  "    console.log('XSRF-TOKEN diset ke collection variable:', decoded);",
+                  "    console.log('XSRF-TOKEN diset ke environment & collection variable:', decoded);",
                   "}"
                 ]
               }
@@ -141,8 +153,9 @@
                 "exec": [
                   "let res = pm.response.json();",
                   "if (res && res.token) {",
+                  "    pm.environment.set('token', res.token);",
                   "    pm.collectionVariables.set('token', res.token);",
-                  "    console.log('Bearer token saved to collection variable:', res.token);",
+                  "    console.log('Bearer token saved to environment & collection variable:', res.token);",
                   "}"
                 ]
               }
@@ -196,8 +209,9 @@
                 "exec": [
                   "let res = pm.response.json();",
                   "if (res && res.token) {",
+                  "    pm.environment.set('token', res.token);",
                   "    pm.collectionVariables.set('token', res.token);",
-                  "    console.log('Bearer token saved to collection variable:', res.token);",
+                  "    console.log('Bearer token saved to environment & collection variable:', res.token);",
                   "}"
                 ]
               }
@@ -251,8 +265,9 @@
                 "exec": [
                   "let res = pm.response.json();",
                   "if (res && res.token) {",
+                  "    pm.environment.set('token', res.token);",
                   "    pm.collectionVariables.set('token', res.token);",
-                  "    console.log('Bearer token saved to collection variable:', res.token);",
+                  "    console.log('Bearer token saved to environment & collection variable:', res.token);",
                   "}"
                 ]
               }
@@ -306,8 +321,9 @@
                 "exec": [
                   "let res = pm.response.json();",
                   "if (res && res.token) {",
+                  "    pm.environment.set('token', res.token);",
                   "    pm.collectionVariables.set('token', res.token);",
-                  "    console.log('Bearer token saved to collection variable:', res.token);",
+                  "    console.log('Bearer token saved to environment & collection variable:', res.token);",
                   "}"
                 ]
               }
@@ -361,8 +377,9 @@
                 "exec": [
                   "let res = pm.response.json();",
                   "if (res && res.token) {",
+                  "    pm.environment.set('token', res.token);",
                   "    pm.collectionVariables.set('token', res.token);",
-                  "    console.log('Bearer token saved to collection variable:', res.token);",
+                  "    console.log('Bearer token saved to environment & collection variable:', res.token);",
                   "}"
                 ]
               }
@@ -416,8 +433,9 @@
                 "exec": [
                   "let res = pm.response.json();",
                   "if (res && res.token) {",
+                  "    pm.environment.set('token', res.token);",
                   "    pm.collectionVariables.set('token', res.token);",
-                  "    console.log('Bearer token saved to collection variable:', res.token);",
+                  "    console.log('Bearer token saved to environment & collection variable:', res.token);",
                   "}"
                 ]
               }
@@ -471,8 +489,9 @@
                 "exec": [
                   "let res = pm.response.json();",
                   "if (res && res.token) {",
+                  "    pm.environment.set('token', res.token);",
                   "    pm.collectionVariables.set('token', res.token);",
-                  "    console.log('Bearer token saved to collection variable:', res.token);",
+                  "    console.log('Bearer token saved to environment & collection variable:', res.token);",
                   "}"
                 ]
               }
@@ -526,8 +545,9 @@
                 "exec": [
                   "let res = pm.response.json();",
                   "if (res && res.token) {",
+                  "    pm.environment.set('token', res.token);",
                   "    pm.collectionVariables.set('token', res.token);",
-                  "    console.log('Bearer token saved to collection variable:', res.token);",
+                  "    console.log('Bearer token saved to environment & collection variable:', res.token);",
                   "}"
                 ]
               }
@@ -581,8 +601,9 @@
                 "exec": [
                   "let res = pm.response.json();",
                   "if (res && res.token) {",
+                  "    pm.environment.set('token', res.token);",
                   "    pm.collectionVariables.set('token', res.token);",
-                  "    console.log('Bearer token saved to collection variable:', res.token);",
+                  "    console.log('Bearer token saved to environment & collection variable:', res.token);",
                   "}"
                 ]
               }
@@ -645,8 +666,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "pm.environment.set('token', '');",
                   "pm.collectionVariables.set('token', '');",
-                  "console.log('Bearer token cleared.');"
+                  "console.log('Bearer token cleared from environment & collection.');"
                 ]
               }
             }

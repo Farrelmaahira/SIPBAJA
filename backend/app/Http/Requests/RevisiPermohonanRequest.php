@@ -52,4 +52,3 @@ class RevisiPermohonanRequest extends FormRequest
         ];
     }
 }
-

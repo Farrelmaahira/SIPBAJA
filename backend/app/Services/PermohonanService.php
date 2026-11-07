@@ -208,13 +208,17 @@ class PermohonanService
     /**
      * Mengambil informasi berkas fisik dokumen permohonan untuk diunduh pemohon.
      */
-    public function ambilDokumen(User $user, Permohonan $permohonan): array
+    public function ambilDokumen(User $user, Permohonan $permohonan, ?int $dokumenId = null): array
     {
         $user->loadMissing('role');
         $isReviewer = in_array($user->role?->nama, ['Admin', 'Bidang 2', 'Perencanaan', 'PPBJ', 'PPK', 'PP', 'Perlengkapan', 'Keuangan']);
         abort_unless($isReviewer || ($user->unit_id && $user->unit_id === $permohonan->unit_id), 403, 'Akses tidak diizinkan untuk unit lain.');
 
-        $dokumen = $permohonan->Dokumen()->where('tipe_dokumen', 'surat_permohonan')->latest('versi')->firstOrFail();
+        if ($dokumenId) {
+            $dokumen = $permohonan->Dokumen()->where('id', $dokumenId)->firstOrFail();
+        } else {
+            $dokumen = $permohonan->Dokumen()->where('tipe_dokumen', 'surat_permohonan')->latest('versi')->firstOrFail();
+        }
         $path = 'dokumen/permohonan/'.$dokumen->nama_hash;
 
         abort_unless(Storage::disk('local')->exists($path), 404, 'Berkas dokumen tidak ditemukan di server.');

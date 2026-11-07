@@ -1,16 +1,19 @@
 import type { FC } from 'react';
-import PpProfilIndex, { type PpProfilProps } from '../../Pp/Profil/Index';
+import SharedProfilPage, { type SharedProfilPageProps } from '../../Shared/SharedProfilPage';
 import { PERENCANAAN_NAV_ITEMS } from '../Dashboard';
 
-export const PerencanaanProfilIndex: FC<PpProfilProps> = (props) => {
+export type PerencanaanProfilProps = SharedProfilPageProps;
+
+export const PerencanaanProfilIndex: FC<PerencanaanProfilProps> = (props) => {
   return (
-    <PpProfilIndex
-      {...props}
+    <SharedProfilPage
       basePath="/perencanaan"
       roleInitials="PR"
       roleTitle="Perencanaan"
       roleSubtitle="Unit Perencanaan"
+      badgeLabel="Unit Perencanaan"
       navItems={PERENCANAAN_NAV_ITEMS}
+      {...props}
     />
   );
 };
