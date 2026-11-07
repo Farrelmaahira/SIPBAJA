@@ -1,62 +1,19 @@
 import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
+import type {
+  PpbjTabKey,
+  PpbjStatItem,
+  PpbjPermohonanItem,
+  PpbjPengadaanItem,
+  PpbjTerminItem,
+} from '../types/ppbj';
 
-export type PpbjTab = 'permohonan' | 'pengadaan' | 'termin';
-
-export interface PpbjStatItem {
-  label: string;
-  value: number;
-  unit: string;
-  variant: string;
-  [key: string]: any;
-}
-
-export interface PpbjPermohonanItem {
-  id: number;
-  nomorSurat?: string | null;
-  judul?: string | null;
-  ringkasanTujuan?: string | null;
-  unitNama?: string | null;
-  estimasiAnggaran?: number | null;
-  revisiKe?: number | null;
-  status?: string | null;
-  tanggalPengajuan?: string | null;
-  makList?: string[];
-  jumlahPaket?: number;
-  [key: string]: any;
-}
-
-export interface PpbjPengadaanItem {
-  id: number;
-  nomorSurat?: string | null;
-  judul?: string | null;
-  unitNama?: string | null;
-  makNama?: string | null;
-  jenisNama?: string | null;
-  metodeNama?: string | null;
-  levelNama?: string | null;
-  ppkNama?: string | null;
-  nominal?: number | null;
-  revisiKe?: number | null;
-  status?: string | null;
-  tanggalDibuat?: string | null;
-  [key: string]: any;
-}
-
-export interface PpbjTerminItem {
-  id: number;
-  kontrakNomor?: string | null;
-  kontrakTipe?: string | null;
-  judul?: string | null;
-  unitNama?: string | null;
-  terminKe?: number | null;
-  nominalRencana?: number | null;
-  tanggalJatuhTempo?: string | null;
-  status?: string | null;
-  pembayaranStatus?: string | null;
-  pembayaranNominal?: number | null;
-  reminderTanggal?: string | null;
-  [key: string]: any;
-}
+export type {
+  PpbjTabKey,
+  PpbjStatItem,
+  PpbjPermohonanItem,
+  PpbjPengadaanItem,
+  PpbjTerminItem,
+};
 
 export type PpbjDashboardItem =
   | PpbjPermohonanItem
@@ -71,8 +28,8 @@ export interface UsePpbjDashboardProps {
 }
 
 export interface UsePpbjDashboardReturn {
-  activeTab: PpbjTab;
-  setActiveTab: Dispatch<SetStateAction<PpbjTab>>;
+  activeTab: PpbjTabKey;
+  setActiveTab: Dispatch<SetStateAction<PpbjTabKey>>;
   searchQuery: string;
   setSearchQuery: Dispatch<SetStateAction<string>>;
   filteredItems: PpbjDashboardItem[];
@@ -89,7 +46,7 @@ export function usePpbjDashboard({
   terminKontrak = [],
   stats = [],
 }: UsePpbjDashboardProps = {}): UsePpbjDashboardReturn {
-  const [activeTab, setActiveTab] = useState<PpbjTab>('permohonan');
+  const [activeTab, setActiveTab] = useState<PpbjTabKey>('permohonan');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const filteredItems = useMemo<PpbjDashboardItem[]>(() => {
@@ -97,42 +54,33 @@ export function usePpbjDashboard({
 
     if (activeTab === 'permohonan') {
       if (!q) return permohonanMasuk;
-      return permohonanMasuk.filter((item) =>
-        [item.nomorSurat, item.judul, item.unitNama, item.status]
-          .filter(Boolean)
-          .some((val) => String(val).toLowerCase().includes(q))
-      );
+      return permohonanMasuk.filter((item) => {
+        const nomor = (item.nomorSurat || '').toLowerCase();
+        const judul = (item.judul || '').toLowerCase();
+        const unit = (item.unitNama || '').toLowerCase();
+        return nomor.includes(q) || judul.includes(q) || unit.includes(q);
+      });
     }
 
     if (activeTab === 'pengadaan') {
       if (!q) return pengadaanBerjalan;
-      return pengadaanBerjalan.filter((item) =>
-        [
-          item.nomorSurat,
-          item.judul,
-          item.unitNama,
-          item.makNama,
-          item.levelNama,
-          item.status,
-        ]
-          .filter(Boolean)
-          .some((val) => String(val).toLowerCase().includes(q))
-      );
+      return pengadaanBerjalan.filter((item) => {
+        const nomor = (item.nomorSurat || '').toLowerCase();
+        const judul = (item.judul || '').toLowerCase();
+        const mak = (item.makNama || '').toLowerCase();
+        const ppk = (item.ppkNama || '').toLowerCase();
+        return nomor.includes(q) || judul.includes(q) || mak.includes(q) || ppk.includes(q);
+      });
     }
 
     if (activeTab === 'termin') {
       if (!q) return terminKontrak;
-      return terminKontrak.filter((item) =>
-        [
-          item.kontrakNomor,
-          item.judul,
-          item.unitNama,
-          item.status,
-          item.pembayaranStatus,
-        ]
-          .filter(Boolean)
-          .some((val) => String(val).toLowerCase().includes(q))
-      );
+      return terminKontrak.filter((item) => {
+        const kontrak = (item.kontrakNomor || '').toLowerCase();
+        const judul = (item.judul || '').toLowerCase();
+        const unit = (item.unitNama || '').toLowerCase();
+        return kontrak.includes(q) || judul.includes(q) || unit.includes(q);
+      });
     }
 
     return [];

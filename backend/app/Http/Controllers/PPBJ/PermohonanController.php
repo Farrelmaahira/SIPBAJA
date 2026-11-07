@@ -3,11 +3,12 @@
 namespace App\Http\Controllers\PPBJ;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\PPBJ\HapusDraftPengadaanRequest;
 use App\Http\Requests\PPBJ\StoreDraftPengadaanRequest;
+use App\Http\Requests\PPBJ\SubmitPengadaanReviewerRequest;
 use App\Services\PengadaanService;
 use App\Services\PermohonanService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 class PermohonanController extends Controller
@@ -32,8 +33,11 @@ class PermohonanController extends Controller
      */
     public function show(string $id): JsonResponse
     {
+        $detail = $this->permohonanService->getPermohonanDetail((int) $id);
+        $splitContext = $this->pengadaanService->getSplitContext((int) $id);
+
         return response()->json([
-            'permohonan' => $this->permohonanService->getPermohonanDetail((int) $id),
+            'permohonan' => array_merge($detail, $splitContext),
         ]);
     }
 
@@ -56,7 +60,7 @@ class PermohonanController extends Controller
     /**
      * Menghapus paket pengadaan berstatus draft.
      */
-    public function destroyDraft(Request $request, string $id): Response
+    public function destroyDraft(HapusDraftPengadaanRequest $request, string $id): Response
     {
         $this->pengadaanService->hapusDraftPengadaan((int) $id, $request->user());
 
@@ -66,7 +70,7 @@ class PermohonanController extends Controller
     /**
      * Submit seluruh paket pengadaan ke reviewer dan kunci permohonan.
      */
-    public function submitReviewer(Request $request, string $id): JsonResponse
+    public function submitReviewer(SubmitPengadaanReviewerRequest $request, string $id): JsonResponse
     {
         $this->pengadaanService->submitKeReviewer((int) $id, $request->user());
 

@@ -1,13 +1,15 @@
 import { useEffect, useState, type FC } from 'react';
-import api from '../../services/api';
+import ppbjService from '../../services/ppbjService';
 import { useAuth } from '../../hooks/useAuth';
-import usePpbjDashboard, {
-  type PpbjPermohonanItem,
-  type PpbjPengadaanItem,
-  type PpbjTerminItem,
-  type PpbjStatItem,
-} from '../../hooks/usePpbjDashboard';
+import usePpbjDashboard from '../../hooks/usePpbjDashboard';
 import PpbjDashboardTemplate from '../../components/templates/PpbjDashboardTemplate';
+import type {
+  PpbjStatItem,
+  PpbjPermohonanItem,
+  PpbjPengadaanItem,
+  PpbjTerminItem,
+} from '../../types/ppbj';
+import type { AppTopbarUser } from '../../components/organisms/AppTopbar';
 
 export const PpbjDashboard: FC = () => {
   const { user } = useAuth();
@@ -20,24 +22,23 @@ export const PpbjDashboard: FC = () => {
 
   useEffect(() => {
     let isMounted = true;
+    const controller = new AbortController();
+
     setIsLoading(true);
 
-    api
-      .get<{
-        stats?: PpbjStatItem[];
-        permohonanMasuk?: PpbjPermohonanItem[];
-        pengadaanBerjalan?: PpbjPengadaanItem[];
-        terminKontrak?: PpbjTerminItem[];
-      }>('/v1/ppbj/dashboard')
-      .then((res) => {
+    ppbjService
+      .getDashboard(controller.signal)
+      .then((data) => {
         if (!isMounted) return;
-        if (res.data.stats) setStats(res.data.stats);
-        if (res.data.permohonanMasuk) setPermohonanMasuk(res.data.permohonanMasuk);
-        if (res.data.pengadaanBerjalan) setPengadaanBerjalan(res.data.pengadaanBerjalan);
-        if (res.data.terminKontrak) setTerminKontrak(res.data.terminKontrak);
+        if (data.stats) setStats(data.stats);
+        if (data.permohonanMasuk) setPermohonanMasuk(data.permohonanMasuk);
+        if (data.pengadaanBerjalan) setPengadaanBerjalan(data.pengadaanBerjalan);
+        if (data.terminKontrak) setTerminKontrak(data.terminKontrak);
       })
       .catch((err) => {
-        console.error('Failed to fetch PPBJ dashboard:', err);
+        if (!controller.signal.aborted) {
+          console.error('Failed to fetch PPBJ dashboard:', err);
+        }
       })
       .finally(() => {
         if (isMounted) setIsLoading(false);
@@ -45,6 +46,7 @@ export const PpbjDashboard: FC = () => {
 
     return () => {
       isMounted = false;
+      controller.abort();
     };
   }, []);
 
@@ -69,7 +71,7 @@ export const PpbjDashboard: FC = () => {
 
   return (
     <PpbjDashboardTemplate
-      user={user}
+      user={user as AppTopbarUser | null}
       stats={stats}
       activeTab={activeTab}
       onTabChange={setActiveTab}

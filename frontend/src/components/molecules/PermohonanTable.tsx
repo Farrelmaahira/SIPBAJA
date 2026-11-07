@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { FileText, Layers, Eye } from 'lucide-react';
 import StatusPill from '../atoms/StatusPill';
 import { formatRupiah, formatTanggalIndo } from '../../utils/formatters';
+import type { PpbjPermohonanItem } from '../../types/ppbj';
 
 export interface PermohonanTableItem {
   id: number | string;
@@ -24,7 +25,7 @@ export interface PermohonanTableItem {
 }
 
 export interface PermohonanTableProps {
-  items?: PermohonanTableItem[];
+  items?: (PermohonanTableItem | PpbjPermohonanItem)[];
   isLoading?: boolean;
 }
 
@@ -75,10 +76,11 @@ export const PermohonanTable: FC<PermohonanTableProps> = ({ items = [], isLoadin
             {items.map((item) => {
               const hasMak = Array.isArray(item.makList) && item.makList.length > 0;
               const isRevised = (item.revisiKe ?? 0) > 0;
-              const nomor = item.nomorSurat || item.nomor_surat || '-';
-              const tanggal = item.tanggalPengajuan || item.tanggal_pengajuan || item.created_at;
-              const unit = item.unitNama || item.unit_nama || '-';
-              const nominal = item.estimasiAnggaran ?? item.estimasi_anggaran;
+              const raw = item as Record<string, unknown>;
+              const nomor = (item.nomorSurat || raw.nomor_surat || '-') as string;
+              const tanggal = (item.tanggalPengajuan || raw.tanggal_pengajuan || raw.created_at || '') as string;
+              const unit = (item.unitNama || raw.unit_nama || '-') as string;
+              const nominal = (item.estimasiAnggaran ?? raw.estimasi_anggaran) as number | string;
 
               return (
                 <tr

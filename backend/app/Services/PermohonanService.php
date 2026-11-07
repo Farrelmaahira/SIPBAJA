@@ -440,9 +440,23 @@ class PermohonanService
         $permohonan = Permohonan::with([
             'Unit',
             'Creator',
+            'Dokumen',
             'PermohonanMak.Mak',
             'Pengadaan.PermohonanMak.Mak',
         ])->findOrFail($id);
+
+        $dokumenList = $permohonan->Dokumen
+            ->map(fn ($doc) => [
+                'id' => (int) $doc->id,
+                'nama_asli' => (string) $doc->nama_asli,
+                'tipe_dokumen' => (string) ($doc->tipe_dokumen ?? 'surat_permohonan'),
+                'ukuran_bytes' => (int) ($doc->ukuran_bytes ?? 0),
+                'mime_type' => (string) ($doc->mime_type ?? 'application/pdf'),
+                'versi' => (int) ($doc->versi ?? 1),
+                'download_url' => "/api/v1/pemohon/permohonan/{$permohonan->id}/dokumen?dokumen_id={$doc->id}",
+            ])
+            ->values()
+            ->all();
 
         $makList = $permohonan->PermohonanMak
             ->filter(fn ($pm) => $pm->Mak !== null)
@@ -480,6 +494,7 @@ class PermohonanService
             'pembuatNama' => (string) ($permohonan->Creator?->nama ?? $permohonan->Creator?->name ?? '-'),
             'makList' => $makList,
             'paketList' => $paketList,
+            'dokumenList' => $dokumenList,
         ];
     }
 }
