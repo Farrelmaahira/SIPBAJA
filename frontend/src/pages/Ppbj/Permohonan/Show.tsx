@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState, type FC } from 'react';
+import { useCallback, useEffect, useMemo, useState, type FC } from 'react';
 import { useParams } from 'react-router-dom';
-import api from '../../../services/api';
+import axios from 'axios';
 import ppbjService from '../../../services/ppbjService';
 import { useAuth } from '../../../hooks/useAuth';
 import PermohonanShowTemplate from '../../../components/templates/PermohonanShowTemplate';
@@ -19,6 +19,57 @@ export const PpbjPermohonanShow: FC = () => {
   const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
   const [previewDocId, setPreviewDocId] = useState<number | string | null>(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState<boolean>(false);
+  const [isViewingDocId, setIsViewingDocId] = useState<number | string | null>(null);
+  const [isDownloadingDocId, setIsDownloadingDocId] = useState<number | string | null>(null);
+
+  const dokumenList: DokumenItem[] = useMemo(() => {
+    return (permohonan?.dokumenList || []).map((d) => ({
+      id: d.id,
+      nama_asli: d.nama_asli || 'Surat_Permohonan.pdf',
+      tipe_dokumen: d.tipe_dokumen || 'surat_permohonan',
+      ukuran_bytes: d.ukuran_bytes || 0,
+      mime_type: d.mime_type || 'application/pdf',
+      download_url: d.download_url,
+    }));
+  }, [permohonan?.dokumenList]);
+
+  // Preload preview blob for the surat_permohonan document so iframe previews it directly
+  useEffect(() => {
+    const targetDoc =
+      dokumenList.find(
+        (d) => d.tipe_dokumen === 'surat_permohonan' || d.tipe_dokumen === 'permohonan'
+      ) || dokumenList[0];
+
+    if (!targetDoc?.download_url) return;
+
+    let isMounted = true;
+    let localBlobUrl: string | null = null;
+    setIsLoadingPreview(true);
+    setPreviewDocId(targetDoc.id);
+
+    ppbjService
+      .fetchDokumenBlob(targetDoc.download_url, 'inline')
+      .then(({ blob }) => {
+        if (!isMounted) return;
+        localBlobUrl = URL.createObjectURL(blob);
+        setPreviewBlobUrl(localBlobUrl);
+      })
+      .catch((err) => {
+        console.error('Gagal memuat pratinjau inline dokumen:', err);
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsLoadingPreview(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+      if (localBlobUrl) {
+        URL.revokeObjectURL(localBlobUrl);
+      }
+    };
+  }, [dokumenList]);
 
   const fetchDetail = useCallback(async (signal?: AbortSignal) => {
     if (!id) return;
@@ -26,9 +77,14 @@ export const PpbjPermohonanShow: FC = () => {
       const data = await ppbjService.getPermohonanDetail(id, signal);
       setPermohonan(data);
     } catch (err: unknown) {
-      if (!(err instanceof DOMException && err.name === 'AbortError')) {
-        console.error('Failed to fetch PPBJ permohonan detail:', err);
+      if (
+        axios.isCancel(err) ||
+        (err as { name?: string })?.name === 'CanceledError' ||
+        (err instanceof DOMException && err.name === 'AbortError')
+      ) {
+        return;
       }
+      console.error('Failed to fetch PPBJ permohonan detail:', err);
     } finally {
       setIsLoading(false);
     }
@@ -110,43 +166,42 @@ export const PpbjPermohonanShow: FC = () => {
 
   const handleViewDokumen = async (doc: DokumenItem) => {
     if (!doc.download_url) return;
-    if (previewDocId === doc.id) {
-      setPreviewDocId(null);
-      setPreviewBlobUrl(null);
-      return;
-    }
 
-    setIsLoadingPreview(true);
-    setPreviewDocId(doc.id);
-
+    setIsViewingDocId(doc.id);
     try {
-      const endpoint = `${doc.download_url}${doc.download_url.includes('?') ? '&' : '?'}disposition=inline`;
-      const res = await api.get<Blob>(endpoint, { responseType: 'blob' });
-      const blob = new Blob([res.data], { type: doc.mime_type || 'application/pdf' });
+      const { blob } = await ppbjService.fetchDokumenBlob(doc.download_url, 'inline');
       const blobUrl = URL.createObjectURL(blob);
-      setPreviewBlobUrl(blobUrl);
+      window.open(blobUrl, '_blank');
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
     } catch (err) {
-      console.error('Failed to preview document:', err);
-      setPreviewBlobUrl(null);
+      console.error('Gagal membuka dokumen di tab baru:', err);
     } finally {
-      setIsLoadingPreview(false);
+      setIsViewingDocId(null);
     }
   };
 
-  const handleDownloadDokumen = (doc: DokumenItem) => {
-    if (doc.download_url) {
-      window.open(doc.download_url, '_blank');
+  const handleDownloadDokumen = async (doc: DokumenItem) => {
+    if (!doc.download_url) return;
+
+    setIsDownloadingDocId(doc.id);
+    try {
+      const { blob } = await ppbjService.fetchDokumenBlob(doc.download_url, 'attachment');
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download =
+        doc.nama_asli ||
+        `Dokumen_Permohonan_${permohonan?.nomorSurat || 'SIPBAJA'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+    } catch (err) {
+      console.error('Gagal mengunduh dokumen:', err);
+    } finally {
+      setIsDownloadingDocId(null);
     }
   };
-
-  const dokumenList: DokumenItem[] = (permohonan?.dokumenList || []).map((d) => ({
-    id: d.id,
-    nama_asli: d.nama_asli || 'Surat_Permohonan.pdf',
-    tipe_dokumen: d.tipe_dokumen || 'surat_permohonan',
-    ukuran_bytes: d.ukuran_bytes || 0,
-    mime_type: d.mime_type || 'application/pdf',
-    download_url: d.download_url,
-  }));
 
   return (
     <PermohonanShowTemplate
@@ -160,6 +215,8 @@ export const PpbjPermohonanShow: FC = () => {
       onSubmitToReviewer={handleSubmitToReviewer}
       onViewDokumen={handleViewDokumen}
       onDownloadDokumen={handleDownloadDokumen}
+      isViewingId={isViewingDocId}
+      isDownloadingId={isDownloadingDocId}
       previewBlobUrl={previewBlobUrl}
       previewDocId={previewDocId}
       isLoadingPreview={isLoadingPreview}

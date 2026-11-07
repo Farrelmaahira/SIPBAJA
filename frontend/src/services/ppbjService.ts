@@ -81,6 +81,30 @@ export const ppbjService = {
     );
     return response.data;
   },
+
+  /**
+   * Mengambil blob file dokumen PDF terotentikasi.
+   */
+  async fetchDokumenBlob(
+    downloadUrl: string,
+    disposition: 'inline' | 'attachment' = 'attachment'
+  ): Promise<{ blob: Blob; contentType?: string }> {
+    const normalizedUrl = downloadUrl.replace(/^\/api(?=\/)/, '');
+    const separator = normalizedUrl.includes('?') ? '&' : '?';
+    const finalUrl =
+      disposition === 'inline'
+        ? `${normalizedUrl}${separator}disposition=inline`
+        : normalizedUrl;
+
+    const response = await api.get<Blob>(finalUrl, { responseType: 'blob' });
+    const rawContentType = response.headers['content-type'];
+    const contentType =
+      typeof rawContentType === 'string' ? rawContentType : 'application/pdf';
+    return {
+      blob: new Blob([response.data], { type: contentType }),
+      contentType,
+    };
+  },
 };
 
 export default ppbjService;

@@ -453,7 +453,7 @@ class PermohonanService
                 'ukuran_bytes' => (int) ($doc->ukuran_bytes ?? 0),
                 'mime_type' => (string) ($doc->mime_type ?? 'application/pdf'),
                 'versi' => (int) ($doc->versi ?? 1),
-                'download_url' => "/api/v1/pemohon/permohonan/{$permohonan->id}/dokumen?dokumen_id={$doc->id}",
+                'download_url' => "/api/v1/ppbj/permohonan/{$permohonan->id}/dokumen?dokumen_id={$doc->id}",
             ])
             ->values()
             ->all();

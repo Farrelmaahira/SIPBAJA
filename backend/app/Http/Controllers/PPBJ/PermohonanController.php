@@ -6,10 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\PPBJ\HapusDraftPengadaanRequest;
 use App\Http\Requests\PPBJ\StoreDraftPengadaanRequest;
 use App\Http\Requests\PPBJ\SubmitPengadaanReviewerRequest;
+use App\Models\Permohonan;
 use App\Services\PengadaanService;
 use App\Services\PermohonanService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PermohonanController extends Controller
 {
@@ -39,6 +43,23 @@ class PermohonanController extends Controller
         return response()->json([
             'permohonan' => array_merge($detail, $splitContext),
         ]);
+    }
+
+    /**
+     * Mengunduh atau menampilkan pratinjau berkas dokumen permohonan untuk PPBJ.
+     */
+    public function downloadDokumen(Request $request, Permohonan $permohonan): StreamedResponse
+    {
+        $user = $request->user();
+        $dokumenId = $request->filled('dokumen_id') ? $request->integer('dokumen_id') : null;
+        $info = $this->permohonanService->ambilDokumen($user, $permohonan, $dokumenId);
+
+        $disposition = $request->query('disposition', 'attachment');
+        if ($disposition === 'inline') {
+            return Storage::disk('local')->response($info['path'], $info['nama_asli']);
+        }
+
+        return Storage::disk('local')->download($info['path'], $info['nama_asli']);
     }
 
     /**

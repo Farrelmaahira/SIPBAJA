@@ -38,6 +38,8 @@ export interface PermohonanShowTemplateProps {
   previewBlobUrl?: string | null;
   previewDocId?: number | string | null;
   isLoadingPreview?: boolean;
+  isViewingId?: number | string | null;
+  isDownloadingId?: number | string | null;
 }
 
 export const PermohonanShowTemplate: FC<PermohonanShowTemplateProps> = ({
@@ -54,6 +56,8 @@ export const PermohonanShowTemplate: FC<PermohonanShowTemplateProps> = ({
   previewBlobUrl = null,
   previewDocId = null,
   isLoadingPreview = false,
+  isViewingId = null,
+  isDownloadingId = null,
 }) => {
   const isRevised = (permohonan?.revisiKe ?? 0) > 0;
   const canSplit = Boolean(permohonan?.bisaDipecah);
@@ -245,6 +249,8 @@ export const PermohonanShowTemplate: FC<PermohonanShowTemplateProps> = ({
               tanggal={permohonan.tanggalPengajuan}
               onViewNewTab={onViewDokumen}
               onDownload={onDownloadDokumen}
+              isViewingId={isViewingId}
+              isDownloadingId={isDownloadingId}
               previewBlobUrl={previewBlobUrl}
               previewDocId={previewDocId}
               isLoadingPreview={isLoadingPreview}

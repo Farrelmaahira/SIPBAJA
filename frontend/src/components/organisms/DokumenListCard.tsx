@@ -1,4 +1,4 @@
-import { useState, useMemo, type FC } from 'react';
+import { useState, useMemo, useEffect, useRef, type FC } from 'react';
 import {
   FileText,
   Eye,
@@ -67,6 +67,14 @@ export const DokumenListCard: FC<DokumenListCardProps> = ({
   }, [safeList]);
 
   const [expandedId, setExpandedId] = useState<number | string | null>(initialExpandedId);
+  const hasAutoExpandedRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    if (!hasAutoExpandedRef.current && initialExpandedId !== null) {
+      hasAutoExpandedRef.current = true;
+      setExpandedId(initialExpandedId);
+    }
+  }, [initialExpandedId]);
 
   const toggleExpand = (id: number | string) => {
     setExpandedId((prev) => (prev === id ? null : id));
@@ -156,13 +164,19 @@ export const DokumenListCard: FC<DokumenListCardProps> = ({
             const isDownloadingThis = isDownloadingId === doc.id;
 
             // Preview URL priority: blob URL if matches current doc, or direct download_url with inline disposition
+            const directUrl = doc.download_url
+              ? doc.download_url.startsWith('http')
+                ? doc.download_url
+                : doc.download_url.startsWith('/api')
+                  ? doc.download_url
+                  : `/api${doc.download_url.startsWith('/') ? doc.download_url : `/${doc.download_url}`}`
+              : null;
+
             const activePreviewSrc =
               previewBlobUrl && previewDocId === doc.id
                 ? previewBlobUrl
-                : doc.download_url
-                  ? `${doc.download_url.replace(/^\/api(?=\/)/, '')}${
-                      doc.download_url.includes('?') ? '&' : '?'
-                    }disposition=inline`
+                : directUrl
+                  ? `${directUrl}${directUrl.includes('?') ? '&' : '?'}disposition=inline`
                   : null;
 
             return (

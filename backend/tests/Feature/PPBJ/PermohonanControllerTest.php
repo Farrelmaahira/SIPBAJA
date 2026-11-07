@@ -2,11 +2,13 @@
 
 namespace Tests\Feature\PPBJ;
 
+use App\Models\Dokumen;
 use App\Models\Permohonan;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\PpbjDummySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class PermohonanControllerTest extends TestCase
@@ -68,5 +70,31 @@ class PermohonanControllerTest extends TestCase
         $response = $this->actingAs($nonPpbjUser)->getJson("/api/v1/ppbj/permohonan/{$permohonan->id}");
 
         $response->assertForbidden();
+    }
+
+    public function test_show_mengembalikan_download_url_dengan_prefix_ppbj(): void
+    {
+        $permohonan = Permohonan::where('nomor_surat', 'PRM-PPBJ-001')->firstOrFail();
+
+        $response = $this->actingAs($this->ppbjUser)->getJson("/api/v1/ppbj/permohonan/{$permohonan->id}");
+
+        $response->assertOk();
+        $dokumenList = $response->json('permohonan.dokumenList');
+        $this->assertNotEmpty($dokumenList);
+        $this->assertStringStartsWith("/api/v1/ppbj/permohonan/{$permohonan->id}/dokumen", $dokumenList[0]['download_url']);
+    }
+
+    public function test_download_dokumen_berhasil_diakses_oleh_ppbj(): void
+    {
+        Storage::fake('local');
+        $permohonan = Permohonan::where('nomor_surat', 'PRM-PPBJ-001')->firstOrFail();
+        $dokumen = Dokumen::where('ref_id', $permohonan->id)->where('ref_type', 'permohonan')->firstOrFail();
+
+        $fakePath = 'dokumen/permohonan/'.$dokumen->nama_hash;
+        Storage::disk('local')->put($fakePath, 'dummy pdf content');
+
+        $response = $this->actingAs($this->ppbjUser)->get("/api/v1/ppbj/permohonan/{$permohonan->id}/dokumen?dokumen_id={$dokumen->id}&disposition=inline");
+
+        $response->assertOk();
     }
 }
