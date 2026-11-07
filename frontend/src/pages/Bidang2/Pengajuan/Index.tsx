@@ -1,4 +1,5 @@
 import { useState, useEffect, type FC, type FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { LayoutDashboard, ClipboardList, FileText, Search, Download, Eye } from 'lucide-react';
 import api from '../../../services/api';
 import { useAuth } from '../../../hooks/useAuth';
@@ -30,6 +31,7 @@ const NAV_ITEMS = [
 
 export const PengajuanIndex: FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const [search, setSearch] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('semua');
@@ -196,7 +198,7 @@ export const PengajuanIndex: FC = () => {
                         <td className="py-3.5 px-4 text-right space-x-1.5 whitespace-nowrap">
                           <button
                             type="button"
-                            onClick={() => setDetailPermohonan(row)}
+                            onClick={() => navigate(`/bidang-2/pengajuan/${row.id}`)}
                             className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-[#0E7C5A] bg-[#E8F5F1] hover:bg-[#D4EFE6] rounded-lg transition-colors cursor-pointer"
                             title="Lihat Detail Permohonan"
                           >

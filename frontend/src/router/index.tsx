@@ -35,6 +35,7 @@ import PerencanaanProfilIndex from '../pages/Perencanaan/Profil/Index';
 // Bidang 2 Pages
 import Bidang2Dashboard from '../pages/Bidang2/Dashboard';
 import Bidang2PengajuanIndex from '../pages/Bidang2/Pengajuan/Index';
+import Bidang2PengajuanShow from '../pages/Bidang2/Pengajuan/Show';
 import Bidang2RkaklIndex from '../pages/Bidang2/Rkakl/Index';
 
 // PPBJ Pages
@@ -206,6 +207,7 @@ export const AppRoutes: FC = () => {
         <Route element={<RoleRoute allowedRoles={['Bidang 2', 'bidang-2']} />}>
           <Route path="/bidang-2/dashboard" element={<Bidang2Dashboard />} />
           <Route path="/bidang-2/pengajuan" element={<Bidang2PengajuanIndex />} />
+          <Route path="/bidang-2/pengajuan/:id" element={<Bidang2PengajuanShow />} />
           <Route path="/bidang-2/rkakl" element={<Bidang2RkaklIndex />} />
         </Route>
 
