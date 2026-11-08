@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Perlengkapan;
 
 use App\Http\Controllers\Controller;
-
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 

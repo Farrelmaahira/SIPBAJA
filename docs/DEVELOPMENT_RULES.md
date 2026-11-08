@@ -27,8 +27,15 @@ Success criteria:
 | Language | PHP 8.5.11 |
 | Frontend | React 19 + TypeScript + React Router v7 + Tailwind CSS v4 |
 | HTTP Client | Axios (SPA session via Sanctum cookie auth) |
-| DB (development) | SQLite |
+| DB (development) | SQLite / PostgreSQL 18 via Docker Compose |
 | DB (production target) | PostgreSQL 18 |
+
+### Local Database (Docker Compose)
+
+Run `docker compose up -d` from the project root to start PostgreSQL.
+Credentials: host `127.0.0.1`, port `5432`, db `sipbaja_dev`, user `sipbaja`, password `secret`.
+
+To reset data: `docker compose down -v && docker compose up -d`, then run `php artisan --working-dir=backend migrate:fresh --seed`.
 
 Rules:
 - Do NOT add any package or library without user approval.
@@ -176,6 +183,8 @@ Domain terms stay in Indonesian (`Permohonan`, `Pengadaan`, `Kontrak`, `Pembayar
 - Do NOT delete files or data unless the task says so.
 - Do NOT use `@inertiajs/react` or Inertia primitives (`usePage`, `useForm`, `router`, `Head`, `Link`).
 - Do NOT use direct `fetch()` in pages or components; use the shared Axios instance from `frontend/src/services/api.ts`.
+- Do NOT call Axios or import service modules inside atoms, molecules, organisms, or templates (Section 10).
+- Do NOT add a data-fetching/caching library (TanStack Query, SWR, etc.) without user approval.
 
 ---
 
@@ -202,8 +211,9 @@ Domain terms stay in Indonesian (`Permohonan`, `Pengadaan`, `Kontrak`, `Pembayar
 - One-way hierarchy: atoms → molecules → organisms → templates → pages.
 - Locations: `frontend/src/components/atoms/`, `molecules/`, `organisms/`, `templates/`; pages in `frontend/src/pages/`.
 - Navigation: Use React Router v7 navigation (`useNavigate`, `Link` from `react-router-dom`).
-- Pages are glue only: call hooks, utils, and services (Section 11), pass the results to a single template via props. No direct fetch or Axios calls inside templates. State used by more than one part MUST live in the page.
-- Atoms are presentational only. Explicit props. No global state. No fetch.
+- Pages are glue only: call hooks, utils, and services (Section 11), pass the results to a single template via props. No direct fetch or Axios calls inside templates. State used by more than one part of the same page MUST live in the page.
+- Exception: data shared across many pages (notifications, current user profile) lives in a Context Provider mounted at the route layout level (Section 11.6), not in a page or template.
+- Atoms, molecules, organisms, and templates are presentational only. Explicit props. No fetch, no Axios, no service imports. Local UI state only (dropdown open/close, active tab).
 - Molecules combine atoms. Organisms combine molecules. Templates handle layout. Pages choose the template + copy.
 - A layer may be skipped when there is nothing to group; the direction stays one-way.
 - Check existing components before creating new ones.
@@ -235,6 +245,47 @@ Domain terms stay in Indonesian (`Permohonan`, `Pengadaan`, `Kontrak`, `Pembayar
   - Wrong: `searchQuery` lives in `AdminDashboardTemplate` and is then used by the topbar and table inside it.
   - Right: `frontend/src/pages/Admin/Dashboard.tsx` calls `useUserSearch` and passes `searchQuery` / `onSearchChange` / `filteredUsers` to the template.
 - Checklist before commit: template free of business/filter `useState`? No fake hardcoded numbers/data? Hooks, utils, and services testable in isolation?
+
+### 11.1 Fetch Hook Contract
+Every hook that fetches data MUST return `{ data, isLoading, error, refetch }`.
+- `data` defaults to `null` or `[]`, never fake data.
+- `error` holds a message string or `null`. Pages pass it to the template for display.
+- `refetch` is the only way to reload manually.
+
+### 11.2 Fetch Lifecycle & Cleanup
+- Every request in a hook MUST be cancellable via `AbortController`, aborted in the `useEffect` cleanup.
+- Every polling interval MUST be cleared in the `useEffect` cleanup (`clearInterval`).
+- Ignore aborted requests: do not set state or show an error for them.
+- Polling interval value lives in a named constant, not an inline number.
+- Polling pauses while the tab is hidden (`document.visibilityState`).
+
+### 11.3 Centralized HTTP Error Handling
+Handled once in the response interceptor of `frontend/src/services/api.ts`, never repeated in hooks or components:
+- 401: clear session state and redirect to login.
+- 403: render the `ErrorTemplate` 403 view.
+- 422: pass `message` and `errors` through to the caller untouched.
+- 429: surface the `message` from the API (rate limit).
+- Network error / 5xx: return a generic Indonesian error message.
+
+### 11.4 Service Module Rules
+- One service file per domain in `frontend/src/services/` (`notifikasiService.ts`, `authService.ts`).
+- Service functions only call the shared Axios instance and return typed data. No state, no React imports.
+- Request/response types come from `frontend/src/types/api.ts`.
+- Endpoints follow `docs/API_CONTRACT.md` under `/api/v1/`.
+
+### 11.5 No Duplicate Fetch
+- The same endpoint MUST NOT be fetched by more than one mounted hook instance at the same time.
+- Data needed by more than one page or layout part (topbar badge + dropdown + page) is fetched once in a Context Provider and read through a consumer hook.
+- Do NOT add a data-fetching/caching library (TanStack Query, SWR, etc.) without user approval (Section 2).
+
+### 11.6 Shared Data Context Pattern
+- Location: `frontend/src/contexts/<Name>Context.tsx` for the provider, `frontend/src/hooks/use<Name>.ts` for the consumer hook.
+- The provider calls the fetch hook once and exposes `{ data, isLoading, error, refetch }`.
+- The provider is mounted in the role layout route, so all pages under that layout share it.
+- Organisms and templates never import the provider. The page reads the consumer hook and passes data to the template via props.
+
+### 11.7 Checklist Addition
+Before commit: no fetch in organisms/molecules? Abort and interval cleanup present? Error and loading states exposed? No duplicate fetch of the same endpoint? 401/403/429 handled only in the interceptor?
 
 ---
 
