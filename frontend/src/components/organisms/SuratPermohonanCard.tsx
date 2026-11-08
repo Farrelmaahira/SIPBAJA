@@ -154,7 +154,7 @@ export const SuratPermohonanCard: FC<SuratPermohonanCardProps> = ({
         </div>
       </div>
 
-      {/* Live Preview Container
+      {/* Live Preview Container */}
       {showPreview && (
         <div className="relative rounded-2xl border border-[#E4EBE8] bg-[#F7FAF9] p-4 sm:p-5 shadow-inner overflow-hidden animate-in fade-in duration-200">
           {isLoadingPdf ? (
@@ -181,7 +181,7 @@ export const SuratPermohonanCard: FC<SuratPermohonanCardProps> = ({
               </div>
             </div>
           ) : (
-            /* Fallback Mockup Dokumen Berkop Resmi 
+            /* Fallback Mockup Dokumen Berkop Resmi */
             <div className="bg-white rounded-xl border border-[#E4EBE8] shadow-sm p-6 sm:p-8 max-w-xl mx-auto space-y-6">
               <div className="flex items-center gap-3 pb-4 border-b-2 border-[#14201C]">
                 <div
@@ -239,7 +239,7 @@ export const SuratPermohonanCard: FC<SuratPermohonanCardProps> = ({
             </div>
           )}
         </div>
-      )} */}
+      )}
     </section>
   );
 };

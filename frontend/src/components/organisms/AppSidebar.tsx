@@ -2,7 +2,7 @@ import type { ComponentType, FC } from 'react';
 import { LayoutGrid, FileText, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-export interface PpNavItem {
+export interface AppNavItem {
   key: string;
   label: string;
   icon: ComponentType<{ className?: string }>;
@@ -10,34 +10,34 @@ export interface PpNavItem {
   badge?: number | string | null;
 }
 
-export interface PpSidebarProps {
+export interface AppSidebarProps {
   activeRoute?: string;
   mobileOpen?: boolean;
   onClose?: () => void;
   pendingCount?: number;
-  navItems?: PpNavItem[] | null;
+  navItems?: AppNavItem[] | null;
 }
 
-export const PpSidebar: FC<PpSidebarProps> = ({
+export const AppSidebar: FC<AppSidebarProps> = ({
   activeRoute = 'dashboard',
   mobileOpen = false,
   onClose,
   pendingCount = 4,
   navItems: customNavItems = null,
 }) => {
-  const defaultNavItems: PpNavItem[] = [
+  const defaultNavItems: AppNavItem[] = [
     {
       key: 'dashboard',
       label: 'Dashboard',
       icon: LayoutGrid,
-      href: '/pp/dashboard',
+      href: '/dashboard',
       badge: null,
     },
     {
       key: 'pengajuan',
       label: 'List Pengajuan',
       icon: FileText,
-      href: '/pp/pengajuan',
+      href: '/pengajuan',
       badge: pendingCount,
     },
   ];
@@ -79,7 +79,8 @@ export const PpSidebar: FC<PpSidebarProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="md:hidden p-1.5 rounded-lg text-[#5F6F6A] hover:bg-[#EEF5F2]"
+            className="md:hidden p-1.5 rounded-lg text-[#5F6F6A] hover:bg-[#EEF5F2] cursor-pointer"
+            aria-label="Tutup menu navigasi"
           >
             <X className="w-5 h-5" />
           </button>
@@ -99,11 +100,10 @@ export const PpSidebar: FC<PpSidebarProps> = ({
               <Link
                 key={item.key}
                 to={item.href}
-                className={`relative flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[13px] transition-all duration-150 ${
-                  isActive
+                className={`relative flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[13px] transition-all duration-150 ${isActive
                     ? 'bg-[#E8F5EF] text-[#0E7C5A] font-bold'
                     : 'text-[#5F6F6A] font-medium hover:bg-[#F4F7F5] hover:text-[#14201C]'
-                }`}
+                  }`}
               >
                 {isActive && (
                   <span
@@ -113,19 +113,17 @@ export const PpSidebar: FC<PpSidebarProps> = ({
                 )}
                 <div className="flex items-center gap-3">
                   <Icon
-                    className={`w-[18px] h-[18px] ${
-                      isActive ? 'text-[#0E7C5A]' : 'text-[#5F6F6A]'
-                    }`}
+                    className={`w-[18px] h-[18px] ${isActive ? 'text-[#0E7C5A]' : 'text-[#5F6F6A]'
+                      }`}
                   />
                   <span>{item.label}</span>
                 </div>
                 {item.badge !== null && item.badge !== undefined && (
                   <span
-                    className={`w-5 h-5 rounded-full text-[11px] font-bold flex items-center justify-center ${
-                      isActive
+                    className={`w-5 h-5 rounded-full text-[11px] font-bold flex items-center justify-center ${isActive
                         ? 'bg-[#0E7C5A] text-white'
                         : 'bg-[#EEF2F0] text-[#5F6F6A]'
-                    }`}
+                      }`}
                   >
                     {item.badge}
                   </span>
@@ -145,7 +143,7 @@ export const PpSidebar: FC<PpSidebarProps> = ({
 
       {/* Mobile Drawer */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-50 md:hidden bg-black/40 backdrop-blur-xs flex">
+        <div className="fixed inset-0 z-50 md:hidden bg-black/40 backdrop-blur-xs flex animate-in fade-in duration-150">
           <div className="w-[248px] max-w-xs">{sidebarContent}</div>
           <div className="flex-1" onClick={onClose} />
         </div>
@@ -154,4 +152,5 @@ export const PpSidebar: FC<PpSidebarProps> = ({
   );
 };
 
-export default PpSidebar;
+export default AppSidebar;
+

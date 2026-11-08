@@ -63,6 +63,10 @@ import PpkProfilIndex from '../pages/Ppk/Profil/Index';
 import PerlengkapanDashboard from '../pages/Perlengkapan/Dashboard';
 import KeuanganDashboard from '../pages/Keuangan/Dashboard';
 
+// Shared Pages
+import SharedNotifikasiPage from '../pages/Shared/SharedNotifikasiPage';
+import SharedProfilPage from '../pages/Shared/SharedProfilPage';
+
 // Error Pages
 import Error403 from '../pages/Errors/403';
 import Error404 from '../pages/Errors/404';
@@ -172,17 +176,9 @@ export const AppRoutes: FC = () => {
 
       {/* Protected Routes: requires authenticated user */}
       <Route element={<ProtectedRoute />}>
-        {/* Centralized Notifications Route */}
-        <Route
-          path="/notifikasi"
-          element={
-            <PpNotifikasiIndex
-              basePath=""
-              roleTitle="Notifikasi"
-              roleSubtitle="Pemberitahuan Sistem"
-            />
-          }
-        />
+        {/* Centralized Notifications & Profile Routes */}
+        <Route path="/notifikasi" element={<SharedNotifikasiPage />} />
+        <Route path="/profil" element={<SharedProfilPage />} />
 
         {/* Admin Routes */}
         <Route element={<RoleRoute allowedRoles={['Admin']} />}>

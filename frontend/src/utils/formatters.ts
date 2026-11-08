@@ -51,3 +51,15 @@ export function formatTanggalIndo(
 
 export const formatTanggal = formatTanggalIndo;
 
+/**
+ * Format ukuran file dari bytes ke format ramah pengguna (KB/MB).
+ */
+export function formatBytes(bytes?: number | null): string {
+  if (!bytes || bytes <= 0) return '0 KB';
+  const mb = bytes / (1024 * 1024);
+  if (mb >= 1) return `${mb.toFixed(1)} MB`;
+  const kb = bytes / 1024;
+  return `${Math.round(kb)} KB`;
+}
+
+

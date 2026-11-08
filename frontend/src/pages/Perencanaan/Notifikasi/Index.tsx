@@ -1,16 +1,18 @@
 import type { FC } from 'react';
-import PpNotifikasiIndex, { type PpNotifikasiProps } from '../../Pp/Notifikasi/Index';
+import SharedNotifikasiPage, { type SharedNotifikasiPageProps } from '../../Shared/SharedNotifikasiPage';
 import { PERENCANAAN_NAV_ITEMS } from '../Dashboard';
 
-export const PerencanaanNotifikasiIndex: FC<PpNotifikasiProps> = (props) => {
+export type PerencanaanNotifikasiProps = SharedNotifikasiPageProps;
+
+export const PerencanaanNotifikasiIndex: FC<PerencanaanNotifikasiProps> = (props) => {
   return (
-    <PpNotifikasiIndex
-      {...props}
+    <SharedNotifikasiPage
       basePath="/perencanaan"
       roleInitials="PR"
       roleTitle="Perencanaan"
-      roleSubtitle="Pejabat Perencanaan"
+      roleSubtitle="Unit Perencanaan"
       navItems={PERENCANAAN_NAV_ITEMS}
+      {...props}
     />
   );
 };

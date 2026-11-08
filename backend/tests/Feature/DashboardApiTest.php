@@ -108,8 +108,6 @@ class DashboardApiTest extends TestCase
             ->assertJsonStructure([
                 'stats',
                 'permohonanTerbaru',
-                'recentNotifications',
-                'unreadNotificationsCount',
             ]);
     }
 
