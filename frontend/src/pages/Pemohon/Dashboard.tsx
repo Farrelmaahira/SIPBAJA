@@ -1,75 +1,42 @@
-import { useEffect, useState, type FC } from 'react';
+import type { FC } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../../services/api';
 import { useAuth } from '../../hooks/useAuth';
-import usePemohonDashboard, {
-  type RingkasanPemohon,
-  type PermohonanAktifItem,
-  type StatistikBulananItem,
-} from '../../hooks/usePemohonDashboard';
+import usePemohonDashboard from '../../hooks/usePemohonDashboard';
 import PemohonDashboardTemplate from '../../components/templates/PemohonDashboardTemplate';
 
 export const PemohonDashboard: FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const [initialData, setInitialData] = useState<{
-    ringkasan?: RingkasanPemohon;
-    permohonanAktif?: PermohonanAktifItem[];
-    statistikBulanan?: StatistikBulananItem[];
-    tahunAktif?: number;
-  }>({});
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    let isMounted = true;
-    setIsLoading(true);
-
-    api
-      .get<{
-        ringkasan?: RingkasanPemohon;
-        permohonanAktif?: PermohonanAktifItem[];
-        statistikBulanan?: StatistikBulananItem[];
-        tahunAktif?: number;
-      }>('/v1/pemohon/dashboard')
-      .then((res) => {
-        if (!isMounted) return;
-        setInitialData(res.data);
-      })
-      .catch((err) => {
-        console.error('Failed to fetch Pemohon dashboard data:', err);
-      })
-      .finally(() => {
-        if (isMounted) setIsLoading(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
   const {
-    ringkasan: ringkasanData,
-    permohonanAktif: listPermohonan,
+    ringkasan,
+    permohonanAktif,
     chartData,
-    tahunAktif: activeYear,
+    tahunAktif,
     gantiTahun,
-  } = usePemohonDashboard(initialData);
+    isLoading,
+    isError,
+  } = usePemohonDashboard();
 
   const handleBuatPermohonan = () => {
     navigate('/pemohon/permohonan/create');
   };
 
+  const handleGantiTahun = (tahun: number) => {
+    void gantiTahun(tahun);
+  };
+
   return (
     <PemohonDashboardTemplate
       user={user}
-      ringkasan={ringkasanData}
-      permohonanAktif={listPermohonan}
+      ringkasan={ringkasan}
+      permohonanAktif={permohonanAktif}
       chartData={chartData ?? undefined}
-      tahunAktif={activeYear}
-      gantiTahun={gantiTahun}
-      isLoading={isLoading}
+      tahunAktif={tahunAktif}
+      gantiTahun={handleGantiTahun}
       onBuatPermohonan={handleBuatPermohonan}
+      isLoading={isLoading}
+      isError={isError}
     />
   );
 };
