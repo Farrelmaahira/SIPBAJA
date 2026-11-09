@@ -1,8 +1,6 @@
 import type { FC } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  LayoutDashboard,
-  ClipboardList,
   ArrowLeft,
   Hash,
   FileText,
@@ -15,31 +13,16 @@ import {
   CheckCircle2,
   X,
 } from 'lucide-react';
-import DashboardShellTemplate from './DashboardShellTemplate';
+import AppLayout from './AppLayout';
 import HeroBanner from '../organisms/HeroBanner';
 import StatusPill from '../atoms/StatusPill';
 import CatatanPenolakanCard from '../molecules/CatatanPenolakanCard';
 import SuratPermohonanCard from '../organisms/SuratPermohonanCard';
 import TimelineProsesCard from '../organisms/TimelineProsesCard';
 import { formatRupiah, formatTanggal } from '../../utils/formatPermohonan';
+import { PEMOHON_NAV_ITEMS } from '../../constants/pemohonNav';
 import type { PermohonanDetailInfo } from '../../types/permohonan';
 import type { ProfilePillUser } from '../molecules/ProfilePill';
-
-const NAV_ITEMS = [
-  {
-    key: 'dashboard',
-    label: 'Dashboard',
-    icon: LayoutDashboard,
-    href: '/pemohon/dashboard',
-  },
-  {
-    key: 'permohonan',
-    label: 'List Permohonan',
-    icon: ClipboardList,
-    href: '/pemohon/permohonan',
-    badge: 4,
-  },
-];
 
 export interface PemohonPermohonanShowTemplateProps {
   user?: ProfilePillUser | null;
@@ -57,7 +40,6 @@ export interface PemohonPermohonanShowTemplateProps {
 export const PemohonPermohonanShowTemplate: FC<
   PemohonPermohonanShowTemplateProps
 > = ({
-  user = {},
   permohonan,
   isLoading,
   hasError,
@@ -68,21 +50,18 @@ export const PemohonPermohonanShowTemplate: FC<
   onBack,
   onRevisi,
 }) => {
-  const sidebarProps = {
-    navItems: NAV_ITEMS,
-    activeRoute: 'permohonan',
-    brandSubtitle: 'Pengadaan Barang & Jasa',
-    sectionTitle: 'MENU',
-  };
-
-  const topbarProps = {
-    user,
-  };
-
   const isDitolak = permohonan?.status === 'ditolak';
 
   return (
-    <DashboardShellTemplate sidebarProps={sidebarProps} topbarProps={topbarProps}>
+    <AppLayout
+      activeRoute="permohonan"
+      navItems={PEMOHON_NAV_ITEMS}
+      roleInitials="PM"
+      roleTitle="Pemohon"
+      roleSubtitle="Unit Pemohon"
+      profileHref="/pemohon/dashboard"
+      notifikasiHref="/pemohon/dashboard"
+    >
       {/* Breadcrumb Nav */}
       <nav
         aria-label="Breadcrumb"
@@ -337,7 +316,7 @@ export const PemohonPermohonanShowTemplate: FC<
           )}
         </div>
       )}
-    </DashboardShellTemplate>
+    </AppLayout>
   );
 };
 
