@@ -38,14 +38,17 @@ export interface AdminUserItem {
   status: 'aktif' | 'nonaktif';
   created_at?: string;
   updated_at?: string;
+  [key: string]: unknown;
 }
 
 export interface AdminUnitItem {
   id: number;
   nama: string;
   kode?: string;
+  users_count?: number;
   created_at?: string;
   updated_at?: string;
+  [key: string]: unknown;
 }
 
 export interface AdminMakItem {

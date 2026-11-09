@@ -1,15 +1,14 @@
 import type { ChangeEvent, FC, ReactNode } from 'react';
 import { Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import DashboardShellTemplate from './DashboardShellTemplate';
-import { adminSidebarPreset } from '../organisms/AdminSidebar';
-import { adminTopbarPreset } from '../organisms/AdminTopbar';
+import AppLayout from './AppLayout';
 import CrudTable from '../organisms/CrudTable';
 import Modal from '../organisms/Modal';
 import SearchBar from '../molecules/SearchBar';
 import FormField from '../molecules/FormField';
 import TextInput from '../molecules/TextInput';
 import PrimaryButton from '../atoms/PrimaryButton';
+import { ADMIN_NAV_ITEMS } from '../../constants/adminNav';
 
 export interface RoleRowItem {
   id: number;
@@ -50,15 +49,8 @@ const columns = [
 ];
 
 export interface RoleFormData {
-  nama?: string;
+  nama: string;
   [key: string]: unknown;
-}
-
-export interface RoleTemplateForm {
-  data: RoleFormData;
-  setData: (field: string, value: any) => void;
-  errors: Record<string, string>;
-  processing?: boolean;
 }
 
 export interface RoleTemplateProps {
@@ -68,7 +60,12 @@ export interface RoleTemplateProps {
   onQueryChange?: (e: ChangeEvent<HTMLInputElement>) => void;
   searchPlaceholder?: string;
   modalMode?: 'create' | 'edit' | null;
-  form: RoleTemplateForm;
+  form: {
+    data: RoleFormData;
+    setData: (field: string, value: any) => void;
+    errors: Record<string, string>;
+    processing?: boolean;
+  };
   onOpenCreate?: () => void;
   onOpenEdit?: (row: RoleRowItem) => void;
   onCloseModal: () => void;
@@ -100,118 +97,113 @@ export const RoleTemplate: FC<RoleTemplateProps> = ({
 }) => {
   const { data, setData, errors, processing = false } = form;
   const isEdit = modalMode === 'edit';
-  const inUse = (deleteTarget?.users_count ?? 0) > 0;
 
   return (
-    <DashboardShellTemplate
-      sidebarProps={{ ...adminSidebarPreset, activeRoute: 'admin.role.index' }}
-      topbarProps={{
-        ...adminTopbarPreset,
-        searchValue: query,
-        onSearchChange: onQueryChange,
-        searchPlaceholder,
-        searchId: 'role-search-input',
-      }}
+    <AppLayout
+      activeRoute="role"
+      navItems={ADMIN_NAV_ITEMS}
+      roleInitials="AD"
+      roleTitle="Administrator"
+      roleSubtitle="Panel Admin"
+      profileHref="/admin/pengguna"
+      notifikasiHref="/admin/dashboard"
     >
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-[#14201C]">Peran</h1>
-          <p className="text-sm text-[#5F6F6A] mt-1">
-            Kelola peran pengguna beserta hak aksesnya.
-          </p>
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-bold text-[#14201C]">Peran</h1>
+            <p className="text-sm text-[#5F6F6A] mt-1">
+              Kelola peran pengguna dan pembagian wewenang dalam sistem.
+            </p>
+          </div>
+          <PrimaryButton icon={Plus} onClick={onOpenCreate}>
+            Tambah Peran
+          </PrimaryButton>
         </div>
-        <PrimaryButton icon={Plus} onClick={onOpenCreate}>
-          Tambah Peran
-        </PrimaryButton>
-      </div>
 
-      <div className="max-w-md">
-        <SearchBar
-          value={query}
-          onChange={onQueryChange}
-          placeholder={searchPlaceholder}
-          id="role-table-search"
-        />
-      </div>
-
-      <CrudTable
-        columns={columns}
-        rows={rows}
-        onEdit={onOpenEdit}
-        onDelete={onAskDelete}
-        emptyTitle="Belum ada peran"
-        emptyDescription="Peran yang ditambahkan akan ditampilkan di sini."
-        isLoading={isLoading}
-      />
-
-      {pagination}
-
-      <Modal
-        open={modalMode !== null}
-        onClose={onCloseModal}
-        title={isEdit ? 'Ubah Peran' : 'Tambah Peran'}
-        footer={
-          <>
-            <button
-              type="button"
-              onClick={onCloseModal}
-              className="inline-flex items-center justify-center min-h-[44px] px-4 rounded-xl border border-[#E4EBE8] text-sm font-semibold text-[#5F6F6A] hover:bg-[#EEF5F2] transition-colors cursor-pointer"
-            >
-              Batal
-            </button>
-            <PrimaryButton onClick={onSubmitForm} disabled={processing}>
-              {processing ? 'Menyimpan...' : isEdit ? 'Simpan Perubahan' : 'Tambah Peran'}
-            </PrimaryButton>
-          </>
-        }
-      >
-        <FormField label="Nama peran" error={errors.nama} htmlFor="role-nama">
-          <TextInput
-            id="role-nama"
-            value={data.nama || ''}
-            onChange={(e) => setData('nama', e.target.value)}
-            placeholder="Contoh: Auditor"
-            error={errors.nama}
+        <div className="max-w-md">
+          <SearchBar
+            value={query}
+            onChange={onQueryChange}
+            placeholder={searchPlaceholder}
+            id="role-table-search"
           />
-        </FormField>
-      </Modal>
+        </div>
 
-      <Modal
-        open={deleteTarget !== null}
-        onClose={onCancelDelete}
-        title="Hapus Peran"
-        footer={
-          <>
-            <button
-              type="button"
-              onClick={onCancelDelete}
-              className="inline-flex items-center justify-center min-h-[44px] px-4 rounded-xl border border-[#E4EBE8] text-sm font-semibold text-[#5F6F6A] hover:bg-[#EEF5F2] transition-colors cursor-pointer"
-            >
-              Batal
-            </button>
-            <button
-              type="button"
-              onClick={onConfirmDelete}
-              disabled={inUse}
-              className="inline-flex items-center justify-center min-h-[44px] px-4 rounded-xl bg-[#E5484D] hover:bg-[#B42318] text-white text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
-            >
-              Ya, Hapus
-            </button>
-          </>
-        }
-      >
-        {inUse ? (
+        <CrudTable
+          columns={columns}
+          rows={rows}
+          onEdit={onOpenEdit}
+          onDelete={onAskDelete}
+          emptyTitle="Belum ada peran"
+          emptyDescription="Peran yang ditambahkan akan muncul di sini."
+          isLoading={isLoading}
+        />
+
+        {pagination}
+
+        <Modal
+          open={modalMode !== null}
+          onClose={onCloseModal}
+          title={isEdit ? 'Ubah Peran' : 'Tambah Peran'}
+          footer={
+            <>
+              <button
+                type="button"
+                onClick={onCloseModal}
+                className="inline-flex items-center justify-center min-h-[44px] px-4 rounded-xl border border-[#E4EBE8] text-sm font-semibold text-[#5F6F6A] hover:bg-[#EEF5F2] transition-colors cursor-pointer"
+              >
+                Batal
+              </button>
+              <PrimaryButton onClick={onSubmitForm} disabled={processing}>
+                {processing ? 'Menyimpan...' : isEdit ? 'Simpan Perubahan' : 'Tambah Peran'}
+              </PrimaryButton>
+            </>
+          }
+        >
+          <div className="space-y-4">
+            <FormField label="Nama peran" error={errors.nama} htmlFor="role-nama">
+              <TextInput
+                id="role-nama"
+                value={data.nama || ''}
+                onChange={(e) => setData('nama', e.target.value)}
+                placeholder="cth. Auditor Internal"
+                error={errors.nama}
+              />
+            </FormField>
+          </div>
+        </Modal>
+
+        <Modal
+          open={deleteTarget !== null}
+          onClose={onCancelDelete}
+          title="Hapus Peran"
+          footer={
+            <>
+              <button
+                type="button"
+                onClick={onCancelDelete}
+                className="inline-flex items-center justify-center min-h-[44px] px-4 rounded-xl border border-[#E4EBE8] text-sm font-semibold text-[#5F6F6A] hover:bg-[#EEF5F2] transition-colors cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={onConfirmDelete}
+                className="inline-flex items-center justify-center min-h-[44px] px-4 rounded-xl bg-[#E5484D] hover:bg-[#B42318] text-white text-sm font-semibold transition-colors cursor-pointer"
+              >
+                Ya, Hapus
+              </button>
+            </>
+          }
+        >
           <p className="text-sm text-[#5F6F6A]">
-            Peran <span className="font-semibold text-[#14201C]">{deleteTarget?.nama}</span> dipakai{' '}
-            {deleteTarget?.users_count} pengguna dan tidak bisa dihapus.
+            Hapus peran <span className="font-semibold text-[#14201C]">{deleteTarget?.nama}</span>?
+            Peran tidak dapat dihapus jika masih ada pengguna yang terdaftar dengan peran ini.
           </p>
-        ) : (
-          <p className="text-sm text-[#5F6F6A]">
-            Hapus <span className="font-semibold text-[#14201C]">{deleteTarget?.nama}</span>?
-          </p>
-        )}
-      </Modal>
-    </DashboardShellTemplate>
+        </Modal>
+      </div>
+    </AppLayout>
   );
 };
 

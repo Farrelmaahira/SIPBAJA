@@ -1,8 +1,6 @@
 import type { ChangeEvent, FC, ReactNode } from 'react';
 import { Plus } from 'lucide-react';
-import DashboardShellTemplate from './DashboardShellTemplate';
-import { adminSidebarPreset } from '../organisms/AdminSidebar';
-import { adminTopbarPreset } from '../organisms/AdminTopbar';
+import AppLayout from './AppLayout';
 import CrudTable from '../organisms/CrudTable';
 import Modal from '../organisms/Modal';
 import SearchBar from '../molecules/SearchBar';
@@ -11,6 +9,7 @@ import TextInput from '../molecules/TextInput';
 import SelectInput from '../molecules/SelectInput';
 import PrimaryButton from '../atoms/PrimaryButton';
 import normalizeOptions from '../../utils/normalizeOptions';
+import { ADMIN_NAV_ITEMS } from '../../constants/adminNav';
 
 export interface UserRowItem {
   id: number;
@@ -179,107 +178,108 @@ export const PenggunaTemplate: FC<PenggunaTemplateProps> = ({
   const isEdit = modalMode === 'edit';
 
   return (
-    <DashboardShellTemplate
-      sidebarProps={{ ...adminSidebarPreset, activeRoute: 'admin.pengguna.index' }}
-      topbarProps={{
-        ...adminTopbarPreset,
-        searchValue: query,
-        onSearchChange: onQueryChange,
-        searchPlaceholder,
-        searchId: 'pengguna-search-input',
-      }}
+    <AppLayout
+      activeRoute="pengguna"
+      navItems={ADMIN_NAV_ITEMS}
+      roleInitials="AD"
+      roleTitle="Administrator"
+      roleSubtitle="Panel Admin"
+      profileHref="/admin/pengguna"
+      notifikasiHref="/admin/dashboard"
     >
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-[#14201C]">Pengguna</h1>
-          <p className="text-sm text-[#5F6F6A] mt-1">
-            Kelola akun pengguna dan peran mereka di SIPBAJA.
-          </p>
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-bold text-[#14201C]">Pengguna</h1>
+            <p className="text-sm text-[#5F6F6A] mt-1">
+              Kelola akun pengguna dan peran mereka di SIPBAJA.
+            </p>
+          </div>
+          <PrimaryButton icon={Plus} onClick={onOpenCreate}>
+            Tambah Pengguna
+          </PrimaryButton>
         </div>
-        <PrimaryButton icon={Plus} onClick={onOpenCreate}>
-          Tambah Pengguna
-        </PrimaryButton>
-      </div>
 
-      <div className="max-w-md">
-        <SearchBar
-          value={query}
-          onChange={onQueryChange}
-          placeholder={searchPlaceholder}
-          id="pengguna-table-search"
+        <div className="max-w-md">
+          <SearchBar
+            value={query}
+            onChange={onQueryChange}
+            placeholder={searchPlaceholder}
+            id="pengguna-table-search"
+          />
+        </div>
+
+        <CrudTable
+          columns={columns}
+          rows={rows}
+          onEdit={onOpenEdit}
+          onDelete={onAskDelete}
+          emptyTitle="Belum ada pengguna"
+          emptyDescription="Pengguna yang ditambahkan akan ditampilkan di sini."
+          isLoading={isLoading}
         />
+
+        {pagination}
+
+        <Modal
+          open={modalMode !== null}
+          onClose={onCloseModal}
+          title={isEdit ? 'Ubah Pengguna' : 'Tambah Pengguna'}
+          footer={
+            <>
+              <button
+                type="button"
+                onClick={onCloseModal}
+                className="inline-flex items-center justify-center min-h-[44px] px-4 rounded-xl border border-[#E4EBE8] text-sm font-semibold text-[#5F6F6A] hover:bg-[#EEF5F2] transition-colors cursor-pointer"
+              >
+                Batal
+              </button>
+              <PrimaryButton onClick={onSubmitForm} disabled={processing}>
+                {processing ? 'Menyimpan...' : isEdit ? 'Simpan Perubahan' : 'Tambah Pengguna'}
+              </PrimaryButton>
+            </>
+          }
+        >
+          <PenggunaForm
+            data={data}
+            setData={setData}
+            errors={errors}
+            roles={roles}
+            units={units}
+            isEdit={isEdit}
+          />
+        </Modal>
+
+        <Modal
+          open={deleteTarget !== null}
+          onClose={onCancelDelete}
+          title="Hapus Pengguna"
+          footer={
+            <>
+              <button
+                type="button"
+                onClick={onCancelDelete}
+                className="inline-flex items-center justify-center min-h-[44px] px-4 rounded-xl border border-[#E4EBE8] text-sm font-semibold text-[#5F6F6A] hover:bg-[#EEF5F2] transition-colors cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={onConfirmDelete}
+                className="inline-flex items-center justify-center min-h-[44px] px-4 rounded-xl bg-[#E5484D] hover:bg-[#B42318] text-white text-sm font-semibold transition-colors cursor-pointer"
+              >
+                Ya, Hapus
+              </button>
+            </>
+          }
+        >
+          <p className="text-sm text-[#5F6F6A]">
+            Hapus <span className="font-semibold text-[#14201C]">{deleteTarget?.nama}</span>?
+            Riwayat persetujuan dan unggahan yang dibuat akun ini tetap tersimpan.
+          </p>
+        </Modal>
       </div>
-
-      <CrudTable
-        columns={columns}
-        rows={rows}
-        onEdit={onOpenEdit}
-        onDelete={onAskDelete}
-        emptyTitle="Belum ada pengguna"
-        emptyDescription="Pengguna yang ditambahkan akan ditampilkan di sini."
-        isLoading={isLoading}
-      />
-
-      {pagination}
-
-      <Modal
-        open={modalMode !== null}
-        onClose={onCloseModal}
-        title={isEdit ? 'Ubah Pengguna' : 'Tambah Pengguna'}
-        footer={
-          <>
-            <button
-              type="button"
-              onClick={onCloseModal}
-              className="inline-flex items-center justify-center min-h-[44px] px-4 rounded-xl border border-[#E4EBE8] text-sm font-semibold text-[#5F6F6A] hover:bg-[#EEF5F2] transition-colors cursor-pointer"
-            >
-              Batal
-            </button>
-            <PrimaryButton onClick={onSubmitForm} disabled={processing}>
-              {processing ? 'Menyimpan...' : isEdit ? 'Simpan Perubahan' : 'Tambah Pengguna'}
-            </PrimaryButton>
-          </>
-        }
-      >
-        <PenggunaForm
-          data={data}
-          setData={setData}
-          errors={errors}
-          roles={roles}
-          units={units}
-          isEdit={isEdit}
-        />
-      </Modal>
-
-      <Modal
-        open={deleteTarget !== null}
-        onClose={onCancelDelete}
-        title="Hapus Pengguna"
-        footer={
-          <>
-            <button
-              type="button"
-              onClick={onCancelDelete}
-              className="inline-flex items-center justify-center min-h-[44px] px-4 rounded-xl border border-[#E4EBE8] text-sm font-semibold text-[#5F6F6A] hover:bg-[#EEF5F2] transition-colors cursor-pointer"
-            >
-              Batal
-            </button>
-            <button
-              type="button"
-              onClick={onConfirmDelete}
-              className="inline-flex items-center justify-center min-h-[44px] px-4 rounded-xl bg-[#E5484D] hover:bg-[#B42318] text-white text-sm font-semibold transition-colors cursor-pointer"
-            >
-              Ya, Hapus
-            </button>
-          </>
-        }
-      >
-        <p className="text-sm text-[#5F6F6A]">
-          Hapus <span className="font-semibold text-[#14201C]">{deleteTarget?.nama}</span>?
-          Riwayat persetujuan dan unggahan yang dibuat akun ini tetap tersimpan.
-        </p>
-      </Modal>
-    </DashboardShellTemplate>
+    </AppLayout>
   );
 };
 
