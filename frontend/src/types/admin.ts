@@ -13,6 +13,7 @@ export interface AdminRecentUser {
   unit: string;
   status: 'aktif' | 'nonaktif';
   tanggal: string;
+  [key: string]: unknown;
 }
 
 export interface AdminDashboardData {
