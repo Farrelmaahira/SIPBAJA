@@ -1,39 +1,21 @@
-import type { ChangeEvent, FC } from 'react';
-import DashboardShellTemplate from './DashboardShellTemplate';
-import { adminSidebarPreset } from '../organisms/AdminSidebar';
-import { adminTopbarPreset } from '../organisms/AdminTopbar';
+import type { FC } from 'react';
+import AppLayout from './AppLayout';
 import HeroBanner from '../organisms/HeroBanner';
 import RecentUsersTable, { type RecentUserItem } from '../organisms/RecentUsersTable';
 import StatCard from '../molecules/StatCard';
 import { Users, Building, Layers } from 'lucide-react';
-import type { ProfilePillUser } from '../molecules/ProfilePill';
+import { ADMIN_NAV_ITEMS } from '../../constants/adminNav';
+import type { AdminStatItem } from '../../types/admin';
 
-const statCards = [
-  {
-    key: 'totalPengguna' as const,
-    icon: Users,
-    label: 'Total Pengguna',
-    unit: 'akun',
-    iconBg: 'bg-[#E4F6EC]',
-    iconColor: 'text-[#0E7C5A]',
-  },
-  {
-    key: 'totalUnit' as const,
-    icon: Building,
-    label: 'Unit Kerja Terdaftar',
-    unit: 'unit',
-    iconBg: 'bg-[#E8F0FF]',
-    iconColor: 'text-[#1F55C7]',
-  },
-  {
-    key: 'totalMak' as const,
-    icon: Layers,
-    label: 'Kode Anggaran MAK',
-    unit: 'kode',
-    iconBg: 'bg-[#EEF5F2]',
-    iconColor: 'text-[#0E7C5A]',
-  },
-];
+export interface AdminDashboardTemplateProps {
+  stats?: AdminStatItem[];
+  recentUsers?: RecentUserItem[];
+  userName?: string;
+  isLoading?: boolean;
+  onAddUser?: () => void;
+  onViewUser?: (user: RecentUserItem) => void;
+  onViewAllUsers?: () => void;
+}
 
 function StatSkeleton() {
   return (
@@ -48,78 +30,64 @@ function StatSkeleton() {
   );
 }
 
-export interface AdminStatsData {
-  totalPengguna?: number;
-  totalUnit?: number;
-  totalMak?: number;
-}
-
-export interface AdminDashboardTemplateProps {
-  stats?: AdminStatsData;
-  filteredUsers?: RecentUserItem[];
-  user?: ProfilePillUser | null;
-  activeRoute?: string;
-  searchQuery?: string;
-  onSearchChange?: (e: ChangeEvent<HTMLInputElement>) => void;
-  isLoading?: boolean;
-  onAddUser?: () => void;
-  onViewUser?: (user: RecentUserItem) => void;
-  onViewAllUsers?: () => void;
-}
-
 export const AdminDashboardTemplate: FC<AdminDashboardTemplateProps> = ({
-  stats = { totalPengguna: 0, totalUnit: 0, totalMak: 0 },
-  filteredUsers = [],
-  user = {},
-  activeRoute = 'admin.dashboard',
-  searchQuery = '',
-  onSearchChange,
+  stats = [],
+  recentUsers = [],
+  userName = 'Administrator',
   isLoading = false,
   onAddUser,
   onViewUser,
   onViewAllUsers,
 }) => {
+  const statIcons = [
+    { icon: Users, iconBg: 'bg-[#E4F6EC]', iconColor: 'text-[#0E7C5A]' },
+    { icon: Building, iconBg: 'bg-[#E8F0FF]', iconColor: 'text-[#1F55C7]' },
+    { icon: Layers, iconBg: 'bg-[#EEF5F2]', iconColor: 'text-[#0E7C5A]' },
+  ];
+
   return (
-    <DashboardShellTemplate
-      sidebarProps={{ ...adminSidebarPreset, activeRoute }}
-      topbarProps={{
-        ...adminTopbarPreset,
-        user,
-        searchValue: searchQuery,
-        onSearchChange,
-      }}
+    <AppLayout
+      activeRoute="dashboard"
+      navItems={ADMIN_NAV_ITEMS}
+      roleInitials="AD"
+      roleTitle="Administrator"
+      roleSubtitle="Panel Admin"
+      profileHref="/admin/pengguna"
+      notifikasiHref="/admin/dashboard"
     >
-      <HeroBanner
-        userName={user?.nama || user?.name || 'Administrator'}
-        onAddUser={onAddUser}
-      />
+      <div className="space-y-6">
+        <HeroBanner userName={userName} onAddUser={onAddUser} />
 
-      <section
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
-        aria-label="Statistik sistem"
-        aria-busy={isLoading || undefined}
-      >
-        {isLoading
-          ? statCards.map((card) => <StatSkeleton key={card.key} />)
-          : statCards.map((card) => (
-              <StatCard
-                key={card.key}
-                icon={card.icon}
-                value={stats[card.key] ?? 0}
-                label={card.label}
-                unit={card.unit}
-                iconBg={card.iconBg}
-                iconColor={card.iconColor}
-              />
-            ))}
-      </section>
+        <section
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
+          aria-label="Statistik sistem"
+          aria-busy={isLoading || undefined}
+        >
+          {isLoading
+            ? [1, 2, 3].map((i) => <StatSkeleton key={i} />)
+            : stats.map((stat, idx) => {
+                const config = statIcons[idx % statIcons.length];
+                return (
+                  <StatCard
+                    key={stat.label}
+                    icon={config.icon}
+                    value={stat.value}
+                    label={stat.label}
+                    unit={stat.unit}
+                    iconBg={config.iconBg}
+                    iconColor={config.iconColor}
+                  />
+                );
+              })}
+        </section>
 
-      <RecentUsersTable
-        users={filteredUsers}
-        onViewUser={onViewUser}
-        onViewAll={onViewAllUsers}
-      />
-    </DashboardShellTemplate>
+        <RecentUsersTable
+          users={recentUsers}
+          onViewUser={onViewUser}
+          onViewAll={onViewAllUsers}
+        />
+      </div>
+    </AppLayout>
   );
 };
 

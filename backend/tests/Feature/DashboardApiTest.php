@@ -49,6 +49,13 @@ class DashboardApiTest extends TestCase
                 'stats',
                 'recentUsers',
             ]);
+
+        $data = $response->json();
+        $this->assertCount(3, $data['stats']);
+        $this->assertEquals(User::count(), $data['stats'][0]['value']);
+        $this->assertNotEmpty($data['recentUsers']);
+        $this->assertArrayHasKey('nama', $data['recentUsers'][0]);
+        $this->assertArrayHasKey('email', $data['recentUsers'][0]);
     }
 
     public function test_pemohon_can_access_pemohon_dashboard(): void

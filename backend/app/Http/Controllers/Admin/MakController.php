@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SimpanMakRequest;
 use App\Models\Mak;
-use App\Models\User;
 use App\Services\MakService;
+use App\Services\UserService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
@@ -15,7 +15,10 @@ class MakController extends Controller
 {
     use AuthorizesRequests;
 
-    public function __construct(private MakService $maks) {}
+    public function __construct(
+        private MakService $maks,
+        private UserService $users,
+    ) {}
 
     public function index(): JsonResponse
     {
@@ -23,7 +26,7 @@ class MakController extends Controller
 
         return response()->json([
             'maks' => $this->maks->paginate(request('q')),
-            'ppkOptions' => User::orderBy('nama')->get(['id', 'nama', 'email']),
+            'ppkOptions' => $this->users->getPpkOptions(),
             'filters' => ['q' => request('q', '')],
         ]);
     }
@@ -52,13 +55,11 @@ class MakController extends Controller
         ]);
     }
 
-    public function destroy(Mak $mak): Response|JsonResponse
+    public function destroy(Mak $mak): Response
     {
         $this->authorize('delete', $mak);
 
-        if (! $this->maks->delete($mak)) {
-            return response()->json(['message' => 'MAK dipakai permohonan dan tidak bisa dihapus.'], 422);
-        }
+        $this->maks->delete($mak);
 
         return response()->noContent();
     }

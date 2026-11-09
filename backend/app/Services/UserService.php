@@ -60,4 +60,44 @@ class UserService
     {
         $user->delete();
     }
+
+    public function count(): int
+    {
+        return User::count();
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function getRecentUsers(int $limit = 5): array
+    {
+        return User::query()
+            ->with(['role:id,nama', 'unit:id,nama'])
+            ->latest('id')
+            ->limit($limit)
+            ->get()
+            ->map(fn (User $u) => [
+                'id' => $u->id,
+                'nama' => $u->nama,
+                'email' => $u->email,
+                'role' => $u->role?->nama ?? '-',
+                'unit' => $u->unit?->nama ?? '-',
+                'status' => 'aktif',
+                'tanggal' => $u->created_at?->translatedFormat('d M Y') ?? date('d M Y'),
+            ])
+            ->all();
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function getPpkOptions(): array
+    {
+        return User::query()
+            ->whereHas('role', fn ($q) => $q->where('nama', 'PPK'))
+            ->orWhereDoesntHave('role') // fallback if no PPK role assigned yet
+            ->orderBy('nama')
+            ->get(['id', 'nama', 'email'])
+            ->toArray();
+    }
 }

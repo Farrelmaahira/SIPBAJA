@@ -1,10 +1,11 @@
 import { useEffect, useState, type FC, type ChangeEvent } from 'react';
 import axios from 'axios';
-import api from '../../../services/api';
+import { adminService } from '../../../services/adminService';
 import PenggunaTemplate, {
   type UserRowItem,
   type PenggunaFormData,
 } from '../../../components/templates/PenggunaTemplate';
+import Pagination, { type PaginationMeta } from '../../../components/molecules/Pagination';
 
 const EMPTY_FORM: PenggunaFormData = {
   nama: '',
@@ -14,17 +15,11 @@ const EMPTY_FORM: PenggunaFormData = {
   unit_id: '',
 };
 
-interface PaginationLink {
-  url: string | null;
-  label: string;
-  active: boolean;
-}
-
 export const PenggunaIndex: FC = () => {
   const [users, setUsers] = useState<UserRowItem[]>([]);
-  const [paginationLinks, setPaginationLinks] = useState<PaginationLink[]>([]);
-  const [roles, setRoles] = useState<any[]>([]);
-  const [units, setUnits] = useState<any[]>([]);
+  const [paginationMeta, setPaginationMeta] = useState<PaginationMeta | null>(null);
+  const [roles, setRoles] = useState<Array<{ id: number; nama: string }>>([]);
+  const [units, setUnits] = useState<Array<{ id: number; nama: string }>>([]);
   const [query, setQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
@@ -41,35 +36,26 @@ export const PenggunaIndex: FC = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const fetchUsers = async (searchQuery = query, page = currentPage) => {
+  const fetchUsers = async (searchQuery = query, page = currentPage, signal?: AbortSignal) => {
     setIsLoading(true);
     try {
-      const res = await api.get<{
-        users?: {
-          data?: UserRowItem[];
-          links?: PaginationLink[];
-          current_page?: number;
-        };
-        data?: UserRowItem[];
-        roles?: any[];
-        units?: any[];
-      }>('/v1/admin/pengguna', {
-        params: { q: searchQuery, page },
-      });
+      const data = await adminService.getUsers({ q: searchQuery, page }, signal);
 
-      const data = res.data;
       if (data.users?.data) {
         setUsers(data.users.data);
-        setPaginationLinks(data.users.links || []);
-      } else if (Array.isArray(data.data)) {
-        setUsers(data.data);
-      } else if (Array.isArray(data)) {
-        setUsers(data as UserRowItem[]);
+        setPaginationMeta({
+          current_page: data.users.current_page,
+          last_page: data.users.last_page,
+          total: data.users.total,
+          from: data.users.from,
+          to: data.users.to,
+        });
       }
 
       if (data.roles) setRoles(data.roles);
       if (data.units) setUnits(data.units);
     } catch (err) {
+      if (axios.isCancel(err)) return;
       console.error('Failed to fetch pengguna list:', err);
     } finally {
       setIsLoading(false);
@@ -77,13 +63,16 @@ export const PenggunaIndex: FC = () => {
   };
 
   useEffect(() => {
+    const controller = new AbortController();
     const timer = setTimeout(() => {
-      fetchUsers(query, 1);
-      setCurrentPage(1);
+      fetchUsers(query, currentPage, controller.signal);
     }, 300);
 
-    return () => clearTimeout(timer);
-  }, [query]);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [query, currentPage]);
 
   const openCreate = () => {
     setFormData({ ...EMPTY_FORM });
@@ -107,7 +96,7 @@ export const PenggunaIndex: FC = () => {
 
   const closeModal = () => {
     setModalMode(null);
-    setErrors({});
+    setEditId(null);
   };
 
   const submitForm = async () => {
@@ -115,76 +104,66 @@ export const PenggunaIndex: FC = () => {
     setErrors({});
 
     try {
-      if (modalMode === 'edit' && editId) {
-        await api.put(`/v1/admin/pengguna/${editId}`, formData);
-      } else {
-        await api.post('/v1/admin/pengguna', formData);
+      if (modalMode === 'create') {
+        await adminService.createUser(formData);
+      } else if (modalMode === 'edit' && editId) {
+        const payload = { ...formData };
+        if (!payload.password) {
+          delete payload.password;
+        }
+        await adminService.updateUser(editId, payload);
       }
-      setModalMode(null);
-      await fetchUsers(query, currentPage);
-    } catch (err: unknown) {
-      if (axios.isAxiosError(err) && err.response?.data?.errors) {
-        const valErrors: Record<string, string> = {};
-        Object.entries(err.response.data.errors).forEach(([field, msg]) => {
-          valErrors[field] = Array.isArray(msg) ? msg[0] : String(msg);
-        });
-        setErrors(valErrors);
-      } else {
-        setErrors({ general: 'Terjadi kesalahan saat menyimpan data.' });
+      closeModal();
+      fetchUsers();
+    } catch (err: any) {
+      if (err.response?.data?.errors) {
+        const flat: Record<string, string> = {};
+        for (const [k, v] of Object.entries(err.response.data.errors)) {
+          flat[k] = Array.isArray(v) ? (v[0] as string) : String(v);
+        }
+        setErrors(flat);
       }
     } finally {
       setProcessing(false);
     }
   };
 
-  const confirmDelete = async () => {
-    if (!deleteTarget) return;
-    try {
-      await api.delete(`/v1/admin/pengguna/${deleteTarget.id}`);
-      setDeleteTarget(null);
-      await fetchUsers(query, currentPage);
-    } catch (err) {
-      console.error('Failed to delete user:', err);
-    }
+  const askDelete = (row: UserRowItem) => {
+    setDeleteTarget(row);
   };
 
-  const renderPagination = () => {
-    if (!paginationLinks || paginationLinks.length <= 3) return null;
-    return (
-      <div className="flex items-center justify-end gap-2">
-        {paginationLinks.map((link, i) => (
-          <button
-            key={i}
-            type="button"
-            disabled={!link.url}
-            onClick={() => {
-              if (link.url) {
-                const urlParams = new URL(link.url, window.location.origin).searchParams;
-                const pageParam = parseInt(urlParams.get('page') || '1', 10);
-                setCurrentPage(pageParam);
-                fetchUsers(query, pageParam);
-              }
-            }}
-            dangerouslySetInnerHTML={{ __html: link.label }}
-            className={`min-w-[44px] min-h-[44px] px-3 rounded-xl border text-sm font-semibold transition-colors cursor-pointer disabled:opacity-40 ${
-              link.active
-                ? 'bg-[#0E7C5A] border-[#0E7C5A] text-white'
-                : 'bg-white border-[#E4EBE8] text-[#5F6F6A] hover:bg-[#EEF5F2]'
-            }`}
-          />
-        ))}
-      </div>
-    );
+  const cancelDelete = () => {
+    setDeleteTarget(null);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+
+    try {
+      await adminService.deleteUser(deleteTarget.id);
+      setDeleteTarget(null);
+      fetchUsers();
+    } catch (err) {
+      console.error('Failed to delete pengguna:', err);
+    }
   };
 
   return (
     <PenggunaTemplate
       rows={users}
-      pagination={renderPagination()}
+      pagination={
+        <Pagination
+          meta={paginationMeta}
+          onPageChange={(page) => setCurrentPage(page)}
+        />
+      }
       roles={roles}
       units={units}
       query={query}
-      onQueryChange={(e: ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
+      onQueryChange={(e: ChangeEvent<HTMLInputElement>) => {
+        setQuery(e.target.value);
+        setCurrentPage(1);
+      }}
       modalMode={modalMode}
       form={{
         data: formData,
@@ -197,8 +176,8 @@ export const PenggunaIndex: FC = () => {
       onCloseModal={closeModal}
       onSubmitForm={submitForm}
       deleteTarget={deleteTarget}
-      onAskDelete={setDeleteTarget}
-      onCancelDelete={() => setDeleteTarget(null)}
+      onAskDelete={askDelete}
+      onCancelDelete={cancelDelete}
       onConfirmDelete={confirmDelete}
       isLoading={isLoading}
     />

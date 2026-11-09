@@ -1,55 +1,42 @@
 import { useEffect, useState, type FC } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../../services/api';
+import axios from 'axios';
+import { adminService } from '../../services/adminService';
 import { useAuth } from '../../hooks/useAuth';
-import useUserSearch from '../../hooks/useUserSearch';
-import AdminDashboardTemplate, {
-  type AdminStatsData,
-} from '../../components/templates/AdminDashboardTemplate';
-import normalizeAdminStats from '../../utils/normalizeAdminStats';
+import AdminDashboardTemplate from '../../components/templates/AdminDashboardTemplate';
 import type { RecentUserItem } from '../../components/organisms/RecentUsersTable';
+import type { AdminStatItem } from '../../types/admin';
 
 export const AdminDashboard: FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const [stats, setStats] = useState<AdminStatsData>({});
+  const [stats, setStats] = useState<AdminStatItem[]>([]);
   const [recentUsers, setRecentUsers] = useState<RecentUserItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const { query, setQuery, filteredUsers } = useUserSearch(recentUsers);
-
   useEffect(() => {
-    let isMounted = true;
+    const controller = new AbortController();
     setIsLoading(true);
 
-    api
-      .get<{
-        stats?: Record<string, unknown>;
-        recentUsers?: RecentUserItem[];
-        users?: RecentUserItem[];
-      }>('/v1/admin/dashboard')
-      .then((response) => {
-        if (!isMounted) return;
-        const data = response.data;
-        if (data.stats) {
-          setStats(normalizeAdminStats(data.stats));
-        }
-        if (data.recentUsers) {
-          setRecentUsers(data.recentUsers);
-        } else if (data.users) {
-          setRecentUsers(data.users);
-        }
+    adminService
+      .getDashboard(controller.signal)
+      .then((data) => {
+        setStats(data.stats || []);
+        setRecentUsers(data.recentUsers || []);
       })
       .catch((error) => {
+        if (axios.isCancel(error)) {
+          return;
+        }
         console.error('Failed to fetch admin dashboard:', error);
       })
       .finally(() => {
-        if (isMounted) setIsLoading(false);
+        setIsLoading(false);
       });
 
     return () => {
-      isMounted = false;
+      controller.abort();
     };
   }, []);
 
@@ -68,11 +55,8 @@ export const AdminDashboard: FC = () => {
   return (
     <AdminDashboardTemplate
       stats={stats}
-      filteredUsers={filteredUsers}
-      user={user}
-      activeRoute="admin.dashboard"
-      searchQuery={query}
-      onSearchChange={(e) => setQuery(e.target.value)}
+      recentUsers={recentUsers}
+      userName={user?.nama || 'Administrator'}
       isLoading={isLoading}
       onAddUser={handleAddUser}
       onViewUser={handleViewUser}

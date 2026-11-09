@@ -28,8 +28,15 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 /.superpowers
+/docs/superpowers/
 
 # Graphify
 graphify-out/
 .graphify*
+
+# Cache
+.cache/
+*.cache
+cache/
+
 
