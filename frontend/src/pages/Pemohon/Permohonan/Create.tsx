@@ -60,7 +60,7 @@ export const PermohonanCreate: FC = () => {
   };
 
   const handleKembali = () => {
-    navigate('/pemohon/dashboard');
+    navigate('/pemohon/permohonan');
   };
 
   return (
