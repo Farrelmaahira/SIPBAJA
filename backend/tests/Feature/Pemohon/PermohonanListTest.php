@@ -208,4 +208,29 @@ class PermohonanListTest extends TestCase
             ->assertJsonFragment(['nomor_surat' => '01016-FF-11'])
             ->assertJsonMissing(['nomor_surat' => '01017-FF-11']);
     }
+
+    public function test_pemohon_can_delete_own_draft_or_pending_permohonan(): void
+    {
+        $pemohon = $this->getPemohonUser();
+
+        $permohonan = Permohonan::create([
+            'unit_id' => $pemohon->unit_id,
+            'created_by' => $pemohon->id,
+            'nomor_surat' => '01099-DEL-11',
+            'judul' => 'Pengadaan Mau Dihapus',
+            'ringkasan_tujuan' => 'Kebutuhan uji coba delete',
+            'estimasi_anggaran' => 10000000,
+            'revisi_ke' => 0,
+            'status' => 'diajukan',
+            'created_at' => now(),
+        ]);
+
+        $response = $this->actingAs($pemohon, 'sanctum')
+            ->deleteJson("/api/v1/pemohon/permohonan/{$permohonan->id}");
+
+        $response->assertStatus(200)
+            ->assertJson(['message' => 'Permohonan pengadaan berhasil dihapus.']);
+
+        $this->assertDatabaseMissing('permohonan', ['id' => $permohonan->id]);
+    }
 }

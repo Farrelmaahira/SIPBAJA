@@ -1,7 +1,8 @@
-import type { FC, FormEvent } from 'react';
+import { useState, type FC, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import usePemohonPermohonan from '../../../hooks/usePemohonPermohonan';
+import pemohonService from '../../../services/pemohonService';
 import PemohonPermohonanIndexTemplate from '../../../components/templates/PemohonPermohonanIndexTemplate';
 import type { PermohonanItem } from '../../../types/permohonan';
 
@@ -27,6 +28,9 @@ export const PermohonanIndex: FC = () => {
     refetch,
   } = usePemohonPermohonan();
 
+  const [deleteTarget, setDeleteTarget] = useState<PermohonanItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const selectedStatuses =
     selectedStatus && selectedStatus !== 'semua'
       ? selectedStatus.split(',')
@@ -43,6 +47,32 @@ export const PermohonanIndex: FC = () => {
 
   const handleView = (item: PermohonanItem) => {
     navigate(`/pemohon/permohonan/${item.id}`);
+  };
+
+  const handleEdit = (item: PermohonanItem) => {
+    navigate(`/pemohon/permohonan/${item.id}/edit`);
+  };
+
+  const handleAskDelete = (item: PermohonanItem) => {
+    setDeleteTarget(item);
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteTarget(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget || !deleteTarget.id) return;
+    setIsDeleting(true);
+    try {
+      await pemohonService.deletePermohonan(deleteTarget.id);
+      setDeleteTarget(null);
+      void refetch();
+    } catch (err) {
+      console.error('Failed to delete permohonan:', err);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -66,6 +96,12 @@ export const PermohonanIndex: FC = () => {
       onRetry={refetch}
       onCreatePermohonan={() => navigate('/pemohon/permohonan/create')}
       onView={handleView}
+      onEdit={handleEdit}
+      onDelete={handleAskDelete}
+      deleteTarget={deleteTarget}
+      onCancelDelete={handleCancelDelete}
+      onConfirmDelete={handleConfirmDelete}
+      isDeleting={isDeleting}
     />
   );
 };

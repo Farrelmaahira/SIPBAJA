@@ -108,4 +108,17 @@ class PermohonanPemohonController extends Controller
             'permohonan' => $updatedPermohonan,
         ], 200);
     }
+
+    /**
+     * Menghapus permohonan pengadaan untuk Pemohon.
+     */
+    public function destroy(Request $request, Permohonan $permohonan): JsonResponse
+    {
+        $user = $request->user();
+        $this->permohonanService->hapusPermohonan($user, $permohonan);
+
+        return response()->json([
+            'message' => 'Permohonan pengadaan berhasil dihapus.',
+        ], 200);
+    }
 }

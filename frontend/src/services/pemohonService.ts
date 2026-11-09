@@ -94,6 +94,16 @@ export const pemohonService = {
   },
 
   /**
+   * Menghapus permohonan pengadaan untuk peran Pemohon.
+   */
+  async deletePermohonan(id: number | string): Promise<{ message: string }> {
+    const response = await api.delete<{ message: string }>(
+      `/v1/pemohon/permohonan/${id}`
+    );
+    return response.data;
+  },
+
+  /**
    * Mendapatkan endpoint URL untuk download file dokumen permohonan.
    */
   getDokumenDownloadUrl(id: number | string): string {
