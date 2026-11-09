@@ -1,10 +1,6 @@
 # SIPBAJA Design System
 
-Design system for **SIPBAJA** (Sistem Informasi Pengadaan Barang dan Jasa). Extracted from the Figma file "SIPBAJA - Dashboard Permohonan (Refined)":
-https://www.figma.com/design/IKl3Kvg02yrez54L2kA2o8
-
-Screens covered: Dashboard Permohonan (1440×980), Login (1440×900), Logo board.
-
+Design system for **SIPBAJA** (Sistem Informasi Pengadaan Barang dan Jasa). 
 ---
 
 ## 1. Visual Theme & Atmosphere

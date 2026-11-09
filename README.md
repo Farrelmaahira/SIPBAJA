@@ -1,58 +1,200 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# SIPBAJA (Sistem Informasi Pengadaan Barang dan Jasa)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+SIPBAJA adalah sistem informasi pengadaan barang dan jasa berbasis monorepo dengan arsitektur **Laravel 13 RESTful API Backend** dan **React 19 + TypeScript Standalone SPA Frontend**. Sistem ini mendigitalkan seluruh alur pengadaan barang dan jasa di lingkungan kampus untuk menyelesaikan fragmentasi dokumen, transparansi pelacakan antar-unit, kepatuhan batas nominal, serta penegakan persetujuan bertingkat (*tiered approval*) dan verifikasi ganda (*dual approval*).
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Fitur Utama
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **Autentikasi & Dynamic RBAC:** Kontrol akses berbasis peran (Pemohon, Perencanaan, Bidang 2/WD2, PPBJ, PP, PPK, Perlengkapan, Keuangan, Admin) dengan dashboard dan izin spesifik.
+- **Pengajuan Permohonan Pengadaan:** Pemohon dapat mengajukan dokumen pengadaan, mengunggah berkas lampiran, dan melakukan revisi berkas tanpa menghapus versi lama.
+- **Verifikasi Anggaran & Manajemen MAK:** Perencanaan memverifikasi ketersediaan anggaran dan menentukan MAK yang relevan.
+- **Persetujuan Bertingkat (Tiered Approval):** Validasi persetujuan berjenjang dari Bidang 2 dengan unggahan memo resmi atau penolakan disertai alasan.
+- **Manajemen Paket Pengadaan & Plotting PPK:** PPBJ memecah permohonan ke dalam paket pengadaan, menentukan level nominal (<50jt, 50–200jt, >200jt), metode, serta menetapkan 1 dari 4 akun PPK sesuai jenis MAK.
+- **Review Dokumen Pengadaan:** Review oleh Pejabat Pengadaan (PP) untuk nominal 50–200 juta dan penandatanganan oleh PPK di semua level nominal.
+- **Penerbitan Kontrak & Termin Pembayaran:** PPBJ menerbitkan SPK/Kontrak/Surat Pesanan dan menetapkan rencana termin pembayaran beserta tanggal reminder.
+- **Penerimaan Barang:** Perlengkapan mendokumentasikan foto serah terima barang dan berita acara penerimaan resmi.
+- **Realisasi Pembayaran & Verifikasi Ganda (Dual Approval):** Pembayaran termin wajib disetujui secara paralel/ganda oleh PPK dan Bidang 2 sebelum berkas dapat diproses dan dibayarkan oleh Keuangan.
+- **Pelacakan Status Berbasis Unit & Audit Trail:** Riwayat status lengkap dicatat per perubahan aktor, dengan visibilitas data dibatasi per unit kerja (`unit_id`).
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## Tech Stack
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+| Lapisan | Teknologi | Keterangan |
+|---|---|---|
+| **Arsitektur** | Monorepo (`backend/` + `frontend/`) | Independen, API-driven via RESTful JSON |
+| **Backend Framework** | Laravel 13 | RESTful API controller & Laravel Sanctum SPA Auth |
+| **Bahasa Backend** | PHP 8.5.x (min. PHP 8.3) | Standar PSR-12, constructor promotion, strict typing |
+| **Frontend Framework** | React 19 + TypeScript | Single Page Application (SPA) |
+| **HTTP Client** | Axios | Session-based cookie auth via Laravel Sanctum |
+| **Styling** | Tailwind CSS v4 | Berdasarkan *SIPBAJA Design System* (Emerald `#0E7C5A`) |
+| **Icons** | Lucide React | Icon set resmi |
+| **Database (Dev)** | SQLite | Cepat untuk pengembangan lokal dan CI |
+| **Database (Target Prod)** | PostgreSQL 18 | Relasional murni, kompatibel dengan SQLite tanpa DB triggers |
+| **Build Tool Frontend** | Vite 8 | Fast build & HMR |
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+## Prasyarat Sistem
 
-## Agentic Development
+- **PHP**: `^8.3` (Disarankan PHP 8.5.x) dengan ekstensi `pdo`, `pdo_sqlite`, `pdo_pgsql`, `mbstring`, `openssl`, `tokenizer`, `xml`, `ctype`, `json`, `curl`.
+- **Composer**: `v2.x`
+- **Node.js**: `v20.x`, `v22.x`, atau `v24.x` (LTS)
+- **NPM**: `v10.x` atau lebih baru
+- **Git**
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+---
 
-```bash
-composer require laravel/boost --dev
+## Struktur Monorepo
 
-php artisan boost:install
+```text
+sipbaja/
+├── backend/                   # Laravel 13 RESTful API (PHP)
+│   ├── app/
+│   │   ├── Http/
+│   │   │   ├── Controllers/   # REST API Controllers (return JsonResponse)
+│   │   │   ├── Middleware/    # Sanctum & Role-based Access Middleware
+│   │   │   └── Requests/      # Form Requests & validasi input
+│   │   ├── Models/            # Eloquent Models
+│   │   ├── Policies/          # Policy & Gate otorisasi
+│   │   └── Services/          # PUSAT LOGIKA BISNIS: transaksi & kalkulasi
+│   ├── config/                # Konfigurasi Laravel, CORS, Sanctum
+│   ├── database/              # Migrasi, seeders, factories, SQLite db
+│   ├── routes/                # API routes (routes/api.php)
+│   └── tests/                 # PHPUnit Feature & Unit tests
+├── frontend/                  # React 19 + TypeScript + Vite SPA
+│   ├── src/
+│   │   ├── components/        # Atomic Design
+│   │   │   ├── atoms/         # Komponen dasar (Button, Input, Badge, Pill)
+│   │   │   ├── molecules/     # FormField, SearchBar, StatCard
+│   │   │   ├── organisms/     # Modul kompleks (Sidebar, Topbar, TableCard)
+│   │   │   └── templates/     # Layout template halaman (murni presentasional)
+│   │   ├── hooks/             # Custom React Hooks
+│   │   ├── pages/             # Komponen halaman (Pages)
+│   │   ├── services/          # Modul API client Axios
+│   │   ├── types/             # Tipe TypeScript bersama
+│   │   └── utils/             # Helper fungsi murni (format mata uang, tanggal)
+│   ├── package.json
+│   ├── tsconfig.json
+│   └── vite.config.ts
+├── docs/                      # Dokumentasi teknis, PRD, Database, Rules
+└── .agents/                   # Konfigurasi AI agent skills & rules
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+---
 
-## Contributing
+## Langkah Instalasi & Menjalankan Aplikasi
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Perintah dijalankan dari subdirektori masing-masing (`backend/` dan `frontend/`).
 
-## Code of Conduct
+### 1. Menyiapkan Backend (Laravel API)
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+cd backend
 
-## Security Vulnerabilities
+# Pasang dependensi PHP
+composer install
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+# Salin file environment
+cp .env.example .env
 
-## License
+# Generate Application Key
+php artisan key:generate
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+# Migrasi dan seed database awal
+touch database/database.sqlite
+php artisan migrate --seed
+
+# Jalankan server backend (port 8000)
+php artisan serve
+```
+
+### 2. Menyiapkan Frontend (React + TypeScript)
+
+Di terminal terpisah:
+
+```bash
+cd frontend
+
+# Pasang dependensi Node.js
+npm install
+
+# Jalankan server dev Vite (port 5173)
+npm run dev
+```
+
+Aplikasi dapat diakses melalui peramban di: **`http://localhost:5173`** (Frontend) dengan backend API berjalan di **`http://localhost:8000`**.
+
+---
+
+## Konfigurasi Environment Backend (`backend/.env`)
+
+Pastikan variabel berikut terkonfigurasi dengan benar di `backend/.env`:
+
+```env
+APP_NAME=SIPBAJA
+APP_ENV=local
+APP_KEY=base64:...
+APP_DEBUG=true
+APP_URL=http://localhost:8000
+
+FRONTEND_URL=http://localhost:5173
+SANCTUM_STATEFUL_DOMAINS=localhost:5173
+
+# Konfigurasi Database Lokal (SQLite)
+DB_CONNECTION=sqlite
+
+# Session
+SESSION_DRIVER=file
+SESSION_LIFETIME=60
+```
+
+---
+
+## Pengujian (Testing)
+
+### Backend (PHPUnit)
+
+```bash
+cd backend
+
+# Menjalankan seluruh test suite
+php artisan test
+
+# Menjalankan secara ringkas
+php artisan test --compact
+
+# Menjalankan test tertentu
+php artisan test --filter=ExampleTest
+```
+
+### Frontend (TypeScript & Build Check)
+
+```bash
+cd frontend
+
+# Pengecekan tipe data TypeScript
+npx tsc -b
+
+# Build bundle produksi
+npm run build
+```
+
+Format kode PHP menggunakan Laravel Pint sebelum commit:
+```bash
+cd backend
+vendor/bin/pint --format agent
+```
+
+---
+
+## Panduan Kontribusi & Aturan Pengembangan
+
+Setiap pengembang atau agen AI wajib mematuhi panduan pada [DEVELOPMENT_RULES.md](file:///d:/Farrel/PROJECTS/sipbaja/docs/DEVELOPMENT_RULES.md):
+
+1. **Monorepo Perintah Subdirektori:** Jalankan perintah langsung dari `backend/` atau `frontend/`.
+2. **Arsitektur Service Layer:** Dilarang meletakkan logika bisnis di Controller. Logika tulis dan mutasi database wajib berada di `backend/app/Services/`.
+3. **Controller RESTful:** Controller backend hanya menerima request, memanggil service, dan mengembalikan `JsonResponse`.
+4. **Validasi & Otorisasi:** Input data divalidasi via Form Request (`backend/app/Http/Requests/`) dengan pesan Bahasa Indonesia.
+5. **Frontend Atomic Design & TypeScript:** Komponen ditempatkan sesuai hierarki (atoms, molecules, organisms, templates) dengan strict TypeScript typing.

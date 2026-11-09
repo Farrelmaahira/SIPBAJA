@@ -2,74 +2,74 @@
 
 ## Product Overview
 
-**Product Vision:** SIPBAJA adalah aplikasi web terpusat yang mendigitalkan seluruh proses pengadaan barang dan jasa kampus, dari pengajuan permohonan, persetujuan bertingkat, pembelian, dan penerimaan barang, sampai pembayaran per termin, sehingga setiap pihak dapat bekerja dan memantau progres di satu tempat.
+**Product Vision:** SIPBAJA is a centralized web application that digitizes the entire campus procurement process for goods and services, from permohonan submission, tiered approval, purchasing, and goods receipt, through to per-termin payment, so that every party can work and monitor progress in one place.
 
 **Target Users:**
-- **Primer:** Jurusan/Unit/Bidang (pemohon), Perencanaan, Bidang 2 (WD2), PPBJ, PP, PPK, Perlengkapan, dan Keuangan sebagai aktor dalam alur pengadaan.
-- **Sekunder:** Admin, yang mengelola akun pengguna.
+- **Primary:** Jurusan/Unit/Bidang (pemohon), Perencanaan, Bidang 2 (WD2), PPBJ, PP, PPK, Perlengkapan, and Keuangan as actors in the procurement flow.
+- **Secondary:** Admin, who manages user accounts.
 
 **Business Objectives:**
-- Memusatkan data dan dokumen pengadaan dalam satu sistem.
-- Memberi pemohon visibilitas progres pengajuan tanpa harus bertanya manual.
-- Memastikan aturan persetujuan bertingkat dan persetujuan ganda pembayaran dijalankan konsisten oleh sistem.
-- Membatasi akses fitur sesuai peran masing-masing aktor.
+- Centralize procurement data and documents in one system.
+- Give pemohon visibility into submission progress without having to ask manually.
+- Ensure the tiered approval rules and the dual payment approval are enforced consistently by the system.
+- Restrict feature access according to each actor's role.
 
-**Success Metrics:** (kualitatif, tanpa target angka)
-- Pengaju permohonan dapat melacak status permohonan yang sudah dibuat.
-- Semua data pengadaan tersimpan secara terpusat.
-- Tidak ada pembayaran yang diproses sebelum disetujui PPK dan Bidang 2.
-- Tidak ada pembayaran yang terlambat.
+**Success Metrics:** (qualitative, no numeric targets)
+- The submitter of a permohonan can track the status of the permohonan they have created.
+- All procurement data is stored centrally.
+- No payment is processed before it is approved by PPK and Bidang 2.
+- No payment is late.
 
 ## Feature Requirements
 
-**Priority:** 1 = prioritas utama, 2 = prioritas kedua, 3 = prioritas terakhir.
+**Priority:** 1 = top priority, 2 = second priority, 3 = last priority.
 
 | Feature | Description | User Stories | Priority | Acceptance Criteria | Dependencies |
 |---------|-------------|--------------|----------|---------------------|--------------|
-| **Autentikasi dan akses berbasis peran** | Login dan pengalihan ke dashboard sesuai peran. Setiap pengguna hanya melihat menu dan fitur sesuai wewenangnya. | Sebagai pengguna, saya ingin masuk dan langsung melihat fitur yang relevan dengan peran saya. | 1 | Kredensial divalidasi. Pengguna diarahkan ke dashboard sesuai peran. Tidak ada akses lintas peran. | Manajemen akun |
-| **Manajemen akun** | Admin membuat, melihat, mengubah, dan menghapus akun pengguna. | Sebagai Admin, saya ingin mengelola akun semua pengguna aplikasi. | 1 (buat), 2 (lihat, ubah), 3 (hapus) | Admin dapat membuat akun untuk semua peran. Akun yang tidak terpakai dapat dihapus tanpa merusak riwayat. | - |
-| **Pengajuan permohonan pengadaan** | Unit menginput nomor surat, judul, unit asal, ringkasan tujuan, dan estimasi anggaran, serta mengunggah dokumen permohonan. Dokumen dapat diunggah ulang saat revisi. | Sebagai pemohon, saya ingin mengajukan dan merevisi permohonan pengadaan secara online. | 1 (pengajuan), 2 (unggah ulang) | Permohonan tersimpan terpusat. Dokumen yang diunggah ulang tidak menghapus versi sebelumnya. | Autentikasi |
-| **Verifikasi anggaran dan pengelolaan MAK** | Perencanaan menyetujui atau menolak permohonan dan menentukan jenis MAK. MAK dapat diubah selama dokumen pengadaan belum disetujui PPK dan Bidang 2. | Sebagai Perencanaan, saya ingin memastikan anggaran tersedia dan menentukan kategori anggaran tiap pengadaan. | 1 (verifikasi, penentuan, perubahan MAK), 2 (unggah RKAKL) | Penolakan wajib disertai alasan. Perubahan MAK setelah persetujuan PPK dan Bidang 2 ditolak sistem, dan perubahan MAK mengganti PPK yang bertugas. | Pengajuan permohonan |
-| **Persetujuan bertingkat** | Bidang 2 memberi persetujuan awal dengan mengunggah memo, atau menolak disertai alasan. | Sebagai Bidang 2, saya ingin menyetujui atau menolak permohonan dengan dokumen dan alasan yang tercatat. | 1 | Persetujuan menyertakan memo. Penolakan menyertakan alasan. Keputusan tercatat beserta aktor dan waktunya. | Verifikasi anggaran |
-| **Pengelolaan paket pengadaan** | PPBJ memecah satu permohonan menjadi beberapa pengadaan, menentukan jenis pengadaan, metode pengadaan, dan level pengadaan berdasarkan nominal (<50 juta, 50–200 juta, >200 juta), lalu menugaskan satu dari empat PPK sesuai jenis anggaran. Setiap pengadaan memakai tepat satu MAK dari daftar yang ditentukan Perencanaan. Dokumen pengadaan dapat diunggah dan diunggah ulang. | Sebagai PPBJ, saya ingin menyusun paket pengadaan dan menentukan siapa yang mereview. | 1 (pecah, metode, level, unggah, penugasan PPK), 2 (unggah ulang, pemantauan) | Satu permohonan dapat menghasilkan beberapa pengadaan. Level ditentukan otomatis dari nominal. PPK yang ditugaskan sesuai jenis MAK dan berganti saat MAK berubah. | Persetujuan bertingkat |
-| **Review dokumen pengadaan** | PP mereview pengadaan bernilai 50–200 juta. PPK menandatangani review di semua level dengan mengunggah bukti tanda tangan. | Sebagai PP atau PPK, saya ingin meninjau dokumen pengadaan yang menjadi tanggung jawab saya. | 1 | PP hanya melihat pengadaan level 50–200 juta. PPK hanya melihat pengadaan yang ditugaskan kepadanya. | Pengelolaan paket pengadaan |
-| **Kontrak dan rencana pembayaran per termin** | PPBJ menerbitkan Kontrak/SPK/Surat Pesanan, menetapkan rencana pembayaran per termin sejak kontrak terbit, dan menentukan tanggal pengingat tiap termin. | Sebagai PPBJ, saya ingin menetapkan jadwal dan nominal termin saat kontrak diterbitkan. | 1 | Setiap termin memiliki nominal dan jatuh tempo. Pengingat terhubung ke termin tertentu. | Review dokumen pengadaan |
-| **Penerimaan barang** | Perlengkapan melihat dokumen pengadaan dan SPK, mengunggah foto dokumentasi barang, dan mengunggah berita acara penerimaan yang sudah ditandatangani. | Sebagai Perlengkapan, saya ingin mencatat penerimaan barang beserta bukti dokumentasinya. | 1 (foto, berita acara), 2 (melihat dokumen) | Foto dan berita acara tersimpan dan terhubung ke pengadaan terkait. | Kontrak |
-| **Pembayaran per termin dengan persetujuan ganda** | PPBJ mengunggah dokumen pembayaran dan legalitas vendor per termin. PPK dan Bidang 2 sama-sama harus menyetujui dengan memo, atau menolak dengan alasan. Keuangan hanya melihat pembayaran yang disetujui keduanya, lalu mengunggah bukti pembayaran. | Sebagai Keuangan, saya hanya ingin memproses pembayaran yang sudah disetujui lengkap. | 1 | Pembayaran tidak muncul untuk Keuangan sebelum PPK dan Bidang 2 sama-sama menyetujui. Nominal pembayaran harus sama persis dengan rencana termin. | Kontrak dan rencana pembayaran, Penerimaan barang |
-| **Tracking status dan notifikasi** | Riwayat perubahan status lengkap dengan aktor dan waktunya, progres terlihat per unit, notifikasi in-app dan email saat status berubah, serta pengingat pembayaran bagi PPBJ, PPK, dan Keuangan. | Sebagai pemohon, saya ingin melihat progres permohonan dan pengadaannya serta diberi tahu saat ada perubahan. | 1 (tracking), 2 (notifikasi, pengingat) | Rekan satu unit dapat memantau progres yang sama. Pengingat muncul pada tanggal yang ditentukan PPBJ. | Seluruh alur pengadaan |
-| **Pencarian, filter, dan rekap** | Pencarian permohonan, filter berdasarkan bulan, tahun, status, nomor surat, dan unit, serta rekap total anggaran per kategori untuk Bidang 2, PPBJ, PPK, dan Keuangan. | Sebagai Bidang 2, PPBJ, PPK, atau Keuangan, saya ingin menyaring dokumen dan melihat rekap anggaran. | 2 | Filter dan pencarian mengembalikan data yang sesuai. Rekap menjumlahkan nominal pengadaan per kategori anggaran. | Pengelolaan paket pengadaan |
+| **Authentication and role-based access** | Login and redirect to the dashboard matching the role. Each user sees only the menus and features within their authority. | As a user, I want to log in and immediately see the features relevant to my role. | 1 | Credentials are validated. The user is redirected to the dashboard matching their role. No cross-role access. | Account management |
+| **Account management** | Admin creates, views, edits, and deletes user accounts. | As Admin, I want to manage the accounts of all application users. | 1 (create), 2 (view, edit), 3 (delete) | Admin can create accounts for all roles. Unused accounts can be deleted without damaging history. | - |
+| **Procurement permohonan submission** | The unit enters the letter number, title, originating unit, purpose summary, and budget estimate, and uploads the permohonan document. The document can be re-uploaded during revision. | As a pemohon, I want to submit and revise procurement permohonan online. | 1 (submission), 2 (re-upload) | The permohonan is stored centrally. A re-uploaded document does not delete the previous version. | Authentication |
+| **Budget verification and MAK management** | Perencanaan approves or rejects the permohonan and determines the MAK type. The MAK can be changed as long as the pengadaan document has not been approved by PPK and Bidang 2. | As Perencanaan, I want to ensure the budget is available and determine the budget category of each pengadaan. | 1 (verification, determining and changing MAK), 2 (upload RKAKL) | Rejection must include a reason. A MAK change after approval by PPK and Bidang 2 is rejected by the system, and a MAK change replaces the assigned PPK. | Permohonan submission |
+| **Tiered approval** | Bidang 2 gives the initial approval by uploading a memo, or rejects with a reason. | As Bidang 2, I want to approve or reject a permohonan with a recorded document and reason. | 1 | Approval includes a memo. Rejection includes a reason. The decision is recorded along with the actor and time. | Budget verification |
+| **Pengadaan package management** | PPBJ splits one permohonan into several pengadaan, determines the pengadaan type, pengadaan method, and pengadaan level based on nominal (<50 million, 50–200 million, >200 million), then assigns one of the four PPK according to the budget type. Each pengadaan uses exactly one MAK from the list determined by Perencanaan. The pengadaan document can be uploaded and re-uploaded. | As PPBJ, I want to compose pengadaan packages and determine who reviews them. | 1 (split, method, level, upload, PPK assignment), 2 (re-upload, monitoring) | One permohonan can produce several pengadaan. The level is determined automatically from the nominal. The assigned PPK matches the MAK type and changes when the MAK changes. | Tiered approval |
+| **Pengadaan document review** | PP reviews pengadaan worth 50–200 million. PPK signs the review at all levels by uploading proof of signature. | As PP or PPK, I want to review the pengadaan documents I am responsible for. | 1 | PP sees only level 50–200 million pengadaan. PPK sees only the pengadaan assigned to them. | Pengadaan package management |
+| **Contract and per-termin payment plan** | PPBJ issues the Kontrak/SPK/Surat Pesanan, sets the per-termin payment plan from the moment the contract is issued, and determines the reminder date of each termin. | As PPBJ, I want to set the schedule and nominal of the termin when the contract is issued. | 1 | Each termin has a nominal and a due date. Reminders are linked to a specific termin. | Pengadaan document review |
+| **Goods receipt** | Perlengkapan views the pengadaan documents and SPK, uploads photo documentation of the goods, and uploads the signed berita acara penerimaan. | As Perlengkapan, I want to record goods receipt along with its documentation proof. | 1 (photos, berita acara), 2 (view documents) | Photos and berita acara are stored and linked to the related pengadaan. | Contract |
+| **Per-termin payment with dual approval** | PPBJ uploads the payment documents and vendor legality documents per termin. PPK and Bidang 2 must both approve with a memo, or reject with a reason. Keuangan sees only payments approved by both, then uploads proof of payment. | As Keuangan, I want to process only payments that have been fully approved. | 1 | The payment does not appear to Keuangan until PPK and Bidang 2 have both approved. The payment nominal must exactly equal the termin plan. | Contract and payment plan, Goods receipt |
+| **Status tracking and notifications** | Full status change history with actor and time, progress visible per unit, in-app and email notifications when status changes, and payment reminders for PPBJ, PPK, and Keuangan. | As a pemohon, I want to see the progress of my permohonan and its pengadaan and be notified when something changes. | 1 (tracking), 2 (notifications, reminders) | Colleagues in the same unit can monitor the same progress. Reminders appear on the dates determined by PPBJ. | Entire procurement flow |
+| **Search, filter, and recap** | Permohonan search, filters by month, year, status, letter number, and unit, plus a total budget recap per category for Bidang 2, PPBJ, PPK, and Keuangan. | As Bidang 2, PPBJ, PPK, or Keuangan, I want to filter documents and view the budget recap. | 2 | Filters and search return matching data. The recap sums the pengadaan nominal per budget category. | Pengadaan package management |
 
-**Di luar cakupan versi awal:** aplikasi mobile, REST API publik, dan integrasi otomatis dengan Srikandi (nomor surat diinput manual).
+**Out of scope for the initial version:** mobile application, public REST API, and automatic integration with Srikandi (letter numbers are entered manually).
 
 ## Non-Functional Requirements
 
 ### Performance
-- **Load Time:** Pemuatan halaman dan pembaruan status selesai dalam ≤3 detik pada kondisi normal.
-- **Concurrent Users:** Sistem dapat diakses 100 pengguna bersamaan tanpa crash atau error.
-- **Response Time:** Rata-rata waktu respons ≤3 detik pada pengujian beban dengan 100 pengguna virtual.
+- **Load Time:** Page loading and status updates complete in ≤3 seconds under normal conditions.
+- **Concurrent Users:** The system can be accessed by 100 simultaneous users without crashes or errors.
+- **Response Time:** Average response time ≤3 seconds in a load test with 100 virtual users.
 
 ### Security
-- **Authentication:** Login dengan kredensial. Password disimpan sebagai hash bcrypt dan tidak pernah ditampilkan atau dicatat dalam teks asli. Sesi berakhir otomatis setelah 60 menit tanpa aktivitas.
-- **Authorization:** Akses berbasis peran (RBAC). Setiap peran hanya dapat mengakses menu dan fitur sesuai wewenangnya, dan pembatasan ditegakkan di sisi server.
-- **Data Protection:** Unggahan hanya berformat PDF, JPG, atau PNG, divalidasi berdasarkan tipe file asli, dengan ukuran maksimal 10 MB per file. Nama file di-hash sebelum disimpan sehingga nama asli tidak dapat ditebak lewat URL.
+- **Authentication:** Login with credentials. Passwords are stored as bcrypt hashes and are never displayed or logged in plain text. Sessions expire automatically after 60 minutes of inactivity.
+- **Authorization:** Role-based access (RBAC). Each role can access only the menus and features within its authority, and the restrictions are enforced on the server side.
+- **Data Protection:** Uploads are limited to PDF, JPG, or PNG, validated by the actual file type, with a maximum size of 10 MB per file. File names are hashed before storage so the original name cannot be guessed from the URL.
 
 ### Compatibility
-- **Devices:** Perangkat desktop atau laptop sebagai target utama (asumsi).
-- **Browsers:** Browser modern versi terbaru (asumsi).
-- **Screen Sizes:** Tampilan responsif dasar (asumsi).
+- **Devices:** Desktop or laptop devices as the primary target (assumption).
+- **Browsers:** Latest versions of modern browsers (assumption).
+- **Screen Sizes:** Basic responsive layout (assumption).
 
 ### Accessibility
-- **Compliance Level:** Tidak ada target kepatuhan spesifik pada versi awal.
-- **Specific Requirements:** Tidak ada.
+- **Compliance Level:** No specific compliance target in the initial version.
+- **Specific Requirements:** None.
 
 ## Technical Specifications
 
 ### Frontend
-- **Technology Stack:** React dengan Inertia.js dan Tailwind CSS dalam satu aplikasi monolitik (routing Laravel di server, render React di client).
-- **Design System:** Belum ditentukan.
-- **Responsive Design:** Responsif dasar menggunakan utilitas Tailwind.
+- **Technology Stack:** React with Inertia.js and Tailwind CSS in a single monolithic application (Laravel routing on the server, React rendering on the client).
+- **Design System:** Not yet decided.
+- **Responsive Design:** Basic responsive layout using Tailwind utilities.
 
 ### Backend
-- **Technology Stack:** PHP 8.5.11 dengan Laravel 13.
-- **API Requirements:** Tidak ada REST API karena aplikasi monolitik Inertia (komunikasi via protokol Inertia, bukan REST). Lapisan API (Laravel Sanctum untuk autentikasi dan Scribe untuk dokumentasi) baru ditambahkan jika nanti ada konsumen eksternal.
-- **Database:** PostgreSQL 18, relasional. Data dokumen, persetujuan, dan riwayat status disimpan dalam tabel bersama yang dapat merujuk ke berbagai objek pengadaan.
+- **Technology Stack:** PHP 8.5.11 with Laravel 13.
+- **API Requirements:** No REST API because the application is an Inertia monolith (communication via the Inertia protocol, not REST). An API layer (Laravel Sanctum for authentication and Scribe for documentation) will only be added if external consumers appear later.
+- **Database:** PostgreSQL 18, relational. Document, approval, and status history data are stored in shared tables that can reference various pengadaan objects.
