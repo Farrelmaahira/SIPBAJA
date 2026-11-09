@@ -53,4 +53,9 @@ class MakService
 
         return true;
     }
+
+    public function count(): int
+    {
+        return Mak::count();
+    }
 }
