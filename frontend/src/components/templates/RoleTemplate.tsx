@@ -121,26 +121,26 @@ export const RoleTemplate: FC<RoleTemplateProps> = ({
           </PrimaryButton>
         </div>
 
-        <div className="max-w-md">
-          <SearchBar
-            value={query}
-            onChange={onQueryChange}
-            placeholder={searchPlaceholder}
-            id="role-table-search"
-          />
-        </div>
-
         <CrudTable
           columns={columns}
           rows={rows}
+          toolbar={
+            <div className="max-w-md w-full">
+              <SearchBar
+                value={query}
+                onChange={onQueryChange}
+                placeholder={searchPlaceholder}
+                id="role-table-search"
+              />
+            </div>
+          }
           onEdit={onOpenEdit}
           onDelete={onAskDelete}
           emptyTitle="Belum ada peran"
           emptyDescription="Peran yang ditambahkan akan muncul di sini."
           isLoading={isLoading}
+          footer={pagination}
         />
-
-        {pagination}
 
         <Modal
           open={modalMode !== null}

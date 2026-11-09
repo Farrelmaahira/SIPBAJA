@@ -136,26 +136,26 @@ export const MakTemplate: FC<MakTemplateProps> = ({
           </PrimaryButton>
         </div>
 
-        <div className="max-w-md">
-          <SearchBar
-            value={query}
-            onChange={onQueryChange}
-            placeholder={searchPlaceholder}
-            id="mak-table-search"
-          />
-        </div>
-
         <CrudTable
           columns={columns}
           rows={rows}
+          toolbar={
+            <div className="max-w-md w-full">
+              <SearchBar
+                value={query}
+                onChange={onQueryChange}
+                placeholder={searchPlaceholder}
+                id="mak-table-search"
+              />
+            </div>
+          }
           onEdit={onOpenEdit}
           onDelete={onAskDelete}
           emptyTitle="Belum ada data MAK"
           emptyDescription="Data MAK yang ditambahkan akan muncul di sini."
           isLoading={isLoading}
+          footer={pagination}
         />
-
-        {pagination}
 
         <Modal
           open={modalMode !== null}

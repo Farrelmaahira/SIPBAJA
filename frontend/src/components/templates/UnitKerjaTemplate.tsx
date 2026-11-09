@@ -104,26 +104,26 @@ export const UnitKerjaTemplate = ({
           </PrimaryButton>
         </div>
 
-        <div className="max-w-md">
-          <SearchBar
-            value={query}
-            onChange={onQueryChange}
-            placeholder={searchPlaceholder}
-            id="unit-kerja-table-search"
-          />
-        </div>
-
         <CrudTable
           columns={columns}
           rows={rows}
+          toolbar={
+            <div className="max-w-md w-full">
+              <SearchBar
+                value={query}
+                onChange={onQueryChange}
+                placeholder={searchPlaceholder}
+                id="unit-kerja-table-search"
+              />
+            </div>
+          }
           onEdit={onOpenEdit}
           onDelete={onAskDelete}
           emptyTitle="Belum ada unit kerja"
           emptyDescription="Unit kerja yang ditambahkan akan muncul di tabel ini."
           isLoading={isLoading}
+          footer={pagination}
         />
-
-        {pagination}
 
         <Modal
           open={modalMode !== null}

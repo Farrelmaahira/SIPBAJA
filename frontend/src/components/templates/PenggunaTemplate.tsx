@@ -200,26 +200,26 @@ export const PenggunaTemplate: FC<PenggunaTemplateProps> = ({
           </PrimaryButton>
         </div>
 
-        <div className="max-w-md">
-          <SearchBar
-            value={query}
-            onChange={onQueryChange}
-            placeholder={searchPlaceholder}
-            id="pengguna-table-search"
-          />
-        </div>
-
         <CrudTable
           columns={columns}
           rows={rows}
+          toolbar={
+            <div className="max-w-md w-full">
+              <SearchBar
+                value={query}
+                onChange={onQueryChange}
+                placeholder={searchPlaceholder}
+                id="pengguna-table-search"
+              />
+            </div>
+          }
           onEdit={onOpenEdit}
           onDelete={onAskDelete}
           emptyTitle="Belum ada pengguna"
           emptyDescription="Pengguna yang ditambahkan akan ditampilkan di sini."
           isLoading={isLoading}
+          footer={pagination}
         />
-
-        {pagination}
 
         <Modal
           open={modalMode !== null}
