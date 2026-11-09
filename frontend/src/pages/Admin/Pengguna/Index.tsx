@@ -5,6 +5,7 @@ import PenggunaTemplate, {
   type UserRowItem,
   type PenggunaFormData,
 } from '../../../components/templates/PenggunaTemplate';
+import Pagination, { type PaginationMeta } from '../../../components/molecules/Pagination';
 
 const EMPTY_FORM: PenggunaFormData = {
   nama: '',
@@ -13,14 +14,6 @@ const EMPTY_FORM: PenggunaFormData = {
   role_id: '',
   unit_id: '',
 };
-
-interface PaginationMeta {
-  current_page: number;
-  last_page: number;
-  total: number;
-  from: number | null;
-  to: number | null;
-}
 
 export const PenggunaIndex: FC = () => {
   const [users, setUsers] = useState<UserRowItem[]>([]);
@@ -155,37 +148,15 @@ export const PenggunaIndex: FC = () => {
     }
   };
 
-  const paginationComponent = paginationMeta && paginationMeta.last_page > 1 ? (
-    <div className="flex items-center justify-between text-xs text-[#5F6F6A] pt-4">
-      <span>
-        Menampilkan {paginationMeta.from ?? 0}-{paginationMeta.to ?? 0} dari {paginationMeta.total}
-      </span>
-      <div className="flex items-center gap-1">
-        <button
-          type="button"
-          disabled={paginationMeta.current_page <= 1}
-          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-          className="px-3 py-1.5 rounded-lg border border-[#E4EBE8] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#EEF5F2]"
-        >
-          Sebelumnya
-        </button>
-        <span className="px-2">Halaman {paginationMeta.current_page} dari {paginationMeta.last_page}</span>
-        <button
-          type="button"
-          disabled={paginationMeta.current_page >= paginationMeta.last_page}
-          onClick={() => setCurrentPage((p) => Math.min(paginationMeta.last_page, p + 1))}
-          className="px-3 py-1.5 rounded-lg border border-[#E4EBE8] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#EEF5F2]"
-        >
-          Selanjutnya
-        </button>
-      </div>
-    </div>
-  ) : null;
-
   return (
     <PenggunaTemplate
       rows={users}
-      pagination={paginationComponent}
+      pagination={
+        <Pagination
+          meta={paginationMeta}
+          onPageChange={(page) => setCurrentPage(page)}
+        />
+      }
       roles={roles}
       units={units}
       query={query}
