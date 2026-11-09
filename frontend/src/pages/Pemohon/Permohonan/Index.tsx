@@ -1,10 +1,9 @@
-import { useState, type FC, type FormEvent } from 'react';
+import type { FC, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import usePemohonPermohonan from '../../../hooks/usePemohonPermohonan';
 import PemohonPermohonanIndexTemplate from '../../../components/templates/PemohonPermohonanIndexTemplate';
-import type { PermohonanRowData } from '../../../components/molecules/PermohonanRow';
-import type { PermohonanDetailData } from '../../../components/organisms/DetailPermohonanModal';
+import type { PermohonanItem } from '../../../types/permohonan';
 
 export const PermohonanIndex: FC = () => {
   const navigate = useNavigate();
@@ -28,23 +27,6 @@ export const PermohonanIndex: FC = () => {
     refetch,
   } = usePemohonPermohonan();
 
-  const [selectedPermohonan, setSelectedPermohonan] =
-    useState<PermohonanDetailData | null>(null);
-
-  const handleOpenDetailModal = (item: PermohonanRowData) => {
-    const detailData: PermohonanDetailData = {
-      id: item.id ?? '',
-      nomor_surat: item.nomor_surat ?? '-',
-      judul: item.judul ?? 'Tanpa Judul',
-      status: (item.status as any) ?? 'diajukan',
-      tanggal: item.created_at ?? null,
-      nilai_pengajuan: Number(item.estimasi_anggaran ?? 0),
-      deskripsi: (item.ringkasan_tujuan as string) ?? '',
-      dokumen: Array.isArray(item.dokumen) ? (item.dokumen as any) : [],
-    };
-    setSelectedPermohonan(detailData);
-  };
-
   const selectedStatuses =
     selectedStatus && selectedStatus !== 'semua'
       ? selectedStatus.split(',')
@@ -57,6 +39,10 @@ export const PermohonanIndex: FC = () => {
   const handleClearSearch = () => {
     setSearchQuery('');
     handleSearchSubmit();
+  };
+
+  const handleView = (item: PermohonanItem) => {
+    navigate(`/pemohon/permohonan/${item.id}`);
   };
 
   return (
@@ -79,9 +65,7 @@ export const PermohonanIndex: FC = () => {
       onPageChange={handlePageChange}
       onRetry={refetch}
       onCreatePermohonan={() => navigate('/pemohon/permohonan/create')}
-      onViewDetailModal={handleOpenDetailModal}
-      selectedDetailModalItem={selectedPermohonan}
-      onCloseDetailModal={() => setSelectedPermohonan(null)}
+      onView={handleView}
     />
   );
 };
