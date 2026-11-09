@@ -1,19 +1,18 @@
 import type { FC, FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  LayoutDashboard,
-  ClipboardList,
   ArrowLeft,
   AlertCircle,
   RotateCcw,
 } from 'lucide-react';
-import DashboardShellTemplate from './DashboardShellTemplate';
+import AppLayout from './AppLayout';
 import HeroBanner from '../organisms/HeroBanner';
 import StatusPill from '../atoms/StatusPill';
 import CatatanPenolakanCard from '../molecules/CatatanPenolakanCard';
 import PermohonanEditFormCard from '../organisms/PermohonanEditFormCard';
 import AlurPermohonanCard from '../organisms/AlurPermohonanCard';
 import PanduanPengajuanCard from '../organisms/PanduanPengajuanCard';
+import { PEMOHON_NAV_ITEMS } from '../../constants/pemohonNav';
 import type {
   PermohonanDetailInfo,
   PermohonanRevisiFormData,
@@ -21,22 +20,6 @@ import type {
   PermohonanDokumenDetail,
 } from '../../types/permohonan';
 import type { ProfilePillUser } from '../molecules/ProfilePill';
-
-const NAV_ITEMS = [
-  {
-    key: 'dashboard',
-    label: 'Dashboard',
-    icon: LayoutDashboard,
-    href: '/pemohon/dashboard',
-  },
-  {
-    key: 'permohonan',
-    label: 'List Permohonan',
-    icon: ClipboardList,
-    href: '/pemohon/permohonan',
-    badge: 4,
-  },
-];
 
 export interface PemohonPermohonanEditTemplateProps {
   user?: ProfilePillUser | null;
@@ -57,7 +40,6 @@ export interface PemohonPermohonanEditTemplateProps {
 export const PemohonPermohonanEditTemplate: FC<
   PemohonPermohonanEditTemplateProps
 > = ({
-  user = {},
   permohonan,
   formData,
   formErrors,
@@ -71,23 +53,20 @@ export const PemohonPermohonanEditTemplate: FC<
   onRetry,
   onViewCurrentDokumen,
 }) => {
-  const sidebarProps = {
-    navItems: NAV_ITEMS,
-    activeRoute: 'permohonan',
-    brandSubtitle: 'Pengadaan Barang & Jasa',
-    sectionTitle: 'MENU',
-  };
-
-  const topbarProps = {
-    user,
-  };
-
   const currentDokumen: PermohonanDokumenDetail | null = permohonan?.dokumen
     ? (permohonan.dokumen as unknown as PermohonanDokumenDetail)
     : null;
 
   return (
-    <DashboardShellTemplate sidebarProps={sidebarProps} topbarProps={topbarProps}>
+    <AppLayout
+      activeRoute="permohonan"
+      navItems={PEMOHON_NAV_ITEMS}
+      roleInitials="PM"
+      roleTitle="Pemohon"
+      roleSubtitle="Unit Pemohon"
+      profileHref="/pemohon/dashboard"
+      notifikasiHref="/pemohon/dashboard"
+    >
       {/* Breadcrumb Navigasi */}
       <nav
         aria-label="Breadcrumb"
@@ -211,7 +190,7 @@ export const PemohonPermohonanEditTemplate: FC<
           </div>
         </div>
       )}
-    </DashboardShellTemplate>
+    </AppLayout>
   );
 };
 
