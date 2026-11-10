@@ -3,10 +3,13 @@
 namespace App\Services;
 
 use App\Models\Dokumen;
+use App\Models\Mak;
 use App\Models\Permohonan;
+use App\Models\PermohonanMak;
 use App\Models\StatusHistory;
 use App\Models\Unit;
 use App\Models\User;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -480,6 +483,284 @@ class PermohonanService
             'pembuatNama' => (string) ($permohonan->Creator?->nama ?? $permohonan->Creator?->name ?? '-'),
             'makList' => $makList,
             'paketList' => $paketList,
+        ];
+    }
+
+    // [BARU - Perencanaan: ringkasan statistik dan permohonan masuk terbaru] ditambahkan untuk kebutuhan fitur Dashboard Perencanaan.
+    /**
+     * @return array<string, mixed>
+     */
+    public function getDashboardPerencanaan(): array
+    {
+        $total = Permohonan::count();
+        $diajukan = Permohonan::whereIn('status', ['diajukan', 'menunggu_verifikasi'])->count();
+        $selesai = Permohonan::whereIn('status', ['selesai', 'disetujui', 'diteruskan'])->count();
+        $ditolak = Permohonan::where('status', 'ditolak')->count();
+
+        $permohonanTerbaru = Permohonan::with(['Unit', 'Creator'])
+            ->orderByDesc('id')
+            ->limit(4)
+            ->get();
+
+        return [
+            'stats' => [
+                'total' => $total,
+                'diajukan' => $diajukan,
+                'selesai' => $selesai,
+                'ditolak' => $ditolak,
+            ],
+            'permohonan_terbaru' => $permohonanTerbaru,
+        ];
+    }
+
+    // [BARU - Perencanaan: paginasi daftar permohonan dengan filter lengkap] ditambahkan untuk kebutuhan fitur List Pengajuan Perencanaan.
+    /**
+     * @param  array<string, mixed>  $filters
+     */
+    public function paginatePermohonanPerencanaan(array $filters, int $perPage = 10): LengthAwarePaginator
+    {
+        $query = Permohonan::with(['Unit', 'Creator', 'PermohonanMak.Mak']);
+
+        $keyword = trim((string) ($filters['search'] ?? $filters['q'] ?? ''));
+        if ($keyword !== '') {
+            $query->where(function ($q) use ($keyword) {
+                $q->where('nomor_surat', 'like', "%{$keyword}%")
+                    ->orWhere('judul', 'like', "%{$keyword}%");
+            });
+        }
+
+        $rawStatuses = [];
+        if (! empty($filters['statuses']) && is_array($filters['statuses'])) {
+            $rawStatuses = $filters['statuses'];
+        } elseif (! empty($filters['status']) && $filters['status'] !== 'semua') {
+            $rawStatuses = is_array($filters['status'])
+                ? $filters['status']
+                : array_filter(array_map('trim', explode(',', (string) $filters['status'])));
+        }
+
+        if (! empty($rawStatuses)) {
+            $mappedStatuses = [];
+            foreach ($rawStatuses as $st) {
+                if ($st === 'semua') {
+                    continue;
+                }
+                if ($st === 'diajukan') {
+                    $mappedStatuses[] = 'diajukan';
+                    $mappedStatuses[] = 'menunggu_verifikasi';
+                } elseif ($st === 'pengadaan') {
+                    $mappedStatuses[] = 'pengadaan';
+                    $mappedStatuses[] = 'disetujui';
+                } else {
+                    $mappedStatuses[] = $st;
+                }
+            }
+            if (! empty($mappedStatuses)) {
+                $query->whereIn('status', array_unique($mappedStatuses));
+            }
+        }
+
+        if (! empty($filters['bulan']) && is_numeric($filters['bulan'])) {
+            $query->whereMonth('created_at', (int) $filters['bulan']);
+        }
+
+        if (! empty($filters['tahun']) && is_numeric($filters['tahun'])) {
+            $query->whereYear('created_at', (int) $filters['tahun']);
+        }
+
+        if (! empty($filters['unit_id']) && is_numeric($filters['unit_id'])) {
+            $query->where('unit_id', (int) $filters['unit_id']);
+        }
+
+        return $query
+            ->orderByDesc('id')
+            ->paginate($perPage)
+            ->withQueryString();
+    }
+
+    // [BARU - Perencanaan: detail permohonan beserta pratinjau RKAKL dan opsi MAK] ditambahkan untuk kebutuhan fitur Detail Permohonan Perencanaan.
+    /**
+     * @return array<string, mixed>
+     */
+    public function getDetailPermohonanPerencanaan(Permohonan $permohonan): array
+    {
+        $permohonan->load([
+            'Unit',
+            'Creator',
+            'PermohonanMak.Mak.Ppk',
+            'Pengadaan.Ppk',
+            'Pengadaan.PermohonanMak.Mak.Ppk',
+            'Approvals.Actor',
+        ]);
+
+        $maks = Mak::with('Ppk')->orderBy('id')->get();
+        $selectedMakIds = $permohonan->PermohonanMak->pluck('mak_id')->toArray();
+
+        $dokumenPermohonan = Dokumen::where('ref_type', 'permohonan')->where('ref_id', $permohonan->id)
+            ->orderBy('id')
+            ->get()
+            ->map(function ($doc) use ($permohonan) {
+                return [
+                    'id' => $doc->id,
+                    'nama_asli' => $doc->nama_asli,
+                    'tipe_dokumen' => $doc->tipe_dokumen,
+                    'ukuran_bytes' => (int) ($doc->ukuran_bytes ?? 0),
+                    'mime_type' => $doc->mime_type ?? 'application/pdf',
+                    'versi' => $doc->versi,
+                    'created_at' => is_string($doc->created_at) ? $doc->created_at : $doc->created_at?->toISOString(),
+                    'download_url' => "/api/v1/perencanaan/pengajuan/{$permohonan->id}/dokumen?dokumen_id={$doc->id}",
+                ];
+            });
+
+        $dokumen = $permohonan->Dokumen()->where('tipe_dokumen', 'surat_permohonan')->latest('versi')->first()
+            ?? Dokumen::where('ref_type', 'permohonan')->where('ref_id', $permohonan->id)->latest('id')->first();
+
+        $dokumenInfo = $dokumen ? [
+            'id' => $dokumen->id,
+            'nama_asli' => $dokumen->nama_asli,
+            'ukuran_bytes' => (int) ($dokumen->ukuran_bytes ?? 0),
+            'mime_type' => $dokumen->mime_type ?? 'application/pdf',
+            'download_url' => "/api/v1/perencanaan/pengajuan/{$permohonan->id}/dokumen",
+        ] : null;
+
+        $rkaklDoc = Dokumen::where('ref_type', 'rkakl')->orderByDesc('versi')->orderByDesc('id')->first();
+        $rkaklInfo = $rkaklDoc ? [
+            'id' => $rkaklDoc->id,
+            'nama_asli' => $rkaklDoc->nama_asli,
+            'versi' => $rkaklDoc->versi,
+            'ukuran_bytes' => (int) ($rkaklDoc->ukuran_bytes ?? 0),
+            'mime_type' => $rkaklDoc->mime_type ?? 'application/pdf',
+            'download_url' => "/api/v1/perencanaan/rkakl/dokumen/{$rkaklDoc->id}",
+        ] : null;
+
+        return [
+            'permohonan' => $permohonan,
+            'maks' => $maks,
+            'selected_mak_ids' => $selectedMakIds,
+            'dokumen_permohonan' => $dokumenPermohonan,
+            'dokumen' => $dokumenInfo,
+            'rkakl_active' => $rkaklInfo,
+        ];
+    }
+
+    // [BARU - Perencanaan: kompatibilitas endpoint deprecated kirim-pengadaan] ditambahkan untuk menjaga kompatibilitas endpoint lama.
+    /**
+     * @deprecated Penerusan ke PPBJ kini berjalan otomatis setelah Bidang 2 dan PPK menyetujui secara paralel.
+     */
+    public function kirimPengadaanDeprecated(Permohonan $permohonan, User $actor, int $makId): Permohonan
+    {
+        return DB::transaction(function () use ($permohonan, $actor, $makId) {
+            $statusLama = $permohonan->status;
+            $statusBaru = 'selesai';
+
+            PermohonanMak::updateOrCreate(
+                [
+                    'permohonan_id' => $permohonan->id,
+                    'mak_id' => $makId,
+                ],
+                [
+                    'ditentukan_oleh' => $actor->id,
+                ]
+            );
+
+            $permohonan->update(['status' => $statusBaru]);
+
+            StatusHistory::create([
+                'ref_type' => 'permohonan',
+                'ref_id' => $permohonan->id,
+                'status_lama' => $statusLama,
+                'status_baru' => $statusBaru,
+                'actor_id' => $actor->id,
+            ]);
+
+            return $permohonan;
+        });
+    }
+
+    // [BARU - PPK: daftar Dokumen Turunan / permohonan yang terikat Jenis MAK milik PPK] ditambahkan untuk kebutuhan fitur persetujuan awal permohonan oleh PPK.
+    /**
+     * @param  array<string, mixed>  $filters
+     */
+    public function paginatePermohonanUntukPpk(User $ppk, array $filters = [], int $perPage = 10): LengthAwarePaginator
+    {
+        $query = Permohonan::with(['Unit', 'Creator', 'PermohonanMak.Mak.Ppk', 'Approvals.Actor'])
+            ->whereHas('PermohonanMak.Mak', fn ($q) => $q->where('ppk_user_id', $ppk->id));
+
+        $keyword = trim((string) ($filters['search'] ?? $filters['q'] ?? ''));
+        if ($keyword !== '') {
+            $query->where(function ($q) use ($keyword) {
+                $q->where('nomor_surat', 'like', "%{$keyword}%")
+                    ->orWhere('judul', 'like', "%{$keyword}%");
+            });
+        }
+
+        if (! empty($filters['statuses']) && is_array($filters['statuses'])) {
+            $query->whereIn('status', $filters['statuses']);
+        } elseif (! empty($filters['status']) && $filters['status'] !== 'semua') {
+            $query->where('status', $filters['status']);
+        }
+
+        if (! empty($filters['bulan']) && is_numeric($filters['bulan'])) {
+            $query->whereMonth('created_at', (int) $filters['bulan']);
+        }
+
+        if (! empty($filters['tahun']) && is_numeric($filters['tahun'])) {
+            $query->whereYear('created_at', (int) $filters['tahun']);
+        }
+
+        if (! empty($filters['unit_id']) && is_numeric($filters['unit_id'])) {
+            $query->where('unit_id', (int) $filters['unit_id']);
+        }
+
+        return $query
+            ->orderByDesc('id')
+            ->paginate($perPage)
+            ->withQueryString();
+    }
+
+    // [BARU - PPK: detail permohonan yang terikat Jenis MAK milik PPK] ditambahkan untuk kebutuhan fitur detail persetujuan awal permohonan oleh PPK.
+    /**
+     * @return array<string, mixed>
+     */
+    public function getDetailPermohonanUntukPpk(Permohonan $permohonan, User $ppk): array
+    {
+        $berhak = PermohonanMak::where('permohonan_id', $permohonan->id)
+            ->whereHas('Mak', fn ($q) => $q->where('ppk_user_id', $ppk->id))
+            ->exists();
+
+        if (! $berhak) {
+            abort(403, 'Anda tidak memiliki akses pada permohonan yang tidak terikat dengan Jenis MAK Anda.');
+        }
+
+        $permohonan->load([
+            'Unit',
+            'Creator',
+            'PermohonanMak.Mak.Ppk',
+            'Approvals.Actor',
+            'Approvals.Memo',
+        ]);
+
+        $dokumenPermohonan = Dokumen::where('ref_type', 'permohonan')
+            ->where('ref_id', $permohonan->id)
+            ->orderByDesc('versi')
+            ->get();
+
+        $rkaklDoc = Dokumen::where('ref_type', 'rkakl')->orderByDesc('versi')->orderByDesc('id')->first();
+        $rkaklInfo = $rkaklDoc ? [
+            'id' => $rkaklDoc->id,
+            'nama_asli' => $rkaklDoc->nama_asli,
+            'versi' => $rkaklDoc->versi,
+            'ukuran_bytes' => (int) ($rkaklDoc->ukuran_bytes ?? 0),
+            'mime_type' => $rkaklDoc->mime_type ?? 'application/pdf',
+            'download_url' => "/api/v1/ppk/rkakl/dokumen/{$rkaklDoc->id}",
+        ] : null;
+
+        return [
+            'permohonan' => $permohonan,
+            'dokumen_permohonan' => $dokumenPermohonan,
+            'permohonan_mak_ppk' => $permohonan->PermohonanMak
+                ->filter(fn ($pm) => (int) ($pm->Mak?->ppk_user_id ?? 0) === (int) $ppk->id)
+                ->values(),
+            'rkakl_active' => $rkaklInfo,
         ];
     }
 }

@@ -139,6 +139,10 @@ Route::prefix('v1')->group(function () {
         // PPK Routes
         Route::prefix('ppk')->middleware('role:PPK')->group(function () {
             Route::get('dashboard', [PpkController::class, 'dashboard'])->name('api.ppk.dashboard');
+            Route::get('permohonan', [PpkController::class, 'indexPermohonan'])->name('api.ppk.permohonan.index');
+            Route::get('permohonan/{permohonan}', [PpkController::class, 'showPermohonan'])->name('api.ppk.permohonan.show');
+            Route::post('permohonan/{permohonan}/approve', [PpkController::class, 'approvePermohonan'])->name('api.ppk.permohonan.approve');
+            Route::post('permohonan/{permohonan}/reject', [PpkController::class, 'rejectPermohonan'])->name('api.ppk.permohonan.reject');
             Route::get('pengajuan', [PpkController::class, 'index'])->name('api.ppk.pengajuan.index');
             Route::get('pengajuan/{pengadaan}/review', [PpkController::class, 'review'])->name('api.ppk.pengajuan.review');
             Route::post('pengajuan/{pengadaan}/approve', [PpkController::class, 'approve'])->name('api.ppk.pengajuan.approve');
@@ -147,6 +151,9 @@ Route::prefix('v1')->group(function () {
             Route::post('pengajuan/{pengadaan}/pembayaran/approve', [PpkController::class, 'approvePembayaran'])->name('api.ppk.pengajuan.pembayaran.approve');
             Route::post('pengajuan/{pengadaan}/pembayaran/reject', [PpkController::class, 'rejectPembayaran'])->name('api.ppk.pengajuan.pembayaran.reject');
             Route::get('pengajuan/{pengadaan}', [PpkController::class, 'show'])->name('api.ppk.pengajuan.show');
+            Route::get('rkakl/dokumen', [PpkController::class, 'downloadRkakl'])->name('api.ppk.rkakl.dokumen.latest');
+            Route::get('rkakl/dokumen/{dokumen}', [PpkController::class, 'downloadRkakl'])->name('api.ppk.rkakl.dokumen.download');
+            Route::get('rkakl', [PpkController::class, 'rkakl'])->name('api.ppk.rkakl.index');
             Route::get('notifikasi', [NotificationController::class, 'index'])->name('api.ppk.notifikasi.index');
             Route::post('notifikasi/read-all', [NotificationController::class, 'markAllRead'])->name('api.ppk.notifikasi.readAll');
             Route::post('notifikasi/{notification}/read', [NotificationController::class, 'markOneRead'])->name('api.ppk.notifikasi.readOne');

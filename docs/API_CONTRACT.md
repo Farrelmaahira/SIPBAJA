@@ -775,30 +775,56 @@ Prefix Rute: `/api/v1/ppk`
 
 #### 1. Dashboard, List & Review Pengadaan
 - **Dashboard:** `GET /api/v1/ppk/dashboard`
-- **List Pengajuan:** `GET /api/v1/ppk/pengajuan?q={keyword}&statuses[]={status}`
+- **List Pengajuan:** `GET /api/v1/ppk/pengajuan?q={keyword}&statuses[]={status}&bulan={bulan}&tahun={tahun}&unit_id={unitId}`
+- **Detail Pengajuan:** `GET /api/v1/ppk/pengajuan/{pengadaanId}`
 - **Review Form:** `GET /api/v1/ppk/pengajuan/{pengadaanId}/review`
 
-#### 2. Approve & Reject Dokumen Pengadaan
+#### 2. Persetujuan Awal Permohonan (Dokumen Turunan milik PPK)
+- **List Permohonan untuk PPK:** `GET /api/v1/ppk/permohonan?q={keyword}&status={status}&bulan={bulan}&tahun={tahun}&unit_id={unitId}`
+  - Mengembalikan daftar permohonan yang terikat dengan Jenis MAK milik akun PPK yang login (`mak.ppk_user_id`).
+- **Detail Permohonan untuk PPK:** `GET /api/v1/ppk/permohonan/{permohonanId}`
+  - Response (200 OK): `{ "message": "Detail permohonan untuk PPK berhasil diambil.", "data": { "permohonan": { ... }, "dokumen_permohonan": [...], "permohonan_mak_ppk": [...], "rkakl_active": { ... } } }`
+  - Error Response (403 Forbidden): jika permohonan tidak terikat Jenis MAK milik PPK yang login.
+- **Approve Permohonan oleh PPK:** `POST /api/v1/ppk/permohonan/{permohonanId}/approve`
+  - **Request Body (`multipart/form-data`):**
+    - `memo`: Berkas wajib (`pdf`, `jpg`, `jpeg`, `png`, maks. `10 MB`).
+    - `catatan`: String opsional (maks. `1000` karakter).
+  - **Success Response (200 OK):**
+    ```json
+    {
+      "message": "Permohonan beserta Memo Persetujuan Surat Permohonan berhasil disetujui oleh PPK.",
+      "data": { "id": 1, "status": "disetujui" }
+    }
+    ```
+  - **Error Response (422):** `{ "errors": { "memo": ["Berkas Memo Persetujuan Surat Permohonan wajib diunggah."] } }`
+- **Reject Permohonan oleh PPK:** `POST /api/v1/ppk/permohonan/{permohonanId}/reject`
+  - **Request Body (JSON):** `{ "alasan": "Rincian kebutuhan belum sesuai anggaran MAK." }`
+  - **Success Response (200 OK):** `{ "message": "Permohonan telah ditolak oleh PPK beserta catatan alasan." }`
+
+#### 3. Approve & Reject Dokumen Pengadaan
 - **Approve:** `POST /api/v1/ppk/pengajuan/{pengadaanId}/approve`
-  - Response (200 OK): `{ "message": "Dokumen pengadaan berhasil disetujui oleh PPK." }`
+  - Response (200 OK): `{ "message": "Dokumen pengadaan berhasil disetujui oleh PPK dan diteruskan ke PPBJ." }`
 - **Reject:** `POST /api/v1/ppk/pengajuan/{pengadaanId}/reject`
   - Body: `{ "alasan": "Spesifikasi perlu verifikasi teknis ulang." }`
   - Response (200 OK): `{ "message": "Dokumen pengadaan ditolak dan dikembalikan ke PPBJ." }`
 
-#### 3. Review & Persetujuan Dokumen Pembayaran
+#### 4. Review & Persetujuan Dokumen Pembayaran
 - **Detail Form Pembayaran:** `GET /api/v1/ppk/pengajuan/{pengadaanId}/pembayaran`
-- **Approve Pembayaran:** `POST /api/v1/ppk/pengajuan/{pengadaanId}/pembayaran/approve`
-  - Body (JSON):
-    ```json
-    {
-      "filename": "Memo_Persetujuan_042_TI_PNJ_2026.pdf",
-      "catatan": "Disetujui untuk termin pertama 100% barang diterima."
-    }
-    ```
-  - Response (200 OK): `{ "message": "Dokumen pembayaran beserta Memo Persetujuan berhasil disetujui." }`
+- **Approve Pembayaran (Diperketat):** `POST /api/v1/ppk/pengajuan/{pengadaanId}/pembayaran/approve`
+  - **Request Body (`multipart/form-data`):**
+    - `memo`: Berkas wajib Memo Persetujuan Pembayaran (`pdf`, `jpg`, `jpeg`, `png`, maks. `10 MB`).
+    - `catatan`: String opsional (maks. `1000` karakter).
+  - **Success Response (200 OK):** `{ "message": "Dokumen pembayaran beserta Memo Persetujuan berhasil disetujui." }`
+  - **Error Response (422):** `{ "errors": { "memo": ["Berkas Memo Persetujuan Pembayaran wajib diunggah."] } }`
 - **Reject Pembayaran:** `POST /api/v1/ppk/pengajuan/{pengadaanId}/pembayaran/reject`
   - Body: `{ "alasan": "Faktur pajak belum valid." }`
   - Response (200 OK): `{ "message": "Dokumen pembayaran telah ditolak beserta catatan revisi." }`
+
+#### 5. Lihat Dokumen RKAKL (Read-Only untuk PPK)
+- **Daftar & Dokumen RKAKL Aktif:** `GET /api/v1/ppk/rkakl?tahun={tahun}`
+  - Response (200 OK): `{ "message": "Data Dokumen RKAKL berhasil diambil.", "data": { "active_doc": { ... }, "history": [...], "items": [...], "tahun": "2026" } }`
+- **Unduh / Preview Inline RKAKL:** `GET /api/v1/ppk/rkakl/dokumen/{dokumenId?}`
+  - Response (200 OK): Stream berkas PDF (`application/pdf`).
 
 ---
 
