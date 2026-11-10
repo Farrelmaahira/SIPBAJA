@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
-import api from '../services/api';
+import { useEffect, useMemo, useState, useCallback, type Dispatch, type SetStateAction } from 'react';
+import bidang2Service from '../services/bidang2Service';
 import { namaBulan } from '../utils/formatPermohonan';
 
 export interface RingkasanBidang2 {
@@ -58,83 +58,109 @@ export interface UseBidang2DashboardReturn {
   gantiTahun: (tahun: number) => Promise<void>;
   selectedPermohonan: RiwayatTerbaruBidang2Item | null;
   setSelectedPermohonan: Dispatch<SetStateAction<RiwayatTerbaruBidang2Item | null>>;
+  isLoading: boolean;
+  isError: boolean;
   isLoadingYear: boolean;
+  refetch: () => void;
 }
+
+const DEFAULT_RINGKASAN: RingkasanBidang2 = {
+  total: 0,
+  menunggu_verifikasi: 0,
+  disetujui: 0,
+  ditolak: 0,
+  tambahan_bulan_ini: 0,
+  disetujui_bulan_ini: 0,
+};
 
 /**
  * Stateful hook for the Bidang 2 Dashboard page.
- * Manages view mode, selection, active year statistics, and asynchronous Axios requests.
+ * Manages view mode, selection, active year statistics, and asynchronous Axios requests via bidang2Service.
  */
-export function useBidang2Dashboard({
-  ringkasan: initialRingkasan,
-  riwayatTerbaru: initialRiwayatTerbaru,
-  statistikBulanan: initialStatistikBulanan,
-  totalDisetujui: initialTotalDisetujui,
-  totalDitolak: initialTotalDitolak,
-  tahunAktif: initialTahunAktif,
-}: UseBidang2DashboardProps = {}): UseBidang2DashboardReturn {
+export function useBidang2Dashboard(
+  initialProps: UseBidang2DashboardProps = {}
+): UseBidang2DashboardReturn {
   const [viewMode, setViewMode] = useState<string>('tahun');
   const [selectedPermohonan, setSelectedPermohonan] = useState<RiwayatTerbaruBidang2Item | null>(null);
+
+  const [ringkasan, setRingkasan] = useState<RingkasanBidang2>(
+    () => initialProps.ringkasan ?? DEFAULT_RINGKASAN
+  );
+  const [riwayatTerbaru, setRiwayatTerbaru] = useState<RiwayatTerbaruBidang2Item[]>(
+    () => initialProps.riwayatTerbaru ?? []
+  );
   const [statistikBulanan, setStatistikBulanan] = useState<StatistikBulananBidang2Item[]>(
-    () => initialStatistikBulanan ?? []
+    () => initialProps.statistikBulanan ?? []
   );
-  const [totalDisetujui, setTotalDisetujui] = useState<number>(() => initialTotalDisetujui ?? 0);
-  const [totalDitolak, setTotalDitolak] = useState<number>(() => initialTotalDitolak ?? 0);
+  const [totalDisetujui, setTotalDisetujui] = useState<number>(
+    () => initialProps.totalDisetujui ?? 0
+  );
+  const [totalDitolak, setTotalDitolak] = useState<number>(
+    () => initialProps.totalDitolak ?? 0
+  );
   const [tahunAktif, setTahunAktif] = useState<number>(
-    () => initialTahunAktif ?? new Date().getFullYear()
+    () => initialProps.tahunAktif ?? new Date().getFullYear()
   );
+
+  const [isLoading, setIsLoading] = useState<boolean>(!initialProps.ringkasan);
+  const [isError, setIsError] = useState<boolean>(false);
   const [isLoadingYear, setIsLoadingYear] = useState<boolean>(false);
 
+  const fetchDashboardData = useCallback(async (signal?: AbortSignal) => {
+    setIsLoading(true);
+    setIsError(false);
+    try {
+      const data = await bidang2Service.getDashboard(undefined, signal);
+      if (data) {
+        if (data.ringkasan) setRingkasan(data.ringkasan);
+        if (data.riwayatTerbaru) setRiwayatTerbaru(data.riwayatTerbaru);
+        if (data.statistikBulanan) setStatistikBulanan(data.statistikBulanan);
+        if (data.totalDisetujui !== undefined) setTotalDisetujui(data.totalDisetujui);
+        if (data.totalDitolak !== undefined) setTotalDitolak(data.totalDitolak);
+        if (data.tahunAktif) setTahunAktif(data.tahunAktif);
+      }
+    } catch (err: unknown) {
+      if (!signal?.aborted) {
+        setIsError(true);
+        console.error('Failed to fetch Bidang 2 dashboard data:', err);
+      }
+    } finally {
+      if (!signal?.aborted) {
+        setIsLoading(false);
+      }
+    }
+  }, []);
+
   useEffect(() => {
-    if (initialStatistikBulanan) {
-      setStatistikBulanan(initialStatistikBulanan);
+    if (!initialProps.ringkasan && !initialProps.riwayatTerbaru) {
+      const controller = new AbortController();
+      void fetchDashboardData(controller.signal);
+
+      return () => {
+        controller.abort();
+      };
     }
-    if (initialTahunAktif) {
-      setTahunAktif(initialTahunAktif);
-    }
-    if (initialTotalDisetujui !== undefined && initialTotalDisetujui !== null) {
-      setTotalDisetujui(initialTotalDisetujui);
-    }
-    if (initialTotalDitolak !== undefined && initialTotalDitolak !== null) {
-      setTotalDitolak(initialTotalDitolak);
-    }
-  }, [initialStatistikBulanan, initialTahunAktif, initialTotalDisetujui, initialTotalDitolak]);
+  }, [fetchDashboardData, initialProps.ringkasan, initialProps.riwayatTerbaru]);
 
   /**
-   * Fetch updated annual metrics and monthly statistics for Bidang 2 from the API.
+   * Switch active year and asynchronously fetch monthly statistics from the API.
    */
   const gantiTahun = async (tahun: number): Promise<void> => {
     setIsLoadingYear(true);
     try {
-      const response = await api.get<{
-        ringkasan?: RingkasanBidang2;
-        riwayatTerbaru?: RiwayatTerbaruBidang2Item[];
-        statistikBulanan?: StatistikBulananBidang2Item[];
-        totalDisetujui?: number;
-        totalDitolak?: number;
-        tahunAktif?: number;
-      }>('/v1/bidang-2/dashboard', {
-        params: { tahun },
-      });
-
-      if (response.data) {
-        if (response.data.statistikBulanan) {
-          setStatistikBulanan(response.data.statistikBulanan);
-        }
-        if (response.data.totalDisetujui !== undefined) {
-          setTotalDisetujui(response.data.totalDisetujui);
-        }
-        if (response.data.totalDitolak !== undefined) {
-          setTotalDitolak(response.data.totalDitolak);
-        }
-        if (response.data.tahunAktif) {
-          setTahunAktif(response.data.tahunAktif);
+      const data = await bidang2Service.getDashboard({ tahun });
+      if (data) {
+        if (data.statistikBulanan) setStatistikBulanan(data.statistikBulanan);
+        if (data.totalDisetujui !== undefined) setTotalDisetujui(data.totalDisetujui);
+        if (data.totalDitolak !== undefined) setTotalDitolak(data.totalDitolak);
+        if (data.tahunAktif) {
+          setTahunAktif(data.tahunAktif);
         } else {
           setTahunAktif(tahun);
         }
       }
     } catch (error) {
-      console.error('Failed to update Bidang 2 dashboard data for year:', error);
+      console.error('Failed to update year statistics on Bidang 2 dashboard:', error);
     } finally {
       setIsLoadingYear(false);
     }
@@ -148,16 +174,13 @@ export function useBidang2Dashboard({
     }));
   }, [statistikBulanan]);
 
+  const refetch = useCallback(() => {
+    void fetchDashboardData();
+  }, [fetchDashboardData]);
+
   return {
-    ringkasan: initialRingkasan ?? {
-      total: 0,
-      menunggu_verifikasi: 0,
-      disetujui: 0,
-      ditolak: 0,
-      tambahan_bulan_ini: 0,
-      disetujui_bulan_ini: 0,
-    },
-    riwayatTerbaru: initialRiwayatTerbaru ?? [],
+    ringkasan,
+    riwayatTerbaru,
     chartData,
     totalDisetujui,
     totalDitolak,
@@ -167,7 +190,10 @@ export function useBidang2Dashboard({
     gantiTahun,
     selectedPermohonan,
     setSelectedPermohonan,
+    isLoading,
+    isError,
     isLoadingYear,
+    refetch,
   };
 }
 

@@ -1,85 +1,59 @@
-import { useEffect, useState, type FC } from 'react';
-import api from '../../services/api';
+import type { FC } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import useBidang2Dashboard, {
-  type RingkasanBidang2,
-  type RiwayatTerbaruBidang2Item,
-  type StatistikBulananBidang2Item,
-} from '../../hooks/useBidang2Dashboard';
+import useBidang2Dashboard from '../../hooks/useBidang2Dashboard';
 import Bidang2DashboardTemplate from '../../components/templates/Bidang2DashboardTemplate';
+import type { PermohonanDetailData } from '../../components/organisms/DetailPermohonanModal';
+import type { Bidang2PermohonanItem } from '../../components/molecules/Bidang2PermohonanRow';
 
 export const Bidang2Dashboard: FC = () => {
   const { user } = useAuth();
 
-  const [initialData, setInitialData] = useState<{
-    ringkasan?: RingkasanBidang2;
-    riwayatTerbaru?: RiwayatTerbaruBidang2Item[];
-    statistikBulanan?: StatistikBulananBidang2Item[];
-    totalDisetujui?: number;
-    totalDitolak?: number;
-    tahunAktif?: number;
-  }>({});
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    let isMounted = true;
-    setIsLoading(true);
-
-    api
-      .get<{
-        ringkasan?: RingkasanBidang2;
-        riwayatTerbaru?: RiwayatTerbaruBidang2Item[];
-        statistikBulanan?: StatistikBulananBidang2Item[];
-        totalDisetujui?: number;
-        totalDitolak?: number;
-        tahunAktif?: number;
-      }>('/v1/bidang-2/dashboard')
-      .then((res) => {
-        if (!isMounted) return;
-        setInitialData(res.data);
-      })
-      .catch((err) => {
-        console.error('Failed to fetch Bidang 2 dashboard data:', err);
-      })
-      .finally(() => {
-        if (isMounted) setIsLoading(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
   const {
-    ringkasan: ringkasanData,
-    riwayatTerbaru: riwayatData,
+    ringkasan,
+    riwayatTerbaru,
     chartData,
-    totalDisetujui: statDisetujui,
-    totalDitolak: statDitolak,
-    tahunAktif: activeYear,
+    totalDisetujui,
+    totalDitolak,
+    tahunAktif,
     viewMode,
     setViewMode,
     gantiTahun,
     selectedPermohonan,
     setSelectedPermohonan,
-  } = useBidang2Dashboard(initialData);
+    isLoading,
+    isError,
+  } = useBidang2Dashboard();
+
+  const detailModalData: PermohonanDetailData | null = selectedPermohonan
+    ? {
+        id: selectedPermohonan.id,
+        nomor_surat: selectedPermohonan.nomor_surat ?? '-',
+        judul: selectedPermohonan.judul ?? 'Tanpa Judul',
+        status: (selectedPermohonan.status as any) ?? 'diajukan',
+        tanggal: selectedPermohonan.created_at ?? null,
+        nilai_pengajuan: Number(selectedPermohonan.estimasi_anggaran ?? 0),
+        deskripsi: selectedPermohonan.ringkasan_tujuan ?? '',
+        dokumen: Array.isArray(selectedPermohonan.dokumen) ? selectedPermohonan.dokumen : [],
+      }
+    : null;
 
   return (
     <Bidang2DashboardTemplate
       user={user}
-      ringkasan={ringkasanData}
-      riwayatTerbaru={riwayatData}
+      ringkasan={ringkasan}
+      riwayatTerbaru={riwayatTerbaru}
       chartData={chartData ?? undefined}
-      totalDisetujui={statDisetujui}
-      totalDitolak={statDitolak}
-      tahunAktif={activeYear}
+      totalDisetujui={totalDisetujui}
+      totalDitolak={totalDitolak}
+      tahunAktif={tahunAktif}
       viewMode={viewMode as 'bulan' | 'tahun'}
       onViewModeChange={(m) => setViewMode(m)}
-      gantiTahun={gantiTahun}
-      selectedPermohonan={selectedPermohonan}
-      onSelectPermohonan={(p) => setSelectedPermohonan(p as any)}
+      gantiTahun={(t) => void gantiTahun(t)}
+      selectedPermohonan={detailModalData}
+      onSelectPermohonan={(item: Bidang2PermohonanItem) => setSelectedPermohonan(item as any)}
       onCloseDetail={() => setSelectedPermohonan(null)}
       isLoading={isLoading}
+      isError={isError}
     />
   );
 };

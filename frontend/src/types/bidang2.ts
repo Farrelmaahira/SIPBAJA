@@ -62,3 +62,39 @@ export interface Bidang2DetailApiResponse {
   permohonan: Bidang2DetailPengajuan;
 }
 
+export interface Bidang2PengajuanListItem {
+  id: number | string;
+  nomor_surat?: string | null;
+  judul?: string | null;
+  unit_id?: number | string;
+  unit_nama?: string;
+  created_at?: string | null;
+  tanggal_pengajuan?: string | null;
+  estimasi_anggaran?: number | string | null;
+  status?: string | null;
+  catatan_perencanaan?: CatatanPerencanaanData | null;
+  dokumen?: Bidang2DokumenItem | null;
+  [key: string]: unknown;
+}
+
+export interface Bidang2PengajuanListFilters {
+  status: string;
+  search: string;
+}
+
+export interface Bidang2PengajuanListResponse {
+  permohonanList: {
+    data: Bidang2PengajuanListItem[];
+    current_page?: number;
+    last_page?: number;
+    from?: number;
+    to?: number;
+    total?: number;
+  };
+  filters: Bidang2PengajuanListFilters;
+}
+
+export interface Bidang2MutationResponse {
+  message: string;
+  permohonan?: unknown;
+}
