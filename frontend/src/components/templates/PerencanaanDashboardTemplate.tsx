@@ -10,14 +10,16 @@ import type {
   PerencanaanDashboardStats,
   PermohonanTerbaruItem,
 } from '../../types/perencanaan';
+import type { NotificationItem } from '../../types/notification';
 
 export interface PerencanaanDashboardTemplateProps {
   stats?: PerencanaanDashboardStats;
   permohonanTerbaru: PermohonanTerbaruItem[];
   isLoading?: boolean;
+  errorMessage?: string;
   viewMode: 'bulan' | 'tahun';
   onViewModeChange: (mode: 'bulan' | 'tahun') => void;
-  recentNotifications?: any[];
+  recentNotifications?: NotificationItem[];
   unreadNotificationsCount?: number;
 }
 
@@ -25,6 +27,7 @@ export const PerencanaanDashboardTemplate: FC<PerencanaanDashboardTemplateProps>
   stats,
   permohonanTerbaru,
   isLoading = false,
+  errorMessage = '',
   viewMode,
   onViewModeChange,
   recentNotifications,
@@ -42,6 +45,7 @@ export const PerencanaanDashboardTemplate: FC<PerencanaanDashboardTemplateProps>
       readAllHref="/perencanaan/notifikasi/read-all"
       notifications={recentNotifications}
       unreadCount={unreadNotificationsCount}
+      flash={errorMessage ? { error: errorMessage } : undefined}
     >
       {/* Hero Welcome Banner */}
       <div className="relative overflow-hidden rounded-[24px] bg-[#0E7C5A] p-6 sm:px-9 sm:py-8 text-white shadow-[0_10px_24px_rgba(13,51,38,0.14)] mb-6">

@@ -5,9 +5,13 @@ import type { PerencanaanMakItem } from '../../types/perencanaan';
 export interface PerencanaanVerifikasiMakCardProps {
   maksList: PerencanaanMakItem[];
   selectedMakIds: number[];
+  catatan?: string;
+  makError?: string;
+  catatanError?: string;
   onAddMak: () => void;
   onRemoveMak: (index: number) => void;
   onChangeMak: (index: number, makId: number) => void;
+  onCatatanChange?: (val: string) => void;
   onApproveClick: () => void;
   onRejectClick: () => void;
   processing?: boolean;
@@ -16,19 +20,25 @@ export interface PerencanaanVerifikasiMakCardProps {
 export const PerencanaanVerifikasiMakCard: FC<PerencanaanVerifikasiMakCardProps> = ({
   maksList,
   selectedMakIds,
+  catatan = '',
+  makError = '',
+  catatanError = '',
   onAddMak,
   onRemoveMak,
   onChangeMak,
+  onCatatanChange,
   onApproveClick,
   onRejectClick,
   processing = false,
 }) => {
+  const validSelectedCount = selectedMakIds.filter(Boolean).length;
+
   return (
     <div className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)]">
       <div className="pb-4 mb-4 border-b border-[#F0F4F2]">
         <h3 className="text-base font-bold text-[#14201C]">Verifikasi Anggaran</h3>
         <p className="text-xs text-[#8A9A95] mt-0.5">
-          Tentukan Jenis MAK sebelum menyetujui permohonan
+          Tentukan Jenis MAK (bisa lebih dari 1) sebelum menyetujui permohonan
         </p>
       </div>
 
@@ -51,7 +61,7 @@ export const PerencanaanVerifikasiMakCard: FC<PerencanaanVerifikasiMakCardProps>
                 >
                   {maksList.map((m) => (
                     <option key={m.id} value={m.id}>
-                      {m.nama}
+                      {m.kode ? `${m.kode} - ${m.nama}` : m.nama}
                     </option>
                   ))}
                 </select>
@@ -73,6 +83,8 @@ export const PerencanaanVerifikasiMakCard: FC<PerencanaanVerifikasiMakCardProps>
           ))
         )}
 
+        {makError && <p className="text-[11px] font-medium text-[#D92D20]">{makError}</p>}
+
         <button
           type="button"
           onClick={onAddMak}
@@ -82,6 +94,25 @@ export const PerencanaanVerifikasiMakCard: FC<PerencanaanVerifikasiMakCardProps>
           <Plus className="w-3.5 h-3.5 text-[#0E7C5A]" />
           <span>Tambah Jenis MAK</span>
         </button>
+
+        {onCatatanChange && (
+          <div className="pt-2">
+            <label className="block text-xs font-bold text-[#14201C] mb-1.5">
+              Catatan Verifikasi (Opsional)
+            </label>
+            <textarea
+              rows={2}
+              value={catatan}
+              onChange={(e) => onCatatanChange(e.target.value)}
+              disabled={processing}
+              placeholder="Tambahkan catatan verifikasi anggaran bila diperlukan..."
+              className="w-full px-3.5 py-2.5 rounded-xl border border-[#E4EBE8] bg-[#FAFCFB] focus:bg-white text-xs text-[#14201C] focus:outline-none focus:border-[#0E7C5A] disabled:opacity-60"
+            />
+            {catatanError && (
+              <p className="text-[11px] font-medium text-[#D92D20] mt-1">{catatanError}</p>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="pt-5 mt-5 border-t border-[#F0F4F2] grid grid-cols-2 gap-3">
@@ -92,16 +123,16 @@ export const PerencanaanVerifikasiMakCard: FC<PerencanaanVerifikasiMakCardProps>
           className="py-3 px-3 rounded-xl border border-[#FECDCA] bg-[#FEE4E2]/70 hover:bg-[#FEE4E2] text-xs font-bold text-[#D92D20] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
         >
           <XCircle className="w-4 h-4 shrink-0" />
-          <span>Tolak</span>
+          <span>Tolak Permohonan</span>
         </button>
         <button
           type="button"
           onClick={onApproveClick}
-          disabled={processing || selectedMakIds.length === 0}
+          disabled={processing || validSelectedCount === 0}
           className="py-3 px-3 rounded-xl bg-[#0E7C5A] hover:bg-[#0A5C43] text-xs font-bold text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
         >
           <CheckCircle2 className="w-4 h-4 shrink-0" />
-          <span>Setujui</span>
+          <span>Simpan dan Kirim</span>
         </button>
       </div>
     </div>
@@ -109,4 +140,3 @@ export const PerencanaanVerifikasiMakCard: FC<PerencanaanVerifikasiMakCardProps>
 };
 
 export default PerencanaanVerifikasiMakCard;
-

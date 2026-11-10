@@ -3,18 +3,31 @@ import type { ApiMessageResponse } from '../types/api';
 import type {
   PerencanaanPengajuanDetailResponse,
   PerencanaanPengajuanListResponse,
+  PerencanaanPengadaanDetailResponse,
   JenisMakResponse,
   RkaklResponse,
   PerencanaanProfilResponse,
   PerencanaanDashboardResponse,
+  PerencanaanMakItem,
 } from '../types/perencanaan';
+
+export interface PerencanaanPengajuanFilterParams {
+  q?: string;
+  search?: string;
+  status?: string;
+  statuses?: string[];
+  bulan?: string | number;
+  tahun?: string | number;
+  unit_id?: string | number;
+  page?: number;
+}
 
 export const perencanaanService = {
   /**
    * Mengambil daftar permohonan masuk yang perlu diverifikasi Perencanaan.
    */
   async getPengajuanList(
-    params?: { q?: string; statuses?: string[]; page?: number },
+    params?: PerencanaanPengajuanFilterParams,
     signal?: AbortSignal
   ): Promise<PerencanaanPengajuanListResponse> {
     const response = await api.get<PerencanaanPengajuanListResponse>(
@@ -42,15 +55,16 @@ export const perencanaanService = {
   },
 
   /**
-   * Menyetujui permohonan dan menetapkan jenis MAK.
+   * Menyetujui permohonan dan menetapkan satu atau lebih Jenis MAK.
    */
   async approvePengajuan(
     id: string | number,
-    makIds: number[]
+    makIds: number[],
+    catatan?: string
   ): Promise<ApiMessageResponse> {
     const response = await api.post<ApiMessageResponse>(
       `/v1/perencanaan/pengajuan/${id}/approve`,
-      { mak_ids: makIds }
+      { mak_ids: makIds, catatan }
     );
     return response.data;
   },
@@ -64,7 +78,43 @@ export const perencanaanService = {
   ): Promise<ApiMessageResponse> {
     const response = await api.post<ApiMessageResponse>(
       `/v1/perencanaan/pengajuan/${id}/reject`,
-      { alasan }
+      { alasan, catatan: alasan }
+    );
+    return response.data;
+  },
+
+  /**
+   * Mengambil detail Dokumen Pengadaan untuk Perencanaan (lihat saja + konteks perbaikan MAK).
+   */
+  async getPengadaanDetail(
+    pengadaanId: string | number,
+    signal?: AbortSignal
+  ): Promise<PerencanaanPengadaanDetailResponse> {
+    const response = await api.get<PerencanaanPengadaanDetailResponse>(
+      `/v1/perencanaan/pengadaan/${pengadaanId}`,
+      { signal }
+    );
+    return response.data;
+  },
+
+  /**
+   * Memperbaiki Jenis MAK pada Dokumen Pengadaan (hanya sebelum PPK menyetujui).
+   */
+  async updateJenisMakPengadaan(
+    pengadaanId: string | number,
+    payload: { mak_id?: number; permohonan_mak_id?: number } | number
+  ): Promise<ApiMessageResponse> {
+    const body =
+      typeof payload === 'number'
+        ? { mak_id: payload, permohonan_mak_id: payload }
+        : {
+            mak_id: payload.mak_id ?? payload.permohonan_mak_id,
+            permohonan_mak_id: payload.permohonan_mak_id ?? payload.mak_id,
+          };
+
+    const response = await api.put<ApiMessageResponse>(
+      `/v1/perencanaan/pengadaan/${pengadaanId}/jenis-mak`,
+      body
     );
     return response.data;
   },
@@ -74,10 +124,11 @@ export const perencanaanService = {
    */
   async getJenisMakList(
     q?: string,
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    page?: number
   ): Promise<JenisMakResponse> {
     const response = await api.get<JenisMakResponse>('/v1/perencanaan/jenis-mak', {
-      params: { q },
+      params: { q, page },
       signal,
     });
     return response.data;
@@ -90,8 +141,8 @@ export const perencanaanService = {
     kode: string;
     nama: string;
     ppk_user_id: number;
-  }): Promise<ApiMessageResponse & { mak?: unknown }> {
-    const response = await api.post<ApiMessageResponse & { mak?: unknown }>(
+  }): Promise<ApiMessageResponse & { mak?: PerencanaanMakItem }> {
+    const response = await api.post<ApiMessageResponse & { mak?: PerencanaanMakItem }>(
       '/v1/perencanaan/jenis-mak',
       data
     );
@@ -104,8 +155,8 @@ export const perencanaanService = {
   async updateJenisMak(
     id: number | string,
     data: { kode: string; nama: string; ppk_user_id: number }
-  ): Promise<ApiMessageResponse & { mak?: unknown }> {
-    const response = await api.put<ApiMessageResponse & { mak?: unknown }>(
+  ): Promise<ApiMessageResponse & { mak?: PerencanaanMakItem }> {
+    const response = await api.put<ApiMessageResponse & { mak?: PerencanaanMakItem }>(
       `/v1/perencanaan/jenis-mak/${id}`,
       data
     );
@@ -113,28 +164,40 @@ export const perencanaanService = {
   },
 
   /**
-   * Menghapus Jenis MAK.
+   * Menghapus Jenis MAK (soft delete).
    */
-  async deleteJenisMak(id: number | string): Promise<void> {
-    await api.delete(`/v1/perencanaan/jenis-mak/${id}`);
+  async deleteJenisMak(id: number | string): Promise<ApiMessageResponse> {
+    const response = await api.delete<ApiMessageResponse>(
+      `/v1/perencanaan/jenis-mak/${id}`
+    );
+    return response.data;
   },
 
   /**
-   * Mengambil data dokumen RKAKL aktif dan riwayat versinya.
+   * Mengambil data dokumen RKAKL aktif dan riwayat versinya per tahun anggaran.
    */
-  async getRkaklData(signal?: AbortSignal): Promise<RkaklResponse> {
+  async getRkaklData(
+    signal?: AbortSignal,
+    tahun?: string | number
+  ): Promise<RkaklResponse> {
     const response = await api.get<RkaklResponse>('/v1/perencanaan/rkakl', {
+      params: tahun ? { tahun } : undefined,
       signal,
     });
     return response.data;
   },
 
   /**
-   * Memperbarui / mengganti dokumen RKAKL dengan berkas versi baru.
+   * Mengunggah dokumen RKAKL baru dengan tahun anggaran dan berkas.
    */
-  async replaceRkakl(file: File | string): Promise<ApiMessageResponse> {
+  async replaceRkakl(
+    file: File | string,
+    tahunAnggaran: string | number = 2026
+  ): Promise<ApiMessageResponse> {
     if (file instanceof File) {
       const formData = new FormData();
+      formData.append('tahun_anggaran', String(tahunAnggaran));
+      formData.append('berkas', file);
       formData.append('file', file);
       formData.append('filename', file.name);
       const response = await api.post<ApiMessageResponse>(
@@ -150,8 +213,42 @@ export const perencanaanService = {
     }
 
     const response = await api.post<ApiMessageResponse>('/v1/perencanaan/rkakl', {
+      tahun_anggaran: Number(tahunAnggaran),
       filename: file,
     });
+    return response.data;
+  },
+
+  /**
+   * Mengganti dokumen RKAKL yang sudah ada berdasarkan ID dokumen.
+   */
+  async gantiRkaklById(
+    dokumenId: number | string,
+    berkas: File
+  ): Promise<ApiMessageResponse> {
+    const formData = new FormData();
+    formData.append('berkas', berkas);
+    formData.append('file', berkas);
+
+    const response = await api.post<ApiMessageResponse>(
+      `/v1/perencanaan/rkakl/${dokumenId}/ganti`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return response.data;
+  },
+
+  /**
+   * Menghapus dokumen RKAKL berdasarkan ID dokumen.
+   */
+  async deleteRkakl(dokumenId: number | string): Promise<ApiMessageResponse> {
+    const response = await api.delete<ApiMessageResponse>(
+      `/v1/perencanaan/rkakl/${dokumenId}`
+    );
     return response.data;
   },
 

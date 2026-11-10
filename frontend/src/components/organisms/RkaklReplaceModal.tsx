@@ -4,9 +4,13 @@ import { Upload, X, Loader2 } from 'lucide-react';
 export interface RkaklReplaceModalProps {
   isOpen: boolean;
   selectedFile: string;
+  fileError?: string;
+  isFileValid?: boolean;
+  tahunAnggaran?: number;
   processing?: boolean;
   onClose: () => void;
   onFileChange: (file: File) => void;
+  onTahunAnggaranChange?: (val: number) => void;
   onSubmit: (e: FormEvent) => void;
   title?: string;
   submitLabel?: string;
@@ -15,9 +19,13 @@ export interface RkaklReplaceModalProps {
 export const RkaklReplaceModal: FC<RkaklReplaceModalProps> = ({
   isOpen,
   selectedFile,
+  fileError = '',
+  isFileValid = true,
+  tahunAnggaran,
   processing = false,
   onClose,
   onFileChange,
+  onTahunAnggaranChange,
   onSubmit,
   title = 'Ganti Dokumen RKAKL',
   submitLabel = 'Perbarui Dokumen',
@@ -51,17 +59,37 @@ export const RkaklReplaceModal: FC<RkaklReplaceModalProps> = ({
           </button>
         </div>
 
+        {onTahunAnggaranChange && tahunAnggaran !== undefined && (
+          <div>
+            <label className="block text-xs font-bold text-[#14201C] mb-1.5">
+              Tahun Anggaran <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              min={2020}
+              max={2099}
+              value={tahunAnggaran}
+              onChange={(e) => onTahunAnggaranChange(Number(e.target.value))}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-[#E4EBE8] text-xs font-semibold text-[#14201C] bg-[#FAFCFB] focus:bg-white focus:outline-none focus:border-[#0E7C5A]"
+            />
+          </div>
+        )}
+
         <input
           ref={fileInputRef}
           type="file"
-          accept=".pdf"
+          accept=".pdf,.jpg,.jpeg,.png"
           onChange={handleFileSelect}
           className="hidden"
         />
 
         <div
           onClick={() => fileInputRef.current?.click()}
-          className="rounded-2xl bg-[#F5F8F6] border-2 border-dashed border-[#D2DFD8] hover:border-[#0E7C5A] p-6 text-center cursor-pointer transition-colors"
+          className={`rounded-2xl bg-[#F5F8F6] border-2 border-dashed p-6 text-center cursor-pointer transition-colors ${
+            fileError
+              ? 'border-[#D92D20] bg-[#FEE4E2]/30'
+              : 'border-[#D2DFD8] hover:border-[#0E7C5A]'
+          }`}
         >
           <div className="w-12 h-12 rounded-full bg-[#EAF6F1] text-[#0E7C5A] flex items-center justify-center mx-auto mb-3">
             <Upload className="w-6 h-6" />
@@ -70,9 +98,13 @@ export const RkaklReplaceModal: FC<RkaklReplaceModalProps> = ({
             {selectedFile || 'Belum ada berkas dipilih'}
           </p>
           <p className="text-[11px] text-[#8A9A95] mt-1">
-            Klik untuk memilih berkas format PDF dari komputer Anda
+            Klik untuk memilih berkas format PDF, JPG, atau PNG (maksimal 10 MB)
           </p>
         </div>
+
+        {fileError && (
+          <p className="text-xs font-semibold text-[#D92D20] -mt-2">{fileError}</p>
+        )}
 
         <div className="flex items-center justify-end gap-3 pt-2">
           <button
@@ -85,8 +117,8 @@ export const RkaklReplaceModal: FC<RkaklReplaceModalProps> = ({
           </button>
           <button
             type="submit"
-            disabled={processing || !selectedFile}
-            className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold rounded-xl bg-[#0E7C5A] hover:bg-[#0A5C43] text-white transition-colors cursor-pointer disabled:opacity-50"
+            disabled={processing || !selectedFile || !isFileValid}
+            className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold rounded-xl bg-[#0E7C5A] hover:bg-[#0A5C43] text-white transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {processing && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
             <span>{processing ? 'Menyimpan...' : submitLabel}</span>
@@ -98,4 +130,3 @@ export const RkaklReplaceModal: FC<RkaklReplaceModalProps> = ({
 };
 
 export default RkaklReplaceModal;
-

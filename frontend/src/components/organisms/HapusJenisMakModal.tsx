@@ -6,6 +6,7 @@ export interface HapusJenisMakModalProps {
   isOpen: boolean;
   targetMak?: JenisMakRow | null;
   processing?: boolean;
+  deleteError?: string;
   onClose: () => void;
   onConfirm: () => void;
 }
@@ -14,6 +15,7 @@ export const HapusJenisMakModal: FC<HapusJenisMakModalProps> = ({
   isOpen,
   targetMak,
   processing = false,
+  deleteError = '',
   onClose,
   onConfirm,
 }) => {
@@ -38,10 +40,17 @@ export const HapusJenisMakModal: FC<HapusJenisMakModalProps> = ({
           <span className="text-[#14201C] font-semibold">{targetMak.nama}</span>?
         </p>
 
+        {deleteError && (
+          <div className="p-3 rounded-xl bg-[#FEE4E2]/70 border border-[#FECDCA] text-xs font-medium text-[#D92D20]">
+            {deleteError}
+          </div>
+        )}
+
         <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#F0F4F2]">
           <button
             type="button"
             onClick={onClose}
+            disabled={processing}
             className="px-4 py-2 rounded-xl border border-[#E4EBE8] text-xs font-semibold text-[#5F6F6A] hover:bg-[#F4F7F5] transition-colors cursor-pointer"
           >
             Batal
@@ -61,4 +70,3 @@ export const HapusJenisMakModal: FC<HapusJenisMakModalProps> = ({
 };
 
 export default HapusJenisMakModal;
-

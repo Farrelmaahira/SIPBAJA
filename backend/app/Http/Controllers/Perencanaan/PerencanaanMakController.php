@@ -5,8 +5,7 @@ namespace App\Http\Controllers\Perencanaan;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SimpanJenisMakRequest;
 use App\Models\Mak;
-use App\Models\User;
-use App\Services\PerencanaanService;
+use App\Services\MakService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -14,15 +13,14 @@ use Illuminate\Http\Response;
 class PerencanaanMakController extends Controller
 {
     public function __construct(
-        private PerencanaanService $perencanaanService
+        private MakService $makService
     ) {}
 
     public function index(Request $request): JsonResponse
     {
-        $q = $request->query('q', '');
-        $maks = $this->perencanaanService->paginateMaks($q);
-        $ppkOptions = User::whereHas('Role', fn ($query) => $query->where('nama', 'PPK'))
-            ->get(['id', 'nama', 'email']);
+        $q = (string) $request->query('q', '');
+        $maks = $this->makService->paginateUntukPerencanaan($q);
+        $ppkOptions = $this->makService->getOpsiPpk();
 
         return response()->json([
             'maks' => $maks,
@@ -33,7 +31,7 @@ class PerencanaanMakController extends Controller
 
     public function store(SimpanJenisMakRequest $request): JsonResponse
     {
-        $mak = $this->perencanaanService->storeMak($request->validated());
+        $mak = $this->makService->simpanJenisMakPerencanaan($request->validated());
 
         return response()->json([
             'message' => 'Jenis MAK baru berhasil ditambahkan.',
@@ -43,7 +41,7 @@ class PerencanaanMakController extends Controller
 
     public function update(SimpanJenisMakRequest $request, Mak $mak): JsonResponse
     {
-        $mak = $this->perencanaanService->updateMak($mak, $request->validated());
+        $mak = $this->makService->ubahJenisMakPerencanaan($mak, $request->validated());
 
         return response()->json([
             'message' => 'Jenis MAK berhasil diperbarui.',
@@ -53,7 +51,7 @@ class PerencanaanMakController extends Controller
 
     public function destroy(Mak $mak): Response
     {
-        $this->perencanaanService->deleteMak($mak);
+        $this->makService->hapusJenisMakPerencanaan($mak);
 
         return response()->noContent();
     }

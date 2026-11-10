@@ -1,5 +1,5 @@
 import type { FC, FormEvent } from 'react';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import AppLayout from './AppLayout';
 import JenisMakTable from '../organisms/JenisMakTable';
 import JenisMakFormModal from '../organisms/JenisMakFormModal';
@@ -10,10 +10,15 @@ import { PERENCANAAN_NAV_ITEMS } from '../../pages/Perencanaan/Dashboard';
 export interface PerencanaanJenisMakTemplateProps {
   rows: JenisMakRow[];
   searchQuery: string;
+  currentPage?: number;
+  lastPage?: number;
   isLoading?: boolean;
   processing?: boolean;
+  flashSuccess?: string;
+  flashError?: string;
   onSearchChange: (val: string) => void;
   onSearchSubmit: (e: FormEvent) => void;
+  onPageChange?: (page: number) => void;
   onOpenAddModal: () => void;
   onOpenEditModal: (row: JenisMakRow) => void;
   onOpenDeleteModal: (row: JenisMakRow) => void;
@@ -25,6 +30,8 @@ export interface PerencanaanJenisMakTemplateProps {
   formNama: string;
   formPpkId: number;
   ppkOptions?: PpkOption[];
+  fieldErrors?: Record<string, string>;
+  formError?: string;
   onCloseFormModal: () => void;
   onFormKodeChange: (val: string) => void;
   onFormNamaChange: (val: string) => void;
@@ -34,6 +41,7 @@ export interface PerencanaanJenisMakTemplateProps {
   // Modal Delete
   deleteModalOpen: boolean;
   deleteTarget?: JenisMakRow | null;
+  deleteError?: string;
   onCloseDeleteModal: () => void;
   onConfirmDelete: () => void;
 }
@@ -41,10 +49,15 @@ export interface PerencanaanJenisMakTemplateProps {
 export const PerencanaanJenisMakTemplate: FC<PerencanaanJenisMakTemplateProps> = ({
   rows,
   searchQuery,
+  currentPage = 1,
+  lastPage = 1,
   isLoading = false,
   processing = false,
+  flashSuccess = '',
+  flashError = '',
   onSearchChange,
   onSearchSubmit,
+  onPageChange,
   onOpenAddModal,
   onOpenEditModal,
   onOpenDeleteModal,
@@ -55,6 +68,8 @@ export const PerencanaanJenisMakTemplate: FC<PerencanaanJenisMakTemplateProps> =
   formNama,
   formPpkId,
   ppkOptions = [],
+  fieldErrors = {},
+  formError = '',
   onCloseFormModal,
   onFormKodeChange,
   onFormNamaChange,
@@ -63,6 +78,7 @@ export const PerencanaanJenisMakTemplate: FC<PerencanaanJenisMakTemplateProps> =
 
   deleteModalOpen,
   deleteTarget,
+  deleteError = '',
   onCloseDeleteModal,
   onConfirmDelete,
 }) => {
@@ -76,6 +92,11 @@ export const PerencanaanJenisMakTemplate: FC<PerencanaanJenisMakTemplateProps> =
       profileHref="/perencanaan/profil"
       notifikasiHref="/perencanaan/notifikasi"
       readAllHref="/perencanaan/notifikasi/read-all"
+      flash={
+        flashError || flashSuccess
+          ? { error: flashError || undefined, success: flashSuccess || undefined }
+          : undefined
+      }
     >
       {/* Hero Top Banner */}
       <div className="relative overflow-hidden rounded-[24px] bg-[#0E7C5A] p-6 sm:px-9 sm:py-8 text-white shadow-[0_10px_24px_rgba(13,51,38,0.14)] mb-6">
@@ -139,6 +160,35 @@ export const PerencanaanJenisMakTemplate: FC<PerencanaanJenisMakTemplateProps> =
           onEdit={onOpenEditModal}
           onDelete={onOpenDeleteModal}
         />
+
+        {lastPage > 1 && onPageChange && (
+          <div className="flex items-center justify-between pt-5 mt-4 border-t border-[#F0F4F2]">
+            <span className="text-xs text-[#8A9A95]">
+              Halaman <strong className="text-[#14201C]">{currentPage}</strong> dari{' '}
+              <strong className="text-[#14201C]">{lastPage}</strong>
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={currentPage <= 1 || isLoading}
+                onClick={() => onPageChange(currentPage - 1)}
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[#E4EBE8] text-xs font-semibold text-[#14201C] hover:bg-[#F4F7F5] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                <span>Sebelumnya</span>
+              </button>
+              <button
+                type="button"
+                disabled={currentPage >= lastPage || isLoading}
+                onClick={() => onPageChange(currentPage + 1)}
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[#E4EBE8] text-xs font-semibold text-[#14201C] hover:bg-[#F4F7F5] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <span>Selanjutnya</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Modals */}
@@ -150,6 +200,8 @@ export const PerencanaanJenisMakTemplate: FC<PerencanaanJenisMakTemplateProps> =
         ppkUserId={formPpkId}
         ppkOptions={ppkOptions}
         processing={processing}
+        fieldErrors={fieldErrors}
+        formError={formError}
         onClose={onCloseFormModal}
         onKodeChange={onFormKodeChange}
         onNamaChange={onFormNamaChange}
@@ -161,6 +213,7 @@ export const PerencanaanJenisMakTemplate: FC<PerencanaanJenisMakTemplateProps> =
         isOpen={deleteModalOpen}
         targetMak={deleteTarget}
         processing={processing}
+        deleteError={deleteError}
         onClose={onCloseDeleteModal}
         onConfirm={onConfirmDelete}
       />
@@ -169,4 +222,3 @@ export const PerencanaanJenisMakTemplate: FC<PerencanaanJenisMakTemplateProps> =
 };
 
 export default PerencanaanJenisMakTemplate;
-

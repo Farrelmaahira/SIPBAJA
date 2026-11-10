@@ -1,18 +1,26 @@
 import { useState, useEffect, useCallback, useMemo, type FC, type FormEvent } from 'react';
 import { perencanaanService } from '../../../services/perencanaanService';
 import PerencanaanRkaklTemplate from '../../../components/templates/PerencanaanRkaklTemplate';
+import { validateUploadFile, extractServerErrors } from '../../../utils/fileValidation';
 import type { DokumenItem } from '../../../types/dokumen';
 import type { RkaklActiveDoc, RkaklHistoryItem } from '../../../types/perencanaan';
 
 export const PerencanaanRkaklIndex: FC = () => {
   const [activeDoc, setActiveDoc] = useState<RkaklActiveDoc | null>(null);
   const [historyList, setHistoryList] = useState<RkaklHistoryItem[]>([]);
+  const [selectedTahun, setSelectedTahun] = useState<string>('');
+  const [tahunAnggaran, setTahunAnggaran] = useState<number>(new Date().getFullYear());
   const [isLoading, setIsLoading] = useState(true);
+  const [flashSuccess, setFlashSuccess] = useState('');
+  const [flashError, setFlashError] = useState('');
 
   const [replaceModalOpen, setReplaceModalOpen] = useState(false);
   const [selectedFileObj, setSelectedFileObj] = useState<File | null>(null);
   const [selectedFileName, setSelectedFileName] = useState('');
+  const [fileError, setFileError] = useState('');
+  const [isFileValid, setIsFileValid] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [deletingDocId, setDeletingDocId] = useState<number | string | null>(null);
 
   // Document action & preview states
   const [isViewingDocId, setIsViewingDocId] = useState<number | string | null>(null);
@@ -21,10 +29,11 @@ export const PerencanaanRkaklIndex: FC = () => {
   const [previewDocId, setPreviewDocId] = useState<number | string | null>(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState<boolean>(false);
 
-  const fetchRkakl = useCallback(async () => {
+  const fetchRkakl = useCallback(async (tahunFilter = selectedTahun) => {
     setIsLoading(true);
+    setFlashError('');
     try {
-      const res = await perencanaanService.getRkaklData();
+      const res = await perencanaanService.getRkaklData(undefined, tahunFilter || undefined);
       const rkaklData = (res.rkakl || res.data || res) as {
         active_doc?: RkaklActiveDoc | null;
         history?: RkaklHistoryItem[];
@@ -33,14 +42,15 @@ export const PerencanaanRkaklIndex: FC = () => {
       setHistoryList(rkaklData.history || []);
     } catch (err) {
       console.error('Failed to fetch RKAKL data:', err);
+      setFlashError('Gagal memuat data dokumen RKAKL.');
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [selectedTahun]);
 
   useEffect(() => {
-    fetchRkakl();
-  }, [fetchRkakl]);
+    void fetchRkakl(selectedTahun);
+  }, [selectedTahun, fetchRkakl]);
 
   const activeFilename =
     activeDoc?.nama_asli ||
@@ -55,13 +65,13 @@ export const PerencanaanRkaklIndex: FC = () => {
     }
     return [
       {
-        id: (activeDoc.id as number | string) || 'rkakl-active',
+        id: activeDoc.id || 'rkakl-active',
         nama_asli: activeFilename || 'Dokumen_RKAKL.pdf',
         tipe_dokumen: 'rkakl',
         versi: activeDoc.versi,
-        ukuran_bytes: activeDoc.ukuran_bytes as number | undefined,
+        ukuran_bytes: activeDoc.ukuran_bytes,
         download_url:
-          (activeDoc.download_url as string) ||
+          activeDoc.download_url ||
           (activeDoc.id
             ? `/api/v1/perencanaan/rkakl/dokumen/${activeDoc.id}`
             : '/api/v1/perencanaan/rkakl/dokumen'),
@@ -144,7 +154,7 @@ export const PerencanaanRkaklIndex: FC = () => {
 
   const handleSelectHistoryDoc = async (doc: RkaklHistoryItem) => {
     const docUrl =
-      (doc.download_url as string) || (doc.id ? `/api/v1/perencanaan/rkakl/dokumen/${doc.id}` : null);
+      doc.download_url || (doc.id ? `/api/v1/perencanaan/rkakl/dokumen/${doc.id}` : null);
     if (!docUrl) return;
 
     try {
@@ -157,22 +167,68 @@ export const PerencanaanRkaklIndex: FC = () => {
     }
   };
 
+  const handleFileChange = (file: File) => {
+    setSelectedFileObj(file);
+    setSelectedFileName(file.name);
+    const validation = validateUploadFile(file);
+    if (!validation.valid) {
+      setFileError(validation.errorMessage || 'Berkas tidak valid.');
+      setIsFileValid(false);
+    } else {
+      setFileError('');
+      setIsFileValid(true);
+    }
+  };
+
   const handleReplaceSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    const fileToUpload = selectedFileObj || selectedFileName;
-    if (!fileToUpload) return;
+    if (!selectedFileObj) return;
+
+    const validation = validateUploadFile(selectedFileObj);
+    if (!validation.valid) {
+      setFileError(validation.errorMessage || 'Berkas tidak valid.');
+      setIsFileValid(false);
+      return;
+    }
 
     setProcessing(true);
+    setFileError('');
+    setFlashSuccess('');
+    setFlashError('');
     try {
-      await perencanaanService.replaceRkakl(fileToUpload);
+      if (activeDoc?.id) {
+        const res = await perencanaanService.gantiRkaklById(activeDoc.id, selectedFileObj);
+        setFlashSuccess(res.message || 'Dokumen RKAKL berhasil diganti.');
+      } else {
+        const res = await perencanaanService.replaceRkakl(selectedFileObj, tahunAnggaran);
+        setFlashSuccess(res.message || 'Dokumen RKAKL berhasil diunggah.');
+      }
       setReplaceModalOpen(false);
       setSelectedFileObj(null);
       setSelectedFileName('');
-      await fetchRkakl();
-    } catch (err) {
-      console.error('Failed to update RKAKL:', err);
+      setIsFileValid(false);
+      await fetchRkakl(selectedTahun);
+    } catch (err: unknown) {
+      const serverErr = extractServerErrors(err);
+      setFileError(serverErr.fieldErrors.berkas || serverErr.message);
     } finally {
       setProcessing(false);
+    }
+  };
+
+  const handleDeleteDoc = async (docId: number | string) => {
+    setDeletingDocId(docId);
+    setFlashSuccess('');
+    setFlashError('');
+    try {
+      const res = await perencanaanService.deleteRkakl(docId);
+      setFlashSuccess(res.message || 'Dokumen RKAKL berhasil dihapus.');
+      await fetchRkakl(selectedTahun);
+    } catch (err: unknown) {
+      const serverErr = extractServerErrors(err);
+      setFlashError(serverErr.message || 'Gagal menghapus dokumen RKAKL.');
+    } finally {
+      setDeletingDocId(null);
     }
   };
 
@@ -180,24 +236,34 @@ export const PerencanaanRkaklIndex: FC = () => {
     <PerencanaanRkaklTemplate
       activeFilename={activeFilename}
       activeVersion={activeVersion}
+      activeDocId={activeDoc?.id ?? null}
       activeDokumenList={activeDokumenList}
       historyList={historyList}
+      selectedTahun={selectedTahun}
+      tahunAnggaran={tahunAnggaran}
       isLoading={isLoading}
       replaceModalOpen={replaceModalOpen}
       selectedFile={selectedFileName}
+      fileError={fileError}
+      isFileValid={isFileValid}
       processing={processing}
+      deletingDocId={deletingDocId}
+      flashSuccess={flashSuccess}
+      flashError={flashError}
+      onTahunChange={setSelectedTahun}
+      onTahunAnggaranChange={setTahunAnggaran}
       onOpenReplaceModal={() => {
         setSelectedFileObj(null);
         setSelectedFileName('');
+        setFileError('');
+        setIsFileValid(false);
         setReplaceModalOpen(true);
       }}
       onCloseReplaceModal={() => setReplaceModalOpen(false)}
-      onFileChange={(file) => {
-        setSelectedFileObj(file);
-        setSelectedFileName(file.name);
-      }}
+      onFileChange={handleFileChange}
       onReplaceSubmit={handleReplaceSubmit}
       onSelectHistoryDoc={handleSelectHistoryDoc}
+      onDeleteDoc={handleDeleteDoc}
       onViewDokumen={handleViewDokumen}
       onDownloadDokumen={handleDownloadDokumen}
       isViewingDocId={isViewingDocId}

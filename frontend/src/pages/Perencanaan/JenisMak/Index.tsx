@@ -1,16 +1,22 @@
 import { useState, useEffect, type FC, type FormEvent } from 'react';
 import PerencanaanJenisMakTemplate from '../../../components/templates/PerencanaanJenisMakTemplate';
 import perencanaanService from '../../../services/perencanaanService';
-import type { JenisMakRow, PpkOption } from '../../../types/perencanaan';
+import { extractServerErrors } from '../../../utils/fileValidation';
+import type {
+  JenisMakRow,
+  PpkOption,
+  PerencanaanMakRawItem,
+} from '../../../types/perencanaan';
 
-function parseMakRow(item: any): JenisMakRow {
+function parseMakRow(item: PerencanaanMakRawItem): JenisMakRow {
   const raw = item.nama || '';
   const parts = raw.split(' - ');
   const kode =
     item.kode ||
     (parts.length > 1 && /^\d+$/.test(parts[0].trim()) ? parts[0].trim() : '-');
   const namaBersih = parts.length > 1 ? parts.slice(1).join(' - ').trim() : raw;
-  const ppkNama = item.ppk?.nama || item.Ppk?.nama || 'Belum Ditugaskan';
+  const ppkNama =
+    item.ppk_user?.nama || item.ppk?.nama || item.Ppk?.nama || 'Belum Ditugaskan';
 
   return {
     id: item.id,
@@ -24,10 +30,14 @@ function parseMakRow(item: any): JenisMakRow {
 
 export const PerencanaanJenisMakIndex: FC = () => {
   const [search, setSearch] = useState('');
-  const [rawMaks, setRawMaks] = useState<any[]>([]);
+  const [rawMaks, setRawMaks] = useState<PerencanaanMakRawItem[]>([]);
   const [ppkOptions, setPpkOptions] = useState<PpkOption[]>([]);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [lastPage, setLastPage] = useState<number>(1);
   const [isLoading, setIsLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [flashSuccess, setFlashSuccess] = useState('');
+  const [flashError, setFlashError] = useState('');
 
   // Modals state
   const [formModalOpen, setFormModalOpen] = useState(false);
@@ -36,18 +46,30 @@ export const PerencanaanJenisMakIndex: FC = () => {
   const [formKode, setFormKode] = useState('');
   const [formNama, setFormNama] = useState('');
   const [formPpkId, setFormPpkId] = useState<number>(1);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [formError, setFormError] = useState('');
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<JenisMakRow | null>(null);
+  const [deleteError, setDeleteError] = useState('');
 
-  const fetchJenisMak = async (q = search, signal?: AbortSignal) => {
+  const fetchJenisMak = async (
+    q = search,
+    page = currentPage,
+    signal?: AbortSignal
+  ) => {
     setIsLoading(true);
+    setFlashError('');
     try {
-      const res = await perencanaanService.getJenisMakList(q, signal);
+      const res = await perencanaanService.getJenisMakList(q, signal, page);
       if (Array.isArray(res.maks)) {
         setRawMaks(res.maks);
-      } else if (res.maks && Array.isArray((res.maks as any).data)) {
-        setRawMaks((res.maks as any).data);
+        setCurrentPage(1);
+        setLastPage(1);
+      } else if (res.maks && Array.isArray(res.maks.data)) {
+        setRawMaks(res.maks.data);
+        setCurrentPage(res.maks.current_page ?? page);
+        setLastPage(res.maks.last_page ?? 1);
       } else {
         setRawMaks([]);
       }
@@ -58,9 +80,10 @@ export const PerencanaanJenisMakIndex: FC = () => {
           setFormPpkId(res.ppkOptions[0].id);
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (!signal?.aborted) {
         console.error('Failed to fetch Jenis MAK:', err);
+        setFlashError('Gagal memuat daftar Jenis MAK.');
       }
     } finally {
       if (!signal?.aborted) {
@@ -71,13 +94,14 @@ export const PerencanaanJenisMakIndex: FC = () => {
 
   useEffect(() => {
     const controller = new AbortController();
-    void fetchJenisMak(search, controller.signal);
+    void fetchJenisMak(search, currentPage, controller.signal);
     return () => controller.abort();
-  }, []);
+  }, [currentPage]);
 
   const handleSearchSubmit = (e: FormEvent) => {
     e.preventDefault();
-    void fetchJenisMak(search);
+    setCurrentPage(1);
+    void fetchJenisMak(search, 1);
   };
 
   const handleOpenAdd = () => {
@@ -85,6 +109,8 @@ export const PerencanaanJenisMakIndex: FC = () => {
     setEditId(null);
     setFormKode('');
     setFormNama('');
+    setFieldErrors({});
+    setFormError('');
     if (ppkOptions.length > 0) {
       setFormPpkId(ppkOptions[0].id);
     }
@@ -94,14 +120,17 @@ export const PerencanaanJenisMakIndex: FC = () => {
   const handleOpenEdit = (row: JenisMakRow) => {
     setIsEdit(true);
     setEditId(row.id);
-    setFormKode(row.kode);
+    setFormKode(row.kode === '-' ? '' : row.kode);
     setFormNama(row.nama);
     setFormPpkId(row.ppk_user_id || (ppkOptions[0]?.id ?? 1));
+    setFieldErrors({});
+    setFormError('');
     setFormModalOpen(true);
   };
 
   const handleOpenDelete = (row: JenisMakRow) => {
     setDeleteTarget(row);
+    setDeleteError('');
     setDeleteModalOpen(true);
   };
 
@@ -110,6 +139,9 @@ export const PerencanaanJenisMakIndex: FC = () => {
     if (!formKode.trim() || !formNama.trim()) return;
 
     setProcessing(true);
+    setFieldErrors({});
+    setFormError('');
+    setFlashSuccess('');
     try {
       const payload = {
         kode: formKode.trim(),
@@ -118,15 +150,19 @@ export const PerencanaanJenisMakIndex: FC = () => {
       };
 
       if (isEdit && editId) {
-        await perencanaanService.updateJenisMak(editId, payload);
+        const res = await perencanaanService.updateJenisMak(editId, payload);
+        setFlashSuccess(res.message || 'Jenis MAK berhasil diperbarui.');
       } else {
-        await perencanaanService.storeJenisMak(payload);
+        const res = await perencanaanService.storeJenisMak(payload);
+        setFlashSuccess(res.message || 'Jenis MAK berhasil ditambahkan.');
       }
 
       setFormModalOpen(false);
-      await fetchJenisMak(search);
-    } catch (err) {
-      console.error('Failed to save Jenis MAK:', err);
+      await fetchJenisMak(search, currentPage);
+    } catch (err: unknown) {
+      const serverErr = extractServerErrors(err);
+      setFieldErrors(serverErr.fieldErrors);
+      setFormError(serverErr.message);
     } finally {
       setProcessing(false);
     }
@@ -136,13 +172,21 @@ export const PerencanaanJenisMakIndex: FC = () => {
     if (!deleteTarget) return;
 
     setProcessing(true);
+    setDeleteError('');
+    setFlashSuccess('');
     try {
-      await perencanaanService.deleteJenisMak(deleteTarget.id);
+      const res = await perencanaanService.deleteJenisMak(deleteTarget.id);
+      setFlashSuccess(res.message || 'Jenis MAK berhasil dihapus.');
       setDeleteModalOpen(false);
       setDeleteTarget(null);
-      await fetchJenisMak(search);
-    } catch (err) {
-      console.error('Failed to delete Jenis MAK:', err);
+      await fetchJenisMak(search, currentPage);
+    } catch (err: unknown) {
+      const serverErr = extractServerErrors(err);
+      setDeleteError(
+        serverErr.fieldErrors.mak_id ||
+          serverErr.message ||
+          'Jenis MAK tidak dapat dihapus karena sedang digunakan pada pengadaan aktif.'
+      );
     } finally {
       setProcessing(false);
     }
@@ -154,10 +198,15 @@ export const PerencanaanJenisMakIndex: FC = () => {
     <PerencanaanJenisMakTemplate
       rows={rows}
       searchQuery={search}
+      currentPage={currentPage}
+      lastPage={lastPage}
       isLoading={isLoading}
       processing={processing}
+      flashSuccess={flashSuccess}
+      flashError={flashError}
       onSearchChange={setSearch}
       onSearchSubmit={handleSearchSubmit}
+      onPageChange={setCurrentPage}
       onOpenAddModal={handleOpenAdd}
       onOpenEditModal={handleOpenEdit}
       onOpenDeleteModal={handleOpenDelete}
@@ -167,6 +216,8 @@ export const PerencanaanJenisMakIndex: FC = () => {
       formNama={formNama}
       formPpkId={formPpkId}
       ppkOptions={ppkOptions}
+      fieldErrors={fieldErrors}
+      formError={formError}
       onCloseFormModal={() => setFormModalOpen(false)}
       onFormKodeChange={setFormKode}
       onFormNamaChange={setFormNama}
@@ -174,6 +225,7 @@ export const PerencanaanJenisMakIndex: FC = () => {
       onFormSubmit={handleFormSubmit}
       deleteModalOpen={deleteModalOpen}
       deleteTarget={deleteTarget}
+      deleteError={deleteError}
       onCloseDeleteModal={() => setDeleteModalOpen(false)}
       onConfirmDelete={handleConfirmDelete}
     />
