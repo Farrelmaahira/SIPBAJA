@@ -878,6 +878,140 @@ Prefix Rute: `/api/v1/ppk`
 
 ---
 
+### 3.10 Modul Notifikasi Terpusat (`auth:sanctum` - Semua Role)
+
+Prefix Rute: `/api/v1/notifications` (dan alias `/api/v1/notifikasi`)
+
+#### 1. Daftar Notifikasi (Terpaginasi & Filter Tab)
+- **Method & URL:** `GET /api/v1/notifications?tab={tab}&per_page={per_page}`
+- **Query Parameters:**
+  - `tab`: `semua`, `pengingat`, `status` (default: `semua`)
+  - `per_page`: integer (default: 10)
+- **Success Response (200 OK):**
+  ```json
+  {
+    "notifications": {
+      "data": [
+        {
+          "id": 1,
+          "user_id": 1,
+          "channel": "in_app",
+          "judul": "Pengingat Dokumen",
+          "pesan": "Ada dokumen permohonan baru yang memerlukan verifikasi.",
+          "ref_type": "permohonan",
+          "ref_id": 1,
+          "read_at": null,
+          "created_at": "2026-11-01T10:00:00.000000Z"
+        }
+      ],
+      "current_page": 1,
+      "last_page": 1,
+      "per_page": 10,
+      "total": 1
+    },
+    "unreadCount": 1,
+    "unreadNotificationsCount": 1,
+    "activeTab": "semua"
+  }
+  ```
+
+#### 2. Ringkasan Notifikasi (Summary Topbar)
+- **Method & URL:** `GET /api/v1/notifications/summary?limit={limit}`
+- **Query Parameter:** `limit`: integer (default: 5)
+- **Success Response (200 OK):**
+  ```json
+  {
+    "recentNotifications": [
+      {
+        "id": 1,
+        "judul": "Pengingat Dokumen",
+        "pesan": "Ada dokumen permohonan baru yang memerlukan verifikasi.",
+        "read_at": null,
+        "created_at": "2026-11-01T10:00:00.000000Z"
+      }
+    ],
+    "unreadNotificationsCount": 1,
+    "unreadCount": 1
+  }
+  ```
+
+#### 3. Hitung Notifikasi Belum Dibaca
+- **Method & URL:** `GET /api/v1/notifications/unread-count`
+- **Success Response (200 OK):**
+  ```json
+  {
+    "unreadCount": 1
+  }
+  ```
+
+#### 4. Kirim Notifikasi Baru
+- **Method & URL:** `POST /api/v1/notifications`
+- **Request Body (JSON):**
+  ```json
+  {
+    "user_id": 1,
+    "judul": "Pengingat Dokumen",
+    "pesan": "Ada dokumen permohonan baru.",
+    "channel": "in_app",
+    "ref_type": "permohonan",
+    "ref_id": 1
+  }
+  ```
+- **Success Response (201 Created):**
+  ```json
+  {
+    "message": "Notifikasi berhasil dikirim.",
+    "notification": {
+      "id": 2,
+      "user_id": 1,
+      "judul": "Pengingat Dokumen",
+      "pesan": "Ada dokumen permohonan baru."
+    }
+  }
+  ```
+
+#### 5. Tandai Semua Notifikasi Dibaca
+- **Method & URL:** `POST /api/v1/notifications/read-all`
+- **Success Response (200 OK):**
+  ```json
+  {
+    "message": "Semua notifikasi telah ditandai dibaca.",
+    "affected": 1
+  }
+  ```
+
+#### 6. Tandai Satu Notifikasi Dibaca
+- **Method & URL:** `POST /api/v1/notifications/{notificationId}/read`
+- **Success Response (200 OK):**
+  ```json
+  {
+    "message": "Notifikasi ditandai dibaca."
+  }
+  ```
+- **Error Response (403 Forbidden):**
+  ```json
+  {
+    "message": "Anda tidak memiliki akses ke notifikasi ini."
+  }
+  ```
+
+#### 7. Hapus Notifikasi
+- **Method & URL:** `DELETE /api/v1/notifications/{notificationId}`
+- **Success Response (200 OK):**
+  ```json
+  {
+    "message": "Notifikasi berhasil dihapus."
+  }
+  ```
+- **Error Response (403 Forbidden):**
+  ```json
+  {
+    "message": "Anda tidak memiliki akses ke notifikasi ini."
+  }
+  ```
+
+---
+
 ## 4. Panduan Penanganan Error di Frontend (Axios Interceptors)
 
 Untuk menangani skema respons di atas secara seragam di frontend TypeScript, terapkan pattern interceptor berikut pada [frontend/src/services/api.ts](file:///d:/Farrel/PROJECTS/sipbaja/frontend/src/services/api.ts):

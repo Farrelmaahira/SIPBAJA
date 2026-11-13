@@ -155,6 +155,7 @@ export const SuratPermohonanCard: FC<SuratPermohonanCardProps> = ({
       </div>
 
       {/* Live Preview Container */}
+      {/* Live Preview Container */}
       {showPreview && (
         <div className="relative rounded-2xl border border-[#E4EBE8] bg-[#F7FAF9] p-4 sm:p-5 shadow-inner overflow-hidden animate-in fade-in duration-200">
           {isLoadingPdf ? (
@@ -238,6 +239,7 @@ export const SuratPermohonanCard: FC<SuratPermohonanCardProps> = ({
             </div>
           )}
         </div>
+      )}
       )}
     </section>
   );

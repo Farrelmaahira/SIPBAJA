@@ -1,15 +1,18 @@
 import { useState, useRef, useEffect, type FC, type ReactNode } from 'react';
 import { Menu, Bell, ChevronDown, User as UserIcon, LogOut, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import NotificationDropdown, { type NotificationItem } from './NotificationDropdown';
+import NotificationDropdown from './NotificationDropdown';
 import LogoutModal from './LogoutModal';
+import { useNotifications } from '../../hooks/useNotifications';
+import { useAuth } from '../../hooks/useAuth';
+import type { NotificationItem } from '../../types/notification';
 
 export interface BreadcrumbItem {
   label: ReactNode;
   href?: string;
 }
 
-export interface PpTopbarUser {
+export interface AppTopbarUser {
   nama?: string;
   name?: string;
   role?: string | { nama?: string };
@@ -17,9 +20,9 @@ export interface PpTopbarUser {
   [key: string]: unknown;
 }
 
-export interface PpTopbarProps {
+export interface AppTopbarProps {
   onMenuClick?: () => void;
-  user?: PpTopbarUser | null;
+  user?: AppTopbarUser | null;
   notifications?: NotificationItem[];
   unreadCount?: number;
   breadcrumb?: BreadcrumbItem[] | null;
@@ -31,18 +34,77 @@ export interface PpTopbarProps {
   readAllHref?: string;
 }
 
-export const PpTopbar: FC<PpTopbarProps> = ({
+interface RoleConfig {
+  initials: string;
+  title: string;
+  subtitle: string;
+  basePath: string;
+}
+
+function resolveRoleConfig(roleName?: string): RoleConfig {
+  const normalized = (roleName || '').toLowerCase().trim();
+
+  if (normalized.includes('perencanaan')) {
+    return {
+      initials: 'PR',
+      title: 'Perencanaan',
+      subtitle: 'Unit Perencanaan',
+      basePath: '/perencanaan',
+    };
+  }
+  if (normalized.includes('ppk')) {
+    return {
+      initials: 'PPK',
+      title: 'PPK',
+      subtitle: 'Pejabat Pembuat Komitmen',
+      basePath: '/ppk',
+    };
+  }
+  if (normalized.includes('pengadaan') || normalized === 'pp') {
+    return {
+      initials: 'PP',
+      title: 'PP',
+      subtitle: 'Pejabat Pengadaan',
+      basePath: '/pp',
+    };
+  }
+  if (normalized.includes('pemohon') || normalized.includes('jurusan') || normalized.includes('bagian')) {
+    return {
+      initials: 'PM',
+      title: 'Pemohon',
+      subtitle: 'Unit Pemohon',
+      basePath: '/pemohon',
+    };
+  }
+  if (normalized.includes('bidang') || normalized.includes('wadir') || normalized.includes('b2')) {
+    return {
+      initials: 'B2',
+      title: 'Bidang 2',
+      subtitle: 'Wakil Direktur Bidang 2',
+      basePath: '/bidang-2',
+    };
+  }
+
+  return {
+    initials: 'US',
+    title: 'Pengguna',
+    subtitle: 'Sistem SIPBAJA',
+    basePath: '/dashboard',
+  };
+}
+
+export const AppTopbar: FC<AppTopbarProps> = ({
   onMenuClick,
   user,
-  notifications = [],
-  unreadCount = 0,
+  notifications: propNotifications,
+  unreadCount: propUnreadCount,
   breadcrumb = null,
-  roleInitials = 'PP',
+  roleInitials,
   roleTitle = null,
   roleSubtitle = null,
-  profileHref = '/pp/profil',
-  notifikasiHref = '/pp/notifikasi',
-  readAllHref = '/pp/notifikasi/read-all',
+  profileHref,
+  notifikasiHref,
+  readAllHref,
 }) => {
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -50,6 +112,13 @@ export const PpTopbar: FC<PpTopbarProps> = ({
 
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+
+  const auth = useAuth();
+  const { recentNotifications, unreadCount: contextUnreadCount } = useNotifications();
+
+  const unreadCount = propUnreadCount !== undefined ? propUnreadCount : contextUnreadCount;
+  const notifications =
+    propNotifications && propNotifications.length > 0 ? propNotifications : recentNotifications;
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -64,25 +133,33 @@ export const PpTopbar: FC<PpTopbarProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const rawRole = typeof user?.role === 'string' ? user.role : user?.role?.nama;
-  const displayName =
-    roleTitle ||
-    (rawRole === 'PP'
-      ? 'PP'
-      : rawRole === 'Perencanaan'
-      ? 'Perencanaan'
-      : rawRole === 'PPK'
-      ? 'PPK'
-      : user?.nama || 'PP');
-  const displayRole =
-    roleSubtitle ||
-    (rawRole === 'PP'
-      ? 'Pejabat Pengadaan'
-      : rawRole === 'Perencanaan'
-      ? 'Unit Perencanaan'
-      : rawRole === 'PPK'
-      ? 'Unit PPK'
-      : 'Pejabat Pengadaan');
+  const effectiveUser = user || (auth.user as AppTopbarUser | null);
+  const rawRole =
+    auth.role ||
+    (typeof effectiveUser?.role === 'string'
+      ? effectiveUser.role
+      : effectiveUser?.role?.nama) ||
+    '';
+
+  const defaultConfig = resolveRoleConfig(rawRole);
+
+  const effectiveInitials =
+    roleInitials ||
+    (effectiveUser?.nama
+      ? effectiveUser.nama
+        .split(' ')
+        .map((n) => n[0])
+        .slice(0, 2)
+        .join('')
+        .toUpperCase()
+      : defaultConfig.initials);
+
+  const displayName = roleTitle || effectiveUser?.nama || defaultConfig.title;
+  const displayRole = roleSubtitle || defaultConfig.subtitle;
+
+  const effectiveProfileHref = profileHref || `${defaultConfig.basePath}/profil`;
+  const effectiveNotifikasiHref = notifikasiHref || `${defaultConfig.basePath}/notifikasi`;
+  const effectiveReadAllHref = readAllHref || `${defaultConfig.basePath}/notifikasi/read-all`;
 
   return (
     <>
@@ -92,7 +169,8 @@ export const PpTopbar: FC<PpTopbarProps> = ({
           <button
             type="button"
             onClick={onMenuClick}
-            className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl bg-white border border-[#E4EBE8] text-[#5F6F6A] hover:bg-[#EEF5F2]"
+            className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl bg-white border border-[#E4EBE8] text-[#5F6F6A] hover:bg-[#EEF5F2] cursor-pointer"
+            aria-label="Buka menu navigasi"
           >
             <Menu className="w-5 h-5" />
           </button>
@@ -149,8 +227,8 @@ export const PpTopbar: FC<PpTopbarProps> = ({
               onClose={() => setNotifOpen(false)}
               notifications={notifications}
               unreadCount={unreadCount}
-              notifikasiHref={notifikasiHref}
-              readAllHref={readAllHref}
+              notifikasiHref={effectiveNotifikasiHref}
+              readAllHref={effectiveReadAllHref}
             />
           </div>
 
@@ -162,7 +240,7 @@ export const PpTopbar: FC<PpTopbarProps> = ({
               className="flex items-center gap-2.5 py-1 px-1.5 rounded-full hover:bg-white/60 transition-all cursor-pointer"
             >
               <div className="w-10 h-10 rounded-full bg-[#0E7C5A] text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
-                {roleInitials}
+                {effectiveInitials}
               </div>
               <div className="text-left hidden sm:block">
                 <p className="text-xs font-bold text-[#14201C] leading-tight">
@@ -175,47 +253,28 @@ export const PpTopbar: FC<PpTopbarProps> = ({
               <ChevronDown className="w-3.5 h-3.5 text-[#8A9A95] ml-0.5" />
             </button>
 
-            {/* Modal Profil Popover */}
             {profileOpen && (
-              <div className="absolute right-0 mt-2 w-60 rounded-[24px] bg-white border border-[#E4EBE8] shadow-[0_16px_40px_rgba(13,51,38,0.14)] py-2 z-50 animate-scale-up">
-                <div className="flex items-center gap-3.5 px-4 py-3.5 border-b border-[#F0F4F2]">
-                  <div className="w-11 h-11 rounded-full bg-[#0E7C5A] text-white font-bold text-xs flex items-center justify-center shrink-0">
-                    {roleInitials}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-bold text-[#14201C] truncate">
-                      {displayName}
-                    </p>
-                    <p className="text-xs text-[#8A9A95] truncate mt-0.5">
-                      {displayRole}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="py-1 border-b border-[#F0F4F2]">
-                  <Link
-                    to={profileHref}
-                    onClick={() => setProfileOpen(false)}
-                    className="flex items-center gap-3 px-4 py-2.5 text-xs font-medium text-[#5F6F6A] hover:text-[#14201C] hover:bg-[#F4F7F5] transition-colors"
-                  >
-                    <UserIcon className="w-4 h-4 text-[#5F6F6A]" />
-                    <span>Profil Saya</span>
-                  </Link>
-                </div>
-
-                <div className="pt-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setProfileOpen(false);
-                      setLogoutOpen(true);
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-[#D92D20] hover:bg-[#FEE4E2]/50 transition-colors cursor-pointer text-left"
-                  >
-                    <LogOut className="w-4 h-4 text-[#D92D20]" />
-                    <span>Keluar</span>
-                  </button>
-                </div>
+              <div className="absolute right-0 top-12 w-48 rounded-2xl bg-white border border-[#E4EBE8] shadow-lg py-1.5 z-50 animate-scale-up">
+                <Link
+                  to={effectiveProfileHref}
+                  onClick={() => setProfileOpen(false)}
+                  className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-[#14201C] hover:bg-[#F4F7F5] transition-colors"
+                >
+                  <UserIcon className="w-4 h-4 text-[#8A9A95]" />
+                  Profil Saya
+                </Link>
+                <div className="my-1 border-t border-[#F0F4F2]" />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProfileOpen(false);
+                    setLogoutOpen(true);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-[#D92D20] hover:bg-[#FEE4E2]/40 transition-colors cursor-pointer text-left"
+                >
+                  <LogOut className="w-4 h-4 text-[#D92D20]" />
+                  Keluar
+                </button>
               </div>
             )}
           </div>
@@ -223,12 +282,10 @@ export const PpTopbar: FC<PpTopbarProps> = ({
       </header>
 
       {/* Logout Confirmation Modal */}
-      <LogoutModal
-        isOpen={logoutOpen}
-        onClose={() => setLogoutOpen(false)}
-      />
+      <LogoutModal isOpen={logoutOpen} onClose={() => setLogoutOpen(false)} />
     </>
   );
 };
 
-export default PpTopbar;
+export default AppTopbar;
+

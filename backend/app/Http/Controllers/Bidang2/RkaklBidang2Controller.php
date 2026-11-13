@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Bidang2;
 
 use App\Http\Controllers\Controller;
-
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 

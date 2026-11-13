@@ -5,6 +5,16 @@
     "description": "Koleksi API SIPBAJA (Sistem Informasi Pengadaan Barang dan Jasa) berbasis Laravel 11 RESTful API dengan otentikasi Laravel Sanctum dan role-based access control.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
   "variable": [
     {
       "key": "baseUrl",
@@ -30,16 +40,17 @@
         "exec": [
           "// Set header standar untuk setiap request",
           "pm.request.headers.upsert({key: 'Accept', value: 'application/json'});",
-          "pm.request.headers.upsert({key: 'Referer', value: pm.collectionVariables.get('baseUrl')});",
+          "let baseUrl = pm.variables.get('baseUrl') || 'http://localhost:8000';",
+          "pm.request.headers.upsert({key: 'Referer', value: baseUrl});",
           "",
-          "// Sertakan Bearer Token jika ada",
-          "let token = pm.collectionVariables.get('token');",
-          "if (token) {",
+          "// Sertakan Bearer Token jika ada dan belum diisi oleh Postman Auth",
+          "let token = pm.variables.get('token');",
+          "if (token && !pm.request.headers.has('Authorization')) {",
           "    pm.request.headers.upsert({key: 'Authorization', value: 'Bearer ' + token});",
           "}",
           "",
           "// Sertakan token CSRF jika ada",
-          "let xsrfToken = pm.collectionVariables.get('xsrfToken');",
+          "let xsrfToken = pm.variables.get('xsrfToken');",
           "if (xsrfToken) {",
           "    pm.request.headers.upsert({key: 'X-XSRF-TOKEN', value: xsrfToken});",
           "}"
@@ -86,8 +97,9 @@
                   "let cookie = pm.cookies.get('XSRF-TOKEN');",
                   "if (cookie) {",
                   "    let decoded = decodeURIComponent(cookie);",
+                  "    pm.environment.set('xsrfToken', decoded);",
                   "    pm.collectionVariables.set('xsrfToken', decoded);",
-                  "    console.log('XSRF-TOKEN diset ke collection variable:', decoded);",
+                  "    console.log('XSRF-TOKEN diset ke environment & collection variable:', decoded);",
                   "}"
                 ]
               }
@@ -141,8 +153,9 @@
                 "exec": [
                   "let res = pm.response.json();",
                   "if (res && res.token) {",
+                  "    pm.environment.set('token', res.token);",
                   "    pm.collectionVariables.set('token', res.token);",
-                  "    console.log('Bearer token saved to collection variable:', res.token);",
+                  "    console.log('Bearer token saved to environment & collection variable:', res.token);",
                   "}"
                 ]
               }
@@ -196,8 +209,9 @@
                 "exec": [
                   "let res = pm.response.json();",
                   "if (res && res.token) {",
+                  "    pm.environment.set('token', res.token);",
                   "    pm.collectionVariables.set('token', res.token);",
-                  "    console.log('Bearer token saved to collection variable:', res.token);",
+                  "    console.log('Bearer token saved to environment & collection variable:', res.token);",
                   "}"
                 ]
               }
@@ -251,8 +265,9 @@
                 "exec": [
                   "let res = pm.response.json();",
                   "if (res && res.token) {",
+                  "    pm.environment.set('token', res.token);",
                   "    pm.collectionVariables.set('token', res.token);",
-                  "    console.log('Bearer token saved to collection variable:', res.token);",
+                  "    console.log('Bearer token saved to environment & collection variable:', res.token);",
                   "}"
                 ]
               }
@@ -306,8 +321,9 @@
                 "exec": [
                   "let res = pm.response.json();",
                   "if (res && res.token) {",
+                  "    pm.environment.set('token', res.token);",
                   "    pm.collectionVariables.set('token', res.token);",
-                  "    console.log('Bearer token saved to collection variable:', res.token);",
+                  "    console.log('Bearer token saved to environment & collection variable:', res.token);",
                   "}"
                 ]
               }
@@ -361,8 +377,9 @@
                 "exec": [
                   "let res = pm.response.json();",
                   "if (res && res.token) {",
+                  "    pm.environment.set('token', res.token);",
                   "    pm.collectionVariables.set('token', res.token);",
-                  "    console.log('Bearer token saved to collection variable:', res.token);",
+                  "    console.log('Bearer token saved to environment & collection variable:', res.token);",
                   "}"
                 ]
               }
@@ -416,8 +433,9 @@
                 "exec": [
                   "let res = pm.response.json();",
                   "if (res && res.token) {",
+                  "    pm.environment.set('token', res.token);",
                   "    pm.collectionVariables.set('token', res.token);",
-                  "    console.log('Bearer token saved to collection variable:', res.token);",
+                  "    console.log('Bearer token saved to environment & collection variable:', res.token);",
                   "}"
                 ]
               }
@@ -471,8 +489,9 @@
                 "exec": [
                   "let res = pm.response.json();",
                   "if (res && res.token) {",
+                  "    pm.environment.set('token', res.token);",
                   "    pm.collectionVariables.set('token', res.token);",
-                  "    console.log('Bearer token saved to collection variable:', res.token);",
+                  "    console.log('Bearer token saved to environment & collection variable:', res.token);",
                   "}"
                 ]
               }
@@ -526,8 +545,9 @@
                 "exec": [
                   "let res = pm.response.json();",
                   "if (res && res.token) {",
+                  "    pm.environment.set('token', res.token);",
                   "    pm.collectionVariables.set('token', res.token);",
-                  "    console.log('Bearer token saved to collection variable:', res.token);",
+                  "    console.log('Bearer token saved to environment & collection variable:', res.token);",
                   "}"
                 ]
               }
@@ -581,8 +601,9 @@
                 "exec": [
                   "let res = pm.response.json();",
                   "if (res && res.token) {",
+                  "    pm.environment.set('token', res.token);",
                   "    pm.collectionVariables.set('token', res.token);",
-                  "    console.log('Bearer token saved to collection variable:', res.token);",
+                  "    console.log('Bearer token saved to environment & collection variable:', res.token);",
                   "}"
                 ]
               }
@@ -645,8 +666,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "pm.environment.set('token', '');",
                   "pm.collectionVariables.set('token', '');",
-                  "console.log('Bearer token cleared.');"
+                  "console.log('Bearer token cleared from environment & collection.');"
                 ]
               }
             }
@@ -3653,6 +3675,235 @@
               ]
             },
             "description": ""
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "11. Notifikasi Terpusat (Centralized Notifications)",
+      "description": "Modul Notifikasi Terpusat untuk seluruh pengguna terautentikasi (semua role). Tersedia di /api/v1/notifications dan alias /api/v1/notifikasi.",
+      "item": [
+        {
+          "name": "Notifikasi - List (Terpaginasi)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications?tab=semua&per_page=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications"
+              ],
+              "query": [
+                {
+                  "key": "tab",
+                  "value": "semua",
+                  "description": "Filter tab: semua | pengingat | status"
+                },
+                {
+                  "key": "per_page",
+                  "value": "10",
+                  "description": "Jumlah item per halaman"
+                }
+              ]
+            },
+            "description": "Mengambil daftar notifikasi terpaginasi milik pengguna terautentikasi."
+          },
+          "response": []
+        },
+        {
+          "name": "Notifikasi - Ringkasan (Summary Topbar)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/summary?limit=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "summary"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "description": "Batas notifikasi terbaru yang diambil"
+                }
+              ]
+            },
+            "description": "Mengambil ringkasan notifikasi terbaru beserta unreadNotificationsCount untuk header / topbar."
+          },
+          "response": []
+        },
+        {
+          "name": "Notifikasi - Hitung Belum Dibaca (Unread Count)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/unread-count",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "unread-count"
+              ]
+            },
+            "description": "Mengambil jumlah notifikasi yang belum dibaca."
+          },
+          "response": []
+        },
+        {
+          "name": "Notifikasi - Kirim Notifikasi Baru (Store)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": 1,\n  \"judul\": \"Pengingat Dokumen\",\n  \"pesan\": \"Ada dokumen permohonan baru yang memerlukan verifikasi.\",\n  \"channel\": \"in_app\",\n  \"ref_type\": \"permohonan\",\n  \"ref_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications"
+              ]
+            },
+            "description": "Mengirim / membuat notifikasi baru."
+          },
+          "response": []
+        },
+        {
+          "name": "Notifikasi - Mark All Read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/read-all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "read-all"
+              ]
+            },
+            "description": "Menandai seluruh notifikasi milik pengguna terautentikasi sebagai telah dibaca."
+          },
+          "response": []
+        },
+        {
+          "name": "Notifikasi - Mark One Read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/:notification/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                ":notification",
+                "read"
+              ],
+              "variable": [
+                {
+                  "key": "notification",
+                  "value": "{{notificationId}}",
+                  "description": "ID notifikasi"
+                }
+              ]
+            },
+            "description": "Menandai satu notifikasi milik pengguna terautentikasi sebagai telah dibaca."
+          },
+          "response": []
+        },
+        {
+          "name": "Notifikasi - Hapus (Delete)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/:notification",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                ":notification"
+              ]
+            },
+            "description": "Menghapus satu notifikasi milik pengguna terautentikasi."
           },
           "response": []
         }
