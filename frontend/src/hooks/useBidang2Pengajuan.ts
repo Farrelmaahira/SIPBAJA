@@ -20,8 +20,12 @@ export interface UseBidang2PengajuanReturn {
   setSearchQuery: (q: string) => void;
   selectedStatus: string;
   setSelectedStatus: (status: string) => void;
+  selectedStatuses: string[];
+  filterModalOpen: boolean;
+  setFilterModalOpen: (open: boolean) => void;
   handleSearchSubmit: (e?: FormEvent) => void;
   handleStatusChange: (status: string) => void;
+  handleApplyFilter: (statuses: string[]) => void;
   handlePageChange: (page: number) => void;
   refetch: () => void;
 }
@@ -35,6 +39,8 @@ export function useBidang2Pengajuan(): UseBidang2PengajuanReturn {
   const [searchQuery, setSearchQuery] = useState('');
   const [appliedSearch, setAppliedSearch] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('semua');
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
 
   const [pagination, setPagination] = useState<UseBidang2PengajuanPagination>({
     currentPage: 1,
@@ -128,6 +134,18 @@ export function useBidang2Pengajuan(): UseBidang2PengajuanReturn {
 
   const handleStatusChange = useCallback((status: string) => {
     setSelectedStatus(status);
+    setSelectedStatuses(status === 'semua' ? [] : [status]);
+    setPagination((prev) => ({ ...prev, currentPage: 1 }));
+  }, []);
+
+  const handleApplyFilter = useCallback((statuses: string[]) => {
+    setSelectedStatuses(statuses);
+    if (statuses.length === 0) {
+      setSelectedStatus('semua');
+    } else {
+      setSelectedStatus(statuses.join(','));
+    }
+    setFilterModalOpen(false);
     setPagination((prev) => ({ ...prev, currentPage: 1 }));
   }, []);
 
@@ -154,8 +172,12 @@ export function useBidang2Pengajuan(): UseBidang2PengajuanReturn {
     setSearchQuery,
     selectedStatus,
     setSelectedStatus,
+    selectedStatuses,
+    filterModalOpen,
+    setFilterModalOpen,
     handleSearchSubmit,
     handleStatusChange,
+    handleApplyFilter,
     handlePageChange,
     refetch,
   };
