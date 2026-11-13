@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Pengadaan;
 use App\Models\Permohonan;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -49,6 +50,29 @@ class DashboardBidang2Service
             ->orderBy('created_at', 'desc')
             ->limit($limit)
             ->get(['id', 'unit_id', 'nomor_surat', 'judul', 'estimasi_anggaran', 'status', 'created_at', 'ringkasan_tujuan']);
+    }
+
+    /**
+     * Riwayat pengadaan terbaru hasil pemecahan paket untuk pengawasan Bidang 2.
+     */
+    public function riwayatPengadaanTerbaru(int $limit = 4): Collection
+    {
+        return Pengadaan::with(['Permohonan.unit', 'Jenis', 'Metode', 'Level'])
+            ->orderBy('id', 'desc')
+            ->limit($limit)
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'nomor_pengadaan' => sprintf('%05d-FF-11', $item->id),
+                    'nomor_permohonan' => $item->Permohonan?->nomor_surat ?? '-',
+                    'judul' => $item->Permohonan?->judul ?? 'Pengadaan Barang & Jasa',
+                    'unit_nama' => $item->Permohonan?->unit?->nama ?? 'Unit Kampus',
+                    'nominal' => (float) $item->nominal,
+                    'status' => $item->status,
+                    'created_at' => $item->created_at,
+                ];
+            });
     }
 
     /**

@@ -7,12 +7,14 @@ import type {
 import type {
   RingkasanBidang2,
   RiwayatTerbaruBidang2Item,
+  RiwayatPengadaanBidang2Item,
   StatistikBulananBidang2Item,
 } from '../hooks/useBidang2Dashboard';
 
 export interface Bidang2DashboardData {
   ringkasan?: RingkasanBidang2;
   riwayatTerbaru?: RiwayatTerbaruBidang2Item[];
+  riwayatPengadaanTerbaru?: RiwayatPengadaanBidang2Item[];
   statistikBulanan?: StatistikBulananBidang2Item[];
   totalDisetujui?: number;
   totalDitolak?: number;

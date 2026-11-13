@@ -7,6 +7,7 @@ import {
   Info,
   AlertCircle,
   RotateCcw,
+  ShoppingCart,
 } from 'lucide-react';
 import DashboardShellTemplate from './DashboardShellTemplate';
 import type { ProfilePillUser } from '../molecules/ProfilePill';
@@ -20,9 +21,16 @@ const NAV_ITEMS = [
   },
   {
     key: 'pengajuan',
-    label: 'List Pengajuan',
+    label: 'List Permohonan',
     icon: ClipboardList,
     href: '/bidang-2/pengajuan',
+    badge: 4,
+  },
+  {
+    key: 'pengadaan',
+    label: 'List Pengadaan',
+    icon: ShoppingCart,
+    href: '/bidang-2/pengadaan',
   },
   {
     key: 'rkakl',

@@ -12,6 +12,7 @@ import {
   Eye,
   Download,
   Loader2,
+  ShoppingCart,
 } from 'lucide-react';
 import DashboardShellTemplate from './DashboardShellTemplate';
 import StatusPill from '../atoms/StatusPill';
@@ -33,10 +34,16 @@ const NAV_ITEMS = [
   },
   {
     key: 'pengajuan',
-    label: 'List Pengajuan',
+    label: 'List Permohonan',
     icon: ClipboardList,
     href: '/bidang-2/pengajuan',
     badge: 4,
+  },
+  {
+    key: 'pengadaan',
+    label: 'List Pengadaan',
+    icon: ShoppingCart,
+    href: '/bidang-2/pengadaan',
   },
   {
     key: 'rkakl',

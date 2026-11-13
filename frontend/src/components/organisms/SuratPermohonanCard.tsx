@@ -240,7 +240,6 @@ export const SuratPermohonanCard: FC<SuratPermohonanCardProps> = ({
           )}
         </div>
       )}
-      )}
     </section>
   );
 };

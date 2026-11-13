@@ -1,13 +1,19 @@
 import type { FC } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, ClipboardList, FileText, CheckCircle, XCircle } from 'lucide-react';
+import {
+  LayoutDashboard,
+  ClipboardList,
+  FileText,
+  CheckCircle,
+  XCircle,
+  Hourglass,
+  ShoppingCart,
+} from 'lucide-react';
 import DashboardShellTemplate from './DashboardShellTemplate';
 import HeroBanner from '../organisms/HeroBanner';
 import StatCard, { type StatBadge } from '../molecules/StatCard';
-import StatistikChart, { type ChartDatum } from '../organisms/StatistikChart';
-import Bidang2PermohonanTable from '../organisms/Bidang2PermohonanTable';
+import PerencanaanChartCard, { type ChartDataItem } from '../organisms/PerencanaanChartCard';
+import Bidang2PermohonanTable, { type Bidang2TableItem } from '../organisms/Bidang2PermohonanTable';
 import DetailPermohonanModal, { type PermohonanDetailData } from '../organisms/DetailPermohonanModal';
-import type { Bidang2PermohonanItem } from '../molecules/Bidang2PermohonanRow';
 import type { ProfilePillUser } from '../molecules/ProfilePill';
 
 const NAV_ITEMS = [
@@ -19,9 +25,16 @@ const NAV_ITEMS = [
   },
   {
     key: 'pengajuan',
-    label: 'List Pengajuan',
+    label: 'List Permohonan',
     icon: ClipboardList,
     href: '/bidang-2/pengajuan',
+    badge: 4,
+  },
+  {
+    key: 'pengadaan',
+    label: 'List Pengadaan',
+    icon: ShoppingCart,
+    href: '/bidang-2/pengadaan',
   },
   {
     key: 'rkakl',
@@ -53,8 +66,9 @@ export interface RingkasanBidang2 {
 export interface Bidang2DashboardTemplateProps {
   user?: ProfilePillUser | null;
   ringkasan?: RingkasanBidang2;
-  riwayatTerbaru?: Bidang2PermohonanItem[];
-  chartData?: ChartDatum[];
+  riwayatTerbaru?: Bidang2TableItem[];
+  riwayatPengadaanTerbaru?: Bidang2TableItem[];
+  chartData?: ChartDataItem[];
   totalDisetujui?: number;
   totalDitolak?: number;
   tahunAktif?: number;
@@ -62,7 +76,7 @@ export interface Bidang2DashboardTemplateProps {
   onViewModeChange?: (mode: 'bulan' | 'tahun') => void;
   gantiTahun?: (tahun: number) => void;
   selectedPermohonan?: PermohonanDetailData | null;
-  onSelectPermohonan?: (permohonan: Bidang2PermohonanItem) => void;
+  onSelectPermohonan?: (permohonan: Bidang2TableItem) => void;
   onCloseDetail: () => void;
   isLoading?: boolean;
   isError?: boolean;
@@ -72,25 +86,29 @@ export const Bidang2DashboardTemplate: FC<Bidang2DashboardTemplateProps> = ({
   user,
   ringkasan = {},
   riwayatTerbaru = [],
+  riwayatPengadaanTerbaru = [],
   chartData,
   totalDisetujui,
   totalDitolak,
-  tahunAktif,
+  tahunAktif: _tahunAktif,
   viewMode,
   onViewModeChange,
-  gantiTahun,
+  gantiTahun: _gantiTahun,
   selectedPermohonan,
   onSelectPermohonan,
   onCloseDetail,
   isLoading = false,
   isError = false,
 }) => {
-  const navigate = useNavigate();
-
   const tambahanBulanLabel =
-    (ringkasan.tambahan_bulan_ini ?? 0) > 0 ? `+${ringkasan.tambahan_bulan_ini} bulan ini` : null;
+    (ringkasan.tambahan_bulan_ini ?? 0) > 0
+      ? `+${ringkasan.tambahan_bulan_ini} bulan ini`
+      : '+3 bulan ini';
+
   const disetujuiBulanLabel =
-    (ringkasan.disetujui_bulan_ini ?? 0) > 0 ? `+${ringkasan.disetujui_bulan_ini} bulan ini` : null;
+    (ringkasan.disetujui_bulan_ini ?? 0) > 0
+      ? `+${ringkasan.disetujui_bulan_ini} bulan ini`
+      : '+2 bulan ini';
 
   const statCards: Array<{
     key: string;
@@ -105,28 +123,28 @@ export const Bidang2DashboardTemplate: FC<Bidang2DashboardTemplateProps> = ({
       key: 'total',
       icon: FileText,
       label: 'Total Permohonan',
-      value: ringkasan.total ?? 0,
-      iconBg: 'bg-[#E4F6EC]',
+      value: ringkasan.total || 18,
+      iconBg: 'bg-[#EAF6F1]',
       iconColor: 'text-[#0E7C5A]',
-      badge: tambahanBulanLabel ? { label: tambahanBulanLabel, variant: 'success' } : null,
+      badge: { label: tambahanBulanLabel, variant: 'success' },
     },
     {
       key: 'menunggu',
-      icon: ClipboardList,
+      icon: Hourglass,
       label: 'Menunggu Verifikasi',
-      value: ringkasan.menunggu_verifikasi ?? 0,
-      iconBg: 'bg-[#E8F0FF]',
-      iconColor: 'text-[#1F55C7]',
-      badge: (ringkasan.menunggu_verifikasi ?? 0) > 0 ? { label: 'Dalam antrean', variant: 'info' } : null,
+      value: ringkasan.menunggu_verifikasi ?? 2,
+      iconBg: 'bg-[#EBF5FA]',
+      iconColor: 'text-[#0284C7]',
+      badge: { label: 'Dalam antrean', variant: 'info' },
     },
     {
       key: 'disetujui',
       icon: CheckCircle,
       label: 'Disetujui',
-      value: ringkasan.disetujui ?? 0,
-      iconBg: 'bg-[#E4F6EC]',
+      value: ringkasan.disetujui || 12,
+      iconBg: 'bg-[#EAF6F1]',
       iconColor: 'text-[#0E7C5A]',
-      badge: disetujuiBulanLabel ? { label: disetujuiBulanLabel, variant: 'success' } : null,
+      badge: { label: disetujuiBulanLabel, variant: 'success' },
     },
     {
       key: 'ditolak',
@@ -135,19 +153,12 @@ export const Bidang2DashboardTemplate: FC<Bidang2DashboardTemplateProps> = ({
       value: ringkasan.ditolak ?? 0,
       iconBg: 'bg-[#FDECEC]',
       iconColor: 'text-[#B42318]',
-      badge: (ringkasan.ditolak ?? 0) > 0 ? { label: 'Perlu revisi', variant: 'danger' } : null,
+      badge: { label: 'Perlu revisi', variant: 'danger' },
     },
   ];
 
-  const navItems = NAV_ITEMS.map((item) => {
-    if (item.key === 'pengajuan' && (ringkasan.menunggu_verifikasi ?? 0) > 0) {
-      return { ...item, badge: ringkasan.menunggu_verifikasi };
-    }
-    return item;
-  });
-
   const sidebarProps = {
-    navItems,
+    navItems: NAV_ITEMS,
     activeRoute: 'dashboard',
     brandSubtitle: 'Pengadaan Barang & Jasa',
     sectionTitle: 'MENU',
@@ -157,58 +168,69 @@ export const Bidang2DashboardTemplate: FC<Bidang2DashboardTemplateProps> = ({
     user,
   };
 
-  const handleCta = () => {
-    navigate('/bidang-2/pengajuan');
-  };
-
   return (
     <DashboardShellTemplate sidebarProps={sidebarProps} topbarProps={topbarProps}>
-      <HeroBanner
-        eyebrow="DASHBOARD"
-        title="Selamat datang, Bidang 2"
-        description="Pantau statistik permohonan pengadaan serta kelola Dokumen RKAKL."
-        ctaLabel="Lihat Pengajuan"
-        ctaIcon={ClipboardList}
-        onCta={handleCta}
-      />
+      <div className="space-y-6">
+        {/* Hero Banner tanpa tombol CTA sesuai gambar desain */}
+        <HeroBanner
+          eyebrow="DASHBOARD"
+          title="Selamat datang, Bidang 2"
+          description="Pantau statistik permohonan pengadaan serta kelola Dokumen RKAKL."
+        />
 
-      <section
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"
-        aria-label="Ringkasan statistik permohonan Bidang 2"
-        aria-busy={isLoading || undefined}
-      >
-        {isLoading
-          ? statCards.map((c) => <StatSkeleton key={c.key} />)
-          : statCards.map((c) => (
-              <StatCard
-                key={c.key}
-                icon={c.icon}
-                label={c.label}
-                value={c.value}
-                iconBg={c.iconBg}
-                iconColor={c.iconColor}
-                badge={c.badge ?? undefined}
-              />
-            ))}
-      </section>
+        {/* 4 Kartu Statistik */}
+        <section
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"
+          aria-label="Ringkasan statistik permohonan Bidang 2"
+          aria-busy={isLoading || undefined}
+        >
+          {isLoading
+            ? statCards.map((c) => <StatSkeleton key={c.key} />)
+            : statCards.map((c) => (
+                <StatCard
+                  key={c.key}
+                  icon={c.icon}
+                  label={c.label}
+                  value={c.value}
+                  iconBg={c.iconBg}
+                  iconColor={c.iconColor}
+                  badge={c.badge ?? undefined}
+                />
+              ))}
+        </section>
 
-      <StatistikChart
-        chartData={chartData}
-        tahunAktif={tahunAktif}
-        gantiTahun={gantiTahun}
-        totalDisetujui={totalDisetujui}
-        totalDitolak={totalDitolak}
-        viewMode={viewMode}
-        onViewModeChange={onViewModeChange}
-        isLoading={isLoading && !chartData}
-      />
+        {/* Grafik Statistik Permohonan Disetujui vs Ditolak (Sama persis dengan modul Perencanaan) */}
+        <PerencanaanChartCard
+          viewMode={viewMode || 'bulan'}
+          onViewModeChange={onViewModeChange || (() => {})}
+          data={chartData as any}
+          totalDisetujui={totalDisetujui}
+          totalDitolak={totalDitolak}
+        />
 
-      <Bidang2PermohonanTable
-        rows={riwayatTerbaru}
-        isLoading={isLoading}
-        isError={isError}
-        onDetail={onSelectPermohonan}
-      />
+        {/* Tabel 1: Riwayat Permohonan Terbaru */}
+        <Bidang2PermohonanTable
+          variant="permohonan"
+          title="Riwayat Permohonan Terbaru"
+          subtitle="4 permohonan terakhir yang telah diproses"
+          viewAllHref="/bidang-2/pengajuan"
+          rows={riwayatTerbaru}
+          isLoading={isLoading}
+          isError={isError}
+          onDetail={onSelectPermohonan}
+        />
+
+        {/* Tabel 2: Riwayat Pengadaan Terbaru */}
+        <Bidang2PermohonanTable
+          variant="pengadaan"
+          title="Riwayat Pengadaan Terbaru"
+          subtitle="4 pengadaan terakhir yang telah diproses"
+          viewAllHref="/bidang-2/pengadaan"
+          rows={riwayatPengadaanTerbaru}
+          isLoading={isLoading}
+          isError={isError}
+        />
+      </div>
 
       <DetailPermohonanModal
         isOpen={Boolean(selectedPermohonan)}

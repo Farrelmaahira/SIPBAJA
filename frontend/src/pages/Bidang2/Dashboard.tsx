@@ -11,6 +11,7 @@ export const Bidang2Dashboard: FC = () => {
   const {
     ringkasan,
     riwayatTerbaru,
+    riwayatPengadaanTerbaru,
     chartData,
     totalDisetujui,
     totalDitolak,
@@ -42,6 +43,7 @@ export const Bidang2Dashboard: FC = () => {
       user={user}
       ringkasan={ringkasan}
       riwayatTerbaru={riwayatTerbaru}
+      riwayatPengadaanTerbaru={riwayatPengadaanTerbaru}
       chartData={chartData ?? undefined}
       totalDisetujui={totalDisetujui}
       totalDitolak={totalDitolak}
