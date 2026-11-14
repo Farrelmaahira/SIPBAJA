@@ -98,3 +98,27 @@ export interface Bidang2MutationResponse {
   message: string;
   permohonan?: unknown;
 }
+
+export interface Bidang2RkaklActiveDoc {
+  id: number;
+  nama_asli: string;
+  ukuran_bytes: number;
+  versi: number;
+  tahun_anggaran: number;
+  nomor_dokumen: string;
+  perihal: string;
+  tanggal: string;
+  diperbarui_oleh: string;
+  status: string;
+  total_halaman: number;
+  download_url: string;
+  view_url: string;
+}
+
+export interface Bidang2RkaklApiResponse {
+  rkakl: {
+    active_doc: Bidang2RkaklActiveDoc;
+    history?: unknown[];
+  };
+}
+
