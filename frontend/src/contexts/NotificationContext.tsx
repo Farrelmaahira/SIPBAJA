@@ -1,10 +1,10 @@
 import React, {
   createContext,
   useState,
-  useEffect,
+  // useEffect,
   useCallback,
   useMemo,
-  useRef,
+  // useRef,
 } from 'react';
 import type { NotificationItem } from '../types/notification';
 import { notificationService } from '../services/notificationService';
@@ -37,7 +37,7 @@ export interface NotificationProviderProps {
 
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({
   children,
-  pollingIntervalMs = 60000,
+  pollingIntervalMs: _pollingIntervalMs = 60000,
 }) => {
   const [recentNotifications, setRecentNotifications] = useState<NotificationItem[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -49,7 +49,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const abortControllerRef = useRef<AbortController | null>(null);
+  // const _abortControllerRef = useRef<AbortController | null>(null);
 
   /**
    * Refetch summary: top 5 recent notifications + unread count.
@@ -181,7 +181,9 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
 
   /**
    * Initial fetch and periodic polling when browser tab is visible.
+   * Dinonaktifkan sementara menggunakan komentar sesuai instruksi pengguna.
    */
+  /*
   useEffect(() => {
     const controller = new AbortController();
     abortControllerRef.current = controller;
@@ -209,6 +211,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [refetchSummary, pollingIntervalMs]);
+  */
 
   const value = useMemo<NotificationContextValue>(
     () => ({

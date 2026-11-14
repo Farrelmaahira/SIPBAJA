@@ -7,10 +7,9 @@ import {
 } from 'lucide-react';
 import DashboardShellTemplate from './DashboardShellTemplate';
 import HeroBanner from '../organisms/HeroBanner';
-import Bidang2PermohonanTable from '../organisms/Bidang2PermohonanTable';
-import FilterPengajuanModal, {
+import Bidang2PermohonanTable, {
   type FilterStatusOption,
-} from '../organisms/FilterPengajuanModal';
+} from '../organisms/Bidang2PermohonanTable';
 import type { Bidang2PengajuanListItem } from '../../types/bidang2';
 import type { ProfilePillUser } from '../molecules/ProfilePill';
 
@@ -101,9 +100,6 @@ export const Bidang2PengajuanIndexTemplate: FC<Bidang2PengajuanIndexTemplateProp
   onSearchChange,
   onSearchSubmit,
   selectedStatuses = [],
-  filterModalOpen = false,
-  onOpenFilterModal,
-  onCloseFilterModal,
   onApplyFilter,
   pagination,
   onPageChange,
@@ -130,7 +126,7 @@ export const Bidang2PengajuanIndexTemplate: FC<Bidang2PengajuanIndexTemplateProp
           description="Pantau dan review permohonan serta pengajuan yang masuk ke Bidang 2."
         />
 
-        {/* Tabel Organism Bidang2PermohonanTable dalam mode Full List */}
+        {/* Tabel Organism Bidang2PermohonanTable dengan dropdown popover filter tanpa backdrop overlay */}
         <Bidang2PermohonanTable
           isFullList
           variant="permohonan"
@@ -143,24 +139,14 @@ export const Bidang2PengajuanIndexTemplate: FC<Bidang2PengajuanIndexTemplateProp
           searchQuery={searchQuery}
           onSearchChange={onSearchChange}
           onSearchSubmit={onSearchSubmit}
-          onOpenFilter={onOpenFilterModal}
-          activeFilterCount={selectedStatuses.length}
+          selectedStatuses={selectedStatuses}
+          onApplyFilter={onApplyFilter}
+          filterOptions={BIDANG2_FILTER_STATUS_OPTIONS}
           pagination={pagination}
           onPageChange={onPageChange}
           onDetail={(item) => onViewDetail(item.id)}
         />
       </div>
-
-      {/* Modal Filter Pengajuan */}
-      {onCloseFilterModal && onApplyFilter && (
-        <FilterPengajuanModal
-          isOpen={filterModalOpen}
-          onClose={onCloseFilterModal}
-          onApply={onApplyFilter}
-          selectedStatuses={selectedStatuses}
-          options={BIDANG2_FILTER_STATUS_OPTIONS}
-        />
-      )}
     </DashboardShellTemplate>
   );
 };

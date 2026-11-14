@@ -1,6 +1,6 @@
-import type { FC, FormEvent } from 'react';
+import { useState, useEffect, useRef, type FC, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, ClipboardList, Filter, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, ClipboardList, Filter, Search, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import StatusPill from '../atoms/StatusPill';
 import RowActionMenu from './RowActionMenu';
 import { formatRupiah } from '../../utils/formatters';
@@ -28,6 +28,14 @@ export interface Bidang2PaginationInfo {
   to: number;
 }
 
+export interface FilterStatusOption {
+  key?: string;
+  value?: string;
+  label: string;
+  pillClass?: string;
+  dotClass?: string;
+}
+
 export interface Bidang2PermohonanTableProps {
   variant?: 'permohonan' | 'pengadaan';
   isFullList?: boolean;
@@ -42,8 +50,9 @@ export interface Bidang2PermohonanTableProps {
   searchQuery?: string;
   onSearchChange?: (val: string) => void;
   onSearchSubmit?: (e?: FormEvent) => void;
-  onOpenFilter?: () => void;
-  activeFilterCount?: number;
+  selectedStatuses?: string[];
+  onApplyFilter?: (statuses: string[]) => void;
+  filterOptions?: FilterStatusOption[];
   totalCount?: number;
   // Pagination props for full list mode
   pagination?: Bidang2PaginationInfo;
@@ -92,6 +101,27 @@ function generatePaginationPages(currentPage: number, lastPage: number): (number
   return [1, 'ellipsis', currentPage - 1, currentPage, currentPage + 1, 'ellipsis', lastPage];
 }
 
+const DEFAULT_FILTER_OPTIONS: FilterStatusOption[] = [
+  {
+    key: 'menunggu_bidang2',
+    label: 'Review Permohonan',
+    pillClass: 'bg-[#EFF4FE] text-[#2F68D6] border border-[#D0E1FD]',
+    dotClass: 'bg-[#2F68D6]',
+  },
+  {
+    key: 'disetujui',
+    label: 'Disetujui',
+    pillClass: 'bg-[#E8F5E9] text-[#0E7C5A] border border-[#C8E6C9]',
+    dotClass: 'bg-[#0E7C5A]',
+  },
+  {
+    key: 'ditolak',
+    label: 'Ditolak',
+    pillClass: 'bg-[#FDECEC] text-[#E5484D] border border-[#FECDCA]',
+    dotClass: 'bg-[#E5484D]',
+  },
+];
+
 export const Bidang2PermohonanTable: FC<Bidang2PermohonanTableProps> = ({
   variant = 'permohonan',
   isFullList = false,
@@ -105,8 +135,9 @@ export const Bidang2PermohonanTable: FC<Bidang2PermohonanTableProps> = ({
   searchQuery,
   onSearchChange,
   onSearchSubmit,
-  onOpenFilter,
-  activeFilterCount = 0,
+  selectedStatuses = [],
+  onApplyFilter,
+  filterOptions = DEFAULT_FILTER_OPTIONS,
   totalCount,
   pagination,
   onPageChange,
@@ -137,6 +168,61 @@ export const Bidang2PermohonanTable: FC<Bidang2PermohonanTableProps> = ({
   const displayedRows = isFullList ? rows : rows.slice(0, 4);
   const displayTotal = totalCount !== undefined ? totalCount : rows.length;
 
+  // Popover State
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [tempStatuses, setTempStatuses] = useState<string[]>(selectedStatuses);
+  const filterContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setTempStatuses(selectedStatuses);
+  }, [selectedStatuses, isFilterOpen]);
+
+  // Click outside & ESC listener for the filter popover
+  useEffect(() => {
+    if (!isFilterOpen) return;
+
+    function handleClickOutside(e: MouseEvent) {
+      if (filterContainerRef.current && !filterContainerRef.current.contains(e.target as Node)) {
+        setIsFilterOpen(false);
+      }
+    }
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        setIsFilterOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isFilterOpen]);
+
+  const toggleStatus = (key: string) => {
+    if (tempStatuses.includes(key)) {
+      setTempStatuses(tempStatuses.filter((s) => s !== key));
+    } else {
+      setTempStatuses([...tempStatuses, key]);
+    }
+  };
+
+  const handleResetFilter = () => {
+    setTempStatuses([]);
+    onApplyFilter?.([]);
+    setIsFilterOpen(false);
+  };
+
+  const handleApplyFilterAction = () => {
+    onApplyFilter?.(tempStatuses);
+    setIsFilterOpen(false);
+  };
+
+  const activeFilterCount = selectedStatuses.length;
+
   const renderStatus = (status?: string | null) => {
     if (isPengadaan) {
       return <StatusPill status="review_pengajuan" label="Review Pengajuan" />;
@@ -153,7 +239,7 @@ export const Bidang2PermohonanTable: FC<Bidang2PermohonanTableProps> = ({
 
   return (
     <section
-      className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)] overflow-hidden"
+      className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)] overflow-visible"
       aria-label={displayTitle}
       aria-busy={isLoading || undefined}
     >
@@ -183,24 +269,100 @@ export const Bidang2PermohonanTable: FC<Bidang2PermohonanTableProps> = ({
       {isFullList && (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5">
           <div className="flex flex-wrap items-center gap-2.5">
-            {onOpenFilter && (
-              <button
-                type="button"
-                onClick={onOpenFilter}
-                className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                  activeFilterCount > 0
-                    ? 'bg-[#E8F5EF] text-[#0E7C5A] border-[#0E7C5A]'
-                    : 'bg-white text-[#14201C] border-[#E4EBE8] hover:bg-[#F4F7F5]'
-                }`}
-              >
-                <Filter className="w-3.5 h-3.5" />
-                <span>Filter</span>
-                {activeFilterCount > 0 && (
-                  <span className="w-4 h-4 rounded-full bg-[#0E7C5A] text-white text-[10px] flex items-center justify-center font-bold">
-                    {activeFilterCount}
-                  </span>
+            {/* Filter Button with Dropdown Popover */}
+            {onApplyFilter && (
+              <div className="relative inline-block" ref={filterContainerRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsFilterOpen((prev) => !prev)}
+                  className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                    activeFilterCount > 0
+                      ? 'bg-[#E8F5EF] text-[#0E7C5A] border-[#0E7C5A]'
+                      : 'bg-white text-[#14201C] border-[#E4EBE8] hover:bg-[#F4F7F5]'
+                  }`}
+                  aria-expanded={isFilterOpen}
+                  aria-label="Filter status permohonan"
+                >
+                  <Filter className="w-3.5 h-3.5" />
+                  <span>Filter</span>
+                  {activeFilterCount > 0 && (
+                    <span className="w-4 h-4 rounded-full bg-[#0E7C5A] text-white text-[10px] flex items-center justify-center font-bold">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Dropdown Popover without page-blocking backdrop overlay */}
+                {isFilterOpen && (
+                  <div
+                    className="absolute left-0 top-full mt-2 w-72 rounded-2xl bg-white border border-[#E4EBE8] shadow-[0_14px_36px_rgba(13,51,38,0.14)] p-4 z-40 animate-scale-up"
+                    role="dialog"
+                    aria-label="Filter status permohonan"
+                  >
+                    <div className="flex items-center justify-between pb-3 border-b border-[#F0F4F2]">
+                      <h3 className="text-sm font-bold text-[#14201C]">Filter</h3>
+                      <button
+                        type="button"
+                        onClick={() => setIsFilterOpen(false)}
+                        className="p-1 rounded-lg text-[#8A9A95] hover:bg-[#F4F7F5] hover:text-[#14201C] transition-colors cursor-pointer"
+                        aria-label="Tutup filter"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div className="py-3">
+                      <p className="text-[10px] font-bold text-[#8A9A95] uppercase tracking-wider mb-2.5">
+                        Status Permohonan
+                      </p>
+                      <div className="space-y-2.5">
+                        {filterOptions.map((opt) => {
+                          const optKey = opt.key || opt.value || '';
+                          const isChecked = tempStatuses.includes(optKey);
+                          return (
+                            <label
+                              key={optKey}
+                              className="flex items-center gap-2.5 cursor-pointer select-none group"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => toggleStatus(optKey)}
+                                className="w-4 h-4 rounded border-[#CFDBD5] text-[#0E7C5A] focus:ring-[#0E7C5A] accent-[#0E7C5A] cursor-pointer"
+                              />
+                              <span
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
+                                  opt.pillClass || 'bg-slate-100 text-slate-800'
+                                }`}
+                              >
+                                <span className={`w-1.5 h-1.5 rounded-full ${opt.dotClass || 'bg-slate-500'}`} />
+                                {opt.label}
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-3 border-t border-[#F0F4F2]">
+                      <button
+                        type="button"
+                        onClick={handleResetFilter}
+                        className="flex-1 py-2 px-3 rounded-xl border border-[#E4EBE8] text-xs font-bold text-[#5F6F6A] hover:bg-[#F4F7F5] transition-colors cursor-pointer"
+                      >
+                        Reset
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleApplyFilterAction}
+                        className="flex-1 py-2 px-3 rounded-xl bg-[#0E7C5A] hover:bg-[#0B6549] text-xs font-bold text-white transition-colors cursor-pointer shadow-xs"
+                      >
+                        Terapkan
+                      </button>
+                    </div>
+                  </div>
                 )}
-              </button>
+              </div>
             )}
 
             {onSearchChange && (
