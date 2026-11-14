@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback, type FC } from 'react';
+import { useState, useEffect, useCallback, useMemo, type FC } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import bidang2Service from '../../../services/bidang2Service';
 import Bidang2PengajuanShowTemplate from '../../../components/templates/Bidang2PengajuanShowTemplate';
 import type { Bidang2DetailPengajuan } from '../../../types/bidang2';
+import type { DokumenItem } from '../../../types/dokumen';
 
 export const Bidang2PengajuanShow: FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -16,9 +17,12 @@ export const Bidang2PengajuanShow: FC = () => {
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [flashMessage, setFlashMessage] = useState<string | null>(null);
 
-  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
-  const [isLoadingPdf, setIsLoadingPdf] = useState<boolean>(false);
-  const [pdfLoadFailed, setPdfLoadFailed] = useState<boolean>(false);
+  // Document action & live preview states (identical to Perencanaan Pengajuan Show)
+  const [isViewingDocId, setIsViewingDocId] = useState<number | string | null>(null);
+  const [isDownloadingDocId, setIsDownloadingDocId] = useState<number | string | null>(null);
+  const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
+  const [previewDocId, setPreviewDocId] = useState<number | string | null>(null);
+  const [isLoadingPreview, setIsLoadingPreview] = useState<boolean>(false);
 
   const [isSetujuModalOpen, setIsSetujuModalOpen] = useState<boolean>(false);
   const [isTolakModalOpen, setIsTolakModalOpen] = useState<boolean>(false);
@@ -57,46 +61,125 @@ export const Bidang2PengajuanShow: FC = () => {
     };
   }, [fetchDetail]);
 
-  // Muat berkas fisik PDF dokumen yang diunggah oleh jurusan untuk live preview
-  useEffect(() => {
-    let localBlobUrl: string | null = null;
-    const downloadUrl = permohonan?.dokumen?.download_url;
+  const dokumenList: DokumenItem[] = useMemo(() => {
+    if (!permohonan) return [];
+    if (permohonan.dokumen) {
+      return [
+        {
+          id: permohonan.dokumen.id || permohonan.id,
+          nama_asli:
+            permohonan.dokumen.nama_asli ||
+            `Surat_Permohonan_${(permohonan.judul || 'Pengadaan').replace(/\s+/g, '_')}.pdf`,
+          tipe_dokumen: 'surat_permohonan',
+          ukuran_bytes: permohonan.dokumen.ukuran_bytes,
+          mime_type: permohonan.dokumen.mime_type || 'application/pdf',
+          download_url:
+            permohonan.dokumen.download_url ||
+            `/api/v1/bidang-2/permohonan/${permohonan.id}/dokumen`,
+        },
+      ];
+    }
+    return [
+      {
+        id: permohonan.id,
+        nama_asli: `Surat_Permohonan_${(permohonan.judul || 'Pengadaan').replace(/\s+/g, '_')}.pdf`,
+        tipe_dokumen: 'surat_permohonan',
+        download_url: `/api/v1/bidang-2/permohonan/${permohonan.id}/dokumen`,
+      },
+    ];
+  }, [permohonan]);
 
-    if (!downloadUrl) {
-      setPdfBlobUrl(null);
-      setIsLoadingPdf(false);
+  // Preload preview blob for the surat_permohonan document (matching Perencanaan)
+  useEffect(() => {
+    const targetDoc =
+      dokumenList.find(
+        (d) => d.tipe_dokumen === 'surat_permohonan' || d.tipe_dokumen === 'permohonan'
+      ) || dokumenList[0];
+
+    if (!targetDoc?.download_url) {
+      setPreviewBlobUrl(null);
+      setPreviewDocId(null);
+      setIsLoadingPreview(false);
       return;
     }
 
+    let isMounted = true;
+    let currentBlobUrl: string | null = null;
     const controller = new AbortController();
-    setIsLoadingPdf(true);
-    setPdfLoadFailed(false);
+
+    setIsLoadingPreview(true);
+    setPreviewDocId(targetDoc.id);
 
     bidang2Service
-      .getDokumenBlob(downloadUrl, controller.signal)
-      .then((blob) => {
-        localBlobUrl = URL.createObjectURL(blob);
-        setPdfBlobUrl(localBlobUrl);
+      .fetchDokumenBlob(targetDoc.download_url, 'inline', controller.signal)
+      .then(({ blob }) => {
+        if (!isMounted) return;
+        currentBlobUrl = URL.createObjectURL(blob);
+        setPreviewBlobUrl(currentBlobUrl);
       })
       .catch((err) => {
-        if (!controller.signal.aborted) {
-          console.warn('Gagal memuat pratinjau dokumen PDF:', err);
-          setPdfLoadFailed(true);
-        }
+        if (!isMounted || controller.signal.aborted) return;
+        console.error('Gagal memuat pratinjau inline dokumen:', err);
       })
       .finally(() => {
-        if (!controller.signal.aborted) {
-          setIsLoadingPdf(false);
+        if (isMounted) {
+          setIsLoadingPreview(false);
         }
       });
 
     return () => {
+      isMounted = false;
       controller.abort();
-      if (localBlobUrl) {
-        URL.revokeObjectURL(localBlobUrl);
+      if (currentBlobUrl) {
+        URL.revokeObjectURL(currentBlobUrl);
       }
     };
-  }, [permohonan?.dokumen?.download_url]);
+  }, [dokumenList]);
+
+  const handleViewDokumen = async (doc: DokumenItem) => {
+    const targetUrl =
+      doc.download_url ||
+      (permohonan?.id ? `/api/v1/bidang-2/permohonan/${permohonan.id}/dokumen` : null);
+    if (!targetUrl) return;
+
+    setIsViewingDocId(doc.id);
+    try {
+      const { blob } = await bidang2Service.fetchDokumenBlob(targetUrl, 'inline');
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank');
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+    } catch (err) {
+      console.error('Gagal membuka dokumen:', err);
+    } finally {
+      setIsViewingDocId(null);
+    }
+  };
+
+  const handleDownloadDokumen = async (doc: DokumenItem) => {
+    const targetUrl =
+      doc.download_url ||
+      (permohonan?.id ? `/api/v1/bidang-2/permohonan/${permohonan.id}/dokumen` : null);
+    if (!targetUrl) return;
+
+    setIsDownloadingDocId(doc.id);
+    try {
+      const { blob } = await bidang2Service.fetchDokumenBlob(targetUrl, 'attachment');
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download =
+        doc.nama_asli ||
+        `Dokumen_Permohonan_${permohonan?.nomor_surat || 'SIPBAJA'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+    } catch (err) {
+      console.error('Gagal mengunduh dokumen:', err);
+    } finally {
+      setIsDownloadingDocId(null);
+    }
+  };
 
   const handleOpenRkakl = () => {
     navigate('/bidang-2/rkakl');
@@ -125,14 +208,19 @@ export const Bidang2PengajuanShow: FC = () => {
     <Bidang2PengajuanShowTemplate
       user={user}
       permohonan={permohonan}
+      dokumenList={dokumenList}
       isLoading={isLoading}
       hasError={hasError}
       errorMessage={errorMessage}
       flashMessage={flashMessage}
       onCloseFlash={() => setFlashMessage(null)}
-      pdfBlobUrl={pdfBlobUrl}
-      isLoadingPdf={isLoadingPdf}
-      pdfLoadFailed={pdfLoadFailed}
+      previewBlobUrl={previewBlobUrl}
+      previewDocId={previewDocId}
+      isLoadingPreview={isLoadingPreview}
+      isViewingDocId={isViewingDocId}
+      isDownloadingDocId={isDownloadingDocId}
+      onViewDokumen={handleViewDokumen}
+      onDownloadDokumen={handleDownloadDokumen}
       isSetujuModalOpen={isSetujuModalOpen}
       onToggleSetujuModal={setIsSetujuModalOpen}
       isTolakModalOpen={isTolakModalOpen}

@@ -1,12 +1,5 @@
 import type { FC } from 'react';
-import {
-  Hash,
-  Calendar,
-  FileText,
-  Building2,
-  Banknote,
-  Activity,
-} from 'lucide-react';
+import { Hash, Calendar, Banknote, Activity } from 'lucide-react';
 import StatusPill from '../../atoms/StatusPill';
 import { formatRupiah } from '../../../utils/formatPermohonan';
 import type { Bidang2DetailPengajuan } from '../../../types/bidang2';
@@ -16,124 +9,91 @@ export interface InformasiPermohonanCardProps {
 }
 
 export const InformasiPermohonanCard: FC<InformasiPermohonanCardProps> = ({ data }) => {
-  const makKode = data.mak_list && data.mak_list.length > 0
-    ? data.mak_list.map((m) => m.kode).join(', ')
-    : '532111';
-
   return (
     <section
       className="bg-white rounded-[24px] border border-[#E4EBE8] shadow-[0_4px_16px_rgba(20,32,28,0.04)] p-6 md:p-8 space-y-6"
-      aria-labelledby="info-permohonan-title"
+      aria-labelledby="info-permohonan-heading"
     >
       <div>
-        <h2 id="info-permohonan-title" className="text-lg md:text-xl font-bold text-[#14201C]">
-          Informasi Permohonan
+        <p className="text-[11px] font-bold text-[#0E7C5A] tracking-[1.2px] uppercase">
+          INFORMASI PERMOHONAN
+        </p>
+        <h2
+          id="info-permohonan-heading"
+          className="text-xl sm:text-2xl font-extrabold text-[#14201C] tracking-tight mt-1"
+        >
+          {data.judul || 'Pengadaan'}
         </h2>
-        <p className="text-xs md:text-sm text-[#5F6F6A] mt-0.5">
-          Ringkasan data yang diajukan
+        <p className="text-xs sm:text-sm text-[#5F6F6A] font-medium mt-1">
+          Diajukan oleh {data.unit_nama || 'Unit Satuan Kerja'}
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8">
+      <div className="pt-2 border-t border-[#F0F4F2] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {/* Nomor Permohonan */}
-        <div className="flex items-start gap-3.5">
+        <div className="flex items-center gap-3.5">
           <div
-            className="w-10 h-10 rounded-xl bg-[#EEF5F2] text-[#0E7C5A] flex items-center justify-center shrink-0 shadow-2xs"
+            className="w-10 h-10 rounded-xl bg-[#EAF6F1] text-[#0E7C5A] flex items-center justify-center shrink-0 border border-[#C8E6C9]"
             aria-hidden="true"
           >
             <Hash className="w-5 h-5 stroke-[2.2]" />
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-xs font-medium text-[#8A9A95]">Nomor Permohonan</p>
-            <p className="text-sm font-bold text-[#14201C] mt-0.5">{data.nomor_surat || '-'}</p>
+            <p className="text-sm font-bold text-[#14201C] truncate mt-0.5" title={data.nomor_surat}>
+              {data.nomor_surat || '-'}
+            </p>
           </div>
         </div>
 
         {/* Tanggal Pengajuan */}
-        <div className="flex items-start gap-3.5">
+        <div className="flex items-center gap-3.5">
           <div
-            className="w-10 h-10 rounded-xl bg-[#EEF5F2] text-[#0E7C5A] flex items-center justify-center shrink-0 shadow-2xs"
+            className="w-10 h-10 rounded-xl bg-[#EAF6F1] text-[#0E7C5A] flex items-center justify-center shrink-0 border border-[#C8E6C9]"
             aria-hidden="true"
           >
             <Calendar className="w-5 h-5 stroke-[2.2]" />
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-xs font-medium text-[#8A9A95]">Tanggal Pengajuan</p>
-            <p className="text-sm font-bold text-[#14201C] mt-0.5">{data.tanggal_pengajuan || '-'}</p>
+            <p className="text-sm font-bold text-[#14201C] truncate mt-0.5">
+              {data.tanggal_pengajuan || '-'}
+            </p>
           </div>
         </div>
 
-        {/* Judul Permohonan */}
-        <div className="flex items-start gap-3.5">
+        {/* Nominal / Estimasi */}
+        <div className="flex items-center gap-3.5">
           <div
-            className="w-10 h-10 rounded-xl bg-[#EEF5F2] text-[#0E7C5A] flex items-center justify-center shrink-0 shadow-2xs"
-            aria-hidden="true"
-          >
-            <FileText className="w-5 h-5 stroke-[2.2]" />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-[#8A9A95]">Judul Permohonan</p>
-            <p className="text-sm font-bold text-[#14201C] mt-0.5">{data.judul || '-'}</p>
-          </div>
-        </div>
-
-        {/* Diajukan Oleh */}
-        <div className="flex items-start gap-3.5">
-          <div
-            className="w-10 h-10 rounded-xl bg-[#EEF5F2] text-[#0E7C5A] flex items-center justify-center shrink-0 shadow-2xs"
-            aria-hidden="true"
-          >
-            <Building2 className="w-5 h-5 stroke-[2.2]" />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-[#8A9A95]">Diajukan Oleh</p>
-            <p className="text-sm font-bold text-[#14201C] mt-0.5">{data.unit_nama || '-'}</p>
-          </div>
-        </div>
-
-        {/* Nominal/Estimasi */}
-        <div className="flex items-start gap-3.5">
-          <div
-            className="w-10 h-10 rounded-xl bg-[#EEF5F2] text-[#0E7C5A] flex items-center justify-center shrink-0 shadow-2xs"
+            className="w-10 h-10 rounded-xl bg-[#EAF6F1] text-[#0E7C5A] flex items-center justify-center shrink-0 border border-[#C8E6C9]"
             aria-hidden="true"
           >
             <Banknote className="w-5 h-5 stroke-[2.2]" />
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-xs font-medium text-[#8A9A95]">Nominal/Estimasi</p>
-            <p className="text-sm font-bold text-[#14201C] mt-0.5">
+            <p className="text-sm font-bold text-[#14201C] truncate mt-0.5">
               {formatRupiah(data.estimasi_anggaran)}
             </p>
           </div>
         </div>
 
         {/* Status */}
-        <div className="flex items-start gap-3.5">
+        <div className="flex items-center gap-3.5">
           <div
-            className="w-10 h-10 rounded-xl bg-[#EEF5F2] text-[#0E7C5A] flex items-center justify-center shrink-0 shadow-2xs"
+            className="w-10 h-10 rounded-xl bg-[#EAF6F1] text-[#0E7C5A] flex items-center justify-center shrink-0 border border-[#C8E6C9]"
             aria-hidden="true"
           >
             <Activity className="w-5 h-5 stroke-[2.2]" />
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-xs font-medium text-[#8A9A95]">Status</p>
             <div className="mt-1">
-              <StatusPill status={data.status} label={data.status === 'menunggu_bidang2' ? 'Review Permohonan' : undefined} />
+              <StatusPill
+                status={data.status}
+                label={data.status === 'menunggu_bidang2' ? 'Review Permohonan' : undefined}
+              />
             </div>
-          </div>
-        </div>
-
-        {/* Jenis MAK */}
-        <div className="flex items-start gap-3.5">
-          <div
-            className="w-10 h-10 rounded-xl bg-[#EEF5F2] text-[#0E7C5A] flex items-center justify-center shrink-0 shadow-2xs"
-            aria-hidden="true"
-          >
-            <Hash className="w-5 h-5 stroke-[2.2]" />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-[#8A9A95]">Jenis MAK</p>
-            <p className="text-sm font-bold text-[#14201C] mt-0.5">{makKode}</p>
           </div>
         </div>
       </div>
@@ -142,4 +102,3 @@ export const InformasiPermohonanCard: FC<InformasiPermohonanCardProps> = ({ data
 };
 
 export default InformasiPermohonanCard;
-

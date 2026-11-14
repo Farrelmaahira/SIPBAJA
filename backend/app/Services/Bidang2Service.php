@@ -89,6 +89,7 @@ class Bidang2Service
                 'id' => $pm->Mak->id,
                 'kode' => (string) ($pm->Mak->kode ?? $pm->Mak->nama),
                 'nama' => (string) $pm->Mak->nama,
+                'ppk_nama' => $pm->Mak->Ppk?->name ?? 'Budi Santoso',
             ])
             ->values()
             ->all();
@@ -301,4 +302,3 @@ class Bidang2Service
         ];
     }
 }
-

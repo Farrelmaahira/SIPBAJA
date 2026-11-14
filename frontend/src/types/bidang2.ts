@@ -2,6 +2,7 @@ export interface Bidang2PermohonanMakItem {
   id: number | string;
   kode: string;
   nama: string;
+  ppk_nama?: string | null;
   [key: string]: unknown;
 }
 
