@@ -64,10 +64,10 @@ class DashboardBidang2Service
             ->map(function ($item) {
                 return [
                     'id' => $item->id,
-                    'nomor_pengadaan' => sprintf('%05d-FF-11', $item->id),
+                    'nomor_pengadaan' => sprintf('PGD-%04d', $item->id),
                     'nomor_permohonan' => $item->Permohonan?->nomor_surat ?? '-',
-                    'judul' => $item->Permohonan?->judul ?? 'Pengadaan Barang & Jasa',
-                    'unit_nama' => $item->Permohonan?->unit?->nama ?? 'Unit Kampus',
+                    'judul' => $item->Permohonan?->judul ?? '-',
+                    'unit_nama' => $item->Permohonan?->unit?->nama ?? '-',
                     'nominal' => (float) $item->nominal,
                     'status' => $item->status,
                     'created_at' => $item->created_at,

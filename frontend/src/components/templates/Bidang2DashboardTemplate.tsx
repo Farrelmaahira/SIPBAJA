@@ -1,12 +1,9 @@
 import type { FC } from 'react';
 import {
-  LayoutDashboard,
-  ClipboardList,
   FileText,
   CheckCircle,
   XCircle,
   Hourglass,
-  ShoppingCart,
 } from 'lucide-react';
 import DashboardShellTemplate from './DashboardShellTemplate';
 import HeroBanner from '../organisms/HeroBanner';
@@ -14,35 +11,8 @@ import StatCard, { type StatBadge } from '../molecules/StatCard';
 import PerencanaanChartCard, { type ChartDataItem } from '../organisms/PerencanaanChartCard';
 import Bidang2PermohonanTable, { type Bidang2TableItem } from '../organisms/Bidang2PermohonanTable';
 import DetailPermohonanModal, { type PermohonanDetailData } from '../organisms/DetailPermohonanModal';
+import { BIDANG2_NAV_ITEMS } from '../../constants/bidang2Nav';
 import type { ProfilePillUser } from '../molecules/ProfilePill';
-
-const NAV_ITEMS = [
-  {
-    key: 'dashboard',
-    label: 'Dashboard',
-    icon: LayoutDashboard,
-    href: '/bidang-2/dashboard',
-  },
-  {
-    key: 'pengajuan',
-    label: 'List Permohonan',
-    icon: ClipboardList,
-    href: '/bidang-2/pengajuan',
-    badge: 4,
-  },
-  {
-    key: 'pengadaan',
-    label: 'List Pengadaan',
-    icon: ShoppingCart,
-    href: '/bidang-2/pengadaan',
-  },
-  {
-    key: 'rkakl',
-    label: 'Dokumen RKAKL',
-    icon: FileText,
-    href: '/bidang-2/rkakl',
-  },
-];
 
 function StatSkeleton() {
   return (
@@ -103,12 +73,12 @@ export const Bidang2DashboardTemplate: FC<Bidang2DashboardTemplateProps> = ({
   const tambahanBulanLabel =
     (ringkasan.tambahan_bulan_ini ?? 0) > 0
       ? `+${ringkasan.tambahan_bulan_ini} bulan ini`
-      : '+3 bulan ini';
+      : '0 bulan ini';
 
   const disetujuiBulanLabel =
     (ringkasan.disetujui_bulan_ini ?? 0) > 0
       ? `+${ringkasan.disetujui_bulan_ini} bulan ini`
-      : '+2 bulan ini';
+      : '0 bulan ini';
 
   const statCards: Array<{
     key: string;
@@ -123,7 +93,7 @@ export const Bidang2DashboardTemplate: FC<Bidang2DashboardTemplateProps> = ({
       key: 'total',
       icon: FileText,
       label: 'Total Permohonan',
-      value: ringkasan.total || 18,
+      value: ringkasan.total ?? 0,
       iconBg: 'bg-[#EAF6F1]',
       iconColor: 'text-[#0E7C5A]',
       badge: { label: tambahanBulanLabel, variant: 'success' },
@@ -132,7 +102,7 @@ export const Bidang2DashboardTemplate: FC<Bidang2DashboardTemplateProps> = ({
       key: 'menunggu',
       icon: Hourglass,
       label: 'Menunggu Verifikasi',
-      value: ringkasan.menunggu_verifikasi ?? 2,
+      value: ringkasan.menunggu_verifikasi ?? 0,
       iconBg: 'bg-[#EBF5FA]',
       iconColor: 'text-[#0284C7]',
       badge: { label: 'Dalam antrean', variant: 'info' },
@@ -141,7 +111,7 @@ export const Bidang2DashboardTemplate: FC<Bidang2DashboardTemplateProps> = ({
       key: 'disetujui',
       icon: CheckCircle,
       label: 'Disetujui',
-      value: ringkasan.disetujui || 12,
+      value: ringkasan.disetujui ?? 0,
       iconBg: 'bg-[#EAF6F1]',
       iconColor: 'text-[#0E7C5A]',
       badge: { label: disetujuiBulanLabel, variant: 'success' },
@@ -158,7 +128,7 @@ export const Bidang2DashboardTemplate: FC<Bidang2DashboardTemplateProps> = ({
   ];
 
   const sidebarProps = {
-    navItems: NAV_ITEMS,
+    navItems: BIDANG2_NAV_ITEMS,
     activeRoute: 'dashboard',
     brandSubtitle: 'Pengadaan Barang & Jasa',
     sectionTitle: 'MENU',

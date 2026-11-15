@@ -14,31 +14,20 @@ export interface PerencanaanChartCardProps {
   totalDitolak?: number;
 }
 
-const DEFAULT_YEARLY_DATA: ChartDataItem[] = [
-  { label: '2021', disetujui: 165, ditolak: 38 },
-  { label: '2022', disetujui: 205, ditolak: 46 },
-  { label: '2023', disetujui: 245, ditolak: 52 },
-  { label: '2024', disetujui: 280, ditolak: 60 },
-  { label: '2025', disetujui: 315, ditolak: 68 },
-  { label: '2026', disetujui: 315, ditolak: 68 },
+const EMPTY_MONTHLY_DATA: ChartDataItem[] = [
+  { label: 'Jan', disetujui: 0, ditolak: 0 },
+  { label: 'Feb', disetujui: 0, ditolak: 0 },
+  { label: 'Mar', disetujui: 0, ditolak: 0 },
+  { label: 'Apr', disetujui: 0, ditolak: 0 },
+  { label: 'Mei', disetujui: 0, ditolak: 0 },
+  { label: 'Jun', disetujui: 0, ditolak: 0 },
+  { label: 'Jul', disetujui: 0, ditolak: 0 },
+  { label: 'Agu', disetujui: 0, ditolak: 0 },
+  { label: 'Sep', disetujui: 0, ditolak: 0 },
+  { label: 'Okt', disetujui: 0, ditolak: 0 },
+  { label: 'Nov', disetujui: 0, ditolak: 0 },
+  { label: 'Des', disetujui: 0, ditolak: 0 },
 ];
-
-const DEFAULT_MONTHLY_DATA: ChartDataItem[] = [
-  { label: 'Jan', disetujui: 140, ditolak: 30 },
-  { label: 'Feb', disetujui: 180, ditolak: 35 },
-  { label: 'Mar', disetujui: 210, ditolak: 35 },
-  { label: 'Apr', disetujui: 160, ditolak: 50 },
-  { label: 'Mei', disetujui: 240, ditolak: 50 },
-  { label: 'Jun', disetujui: 270, ditolak: 60 },
-  { label: 'Jul', disetujui: 230, ditolak: 40 },
-  { label: 'Agu', disetujui: 280, ditolak: 65 },
-  { label: 'Sep', disetujui: 250, ditolak: 45 },
-  { label: 'Okt', disetujui: 300, ditolak: 35 },
-  { label: 'Nov', disetujui: 190, ditolak: 30 },
-  { label: 'Des', disetujui: 240, ditolak: 40 },
-];
-
-const Y_TICKS = [480, 360, 240, 120, 0];
 
 export const PerencanaanChartCard: FC<PerencanaanChartCardProps> = ({
   viewMode,
@@ -47,28 +36,28 @@ export const PerencanaanChartCard: FC<PerencanaanChartCardProps> = ({
   totalDisetujui,
   totalDitolak,
 }) => {
+  const currentYear = new Date().getFullYear();
+  const emptyYearlyData: ChartDataItem[] = Array.from({ length: 5 }, (_, i) => ({
+    label: String(currentYear - 4 + i),
+    disetujui: 0,
+    ditolak: 0,
+  }));
+
   const activeData =
     data && data.length > 0
       ? data
       : viewMode === 'bulan'
-        ? DEFAULT_MONTHLY_DATA
-        : DEFAULT_YEARLY_DATA;
+        ? EMPTY_MONTHLY_DATA
+        : emptyYearlyData;
 
-  const resolvedDisetujui =
-    totalDisetujui !== undefined
-      ? totalDisetujui
-      : viewMode === 'bulan'
-        ? 337
-        : 1529;
+  const resolvedDisetujui = totalDisetujui ?? 0;
+  const resolvedDitolak = totalDitolak ?? 0;
 
-  const resolvedDitolak =
-    totalDitolak !== undefined
-      ? totalDitolak
-      : viewMode === 'bulan'
-        ? 81
-        : 342;
+  const maxVal = Math.max(10, ...activeData.map((d) => Math.max(d.disetujui, d.ditolak)));
+  const step = Math.ceil(maxVal / 4);
+  const maxTick = step * 4;
+  const yTicks = [maxTick, step * 3, step * 2, step, 0];
 
-  const currentYear = new Date().getFullYear();
   const subtitle =
     viewMode === 'tahun'
       ? `Disetujui vs ditolak per tahun • 2021–${currentYear}`
@@ -125,7 +114,7 @@ export const PerencanaanChartCard: FC<PerencanaanChartCardProps> = ({
         <div className="relative flex gap-3">
           {/* Sumbu Y Ticks */}
           <div className="flex flex-col justify-between h-52 text-[11px] text-[#8A9A95] font-medium pr-2 select-none pb-6">
-            {Y_TICKS.map((tick) => (
+            {yTicks.map((tick) => (
               <span key={tick} className="leading-none text-right w-7">
                 {tick}
               </span>
@@ -136,7 +125,7 @@ export const PerencanaanChartCard: FC<PerencanaanChartCardProps> = ({
           <div className="flex-1 relative h-52 overflow-x-auto">
             {/* Garis Horizontal Panduan */}
             <div className="absolute inset-0 bottom-6 flex flex-col justify-between pointer-events-none">
-              {Y_TICKS.map((tick) => (
+              {yTicks.map((tick) => (
                 <div key={tick} className="w-full border-b border-[#F0F4F2]" />
               ))}
             </div>
@@ -144,8 +133,14 @@ export const PerencanaanChartCard: FC<PerencanaanChartCardProps> = ({
             {/* Kolom Batang Berdampingan */}
             <div className="relative z-10 h-full flex items-end justify-between sm:justify-around gap-1 sm:gap-2 pt-2 min-w-[500px] sm:min-w-0">
               {activeData.map((item, idx) => {
-                const hApprove = Math.min(172, Math.max(2, Math.round((item.disetujui / 480) * 172)));
-                const hReject = Math.min(172, Math.max(2, Math.round((item.ditolak / 480) * 172)));
+                const hApprove =
+                  item.disetujui > 0
+                    ? Math.min(172, Math.max(4, Math.round((item.disetujui / maxTick) * 172)))
+                    : 0;
+                const hReject =
+                  item.ditolak > 0
+                    ? Math.min(172, Math.max(4, Math.round((item.ditolak / maxTick) * 172)))
+                    : 0;
 
                 return (
                   <div key={idx} className="flex-1 flex flex-col items-center gap-2 group">

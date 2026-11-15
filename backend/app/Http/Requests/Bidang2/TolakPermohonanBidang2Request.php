@@ -43,4 +43,3 @@ class TolakPermohonanBidang2Request extends FormRequest
         ];
     }
 }
-

@@ -48,4 +48,3 @@ class SetujuPermohonanBidang2Request extends FormRequest
         ];
     }
 }
-

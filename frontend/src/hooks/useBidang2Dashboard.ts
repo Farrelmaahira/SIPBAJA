@@ -87,45 +87,6 @@ const DEFAULT_RINGKASAN: RingkasanBidang2 = {
   disetujui_bulan_ini: 0,
 };
 
-const FALLBACK_RIWAYAT_PENGADAAN: RiwayatPengadaanBidang2Item[] = [
-  {
-    id: 1,
-    nomor_pengadaan: '01010-FF-11',
-    nomor_permohonan: 'Permohonan 111-FFF-111',
-    judul: 'Pengadaan Komputer Lab',
-    unit_nama: 'Jurusan Teknik Informatika',
-    nominal: 185000000,
-    status: 'Review Pengajuan',
-  },
-  {
-    id: 2,
-    nomor_pengadaan: '01011-FF-11',
-    nomor_permohonan: 'Permohonan 112-FFF-111',
-    judul: 'Pengadaan Proyektor Ruang Kelas',
-    unit_nama: 'Jurusan Teknik Elektro',
-    nominal: 48500000,
-    status: 'Review Pengajuan',
-  },
-  {
-    id: 3,
-    nomor_pengadaan: '01012-FF-11',
-    nomor_permohonan: 'Permohonan 113-FFF-111',
-    judul: 'Pengadaan Switch Jaringan Gedung A',
-    unit_nama: 'Jurusan Teknik Sipil',
-    nominal: 92750000,
-    status: 'Review Pengajuan',
-  },
-  {
-    id: 4,
-    nomor_pengadaan: '01013-FF-11',
-    nomor_permohonan: 'Permohonan 114-FFF-111',
-    judul: 'Pengadaan Perangkat Server',
-    unit_nama: 'Bagian Akademik',
-    nominal: 320000000,
-    status: 'Review Pengajuan',
-  },
-];
-
 /**
  * Stateful hook for the Bidang 2 Dashboard page.
  * Manages view mode, selection, active year statistics, and asynchronous Axios requests via bidang2Service.
@@ -143,7 +104,7 @@ export function useBidang2Dashboard(
     () => initialProps.riwayatTerbaru ?? []
   );
   const [riwayatPengadaanTerbaru, setRiwayatPengadaanTerbaru] = useState<RiwayatPengadaanBidang2Item[]>(
-    () => initialProps.riwayatPengadaanTerbaru ?? FALLBACK_RIWAYAT_PENGADAAN
+    () => initialProps.riwayatPengadaanTerbaru ?? []
   );
   const [statistikBulanan, setStatistikBulanan] = useState<StatistikBulananBidang2Item[]>(
     () => initialProps.statistikBulanan ?? []
@@ -170,10 +131,8 @@ export function useBidang2Dashboard(
       if (data) {
         if (data.ringkasan) setRingkasan(data.ringkasan);
         if (data.riwayatTerbaru) setRiwayatTerbaru(data.riwayatTerbaru);
-        if (data.riwayatPengadaanTerbaru && data.riwayatPengadaanTerbaru.length > 0) {
+        if (data.riwayatPengadaanTerbaru) {
           setRiwayatPengadaanTerbaru(data.riwayatPengadaanTerbaru);
-        } else {
-          setRiwayatPengadaanTerbaru(FALLBACK_RIWAYAT_PENGADAAN);
         }
         if (data.statistikBulanan) setStatistikBulanan(data.statistikBulanan);
         if (data.totalDisetujui !== undefined) setTotalDisetujui(data.totalDisetujui);
