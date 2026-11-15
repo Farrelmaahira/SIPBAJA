@@ -31,6 +31,7 @@ export const PerencanaanPengajuanShow: FC<PerencanaanShowProps> = ({
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [alasanPenolakan, setAlasanPenolakan] = useState('');
   const [alasanError, setAlasanError] = useState('');
+  const [catatanApprove, setCatatanApprove] = useState('');
   const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
@@ -108,7 +109,7 @@ export const PerencanaanPengajuanShow: FC<PerencanaanShowProps> = ({
     if (validIds.length === 0 || !id) return;
     setProcessing(true);
     try {
-      await perencanaanService.approvePengajuan(id, validIds);
+      await perencanaanService.approvePengajuan(id, validIds, catatanApprove);
       setApproveModalOpen(false);
       navigate('/perencanaan/pengajuan');
     } catch (err) {
@@ -263,6 +264,8 @@ export const PerencanaanPengajuanShow: FC<PerencanaanShowProps> = ({
       rejectModalOpen={rejectModalOpen}
       alasanPenolakan={alasanPenolakan}
       alasanError={alasanError}
+      catatanApprove={catatanApprove}
+      onChangeCatatanApprove={setCatatanApprove}
       onCloseApproveModal={() => setApproveModalOpen(false)}
       onCloseRejectModal={() => setRejectModalOpen(false)}
       onConfirmApprove={handleApproveSubmit}

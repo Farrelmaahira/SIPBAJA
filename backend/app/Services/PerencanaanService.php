@@ -143,9 +143,9 @@ class PerencanaanService
      *
      * @param  array<int, int>  $makIds
      */
-    public function approvePermohonan(Permohonan $permohonan, User $actor, array $makIds): Permohonan
+    public function approvePermohonan(Permohonan $permohonan, User $actor, array $makIds, ?string $catatan = null): Permohonan
     {
-        return DB::transaction(function () use ($permohonan, $actor, $makIds) {
+        return DB::transaction(function () use ($permohonan, $actor, $makIds, $catatan) {
             $statusLama = $permohonan->status;
             $statusBaru = 'diteruskan';
 
@@ -163,12 +163,12 @@ class PerencanaanService
             ApprovalPermohonan::updateOrCreate(
                 [
                     'permohonan_id' => $permohonan->id,
-                    'tahap' => 'Perencanaan',
+                    'tahap' => 'PERENCANAAN',
                     'revisi_ke' => $permohonan->revisi_ke,
                 ],
                 [
                     'keputusan' => 'disetujui',
-                    'alasan' => null,
+                    'alasan' => (! empty($catatan) && trim($catatan) !== '') ? trim($catatan) : null,
                     'actor_id' => $actor->id,
                 ]
             );

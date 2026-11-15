@@ -49,6 +49,8 @@ export interface PerencanaanPengajuanShowTemplateProps {
   rejectModalOpen: boolean;
   alasanPenolakan: string;
   alasanError?: string;
+  catatanApprove?: string;
+  onChangeCatatanApprove?: (val: string) => void;
   onCloseApproveModal: () => void;
   onCloseRejectModal: () => void;
   onConfirmApprove: () => void;
@@ -85,6 +87,8 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
   rejectModalOpen,
   alasanPenolakan,
   alasanError = '',
+  catatanApprove = '',
+  onChangeCatatanApprove,
   onCloseApproveModal,
   onCloseRejectModal,
   onConfirmApprove,
@@ -396,16 +400,35 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
       {/* Modal Approve */}
       {approveModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-sm w-full shadow-2xl border border-[#E4EBE8]">
+          <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl border border-[#E4EBE8]">
             <div className="w-12 h-12 rounded-2xl bg-[#E4F6EC] text-[#0E7C5A] flex items-center justify-center mx-auto mb-4">
               <CheckCircle2 className="w-6 h-6" />
             </div>
-            <div className="text-center mb-5">
+            <div className="text-center mb-4">
               <h3 className="text-base font-bold text-[#14201C]">Verifikasi Permohonan?</h3>
               <p className="text-xs text-[#5F6F6A] mt-1.5 leading-relaxed">
                 Permohonan akan diverifikasi dengan <strong>{selectedMakIds.length} Jenis MAK</strong> dan diteruskan ke tahap berikutnya.
               </p>
             </div>
+
+            <div className="text-left mb-5">
+              <label className="block text-xs font-bold text-[#14201C] mb-1.5">
+                Catatan / Arahan Mapping MAK (Opsional)
+              </label>
+              <textarea
+                value={catatanApprove}
+                onChange={(e) => onChangeCatatanApprove?.(e.target.value)}
+                placeholder="Misal: Gunakan MAK Belanja Modal untuk pengadaan server, sisanya untuk operasional..."
+                maxLength={1000}
+                rows={3}
+                className="w-full text-xs rounded-xl border border-[#CFDAD6] p-3 text-[#14201C] focus:outline-none focus:border-[#0E7C5A] resize-none"
+              />
+              <div className="flex justify-between items-center text-[10px] text-[#5F6F6A] mt-1">
+                <span>Diteruskan ke pihak PPBJ saat pemetaan MAK.</span>
+                <span>{catatanApprove.length}/1000</span>
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
