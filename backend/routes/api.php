@@ -119,36 +119,9 @@ Route::prefix('v1')->group(function () {
             Route::get('permohonan/{permohonan}/dokumen', [PermohonanPemohonController::class, 'downloadDokumen'])->name('api.bidang2.permohonan.dokumen.download');
             Route::get('notifications', [NotificationController::class, 'index'])->name('api.bidang2.notifications.index');
             Route::get('notifications/summary', [NotificationController::class, 'summary'])->name('api.bidang2.notifications.summary');
-            Route::get('notifikasi', [NotificationController::class, 'index'])->name('api.bidang2.notifikasi.index');
-            Route::get('notifikasi/summary', [NotificationController::class, 'summary'])->name('api.bidang2.notifikasi.summary');
             Route::post('notifications/read-all', [NotificationController::class, 'markAllRead'])->name('api.bidang2.notifications.readAll');
-            Route::post('notifikasi/read-all', [NotificationController::class, 'markAllRead'])->name('api.bidang2.notifikasi.readAll');
             Route::post('notifications/{notification}/read', [NotificationController::class, 'markOneRead'])->name('api.bidang2.notifications.readOne');
-            Route::post('notifikasi/{notification}/read', [NotificationController::class, 'markOneRead'])->name('api.bidang2.notifikasi.readOne');
             Route::get('profil', [PerencanaanProfilController::class, 'index'])->name('api.bidang2.profil.index');
-        });
-
-        // Bidang 2 Alias Routes without hyphen
-        Route::prefix('bidang2')->middleware('role:Bidang 2')->group(function () {
-            Route::get('dashboard', DashboardBidang2Controller::class);
-            Route::get('pengajuan', [PengajuanBidang2Controller::class, 'index']);
-            Route::get('pengajuan/{permohonan}', [PengajuanBidang2Controller::class, 'show']);
-            Route::post('pengajuan/{permohonan}/approve', [PengajuanBidang2Controller::class, 'approve']);
-            Route::post('pengajuan/{permohonan}/reject', [PengajuanBidang2Controller::class, 'reject']);
-            Route::get('pengajuan/{permohonan}/memo', [PengajuanBidang2Controller::class, 'downloadMemo']);
-            Route::get('rkakl', [RkaklBidang2Controller::class, 'index']);
-            Route::get('rkakl/dokumen', [RkaklBidang2Controller::class, 'downloadDokumen']);
-            Route::get('rkakl/dokumen/{dokumen}', [RkaklBidang2Controller::class, 'downloadDokumen']);
-            Route::get('permohonan/{permohonan}/dokumen', [PermohonanPemohonController::class, 'downloadDokumen']);
-            Route::get('notifications', [NotificationController::class, 'index']);
-            Route::get('notifications/summary', [NotificationController::class, 'summary']);
-            Route::get('notifikasi', [NotificationController::class, 'index']);
-            Route::get('notifikasi/summary', [NotificationController::class, 'summary']);
-            Route::post('notifications/read-all', [NotificationController::class, 'markAllRead']);
-            Route::post('notifikasi/read-all', [NotificationController::class, 'markAllRead']);
-            Route::post('notifications/{notification}/read', [NotificationController::class, 'markOneRead']);
-            Route::post('notifikasi/{notification}/read', [NotificationController::class, 'markOneRead']);
-            Route::get('profil', [PerencanaanProfilController::class, 'index']);
         });
 
         // PPBJ Routes
