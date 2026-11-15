@@ -51,26 +51,26 @@ export const RoleRoute: FC<RoleRouteProps> = ({ allowedRoles, children }) => {
 
   if (!isAllowed) {
     const fallbackPath = getRoleDashboardPath(effectiveRole);
-    // Never bounce an authenticated user to the login route ('/' or '/login')
-    if (fallbackPath === '/' || fallbackPath === '/login') {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm max-w-md w-full text-center">
-            <h2 className="text-base font-bold text-slate-800 mb-2">Akses Terbatas</h2>
-            <p className="text-xs text-slate-500 mb-4">
-              Akun Anda tidak memiliki izin untuk mengakses halaman ini.
-            </p>
-            <Link
-              to="/bidang-2/dashboard"
-              className="inline-block px-4 py-2 text-xs font-semibold text-white bg-[#0E7C5A] rounded-xl hover:bg-[#0B6549] transition-colors"
-            >
-              Kembali ke Dashboard
-            </Link>
-          </div>
-        </div>
-      );
+    if (fallbackPath && fallbackPath !== '/' && fallbackPath !== '/login') {
+      return <Navigate to={fallbackPath} replace />;
     }
-    return <Navigate to={fallbackPath} replace />;
+
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm max-w-md w-full text-center">
+          <h2 className="text-base font-bold text-slate-800 mb-2">Akses Terbatas</h2>
+          <p className="text-xs text-slate-500 mb-4">
+            Akun Anda tidak memiliki izin untuk mengakses halaman ini.
+          </p>
+          <Link
+            to={fallbackPath || '/'}
+            className="inline-block px-4 py-2 text-xs font-semibold text-white bg-[#0E7C5A] rounded-xl hover:bg-[#0B6549] transition-colors"
+          >
+            Kembali ke Beranda
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return children ? <>{children}</> : <Outlet />;

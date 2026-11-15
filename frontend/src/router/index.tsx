@@ -224,17 +224,9 @@ export const AppRoutes: FC = () => {
           <Route path="/bidang-2/notifikasi" element={<SharedNotifikasiPage />} />
           <Route path="/bidang-2/profil" element={<SharedProfilPage />} />
 
-          {/* Bidang 2 Direct Component Rendering for non-hyphenated routes */}
-          <Route path="/bidang2/dashboard" element={<Bidang2Dashboard />} />
-          <Route path="/bidang2/pengajuan" element={<Bidang2PengajuanIndex />} />
-          <Route path="/bidang2/pengajuan/:id" element={<Bidang2PengajuanShow />} />
-          <Route path="/bidang2/pengadaan" element={<Bidang2PengadaanIndex />} />
-          <Route path="/bidang2/pengadaan/:id" element={<Bidang2PengadaanShow />} />
-          <Route path="/bidang2/rkakl" element={<Bidang2RkaklIndex />} />
-          <Route path="/bidang2/notifikasi" element={<SharedNotifikasiPage />} />
-          <Route path="/bidang2/profil" element={<SharedProfilPage />} />
-          <Route path="/bidang2" element={<Navigate to="/bidang-2/dashboard" replace />} />
+          {/* Redirect legacy non-hyphenated routes */}
           <Route path="/bidang2/*" element={<Navigate to="/bidang-2/dashboard" replace />} />
+          <Route path="/bidang2" element={<Navigate to="/bidang-2/dashboard" replace />} />
         </Route>
 
         {/* PPBJ Routes */}
