@@ -46,11 +46,15 @@ export const perencanaanService = {
    */
   async approvePengajuan(
     id: string | number,
-    makIds: number[]
+    makIds: number[],
+    catatan?: string | null
   ): Promise<ApiMessageResponse> {
     const response = await api.post<ApiMessageResponse>(
       `/v1/perencanaan/pengajuan/${id}/approve`,
-      { mak_ids: makIds }
+      {
+        mak_ids: makIds,
+        ...(catatan && catatan.trim() ? { catatan: catatan.trim() } : {}),
+      }
     );
     return response.data;
   },

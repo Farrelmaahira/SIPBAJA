@@ -63,7 +63,8 @@ class PengajuanPerencanaanController extends Controller
         $this->perencanaanService->approvePermohonan(
             $permohonan,
             auth()->user(),
-            $request->validated('mak_ids')
+            $request->validated('mak_ids'),
+            $request->validated('catatan')
         );
 
         return response()->json([
