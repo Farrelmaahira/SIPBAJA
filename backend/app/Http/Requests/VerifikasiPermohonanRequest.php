@@ -30,8 +30,10 @@ class VerifikasiPermohonanRequest extends FormRequest
     {
         return [
             'mak_ids.required' => 'Pilih minimal satu Jenis MAK sebelum menyetujui permohonan.',
+            'mak_ids.array' => 'Format pilihan Jenis MAK harus berupa daftar.',
             'mak_ids.min' => 'Pilih minimal satu Jenis MAK sebelum menyetujui permohonan.',
             'mak_ids.*.exists' => 'Jenis MAK yang dipilih tidak valid.',
+            'catatan.max' => 'Catatan maksimal 500 karakter.',
         ];
     }
 }

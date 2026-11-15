@@ -588,22 +588,25 @@ Prefix Rute: `/api/v1/perencanaan`
 - **Success Response (200 OK):** Mengembalikan data statistik ringkasan pengajuan masuk, verifikasi, dan RKAKL.
 
 #### 2. Daftar & Detail Pengajuan
-- **List Pengajuan:** `GET /api/v1/perencanaan/pengajuan?status={status}&search={search}`
+- **List Pengajuan:** `GET /api/v1/perencanaan/pengajuan?status={status}&search={search}&bulan={bulan}&tahun={tahun}&unit_id={unitId}&page={page}`
 - **Detail Pengajuan:** `GET /api/v1/perencanaan/pengajuan/{permohonanId}`
   - **Success Response (200 OK):**
     ```json
     {
       "detail": {
-        "id": 1,
-        "nomor_surat": "042/TI/PNJ/2026",
-        "judul": "Pengadaan Laptop",
-        "estimasi_anggaran": 45000000,
-        "status": "menunggu_verifikasi",
-        "unit": { "nama": "Teknik Informatika" },
-        "dokumen": [{ "id": 1, "nama_asli": "Surat_042.pdf" }]
-      },
-      "recentNotifications": [],
-      "unreadNotificationsCount": 0
+        "permohonan": {
+          "id": 1,
+          "nomor_surat": "042/TI/PNJ/2026",
+          "judul": "Pengadaan Laptop",
+          "estimasi_anggaran": 45000000,
+          "status": "menunggu_verifikasi",
+          "Unit": { "id": 1, "nama": "Teknik Informatika" }
+        },
+        "maks": [{ "id": 1, "nama": "521111 - Belanja Operasional", "ppk_user_id": 6 }],
+        "selected_mak_ids": [1],
+        "dokumen_permohonan": [{ "id": 1, "nama_asli": "Surat_042.pdf", "download_url": "/api/v1/perencanaan/pengajuan/1/dokumen?dokumen_id=1" }],
+        "rkakl_active": { "id": 10, "nama_asli": "RKAKL_2026.pdf", "download_url": "/api/v1/perencanaan/rkakl/dokumen/10" }
+      }
     }
     ```
 
@@ -612,16 +615,18 @@ Prefix Rute: `/api/v1/perencanaan`
 - **Request Body (JSON):**
   ```json
   {
-    "mak_ids": [1]
+    "mak_ids": [1, 2],
+    "catatan": "Anggaran tersedia pada RKAKL TA 2026."
   }
   ```
 - **Success Response (200 OK):**
   ```json
   {
-    "message": "Permohonan berhasil diverifikasi dan diteruskan ke tahap berikutnya."
+    "message": "Permohonan berhasil diverifikasi dan diteruskan ke tahap berikutnya.",
+    "data": { "id": 1, "status": "diteruskan" }
   }
   ```
-- **Error Response (422):** `{ "errors": { "mak_ids": ["Mata Anggaran Kegiatan wajib dipilih."] } }`
+- **Error Response (422):** `{ "message": "Pilih minimal satu Jenis MAK sebelum menyetujui permohonan.", "errors": { "mak_ids": ["Pilih minimal satu Jenis MAK sebelum menyetujui permohonan."] } }`
 
 #### 4. Penolakan / Reject Permohonan
 - **Method & URL:** `POST /api/v1/perencanaan/pengajuan/{permohonanId}/reject`
@@ -638,19 +643,63 @@ Prefix Rute: `/api/v1/perencanaan`
   }
   ```
 
-#### 5. Kirim ke Pengadaan (PPBJ)
+#### 5. Kirim ke Pengadaan (PPBJ) — **@deprecated**
 - **Method & URL:** `POST /api/v1/perencanaan/pengajuan/{permohonanId}/kirim-pengadaan`
+- **Keterangan:** **Deprecated.** Penerusan ke PPBJ kini berjalan otomatis setelah Bidang 2 dan PPK menyetujui secara paralel.
 - **Request Body (JSON):** `{ "mak_id": 1 }`
 - **Success Response (200 OK):** `{ "message": "Jenis MAK pengadaan berhasil ditetapkan dan dikirim." }`
 
-#### 6. Manajemen Jenis MAK & RKAKL
+#### 6. Lihat & Perbaiki Jenis MAK pada Dokumen Pengadaan
+- **Detail Dokumen Pengadaan (Read-Only + Konteks MAK):** `GET /api/v1/perencanaan/pengadaan/{pengadaanId}`
+  - **Success Response (200 OK):**
+    ```json
+    {
+      "data": {
+        "pengadaan": { "id": 1, "permohonan_id": 1, "permohonan_mak_id": 1, "ppk_id": 6, "nominal": 45000000, "status": "menunggu_review" },
+        "dokumen_pengadaan": [],
+        "bisa_ubah_mak": true,
+        "opsi_permohonan_mak": [
+          { "permohonan_mak_id": 1, "mak_id": 1, "kode": "521111", "nama": "521111 - Belanja Operasional", "ppk_user_id": 6, "ppk_nama": "PPK BLU Fisik" }
+        ]
+      }
+    }
+    ```
+- **Perbaiki Jenis MAK Dokumen Pengadaan:** `PUT /api/v1/perencanaan/pengadaan/{pengadaanId}/jenis-mak`
+  - **Request Body (JSON):**
+    ```json
+    {
+      "permohonan_mak_id": 2
+    }
+    ```
+  - **Success Response (200 OK):**
+    ```json
+    {
+      "message": "Jenis MAK pada dokumen pengadaan berhasil diperbaiki.",
+      "data": { "id": 1, "permohonan_mak_id": 2, "ppk_id": 7 }
+    }
+    ```
+  - **Error Response (422):** Jika PPK sudah menyetujui dokumen pengadaan atau `permohonan_mak_id` tidak berasal dari permohonan tersebut.
+
+#### 7. Manajemen Jenis MAK & RKAKL
 - **List Jenis MAK:** `GET /api/v1/perencanaan/jenis-mak?q={keyword}`
 - **Tambah Jenis MAK:** `POST /api/v1/perencanaan/jenis-mak`
-  - Body: `{ "kode": "MAK-01", "nama": "Belanja Komputer", "ppk_user_id": 6, "penanggung_jawab": "PPK Kampus" }`
+  - Body: `{ "kode": "521111", "nama": "Belanja Komputer", "ppk_user_id": 6 }`
   - Response (201 Created): `{ "message": "Jenis MAK baru berhasil ditambahkan.", "mak": { ... } }`
-- **Update Dokumen RKAKL:** `POST /api/v1/perencanaan/rkakl`
-  - Body: `{ "filename": "RKAKL_2026_v5.pdf" }`
-  - Response (200 OK): `{ "message": "Dokumen RKAKL berhasil diperbarui dengan versi terbaru." }`
+- **Ubah Jenis MAK:** `PUT /api/v1/perencanaan/jenis-mak/{makId}`
+  - Body: `{ "kode": "521111", "nama": "Belanja Komputer", "ppk_user_id": 6 }`
+  - Response (200 OK): `{ "message": "Jenis MAK berhasil diperbarui.", "mak": { ... } }`
+- **Hapus Jenis MAK (Soft Delete):** `DELETE /api/v1/perencanaan/jenis-mak/{makId}`
+  - Response (204 No Content)
+  - Error Response (422): `{ "message": "Jenis MAK tidak dapat dihapus karena masih terikat pada Dokumen Turunan yang sedang berjalan." }`
+- **List Dokumen RKAKL per Tahun Anggaran:** `GET /api/v1/perencanaan/rkakl?tahun={tahun}`
+- **Unggah Dokumen RKAKL Baru (Multipart):** `POST /api/v1/perencanaan/rkakl`
+  - Form Data (`multipart/form-data`): `tahun_anggaran` (`2026`), `berkas` (PDF/JPG/PNG, maks 10 MB)
+  - Response (200 OK): `{ "message": "Dokumen RKAKL berhasil diperbarui dengan versi terbaru.", "data": { ... } }`
+- **Ganti Dokumen RKAKL (Multipart):** `POST /api/v1/perencanaan/rkakl/{dokumenId}/ganti`
+  - Form Data (`multipart/form-data`): `berkas` (PDF/JPG/PNG, maks 10 MB)
+  - Response (200 OK): `{ "message": "Dokumen RKAKL berhasil diganti dengan versi terbaru.", "data": { ... } }`
+- **Hapus Dokumen RKAKL:** `DELETE /api/v1/perencanaan/rkakl/{dokumenId}`
+  - Response (204 No Content)
 
 #### 7. Notifikasi
 - **List Notifikasi:** `GET /api/v1/perencanaan/notifikasi?tab=semua`

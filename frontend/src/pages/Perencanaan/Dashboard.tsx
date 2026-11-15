@@ -6,6 +6,7 @@ import type {
   PerencanaanDashboardStats,
   PermohonanTerbaruItem,
 } from '../../types/perencanaan';
+import type { NotificationItem } from '../../types/notification';
 
 export const PERENCANAAN_NAV_ITEMS = [
   {
@@ -43,10 +44,11 @@ export type { PerencanaanDashboardStats, PermohonanTerbaruItem };
 export const PerencanaanDashboard: FC = () => {
   const [stats, setStats] = useState<PerencanaanDashboardStats | undefined>(undefined);
   const [permohonanTerbaru, setPermohonanTerbaru] = useState<PermohonanTerbaruItem[]>([]);
-  const [recentNotifications, setRecentNotifications] = useState<any[]>([]);
+  const [recentNotifications, setRecentNotifications] = useState<NotificationItem[]>([]);
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState<number>(0);
   const [viewMode, setViewMode] = useState<'bulan' | 'tahun'>('tahun');
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
   useEffect(() => {
     let isMounted = true;
@@ -68,6 +70,7 @@ export const PerencanaanDashboard: FC = () => {
       .catch((err) => {
         if (!controller.signal.aborted) {
           console.error('Failed to fetch Perencanaan dashboard:', err);
+          setErrorMessage('Gagal memuat data dashboard Perencanaan.');
         }
       })
       .finally(() => {
@@ -85,6 +88,7 @@ export const PerencanaanDashboard: FC = () => {
       stats={stats}
       permohonanTerbaru={permohonanTerbaru}
       isLoading={isLoading}
+      errorMessage={errorMessage}
       viewMode={viewMode}
       onViewModeChange={setViewMode}
       recentNotifications={recentNotifications}
