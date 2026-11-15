@@ -19,4 +19,3 @@ class SubmitPengadaanReviewerRequest extends FormRequest
         return [];
     }
 }
-

@@ -118,6 +118,7 @@ export interface PpbjPermohonanDetail {
   totalNominalPaket: number;
   availableMak: PpbjAvailableMak[];
   referenceData: PpbjReferenceData;
+  catatanPerencanaan?: string;
   dokumenList?: Array<{
     id: number | string;
     nama_asli?: string;

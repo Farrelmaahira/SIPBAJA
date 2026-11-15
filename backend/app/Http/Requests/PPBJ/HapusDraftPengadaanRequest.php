@@ -19,4 +19,3 @@ class HapusDraftPengadaanRequest extends FormRequest
         return [];
     }
 }
-

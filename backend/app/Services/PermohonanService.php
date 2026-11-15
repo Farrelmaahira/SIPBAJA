@@ -441,6 +441,7 @@ class PermohonanService
             'Unit',
             'Creator',
             'Dokumen',
+            'Approvals',
             'PermohonanMak.Mak',
             'Pengadaan.PermohonanMak.Mak',
         ])->findOrFail($id);
@@ -481,6 +482,18 @@ class PermohonanService
             ? Carbon::parse($permohonan->created_at)->format('Y-m-d')
             : '';
 
+        $approvalPerencanaan = $permohonan->Approvals
+            ->first(function ($app) use ($permohonan) {
+                return strtoupper($app->tahap) === 'PERENCANAAN'
+                    && (int) $app->revisi_ke === (int) ($permohonan->revisi_ke ?? 0)
+                    && $app->keputusan === 'disetujui';
+            });
+
+        $catatan = $approvalPerencanaan?->alasan;
+        $catatanPerencanaan = (! empty($catatan) && trim($catatan) !== '')
+            ? trim($catatan)
+            : 'Tidak ada catatan dari pihak perencanaan';
+
         return [
             'id' => (int) $permohonan->id,
             'nomorSurat' => (string) ($permohonan->nomor_surat ?? '-'),
@@ -495,6 +508,7 @@ class PermohonanService
             'makList' => $makList,
             'paketList' => $paketList,
             'dokumenList' => $dokumenList,
+            'catatanPerencanaan' => $catatanPerencanaan,
         ];
     }
 }

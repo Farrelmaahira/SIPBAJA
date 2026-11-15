@@ -272,6 +272,21 @@ export const PermohonanShowTemplate: FC<PermohonanShowTemplateProps> = ({
                 )}
               </div>
               <PermohonanShowMakList makList={permohonan.makList} />
+
+              {/* Catatan / Arahan Mapping MAK dari Perencanaan */}
+              {permohonan.catatanPerencanaan && (
+                <div className="mt-4 p-4 rounded-2xl bg-[#EBF7F2] border border-[#D0EAE0] flex items-start gap-3">
+                  <Info className="w-5 h-5 text-[#0E7C5A] shrink-0 mt-0.5" />
+                  <div className="text-left">
+                    <span className="block text-xs font-bold text-[#0E7C5A] uppercase tracking-wider mb-1">
+                      Catatan & Arahan Mapping MAK dari Perencanaan
+                    </span>
+                    <p className="text-sm text-[#14201C] leading-relaxed whitespace-pre-line">
+                      {permohonan.catatanPerencanaan}
+                    </p>
+                  </div>
+                </div>
+              )}
             </section>
 
             {/* Card 4: Form Pemecahan Pengadaan (Kondisional) */}
