@@ -98,20 +98,23 @@ const DEFAULT_FILTER_OPTIONS: FilterStatusOption[] = [
   },
 ];
 
+const DEFAULT_EMPTY_STATUSES: string[] = [];
+const DEFAULT_EMPTY_ROWS: Bidang2TableItem[] = [];
+
 export const Bidang2PermohonanTable: FC<Bidang2PermohonanTableProps> = ({
   variant = 'permohonan',
   isFullList = false,
   title,
   subtitle,
   viewAllHref,
-  rows = [],
+  rows = DEFAULT_EMPTY_ROWS,
   isLoading = false,
   isError = false,
   onDetail,
   searchQuery,
   onSearchChange,
   onSearchSubmit,
-  selectedStatuses = [],
+  selectedStatuses = DEFAULT_EMPTY_STATUSES,
   onApplyFilter,
   filterOptions = DEFAULT_FILTER_OPTIONS,
   totalCount,
@@ -146,9 +149,11 @@ export const Bidang2PermohonanTable: FC<Bidang2PermohonanTableProps> = ({
   const [tempStatuses, setTempStatuses] = useState<string[]>(selectedStatuses);
   const filterContainerRef = useRef<HTMLDivElement>(null);
 
+  const selectedStatusesKey = selectedStatuses.join(',');
+
   useEffect(() => {
     setTempStatuses(selectedStatuses);
-  }, [selectedStatuses, isFilterOpen]);
+  }, [selectedStatusesKey, isFilterOpen]);
 
   // Click outside & ESC listener for the filter popover
   useEffect(() => {
