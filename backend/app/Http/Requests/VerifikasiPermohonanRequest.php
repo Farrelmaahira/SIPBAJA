@@ -19,7 +19,7 @@ class VerifikasiPermohonanRequest extends FormRequest
         return [
             'mak_ids' => ['required', 'array', 'min:1'],
             'mak_ids.*' => ['required', 'integer', 'exists:maks,id'],
-            'catatan' => ['nullable', 'string', 'max:1000'],
+            'catatan' => ['nullable', 'string', 'max:500'],
         ];
     }
 

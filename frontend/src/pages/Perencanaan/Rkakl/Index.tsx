@@ -170,9 +170,9 @@ export const PerencanaanRkaklIndex: FC = () => {
   const handleFileChange = (file: File) => {
     setSelectedFileObj(file);
     setSelectedFileName(file.name);
-    const errorMsg = validateUploadFile(file);
-    if (errorMsg) {
-      setFileError(errorMsg);
+    const validation = validateUploadFile(file);
+    if (validation) {
+      setFileError(validation || 'Berkas tidak valid.');
       setIsFileValid(false);
     } else {
       setFileError('');
