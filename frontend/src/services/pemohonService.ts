@@ -109,6 +109,31 @@ export const pemohonService = {
   getDokumenDownloadUrl(id: number | string): string {
     return `/api/v1/pemohon/permohonan/${id}/dokumen`;
   },
+
+  /**
+   * Mengambil blob dokumen permohonan untuk pratinjau inline atau unduhan.
+   */
+  async fetchDokumenBlob(
+    downloadUrl: string,
+    disposition: 'inline' | 'attachment' = 'attachment',
+    signal?: AbortSignal
+  ): Promise<{ blob: Blob; contentType?: string }> {
+    const normalizedUrl = downloadUrl.replace(/^\/api(?=\/)/, '');
+    const separator = normalizedUrl.includes('?') ? '&' : '?';
+    const finalUrl = `${normalizedUrl}${separator}disposition=${disposition}`;
+
+    const response = await api.get<Blob>(finalUrl, {
+      responseType: 'blob',
+      signal,
+    });
+    const rawContentType = response.headers['content-type'];
+    const contentType =
+      typeof rawContentType === 'string' ? rawContentType : 'application/pdf';
+    return {
+      blob: new Blob([response.data], { type: contentType }),
+      contentType,
+    };
+  },
 };
 
 export default pemohonService;
