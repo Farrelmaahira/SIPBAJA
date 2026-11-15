@@ -1,4 +1,4 @@
-import type { FC } from 'react';
+import { useMemo, type FC } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -17,12 +17,12 @@ import AppLayout from './AppLayout';
 import HeroBanner from '../organisms/HeroBanner';
 import StatusPill from '../atoms/StatusPill';
 import CatatanPenolakanCard from '../molecules/CatatanPenolakanCard';
-import SuratPermohonanCard from '../organisms/SuratPermohonanCard';
-import TimelineProsesCard from '../organisms/TimelineProsesCard';
+import DokumenListCard from '../organisms/DokumenListCard';
 import { formatRupiah, formatTanggal } from '../../utils/formatPermohonan';
 import { PEMOHON_NAV_ITEMS } from '../../constants/pemohonNav';
 import type { PermohonanDetailInfo } from '../../types/permohonan';
 import type { ProfilePillUser } from '../molecules/ProfilePill';
+import type { DokumenItem } from '../../types/dokumen';
 
 export interface PemohonPermohonanShowTemplateProps {
   user?: ProfilePillUser | null;
@@ -51,6 +51,57 @@ export const PemohonPermohonanShowTemplate: FC<
   onRevisi,
 }) => {
   const isDitolak = permohonan?.status === 'ditolak';
+
+  const dokumenList: DokumenItem[] = useMemo(() => {
+    if (!permohonan) return [];
+
+    const rawList = Array.isArray(permohonan.dokumen)
+      ? permohonan.dokumen
+      : permohonan.dokumen
+      ? [permohonan.dokumen]
+      : [];
+
+    if (rawList.length === 0) {
+      return [
+        {
+          id: permohonan.id ?? '1',
+          nama_asli: `Surat_Permohonan_${(permohonan.judul || 'Pengadaan').replace(/\s+/g, '_')}.pdf`,
+          tipe_dokumen: 'surat_permohonan',
+          download_url: `/api/v1/pemohon/permohonan/${permohonan.id}/dokumen`,
+        },
+      ];
+    }
+
+    return rawList.map((d: any, idx: number) => ({
+      id: d.id || idx + 1,
+      nama_asli:
+        d.nama_asli ||
+        `Surat_Permohonan_${(permohonan.judul || 'Pengadaan').replace(/\s+/g, '_')}.pdf`,
+      tipe_dokumen: d.tipe_dokumen || 'surat_permohonan',
+      ukuran_bytes: d.ukuran_bytes,
+      mime_type: d.mime_type || 'application/pdf',
+      download_url:
+        d.download_url || `/api/v1/pemohon/permohonan/${permohonan.id}/dokumen`,
+    }));
+  }, [permohonan]);
+
+  const handleViewNewTab = (doc: DokumenItem) => {
+    if (doc.download_url) {
+      const url = `${doc.download_url.replace(/^\/api(?=\/)/, '')}${
+        doc.download_url.includes('?') ? '&' : '?'
+      }disposition=inline`;
+      window.open(url, '_blank');
+    }
+  };
+
+  const handleDownload = (doc: DokumenItem) => {
+    if (doc.download_url) {
+      const url = `${doc.download_url.replace(/^\/api(?=\/)/, '')}${
+        doc.download_url.includes('?') ? '&' : '?'
+      }disposition=attachment`;
+      window.open(url, '_blank');
+    }
+  };
 
   return (
     <AppLayout
@@ -279,38 +330,28 @@ export const PemohonPermohonanShowTemplate: FC<
                 onRevisi={onRevisi}
               />
 
-              <SuratPermohonanCard
-                dokumen={permohonan.dokumen as any}
+              <DokumenListCard
+                title="Dokumen Surat Permohonan"
+                dokumenList={dokumenList}
                 nomorSurat={permohonan.nomor_surat}
                 judul={permohonan.judul}
                 unitNama={permohonan.unit_nama}
-                tanggal={permohonan.created_at}
-                nominal={permohonan.estimasi_anggaran}
-                ringkasanTujuan={permohonan.ringkasan_tujuan}
-                showLivePreviewInitially={false}
-              />
-
-              <TimelineProsesCard
-                stages={permohonan.timeline_stages}
-                history={permohonan.history}
+                tanggal={formatTanggal(permohonan.created_at)}
+                onViewNewTab={handleViewNewTab}
+                onDownload={handleDownload}
               />
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-              <SuratPermohonanCard
-                dokumen={permohonan.dokumen as any}
+            <div className="w-full">
+              <DokumenListCard
+                title="Dokumen Surat Permohonan"
+                dokumenList={dokumenList}
                 nomorSurat={permohonan.nomor_surat}
                 judul={permohonan.judul}
                 unitNama={permohonan.unit_nama}
-                tanggal={permohonan.created_at}
-                nominal={permohonan.estimasi_anggaran}
-                ringkasanTujuan={permohonan.ringkasan_tujuan}
-                showLivePreviewInitially={true}
-              />
-
-              <TimelineProsesCard
-                stages={permohonan.timeline_stages}
-                history={permohonan.history}
+                tanggal={formatTanggal(permohonan.created_at)}
+                onViewNewTab={handleViewNewTab}
+                onDownload={handleDownload}
               />
             </div>
           )}
