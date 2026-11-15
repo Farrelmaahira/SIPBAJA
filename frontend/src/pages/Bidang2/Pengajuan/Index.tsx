@@ -18,8 +18,12 @@ export const PengajuanIndex: FC = () => {
     searchQuery,
     setSearchQuery,
     selectedStatus,
+    selectedStatuses,
+    filterModalOpen,
+    setFilterModalOpen,
     handleSearchSubmit,
     handleStatusChange,
+    handleApplyFilter,
     handlePageChange,
     refetch,
   } = useBidang2Pengajuan();
@@ -40,6 +44,11 @@ export const PengajuanIndex: FC = () => {
       onSearchChange={setSearchQuery}
       onSearchSubmit={handleSearchSubmit}
       selectedStatus={selectedStatus}
+      selectedStatuses={selectedStatuses}
+      filterModalOpen={filterModalOpen}
+      onOpenFilterModal={() => setFilterModalOpen(true)}
+      onCloseFilterModal={() => setFilterModalOpen(false)}
+      onApplyFilter={handleApplyFilter}
       onStatusChange={handleStatusChange}
       pagination={pagination}
       onPageChange={handlePageChange}

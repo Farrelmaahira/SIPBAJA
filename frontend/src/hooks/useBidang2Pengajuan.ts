@@ -20,8 +20,12 @@ export interface UseBidang2PengajuanReturn {
   setSearchQuery: (q: string) => void;
   selectedStatus: string;
   setSelectedStatus: (status: string) => void;
+  selectedStatuses: string[];
+  filterModalOpen: boolean;
+  setFilterModalOpen: (open: boolean) => void;
   handleSearchSubmit: (e?: FormEvent) => void;
   handleStatusChange: (status: string) => void;
+  handleApplyFilter: (statuses: string[]) => void;
   handlePageChange: (page: number) => void;
   refetch: () => void;
 }
@@ -35,6 +39,11 @@ export function useBidang2Pengajuan(): UseBidang2PengajuanReturn {
   const [searchQuery, setSearchQuery] = useState('');
   const [appliedSearch, setAppliedSearch] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('semua');
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const [pagination, setPagination] = useState<UseBidang2PengajuanPagination>({
     currentPage: 1,
@@ -44,33 +53,31 @@ export function useBidang2Pengajuan(): UseBidang2PengajuanReturn {
     to: 0,
   });
 
-  const fetchPengajuanList = useCallback(
-    async (
-      search = appliedSearch,
-      status = selectedStatus,
-      page = pagination.currentPage,
-      signal?: AbortSignal
-    ) => {
-      setIsLoading(true);
-      setHasError(false);
-      setErrorMessage('');
+  useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
 
-      try {
-        const res = await bidang2Service.getPengajuanList(
-          {
-            search,
-            status,
-            page,
-          },
-          signal
-        );
+    setIsLoading(true);
+    setHasError(false);
+    setErrorMessage('');
 
+    bidang2Service
+      .getPengajuanList(
+        {
+          search: appliedSearch,
+          status: selectedStatus,
+          page: currentPage,
+        },
+        controller.signal
+      )
+      .then((res) => {
+        if (!isMounted) return;
         const listPayload = res.permohonanList;
         if (listPayload) {
           const dataItems = listPayload.data || [];
           setItems(dataItems);
           setPagination({
-            currentPage: listPayload.current_page || page,
+            currentPage: listPayload.current_page || currentPage,
             lastPage: listPayload.last_page || 1,
             total: listPayload.total || dataItems.length,
             from: listPayload.from || (dataItems.length > 0 ? 1 : 0),
@@ -86,63 +93,66 @@ export function useBidang2Pengajuan(): UseBidang2PengajuanReturn {
             to: 0,
           });
         }
-      } catch (err: unknown) {
-        if (signal?.aborted) return;
+      })
+      .catch((err: unknown) => {
+        if (!isMounted || controller.signal.aborted) return;
         setHasError(true);
-        const errMsg =
+        setErrorMessage(
           err instanceof Error
             ? err.message
-            : 'Gagal memuat daftar pengajuan. Silakan coba kembali.';
-        setErrorMessage(errMsg);
-      } finally {
-        if (!signal?.aborted) {
+            : 'Gagal memuat daftar pengajuan. Silakan coba kembali.'
+        );
+      })
+      .finally(() => {
+        if (isMounted) {
           setIsLoading(false);
         }
-      }
-    },
-    [appliedSearch, selectedStatus, pagination.currentPage]
-  );
-
-  useEffect(() => {
-    const controller = new AbortController();
-    void fetchPengajuanList(
-      appliedSearch,
-      selectedStatus,
-      pagination.currentPage,
-      controller.signal
-    );
+      });
 
     return () => {
+      isMounted = false;
       controller.abort();
     };
-  }, [fetchPengajuanList, appliedSearch, selectedStatus, pagination.currentPage]);
+  }, [appliedSearch, selectedStatus, currentPage, refreshTrigger]);
 
   const handleSearchSubmit = useCallback(
     (e?: FormEvent) => {
       if (e) e.preventDefault();
       setAppliedSearch(searchQuery.trim());
-      setPagination((prev) => ({ ...prev, currentPage: 1 }));
+      setCurrentPage(1);
     },
     [searchQuery]
   );
 
   const handleStatusChange = useCallback((status: string) => {
     setSelectedStatus(status);
-    setPagination((prev) => ({ ...prev, currentPage: 1 }));
+    setSelectedStatuses(status === 'semua' ? [] : [status]);
+    setCurrentPage(1);
+  }, []);
+
+  const handleApplyFilter = useCallback((statuses: string[]) => {
+    setSelectedStatuses(statuses);
+    if (statuses.length === 0) {
+      setSelectedStatus('semua');
+    } else {
+      setSelectedStatus(statuses.join(','));
+    }
+    setFilterModalOpen(false);
+    setCurrentPage(1);
   }, []);
 
   const handlePageChange = useCallback(
     (page: number) => {
-      if (page >= 1 && page <= pagination.lastPage && page !== pagination.currentPage) {
-        setPagination((prev) => ({ ...prev, currentPage: page }));
+      if (page >= 1 && page <= pagination.lastPage && page !== currentPage) {
+        setCurrentPage(page);
       }
     },
-    [pagination.lastPage, pagination.currentPage]
+    [pagination.lastPage, currentPage]
   );
 
   const refetch = useCallback(() => {
-    void fetchPengajuanList(appliedSearch, selectedStatus, pagination.currentPage);
-  }, [fetchPengajuanList, appliedSearch, selectedStatus, pagination.currentPage]);
+    setRefreshTrigger((prev) => prev + 1);
+  }, []);
 
   return {
     items,
@@ -154,8 +164,12 @@ export function useBidang2Pengajuan(): UseBidang2PengajuanReturn {
     setSearchQuery,
     selectedStatus,
     setSelectedStatus,
+    selectedStatuses,
+    filterModalOpen,
+    setFilterModalOpen,
     handleSearchSubmit,
     handleStatusChange,
+    handleApplyFilter,
     handlePageChange,
     refetch,
   };

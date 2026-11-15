@@ -3,6 +3,7 @@ import type {
   Bidang2DetailApiResponse,
   Bidang2PengajuanListResponse,
   Bidang2MutationResponse,
+  Bidang2RkaklApiResponse,
 } from '../types/bidang2';
 import type {
   RingkasanBidang2,
@@ -125,11 +126,45 @@ export const bidang2Service = {
   },
 
   /**
+   * Mengambil blob dokumen RKAKL atau dokumen lainnya dengan content-type eksplisit untuk live preview iframe.
+   */
+  async fetchDokumenBlob(
+    downloadUrl: string,
+    disposition: 'inline' | 'attachment' = 'inline',
+    signal?: AbortSignal
+  ): Promise<{ blob: Blob; contentType?: string }> {
+    const cleanedUrl = downloadUrl.startsWith('/api')
+      ? downloadUrl.replace(/^\/api/, '')
+      : downloadUrl;
+    const separator = cleanedUrl.includes('?') ? '&' : '?';
+    const finalUrl = `${cleanedUrl}${separator}disposition=${disposition}`;
+
+    const response = await api.get<Blob>(finalUrl, {
+      responseType: 'blob',
+      signal,
+    });
+    const rawContentType = response.headers['content-type'];
+    const contentType =
+      typeof rawContentType === 'string' ? rawContentType : 'application/pdf';
+    return {
+      blob: new Blob([response.data], { type: contentType }),
+      contentType,
+    };
+  },
+
+  /**
    * Mengambil data dan dokumen RKAKL untuk Bidang 2.
    */
-  async getRkakl(signal?: AbortSignal): Promise<unknown> {
-    const response = await api.get('/v1/bidang-2/rkakl', { signal });
+  async getRkakl(signal?: AbortSignal): Promise<Bidang2RkaklApiResponse> {
+    const response = await api.get<Bidang2RkaklApiResponse>('/v1/bidang-2/rkakl', { signal });
     return response.data;
+  },
+
+  /**
+   * Mendapatkan endpoint URL untuk download atau pratinjau dokumen RKAKL
+   */
+  downloadRkaklUrl(disposition: 'inline' | 'attachment' = 'attachment', docId?: number | string): string {
+    return `/api/v1/bidang-2/rkakl/dokumen${docId ? `/${docId}` : ''}?disposition=${disposition}`;
   },
 };
 

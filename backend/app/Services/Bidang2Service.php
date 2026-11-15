@@ -24,7 +24,21 @@ class Bidang2Service
         $query = Permohonan::with(['Unit', 'Dokumen', 'PermohonanMak.Mak']);
 
         if (! empty($status) && $status !== 'semua') {
-            $query->where('status', $status);
+            $statuses = is_array($status) ? $status : explode(',', $status);
+            $normalizedStatuses = [];
+            foreach ($statuses as $s) {
+                $trimmed = trim($s);
+                if (in_array($trimmed, ['review_permohonan', 'menunggu_bidang2', 'menunggu_persetujuan'], true)) {
+                    $normalizedStatuses[] = 'menunggu_persetujuan';
+                    $normalizedStatuses[] = 'menunggu_bidang2';
+                    $normalizedStatuses[] = 'diajukan';
+                } elseif (! empty($trimmed)) {
+                    $normalizedStatuses[] = $trimmed;
+                }
+            }
+            if (! empty($normalizedStatuses)) {
+                $query->whereIn('status', array_unique($normalizedStatuses));
+            }
         }
 
         if (! empty($search)) {
@@ -75,6 +89,7 @@ class Bidang2Service
                 'id' => $pm->Mak->id,
                 'kode' => (string) ($pm->Mak->kode ?? $pm->Mak->nama),
                 'nama' => (string) $pm->Mak->nama,
+                'ppk_nama' => $pm->Mak->Ppk?->name ?? 'Budi Santoso',
             ])
             ->values()
             ->all();
@@ -287,4 +302,3 @@ class Bidang2Service
         ];
     }
 }
-
