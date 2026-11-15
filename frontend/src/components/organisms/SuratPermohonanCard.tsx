@@ -1,7 +1,6 @@
 import { useState, useEffect, type FC } from 'react';
 import { FileText, Eye, Download, Loader2 } from 'lucide-react';
 import api from '../../services/api';
-import { formatRupiah, formatTanggal } from '../../utils/formatPermohonan';
 import type { PermohonanDokumenDetail } from '../../types/permohonan';
 
 export interface SuratPermohonanCardProps {
@@ -20,7 +19,7 @@ export interface SuratPermohonanCardProps {
 }
 
 function formatBytes(bytes?: number): string {
-  if (!bytes || bytes <= 0) return '8 MB';
+  if (!bytes || bytes <= 0) return '-';
   const mb = bytes / (1024 * 1024);
   if (mb >= 1) return `${mb.toFixed(1)} MB`;
   const kb = bytes / 1024;
@@ -29,11 +28,11 @@ function formatBytes(bytes?: number): string {
 
 export const SuratPermohonanCard: FC<SuratPermohonanCardProps> = ({
   dokumen,
-  nomorSurat,
+  nomorSurat: _nomorSurat,
   judul,
-  unitNama,
-  tanggal,
-  nominal,
+  unitNama: _unitNama,
+  tanggal: _tanggal,
+  nominal: _nominal,
   pdfBlobUrl: externalBlobUrl,
   isLoadingPdf: externalIsLoading,
   onView,
@@ -203,102 +202,36 @@ export const SuratPermohonanCard: FC<SuratPermohonanCardProps> = ({
             title={`Pratinjau isi ${displayFileName}`}
             className="w-full h-[560px] rounded-xl border border-[#E4EBE8] bg-white shadow-xs"
           />
+        ) : loadFailed ? (
+          <div className="w-full h-[380px] flex flex-col items-center justify-center gap-3 bg-white rounded-xl border border-[#E4EBE8] p-6 text-center">
+            <div className="w-12 h-12 rounded-2xl bg-[#FEE4E2] text-[#D92D20] flex items-center justify-center">
+              <FileText className="w-6 h-6" />
+            </div>
+            <p className="text-sm font-bold text-[#14201C]">Gagal Memuat Pratinjau Dokumen</p>
+            <p className="text-xs text-[#5F6F6A] max-w-sm">
+              Pratinjau dokumen tidak dapat ditampilkan secara langsung di peramban. Silakan gunakan tombol lihat atau unduh berkas.
+            </p>
+            {downloadUrl && (
+              <button
+                type="button"
+                onClick={handleDownload}
+                className="mt-2 inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#0E7C5A] text-xs font-bold text-white hover:bg-[#0B6549] transition-colors cursor-pointer"
+              >
+                <Download className="w-4 h-4" />
+                <span>Unduh Berkas</span>
+              </button>
+            )}
+          </div>
         ) : (
-          /* Fallback Lembar Surat Mockup Ber-Kop Resmi */
-          <>
-            <div className="bg-white border border-[#E4EBE8] rounded-xl shadow-md max-w-xl w-full p-6 sm:p-8 relative min-h-[440px] flex flex-col justify-between">
-              <div>
-                {/* Kop Surat Jurusan */}
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-9 h-9 rounded-xl bg-[#0E7C5A] flex items-center justify-center shrink-0 shadow-xs text-white"
-                    aria-hidden="true"
-                  >
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                      <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-                      <line x1="12" y1="22.08" x2="12" y2="12" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="font-extrabold text-xs sm:text-sm text-[#14201C] tracking-tight uppercase leading-tight">
-                      {unitNama || 'JURUSAN TEKNIK INFORMATIKA & KOMPUTER'}
-                    </p>
-                    <p className="text-[10px] text-[#5F6F6A] font-medium leading-none mt-0.5">
-                      Pengadaan Barang &amp; Jasa
-                    </p>
-                  </div>
-                </div>
-
-                {/* Garis Pembatas Kop */}
-                <div className="border-b-2 border-[#0E7C5A] mt-3.5 mb-4" />
-
-                {/* Metadata Ringkas Berkas Surat */}
-                <div className="text-[11px] text-[#5F6F6A] space-y-1 mb-5">
-                  <div className="grid grid-cols-[80px_10px_1fr]">
-                    <span className="font-medium text-[#8A9A95]">Nomor</span>
-                    <span>:</span>
-                    <span className="font-semibold text-[#14201C]">{nomorSurat || '111-FFF-111'}</span>
-                  </div>
-                  <div className="grid grid-cols-[80px_10px_1fr]">
-                    <span className="font-medium text-[#8A9A95]">Perihal</span>
-                    <span>:</span>
-                    <span className="text-[#14201C]">Permohonan {judul || 'Pengadaan Komputer'}</span>
-                  </div>
-                  <div className="grid grid-cols-[80px_10px_1fr]">
-                    <span className="font-medium text-[#8A9A95]">Tanggal</span>
-                    <span>:</span>
-                    <span className="text-[#14201C]">{formatTanggal(tanggal) || '04 Maret 2027'}</span>
-                  </div>
-                </div>
-
-                {/* Judul Bagian Surat */}
-                <div className="text-center my-4">
-                  <h3 className="text-xs font-bold text-[#14201C] uppercase tracking-wider">
-                    SURAT PERMOHONAN PENGADAAN
-                  </h3>
-                </div>
-
-                {/* Teks Isi Surat */}
-                <p className="text-[11px] text-[#5F6F6A] leading-relaxed mb-5">
-                  Dengan hormat, bersama surat ini kami mengajukan permohonan pengadaan{' '}
-                  <strong className="text-[#14201C] font-semibold">{judul || 'komputer'}</strong>{' '}
-                  dengan estimasi anggaran sebesar{' '}
-                  <strong className="text-[#14201C] font-semibold">{formatRupiah(nominal)}</strong>{' '}
-                  untuk menunjang kegiatan akademik.
-                </p>
-
-                {/* Representasi Garis Konten Dokumen */}
-                <div className="space-y-2.5 opacity-60" aria-hidden="true">
-                  <div className="h-2 rounded bg-[#E4EBE8] w-full" />
-                  <div className="h-2 rounded bg-[#E4EBE8] w-full" />
-                  <div className="h-2 rounded bg-[#E4EBE8] w-3/4" />
-                  <div className="h-2 rounded bg-[#E4EBE8] w-full" />
-                  <div className="h-2 rounded bg-[#E4EBE8] w-5/6" />
-                </div>
-              </div>
-
-              {/* Area Tanda Tangan */}
-              <div className="mt-8 self-end text-right">
-                <p className="text-[10px] text-[#5F6F6A] font-medium">Hormat kami,</p>
-                <div className="w-24 h-1.5 bg-[#E4EBE8] rounded mt-8 ml-auto opacity-70" />
-              </div>
+          <div className="w-full h-[380px] flex flex-col items-center justify-center gap-3 bg-white rounded-xl border border-[#E4EBE8] p-6 text-center">
+            <div className="w-12 h-12 rounded-2xl bg-[#EEF5F2] text-[#0E7C5A] flex items-center justify-center">
+              <FileText className="w-6 h-6" />
             </div>
-
-            {/* Indikator Halaman di Bawah Dokumen */}
-            <div className="mt-4 inline-flex items-center px-4 py-1.5 rounded-full bg-[#14201C] text-white text-[11px] font-semibold shadow-md">
-              Halaman 1 dari 2
-            </div>
-          </>
+            <p className="text-sm font-bold text-[#14201C]">Pratinjau Dokumen Tidak Tersedia</p>
+            <p className="text-xs text-[#5F6F6A] max-w-sm">
+              Berkas lampiran surat belum tersedia atau tidak memiliki pratinjau yang valid.
+            </p>
+          </div>
         )}
       </div>
     </section>
