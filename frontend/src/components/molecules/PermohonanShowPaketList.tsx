@@ -2,6 +2,7 @@ import type { FC } from 'react';
 import { Trash2, FileText, AlertCircle } from 'lucide-react';
 import StatusPill from '../atoms/StatusPill';
 import { formatRupiah } from '../../utils/formatters';
+import type { PpbjPaketDraftItem } from '../../types/ppbj';
 
 export interface PaketPengadaanDokumen {
   id?: number | string;
@@ -13,6 +14,7 @@ export interface PaketPengadaanDokumen {
 export interface PaketPengadaanItem {
   id: number | string;
   makNama?: string;
+  makKode?: string;
   ppkNama?: string;
   jenisNama?: string;
   metodeNama?: string;
@@ -24,7 +26,7 @@ export interface PaketPengadaanItem {
 }
 
 export interface PermohonanShowPaketListProps {
-  paketList?: PaketPengadaanItem[];
+  paketList?: (PaketPengadaanItem | PpbjPaketDraftItem)[];
   sudahDikunci?: boolean;
   onDelete?: (id: number | string) => void;
 }
@@ -69,9 +71,16 @@ export const PermohonanShowPaketList: FC<PermohonanShowPaketListProps> = ({
         </thead>
         <tbody className="divide-y divide-[#F0F4F2] bg-white">
           {paketList.map((paket, index) => {
+            const raw = paket as Record<string, any>;
             const hasDokumen = Boolean(paket.dokumenList && paket.dokumenList.length > 0);
-            const docName = paket.dokumenList?.[0]?.namaAsli || paket.dokumenList?.[0]?.nama_asli;
+            const firstDoc = paket.dokumenList?.[0] as Record<string, any> | undefined;
+            const docName = firstDoc?.namaAsli || firstDoc?.nama_asli || 'Dokumen Pengadaan';
             const isDraft = paket.status === 'draft';
+            const makText = raw.makNama || raw.makKode || '-';
+            const ppkText = raw.ppkNama || '-';
+            const jenisText = raw.jenisNama || '-';
+            const metodeText = raw.metodeNama || '-';
+            const levelText = raw.levelNama || '-';
 
             return (
               <tr key={paket.id} className="hover:bg-[#F8FAF9] transition-colors">
@@ -81,26 +90,26 @@ export const PermohonanShowPaketList: FC<PermohonanShowPaketListProps> = ({
                 <td className="py-3.5 px-4">
                   <div className="flex flex-col gap-0.5">
                     <span className="font-semibold text-xs text-[#14201C]">
-                      {paket.makNama}
+                      {makText}
                     </span>
                     <span className="text-[11px] text-[#5F6F6A]">
-                      PPK: {paket.ppkNama || '-'}
+                      PPK: {ppkText}
                     </span>
                   </div>
                 </td>
                 <td className="py-3.5 px-4">
                   <div className="flex flex-col gap-0.5">
                     <span className="text-xs font-medium text-[#14201C]">
-                      {paket.jenisNama || '-'}
+                      {jenisText}
                     </span>
                     <span className="text-[11px] text-[#5F6F6A]">
-                      {paket.metodeNama || '-'}
+                      {metodeText}
                     </span>
                   </div>
                 </td>
                 <td className="py-3.5 px-4">
                   <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-[#F0F4F2] text-[#14201C] text-xs font-medium border border-[#E4EBE8]">
-                    {paket.levelNama || '-'}
+                    {levelText}
                   </span>
                 </td>
                 <td className="py-3.5 px-4 font-semibold text-[#14201C] tabular-nums">

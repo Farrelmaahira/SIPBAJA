@@ -475,9 +475,24 @@ class PermohonanService
         $permohonan = Permohonan::with([
             'Unit',
             'Creator',
+            'Dokumen',
+            'Approvals',
             'PermohonanMak.Mak',
             'Pengadaan.PermohonanMak.Mak',
         ])->findOrFail($id);
+
+        $dokumenList = $permohonan->Dokumen
+            ->map(fn ($doc) => [
+                'id' => (int) $doc->id,
+                'nama_asli' => (string) $doc->nama_asli,
+                'tipe_dokumen' => (string) ($doc->tipe_dokumen ?? 'surat_permohonan'),
+                'ukuran_bytes' => (int) ($doc->ukuran_bytes ?? 0),
+                'mime_type' => (string) ($doc->mime_type ?? 'application/pdf'),
+                'versi' => (int) ($doc->versi ?? 1),
+                'download_url' => "/api/v1/ppbj/permohonan/{$permohonan->id}/dokumen?dokumen_id={$doc->id}",
+            ])
+            ->values()
+            ->all();
 
         $makList = $permohonan->PermohonanMak
             ->filter(fn ($pm) => $pm->Mak !== null)
@@ -502,6 +517,18 @@ class PermohonanService
             ? Carbon::parse($permohonan->created_at)->format('Y-m-d')
             : '';
 
+        $approvalPerencanaan = $permohonan->Approvals
+            ->first(function ($app) use ($permohonan) {
+                return strtoupper($app->tahap) === 'PERENCANAAN'
+                    && (int) $app->revisi_ke === (int) ($permohonan->revisi_ke ?? 0)
+                    && $app->keputusan === 'disetujui';
+            });
+
+        $catatan = $approvalPerencanaan?->alasan;
+        $catatanPerencanaan = (! empty($catatan) && trim($catatan) !== '')
+            ? trim($catatan)
+            : 'Tidak ada catatan dari pihak perencanaan';
+
         return [
             'id' => (int) $permohonan->id,
             'nomorSurat' => (string) ($permohonan->nomor_surat ?? '-'),
@@ -515,6 +542,8 @@ class PermohonanService
             'pembuatNama' => (string) ($permohonan->Creator?->nama ?? $permohonan->Creator?->name ?? '-'),
             'makList' => $makList,
             'paketList' => $paketList,
+            'dokumenList' => $dokumenList,
+            'catatanPerencanaan' => $catatanPerencanaan,
         ];
     }
 

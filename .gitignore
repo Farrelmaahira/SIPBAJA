@@ -33,9 +33,8 @@ Thumbs.db
 # Graphify
 graphify-out/
 .graphify*
-/docs/superpowers/
-docs/superpowers/
-
+.cache/
+*.tmp
 # Cache
 .cache/
 *.cache
