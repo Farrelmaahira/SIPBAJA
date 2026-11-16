@@ -43,7 +43,6 @@ export const PermohonanIndexTemplate: FC<PermohonanIndexTemplateProps> = ({
         showSearch: false,
       }}
     >
-      {/* Page Header */}
       <header className="flex flex-col gap-1">
         <h1 className="text-2xl font-bold tracking-tight text-[#14201C]">
           Daftar Permohonan Pengadaan
@@ -53,7 +52,6 @@ export const PermohonanIndexTemplate: FC<PermohonanIndexTemplateProps> = ({
         </p>
       </header>
 
-      {/* Table Section */}
       <section aria-label="Tabel Permohonan Pengadaan">
         <PermohonanTable items={items} isLoading={isLoading} />
       </section>

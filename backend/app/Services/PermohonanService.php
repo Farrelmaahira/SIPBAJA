@@ -383,6 +383,38 @@ class PermohonanService
     }
 
     /**
+     * Menghapus permohonan pengadaan milik unit pemohon jika status masih diajukan/draft/ditolak.
+     */
+    public function hapusPermohonan(User $user, Permohonan $permohonan): void
+    {
+        if ($user->unit_id && $permohonan->unit_id !== $user->unit_id) {
+            abort(403, 'Anda tidak berhak menghapus permohonan milik unit lain.');
+        }
+
+        $allowedStatuses = ['diajukan', 'menunggu_verifikasi', 'menunggu_persetujuan', 'ditolak', 'draft'];
+        if (! in_array($permohonan->status, $allowedStatuses, true)) {
+            abort(422, 'Permohonan yang sedang dalam proses pengadaan atau sudah selesai tidak dapat dihapus.');
+        }
+
+        DB::transaction(function () use ($permohonan) {
+            $dokumens = Dokumen::where('ref_type', 'permohonan')
+                ->where('ref_id', $permohonan->id)
+                ->get();
+
+            foreach ($dokumens as $dokumen) {
+                if ($dokumen->file_path && Storage::disk('local')->exists($dokumen->file_path)) {
+                    Storage::disk('local')->delete($dokumen->file_path);
+                }
+                $dokumen->delete();
+            }
+
+            StatusHistory::where('permohonan_id', $permohonan->id)->delete();
+            $permohonan->PermohonanMak()->delete();
+            $permohonan->delete();
+        });
+    }
+
+    /**
      * Mengambil daftar permohonan pengadaan untuk peran PPBJ.
      *
      * @return array<int, array{

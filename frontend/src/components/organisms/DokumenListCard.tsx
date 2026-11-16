@@ -156,13 +156,13 @@ export const DokumenListCard: FC<DokumenListCardProps> = ({
             const isDownloadingThis = isDownloadingId === doc.id;
 
             // Preview URL priority: blob URL if matches current doc, or direct download_url with inline disposition
+            const rawUrl = doc.download_url || '';
+            const normalizedUrl = rawUrl.startsWith('/api') ? rawUrl : `/api${rawUrl.startsWith('/') ? '' : '/'}${rawUrl}`;
             const activePreviewSrc =
               previewBlobUrl && previewDocId === doc.id
                 ? previewBlobUrl
                 : doc.download_url
-                  ? `${doc.download_url.replace(/^\/api(?=\/)/, '')}${
-                      doc.download_url.includes('?') ? '&' : '?'
-                    }disposition=inline`
+                  ? `${normalizedUrl}${normalizedUrl.includes('?') ? '&' : '?'}disposition=inline`
                   : null;
 
             return (
@@ -178,8 +178,8 @@ export const DokumenListCard: FC<DokumenListCardProps> = ({
                   >
                     <div
                       className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isPdf
-                          ? 'bg-[#FEE4E2] text-[#D92D20]'
-                          : 'bg-[#E8F0FF] text-[#2F68D6]'
+                        ? 'bg-[#FEE4E2] text-[#D92D20]'
+                        : 'bg-[#E8F0FF] text-[#2F68D6]'
                         }`}
                     >
                       <FileText className="w-5 h-5" />

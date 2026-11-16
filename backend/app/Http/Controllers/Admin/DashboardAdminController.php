@@ -3,11 +3,20 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\MakService;
+use App\Services\UnitService;
+use App\Services\UserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class DashboardAdminController extends Controller
 {
+    public function __construct(
+        private UserService $users,
+        private UnitService $units,
+        private MakService $maks,
+    ) {}
+
     /**
      * Handle the incoming request.
      */
@@ -15,16 +24,11 @@ class DashboardAdminController extends Controller
     {
         return response()->json([
             'stats' => [
-                ['label' => 'Total Pengguna', 'value' => 24, 'unit' => 'Akun', 'variant' => 'primary'],
-                ['label' => 'Unit Terdaftar', 'value' => 8, 'unit' => 'Unit', 'variant' => 'info'],
-                ['label' => 'MAK Aktif', 'value' => 4, 'unit' => 'MAK', 'variant' => 'success'],
+                ['label' => 'Total Pengguna', 'value' => $this->users->count(), 'unit' => 'Akun', 'variant' => 'primary'],
+                ['label' => 'Unit Terdaftar', 'value' => $this->units->count(), 'unit' => 'Unit', 'variant' => 'info'],
+                ['label' => 'MAK Aktif', 'value' => $this->maks->count(), 'unit' => 'MAK', 'variant' => 'success'],
             ],
-            'recentUsers' => [
-                ['id' => 1, 'nama' => 'Dr. Ahmad Farhan', 'email' => 'farhan@pnj.ac.id', 'role' => 'Perencanaan', 'unit' => 'Pusat Perencanaan', 'status' => 'aktif', 'tanggal' => '14 Mei 2026'],
-                ['id' => 2, 'nama' => 'Siti Nurhaliza, M.T.', 'email' => 'siti@pnj.ac.id', 'role' => 'Pemohon', 'unit' => 'Teknik Informatika', 'status' => 'aktif', 'tanggal' => '14 Mei 2026'],
-                ['id' => 3, 'nama' => 'Bambang Sudarsono', 'email' => 'bambang@pnj.ac.id', 'role' => 'PPK', 'unit' => 'Pengadaan Kampus', 'status' => 'aktif', 'tanggal' => '13 Mei 2026'],
-                ['id' => 4, 'nama' => 'Rina Marlina, S.E.', 'email' => 'rina@pnj.ac.id', 'role' => 'Keuangan', 'unit' => 'Bagian Keuangan', 'status' => 'nonaktif', 'tanggal' => '10 Mei 2026'],
-            ],
+            'recentUsers' => $this->users->getRecentUsers(5),
         ]);
     }
 }

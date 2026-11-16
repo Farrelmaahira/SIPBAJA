@@ -5,6 +5,11 @@ namespace Tests\Feature;
 use App\Models\Mak;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\MakService;
+use App\Services\RolePermissionService;
+use App\Services\RoleService;
+use App\Services\UnitService;
+use App\Services\UserService;
 use Database\Seeders\MasterReferenceSeeder;
 use Database\Seeders\RbacSeeder;
 use Database\Seeders\RoleSeeder;
@@ -191,5 +196,40 @@ class AdminCrudApiTest extends TestCase
 
         $deleteRes = $this->actingAs($this->admin(), 'sanctum')->deleteJson("/api/v1/admin/unit-kerja/{$unitId}");
         $deleteRes->assertStatus(204);
+    }
+
+    public function test_domain_services_provide_accurate_admin_metrics_and_options(): void
+    {
+        $userService = app(UserService::class);
+        $unitService = app(UnitService::class);
+        $makService = app(MakService::class);
+        $roleService = app(RoleService::class);
+        $rolePermissionService = app(RolePermissionService::class);
+
+        $this->assertGreaterThan(0, $userService->count());
+        $this->assertGreaterThan(0, $unitService->count());
+        $this->assertGreaterThanOrEqual(0, $makService->count());
+
+        $recentUsers = $userService->getRecentUsers(3);
+        $this->assertIsArray($recentUsers);
+        $this->assertNotEmpty($recentUsers);
+        $this->assertArrayHasKey('nama', $recentUsers[0]);
+        $this->assertArrayHasKey('role', $recentUsers[0]);
+
+        $ppkOptions = $userService->getPpkOptions();
+        $this->assertIsArray($ppkOptions);
+
+        $unitOptions = $unitService->getUnitOptions();
+        $this->assertIsArray($unitOptions);
+        $this->assertNotEmpty($unitOptions);
+
+        $roleOptions = $roleService->getRoleOptions();
+        $this->assertIsArray($roleOptions);
+        $this->assertNotEmpty($roleOptions);
+
+        $matrix = $rolePermissionService->getMatrixData();
+        $this->assertArrayHasKey('roles', $matrix);
+        $this->assertArrayHasKey('groupedPermissions', $matrix);
+        $this->assertArrayHasKey('assignments', $matrix);
     }
 }
