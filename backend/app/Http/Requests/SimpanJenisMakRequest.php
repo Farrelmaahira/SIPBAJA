@@ -17,7 +17,7 @@ class SimpanJenisMakRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'kode' => ['nullable', 'string', 'max:20'],
+            'kode' => ['nullable', 'string', 'max:50'],
             'nama' => ['required', 'string', 'max:255'],
             'ppk_user_id' => ['nullable', 'integer', 'exists:users,id'],
             'penanggung_jawab' => ['nullable', 'string', 'max:255'],
@@ -30,8 +30,11 @@ class SimpanJenisMakRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'kode.max' => 'Kode Jenis MAK maksimal 50 karakter.',
             'nama.required' => 'Nama Jenis MAK wajib diisi.',
             'nama.max' => 'Nama Jenis MAK maksimal 255 karakter.',
+            'ppk_user_id.integer' => 'Penanggung jawab PPK tidak valid.',
+            'ppk_user_id.exists' => 'Penanggung jawab PPK tidak ditemukan.',
         ];
     }
 }

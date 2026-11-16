@@ -5,14 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Mak extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'maks';
 
     public $timestamps = false;
 
-    protected $fillable = ['nama', 'ppk_user_id'];
+    protected $fillable = ['kode', 'nama', 'ppk_user_id'];
 
     public function Ppk(): BelongsTo
     {
