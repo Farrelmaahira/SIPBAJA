@@ -30,18 +30,18 @@ class PermohonanService
             $bulan = str_pad((string) $sekarang->month, 2, '0', STR_PAD_LEFT);
 
             // Tentukan nomor surat: gunakan input jika ada, atau buat nomor acuan jika tidak disediakan
-            $nomorSurat = !empty($data['nomor_surat'])
+            $nomorSurat = ! empty($data['nomor_surat'])
                 ? trim($data['nomor_surat'])
                 : sprintf('PRM/%s/%s/%s', $tahun, $bulan, strtoupper(Str::random(5)));
 
             // Tentukan ringkasan tujuan: gunakan input jika ada, atau buat dari judul pengadaan
-            $ringkasanTujuan = !empty($data['ringkasan_tujuan'])
+            $ringkasanTujuan = ! empty($data['ringkasan_tujuan'])
                 ? trim($data['ringkasan_tujuan'])
-                : 'Permohonan pengadaan untuk ' . trim($data['judul']);
+                : 'Permohonan pengadaan untuk '.trim($data['judul']);
 
             // Pastikan unit_id tersedia
             $unitId = $user->unit_id;
-            if (!$unitId) {
+            if (! $unitId) {
                 $defaultUnit = Unit::firstOrCreate(['nama' => 'Jurusan Teknik Informatika']);
                 $user->update(['unit_id' => $defaultUnit->id]);
                 $unitId = $defaultUnit->id;
@@ -63,7 +63,7 @@ class PermohonanService
             // 2. Simpan fisik berkas ke direktori lokal privat dengan nama ter-hash
             $namaAsli = $file->getClientOriginalName();
             $extension = $file->getClientOriginalExtension() ?: 'pdf';
-            $namaHash = Str::uuid()->toString() . '.' . $extension;
+            $namaHash = Str::uuid()->toString().'.'.$extension;
             $pathSimpan = 'dokumen/permohonan';
 
             Storage::disk('local')->putFileAs($pathSimpan, $file, $namaHash);
@@ -107,7 +107,7 @@ class PermohonanService
         return DB::transaction(function () use ($user, $permohonan, $data, $file) {
             $permohonan->judul = trim($data['judul']);
             $permohonan->estimasi_anggaran = (float) $data['estimasi_anggaran'];
-            if (!empty($data['ringkasan_tujuan'])) {
+            if (! empty($data['ringkasan_tujuan'])) {
                 $permohonan->ringkasan_tujuan = trim($data['ringkasan_tujuan']);
             }
             $permohonan->revisi_ke = ($permohonan->revisi_ke ?? 0) + 1;
@@ -125,7 +125,7 @@ class PermohonanService
 
                 $namaAsli = $file->getClientOriginalName();
                 $extension = $file->getClientOriginalExtension() ?: 'pdf';
-                $namaHash = Str::uuid()->toString() . '.' . $extension;
+                $namaHash = Str::uuid()->toString().'.'.$extension;
                 $pathSimpan = 'dokumen/permohonan';
 
                 Storage::disk('local')->putFileAs($pathSimpan, $file, $namaHash);
@@ -165,7 +165,7 @@ class PermohonanService
     {
         $query = Permohonan::where('unit_id', $user->unit_id)->with('Dokumen');
 
-        if (!empty($status) && $status !== 'semua') {
+        if (! empty($status) && $status !== 'semua') {
             $rawStatuses = is_array($status)
                 ? $status
                 : array_filter(array_map('trim', explode(',', $status)));
@@ -193,7 +193,7 @@ class PermohonanService
                 }
             }
 
-            if (!empty($mappedStatuses)) {
+            if (! empty($mappedStatuses)) {
                 $query->whereIn('status', array_unique($mappedStatuses));
             }
         }
@@ -222,7 +222,7 @@ class PermohonanService
         } else {
             $dokumen = $permohonan->Dokumen()->where('tipe_dokumen', 'surat_permohonan')->latest('versi')->firstOrFail();
         }
-        $path = 'dokumen/permohonan/' . $dokumen->nama_hash;
+        $path = 'dokumen/permohonan/'.$dokumen->nama_hash;
 
         abort_unless(Storage::disk('local')->exists($path), 404, 'Berkas dokumen tidak ditemukan di server.');
 
@@ -265,7 +265,7 @@ class PermohonanService
 
             if ($approvalDitolak) {
                 $pemeriksaRole = $approvalDitolak->Actor?->Role?->nama ?? $approvalDitolak->tahap ?? 'Pemeriksa';
-                $pemeriksaLabel = 'Tim ' . $pemeriksaRole;
+                $pemeriksaLabel = 'Tim '.$pemeriksaRole;
                 $diperiksaAt = $approvalDitolak->created_at
                     ? Carbon::parse($approvalDitolak->created_at)->translatedFormat('d F Y, H:i')
                     : null;
@@ -288,12 +288,12 @@ class PermohonanService
 
         $historyList = $histories->map(function ($h) {
             $deskripsi = match ($h->status_baru) {
-                'diajukan' => 'Permohonan diajukan oleh ' . ($h->Actor?->nama ?? 'Pemohon'),
+                'diajukan' => 'Permohonan diajukan oleh '.($h->Actor?->nama ?? 'Pemohon'),
                 'menunggu_bidang2' => 'Permohonan diverifikasi oleh Perencanaan dan menunggu persetujuan Bidang 2',
                 'disetujui' => 'Permohonan disetujui oleh Pemeriksa',
                 'ditolak' => 'Permohonan ditolak oleh Pemeriksa. Lihat catatan pemeriksa untuk alasan penolakan.',
                 'proses_pengadaan', 'sedang_diproses' => 'Permohonan masuk ke tahap proses pengadaan oleh PPBJ',
-                default => 'Status permohonan diperbarui menjadi ' . str_replace('_', ' ', (string) $h->status_baru),
+                default => 'Status permohonan diperbarui menjadi '.str_replace('_', ' ', (string) $h->status_baru),
             };
 
             return [
@@ -313,7 +313,7 @@ class PermohonanService
                     'id' => 1,
                     'status_lama' => null,
                     'status_baru' => (string) $permohonan->status,
-                    'deskripsi' => 'Permohonan diajukan oleh ' . ($permohonan->Unit?->nama ?? 'Pemohon'),
+                    'deskripsi' => 'Permohonan diajukan oleh '.($permohonan->Unit?->nama ?? 'Pemohon'),
                     'actor_nama' => $permohonan->Creator?->nama ?? 'Pemohon',
                     'actor_role' => 'Pemohon',
                     'waktu' => $permohonan->created_at ? Carbon::parse($permohonan->created_at)->format('d-m-Y H:i') : Carbon::now()->format('d-m-Y H:i'),
@@ -395,7 +395,7 @@ class PermohonanService
         }
 
         $allowedStatuses = ['diajukan', 'menunggu_verifikasi', 'menunggu_persetujuan', 'ditolak', 'draft'];
-        if (!in_array($permohonan->status, $allowedStatuses, true)) {
+        if (! in_array($permohonan->status, $allowedStatuses, true)) {
             abort(422, 'Permohonan yang sedang dalam proses pengadaan atau sudah selesai tidak dapat dihapus.');
         }
 
@@ -442,7 +442,7 @@ class PermohonanService
 
         return $permohonanItems->map(function (Permohonan $item): array {
             $makList = $item->PermohonanMak
-                ->map(fn($pm) => $pm->Mak?->nama ?? $pm->Mak?->kode)
+                ->map(fn ($pm) => $pm->Mak?->nama ?? $pm->Mak?->kode)
                 ->filter()
                 ->values()
                 ->all();
@@ -480,8 +480,8 @@ class PermohonanService
         ])->findOrFail($id);
 
         $makList = $permohonan->PermohonanMak
-            ->filter(fn($pm) => $pm->Mak !== null)
-            ->map(fn($pm) => [
+            ->filter(fn ($pm) => $pm->Mak !== null)
+            ->map(fn ($pm) => [
                 'kode' => (string) ($pm->Mak->kode ?? $pm->Mak->nama),
                 'nama' => (string) $pm->Mak->nama,
             ])
@@ -489,7 +489,7 @@ class PermohonanService
             ->all();
 
         $paketList = $permohonan->Pengadaan
-            ->map(fn($p) => [
+            ->map(fn ($p) => [
                 'id' => (int) $p->id,
                 'makKode' => (string) ($p->PermohonanMak?->Mak?->nama ?? $p->PermohonanMak?->Mak?->kode ?? '-'),
                 'nominal' => (float) ($p->nominal ?? 0),
@@ -562,15 +562,15 @@ class PermohonanService
         }
 
         $rawStatuses = [];
-        if (!empty($filters['statuses']) && is_array($filters['statuses'])) {
+        if (! empty($filters['statuses']) && is_array($filters['statuses'])) {
             $rawStatuses = $filters['statuses'];
-        } elseif (!empty($filters['status']) && $filters['status'] !== 'semua') {
+        } elseif (! empty($filters['status']) && $filters['status'] !== 'semua') {
             $rawStatuses = is_array($filters['status'])
                 ? $filters['status']
                 : array_filter(array_map('trim', explode(',', (string) $filters['status'])));
         }
 
-        if (!empty($rawStatuses)) {
+        if (! empty($rawStatuses)) {
             $mappedStatuses = [];
             foreach ($rawStatuses as $st) {
                 if ($st === 'semua') {
@@ -586,20 +586,20 @@ class PermohonanService
                     $mappedStatuses[] = $st;
                 }
             }
-            if (!empty($mappedStatuses)) {
+            if (! empty($mappedStatuses)) {
                 $query->whereIn('status', array_unique($mappedStatuses));
             }
         }
 
-        if (!empty($filters['bulan']) && is_numeric($filters['bulan'])) {
+        if (! empty($filters['bulan']) && is_numeric($filters['bulan'])) {
             $query->whereMonth('created_at', (int) $filters['bulan']);
         }
 
-        if (!empty($filters['tahun']) && is_numeric($filters['tahun'])) {
+        if (! empty($filters['tahun']) && is_numeric($filters['tahun'])) {
             $query->whereYear('created_at', (int) $filters['tahun']);
         }
 
-        if (!empty($filters['unit_id']) && is_numeric($filters['unit_id'])) {
+        if (! empty($filters['unit_id']) && is_numeric($filters['unit_id'])) {
             $query->where('unit_id', (int) $filters['unit_id']);
         }
 
@@ -715,7 +715,7 @@ class PermohonanService
     public function paginatePermohonanUntukPpk(User $ppk, array $filters = [], int $perPage = 10): LengthAwarePaginator
     {
         $query = Permohonan::with(['Unit', 'Creator', 'PermohonanMak.Mak.Ppk', 'Approvals.Actor'])
-            ->whereHas('PermohonanMak.Mak', fn($q) => $q->where('ppk_user_id', $ppk->id));
+            ->whereHas('PermohonanMak.Mak', fn ($q) => $q->where('ppk_user_id', $ppk->id));
 
         $keyword = trim((string) ($filters['search'] ?? $filters['q'] ?? ''));
         if ($keyword !== '') {
@@ -725,15 +725,15 @@ class PermohonanService
             });
         }
 
-        if (!empty($filters['status']) && $filters['status'] !== 'semua') {
+        if (! empty($filters['status']) && $filters['status'] !== 'semua') {
             $query->where('status', $filters['status']);
         }
 
-        if (!empty($filters['bulan']) && is_numeric($filters['bulan'])) {
+        if (! empty($filters['bulan']) && is_numeric($filters['bulan'])) {
             $query->whereMonth('created_at', (int) $filters['bulan']);
         }
 
-        if (!empty($filters['tahun']) && is_numeric($filters['tahun'])) {
+        if (! empty($filters['tahun']) && is_numeric($filters['tahun'])) {
             $query->whereYear('created_at', (int) $filters['tahun']);
         }
 
@@ -750,10 +750,10 @@ class PermohonanService
     public function getDetailPermohonanUntukPpk(Permohonan $permohonan, User $ppk): array
     {
         $berhak = PermohonanMak::where('permohonan_id', $permohonan->id)
-            ->whereHas('Mak', fn($q) => $q->where('ppk_user_id', $ppk->id))
+            ->whereHas('Mak', fn ($q) => $q->where('ppk_user_id', $ppk->id))
             ->exists();
 
-        if (!$berhak) {
+        if (! $berhak) {
             abort(403, 'Anda tidak memiliki akses pada permohonan yang tidak terikat dengan Jenis MAK Anda.');
         }
 
@@ -774,7 +774,7 @@ class PermohonanService
             'permohonan' => $permohonan,
             'dokumen_permohonan' => $dokumenPermohonan,
             'permohonan_mak_ppk' => $permohonan->PermohonanMak
-                ->filter(fn($pm) => (int) ($pm->Mak?->ppk_user_id ?? 0) === (int) $ppk->id)
+                ->filter(fn ($pm) => (int) ($pm->Mak?->ppk_user_id ?? 0) === (int) $ppk->id)
                 ->values(),
         ];
     }

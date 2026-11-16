@@ -58,6 +58,11 @@ class MakService
         return true;
     }
 
+    public function count(): int
+    {
+        return Mak::count();
+    }
+
     public function paginateUntukPerencanaan(?string $q = ''): LengthAwarePaginator
     {
         return Mak::query()
@@ -81,7 +86,7 @@ class MakService
      */
     public function getOpsiPpk(): Collection
     {
-        return User::whereHas('Role', fn($query) => $query->where('nama', 'PPK'))
+        return User::whereHas('Role', fn ($query) => $query->where('nama', 'PPK'))
             ->orderBy('nama')
             ->get(['id', 'nama', 'email']);
     }
@@ -98,21 +103,21 @@ class MakService
 
             if ($ppkId !== null) {
                 $isPpk = User::where('id', $ppkId)
-                    ->whereHas('Role', fn($q) => $q->where('nama', 'PPK'))
+                    ->whereHas('Role', fn ($q) => $q->where('nama', 'PPK'))
                     ->exists();
 
-                if (!$isPpk) {
+                if (! $isPpk) {
                     throw ValidationException::withMessages([
                         'ppk_user_id' => ['Penanggung jawab yang dipilih harus memiliki peran PPK.'],
                     ]);
                 }
             } else {
-                $ppkId = (int) (User::whereHas('Role', fn($q) => $q->where('nama', 'PPK'))->value('id') ?? 1);
+                $ppkId = (int) (User::whereHas('Role', fn ($q) => $q->where('nama', 'PPK'))->value('id') ?? 1);
             }
 
             $kode = isset($data['kode']) ? trim((string) $data['kode']) : null;
             $namaInput = trim((string) $data['nama']);
-            $nama = ($kode !== null && $kode !== '' && !str_starts_with($namaInput, $kode))
+            $nama = ($kode !== null && $kode !== '' && ! str_starts_with($namaInput, $kode))
                 ? "{$kode} - {$namaInput}"
                 : $namaInput;
 
@@ -140,10 +145,10 @@ class MakService
             $ppkId = isset($data['ppk_user_id']) ? (int) $data['ppk_user_id'] : (int) $mak->ppk_user_id;
 
             $isPpk = User::where('id', $ppkId)
-                ->whereHas('Role', fn($q) => $q->where('nama', 'PPK'))
+                ->whereHas('Role', fn ($q) => $q->where('nama', 'PPK'))
                 ->exists();
 
-            if (!$isPpk) {
+            if (! $isPpk) {
                 throw ValidationException::withMessages([
                     'ppk_user_id' => ['Penanggung jawab yang dipilih harus memiliki peran PPK.'],
                 ]);
@@ -151,7 +156,7 @@ class MakService
 
             $kode = isset($data['kode']) ? trim((string) $data['kode']) : $mak->kode;
             $namaInput = trim((string) $data['nama']);
-            $nama = ($kode !== null && $kode !== '' && !str_starts_with($namaInput, $kode))
+            $nama = ($kode !== null && $kode !== '' && ! str_starts_with($namaInput, $kode))
                 ? "{$kode} - {$namaInput}"
                 : $namaInput;
 

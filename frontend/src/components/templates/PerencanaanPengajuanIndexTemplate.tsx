@@ -4,7 +4,6 @@ import { Filter, Search, Loader2, FileText, ChevronLeft, ChevronRight } from 'lu
 import AppLayout from './AppLayout';
 import FilterPengajuanModal from '../organisms/FilterPengajuanModal';
 import RowActionMenu from '../organisms/RowActionMenu';
-import CrudTable, { type CrudColumn } from '../organisms/CrudTable';
 import { PERENCANAAN_NAV_ITEMS } from '../../pages/Perencanaan/Dashboard';
 import type { PermohonanTerbaruItem } from '../../types/perencanaan';
 
@@ -128,84 +127,6 @@ export const PerencanaanPengajuanIndexTemplate: FC<PerencanaanPengajuanIndexTemp
       </span>
     );
   };
-
-  const columns: CrudColumn<any>[] = [
-    {
-      key: 'nomor_surat',
-      header: 'No Permohonan',
-      className: 'font-bold text-[#0E7C5A] whitespace-nowrap',
-      render: (item) => (
-        <Link
-          to={`/perencanaan/pengajuan/${item.id}`}
-          className="hover:underline"
-        >
-          {item.nomor_surat || '-'}
-        </Link>
-      ),
-    },
-    {
-      key: 'judul',
-      header: 'Judul Pengadaan',
-      className: 'font-bold text-[#14201C]',
-      render: (item) => item.judul || '-',
-    },
-    {
-      key: 'created_at',
-      header: 'Tanggal',
-      className: 'text-[#5F6F6A] whitespace-nowrap',
-      render: (item) => formatDate(item.created_at),
-    },
-    {
-      key: 'estimasi_anggaran',
-      header: 'Nilai Pengajuan',
-      className: 'font-bold text-[#14201C] whitespace-nowrap',
-      render: (item) => formatCurrency(item.estimasi_anggaran),
-    },
-    {
-      key: 'status',
-      header: 'Status',
-      className: 'whitespace-nowrap',
-      render: (item) => getStatusBadge(item.status),
-    },
-  ];
-
-  const toolbar = (
-    <>
-      <div className="flex flex-wrap items-center gap-2.5">
-        <button
-          type="button"
-          onClick={onOpenFilterModal}
-          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${selectedStatuses.length > 0
-            ? 'bg-[#E8F5EF] text-[#0E7C5A] border-[#0E7C5A]'
-            : 'bg-white text-[#14201C] border-[#E4EBE8] hover:bg-[#F4F7F5]'
-            }`}
-        >
-          <Filter className="w-3.5 h-3.5" />
-          <span>Filter</span>
-          {selectedStatuses.length > 0 && (
-            <span className="w-4 h-4 rounded-full bg-[#0E7C5A] text-white text-[10px] flex items-center justify-center">
-              {selectedStatuses.length}
-            </span>
-          )}
-        </button>
-
-        <form onSubmit={onSearchSubmit} className="relative">
-          <Search className="w-4 h-4 text-[#8A9A95] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Cari nomor surat atau judul..."
-            className="w-64 sm:w-72 pl-10 pr-4 py-2.5 rounded-xl border border-[#E4EBE8] text-xs text-[#14201C] focus:ring-2 focus:ring-[#0E7C5A] focus:border-transparent outline-none bg-white placeholder-[#8A9A95]"
-          />
-        </form>
-      </div>
-
-      <span className="text-xs text-[#8A9A95] font-medium">
-        {totalCount} permohonan
-      </span>
-    </>
-  );
 
   return (
     <AppLayout

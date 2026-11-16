@@ -27,17 +27,6 @@ class ReviewPengadaanRequest extends FormRequest
         }
     }
 
-    protected function prepareForValidation(): void
-    {
-        if (! $this->filled('alasan') && $this->filled('catatan')) {
-            $this->merge(['alasan' => $this->input('catatan')]);
-        }
-
-        if (! $this->filled('catatan') && $this->filled('alasan')) {
-            $this->merge(['catatan' => $this->input('alasan')]);
-        }
-    }
-
     /**
      * @return array<string, mixed>
      */
