@@ -10,13 +10,14 @@ import type {
   PpkRkaklResponse,
 } from '../types/ppk';
 
-export const getDashboard = async (): Promise<PpkDashboardResponse> => {
-  const response = await api.get<PpkDashboardResponse>('/v1/ppk/dashboard');
+export const getDashboard = async (signal?: AbortSignal): Promise<PpkDashboardResponse> => {
+  const response = await api.get<PpkDashboardResponse>('/v1/ppk/dashboard', { signal });
   return response.data;
 };
 
 export const getPermohonanList = async (
-  filters: PpkPengajuanFilters = {}
+  filters: PpkPengajuanFilters = {},
+  signal?: AbortSignal
 ): Promise<PpkPermohonanListResponse> => {
   const response = await api.get<PpkPermohonanListResponse>('/v1/ppk/permohonan', {
     params: {
@@ -30,14 +31,16 @@ export const getPermohonanList = async (
       page: filters.page || undefined,
       per_page: filters.per_page || undefined,
     },
+    signal,
   });
   return response.data;
 };
 
 export const getPermohonanDetail = async (
-  id: number | string
+  id: number | string,
+  signal?: AbortSignal
 ): Promise<PpkPermohonanDetailResponse> => {
-  const response = await api.get<PpkPermohonanDetailResponse>(`/v1/ppk/permohonan/${id}`);
+  const response = await api.get<PpkPermohonanDetailResponse>(`/v1/ppk/permohonan/${id}`, { signal });
   return response.data;
 };
 
@@ -75,7 +78,8 @@ export const rejectPermohonan = async (
 };
 
 export const getPengajuanList = async (
-  filters: PpkPengajuanFilters = {}
+  filters: PpkPengajuanFilters = {},
+  signal?: AbortSignal
 ): Promise<PpkPengajuanListResponse> => {
   const response = await api.get<PpkPengajuanListResponse>('/v1/ppk/pengajuan', {
     params: {
@@ -88,21 +92,24 @@ export const getPengajuanList = async (
       page: filters.page || undefined,
       per_page: filters.per_page || undefined,
     },
+    signal,
   });
   return response.data;
 };
 
 export const getPengajuanReview = async (
-  id: number | string
+  id: number | string,
+  signal?: AbortSignal
 ): Promise<PpkPengajuanDetailResponse> => {
-  const response = await api.get<PpkPengajuanDetailResponse>(`/v1/ppk/pengajuan/${id}/review`);
+  const response = await api.get<PpkPengajuanDetailResponse>(`/v1/ppk/pengajuan/${id}/review`, { signal });
   return response.data;
 };
 
 export const getPengajuanShow = async (
-  id: number | string
+  id: number | string,
+  signal?: AbortSignal
 ): Promise<PpkPengajuanDetailResponse> => {
-  const response = await api.get<PpkPengajuanDetailResponse>(`/v1/ppk/pengajuan/${id}`);
+  const response = await api.get<PpkPengajuanDetailResponse>(`/v1/ppk/pengajuan/${id}`, { signal });
   return response.data;
 };
 
@@ -122,10 +129,12 @@ export const rejectPengadaan = async (
 };
 
 export const getPembayaranDetail = async (
-  id: number | string
+  id: number | string,
+  signal?: AbortSignal
 ): Promise<PpkPengajuanDetailResponse> => {
   const response = await api.get<PpkPengajuanDetailResponse>(
-    `/v1/ppk/pengajuan/${id}/pembayaran`
+    `/v1/ppk/pengajuan/${id}/pembayaran`,
+    { signal }
   );
   return response.data;
 };
@@ -166,11 +175,12 @@ export const rejectPembayaran = async (
   return response.data;
 };
 
-export const getRkakl = async (tahun?: string): Promise<PpkRkaklResponse> => {
+export const getRkakl = async (tahun?: string, signal?: AbortSignal): Promise<PpkRkaklResponse> => {
   const response = await api.get<PpkRkaklResponse>('/v1/ppk/rkakl', {
     params: {
       tahun: tahun || undefined,
     },
+    signal,
   });
   return response.data;
 };

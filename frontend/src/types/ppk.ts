@@ -202,6 +202,7 @@ export interface PpkTableRow {
   nominal: number;
   status: string;
   sourceType?: 'pengadaan' | 'permohonan';
+  [key: string]: unknown;
 }
 
 export type {

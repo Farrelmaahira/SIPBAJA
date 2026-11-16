@@ -2,6 +2,25 @@ import type { DokumenItem } from './dokumen';
 import type { NotificationItem } from './notification';
 
 export type { DokumenItem, NotificationItem };
+export type PpDokumenItem = DokumenItem;
+
+export interface PpApprovalItem {
+  id: number;
+  permohonan_id?: number;
+  user_id?: number;
+  role?: string;
+  status: string;
+  catatan?: string | null;
+  created_at?: string;
+  [key: string]: unknown;
+}
+
+export interface PpPaginationMeta {
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
+}
 
 export interface PpDashboardStats {
   total?: number;
@@ -35,6 +54,7 @@ export interface PpPermohonanInfo {
   judul?: string;
   deskripsi?: string;
   estimasi_anggaran?: number | string;
+  nominal?: number | string;
   created_at?: string;
   unit?: PpUnitInfo | null;
   Unit?: PpUnitInfo | null;

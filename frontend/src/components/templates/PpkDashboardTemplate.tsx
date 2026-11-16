@@ -9,25 +9,11 @@ import {
   Eye,
 } from 'lucide-react';
 import PpLayout, { type PpNavItem } from './PpLayout';
-import RowActionMenu from '../organisms/RowActionMenu';
-import { formatRupiah, formatTanggal } from '../../utils/formatters';
+import HeroBanner from '../organisms/HeroBanner';
+import StatCard from '../molecules/StatCard';
+import PpkPengajuanTable from '../organisms/PpkPengajuanTable';
 import type { NotificationItem } from '../../types/notification';
 import type { PpkDashboardStats, PpkRkaklDoc, PpkTableRow } from '../../types/ppk';
-
-const MONTHLY_CHART_DATA = [
-  { month: 'Jan', count: 310 },
-  { month: 'Feb', count: 165 },
-  { month: 'Mar', count: 255 },
-  { month: 'Apr', count: 130 },
-  { month: 'Mei', count: 205 },
-  { month: 'Jun', count: 390 },
-  { month: 'Jul', count: 295 },
-  { month: 'Agu', count: 470, highlight: true },
-  { month: 'Sep', count: 180 },
-  { month: 'Okt', count: 250 },
-  { month: 'Nov', count: 345 },
-  { month: 'Des', count: 95 },
-];
 
 export interface PpkDashboardTemplateProps {
   navItems: PpNavItem[];
@@ -48,70 +34,14 @@ export const PpkDashboardTemplate: FC<PpkDashboardTemplateProps> = ({
   rows,
   activeRkakl,
   isLoading,
-  hoveredBar,
-  onHoverBar,
   onPreviewRkakl,
   recentNotifications,
   unreadNotificationsCount,
 }) => {
-  const total = stats.total ?? 18;
-  const menunggu = stats.menunggu ?? 2;
-  const disetujui = stats.disetujui ?? 12;
-  const ditolak = stats.ditolak ?? 2;
-
-  const getDetailHref = (row: PpkTableRow): string => {
-    if (row.sourceType === 'permohonan') {
-      return `/ppk/pengajuan/${row.id}/review?type=permohonan`;
-    }
-    if (row.status === 'menunggu_persetujuan' || row.status === 'menunggu_review') {
-      return `/ppk/pengajuan/${row.id}/review`;
-    }
-    if (row.status === 'review_pembayaran' || row.status === 'diteruskan') {
-      return `/ppk/pengajuan/${row.id}/pembayaran`;
-    }
-    return `/ppk/pengajuan/${row.id}`;
-  };
-
-  const renderStatusBadge = (status: string) => {
-    if (status === 'menunggu_persetujuan' || status === 'menunggu_review') {
-      return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#FEF3DC] text-[#9A5B00]">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#F59E0B]" />
-          Menunggu Persetujuan
-        </span>
-      );
-    }
-    if (status === 'review_pembayaran' || status === 'diteruskan') {
-      return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#EFF6FF] text-[#1D4ED8]">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6]" />
-          Review Pembayaran
-        </span>
-      );
-    }
-    if (status === 'ditolak') {
-      return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#FDECEC] text-[#D92D20]">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#E5484D]" />
-          Ditolak
-        </span>
-      );
-    }
-    if (status === 'selesai') {
-      return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#E4F6EC] text-[#0B7A4E]">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#12A06B]" />
-          Selesai
-        </span>
-      );
-    }
-    return (
-      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#E4F6EC] text-[#0B7A4E]">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#12A06B]" />
-        Disetujui
-      </span>
-    );
-  };
+  const total = stats.total ?? 0;
+  const menunggu = stats.menunggu ?? 0;
+  const disetujui = stats.disetujui ?? 0;
+  const ditolak = stats.ditolak ?? 0;
 
   return (
     <PpLayout
@@ -127,223 +57,74 @@ export const PpkDashboardTemplate: FC<PpkDashboardTemplateProps> = ({
       unreadCount={unreadNotificationsCount}
     >
       {/* Hero Welcome Banner */}
-      <div className="relative overflow-hidden rounded-[24px] bg-[#0E7C5A] p-6 sm:px-9 sm:py-8 text-white shadow-[0_10px_24px_rgba(13,51,38,0.14)] mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
-          <div className="max-w-xl">
-            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-white/75 mb-1.5">
-              DASHBOARD
-            </p>
-            <h1 className="text-2xl sm:text-[28px] font-bold tracking-tight leading-tight">
-              Selamat datang, PPK
-            </h1>
-            <p className="text-xs sm:text-sm text-white/85 mt-1.5 leading-relaxed">
-              Tinjau dan berikan keputusan atas permohonan, pengadaan, serta pembayaran yang terikat Jenis MAK Anda.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-start sm:self-auto">
-            {activeRkakl && (
-              <button
-                type="button"
-                onClick={() => onPreviewRkakl(activeRkakl)}
-                className="inline-flex items-center gap-2 px-4 py-3 rounded-xl bg-white/15 hover:bg-white/25 border border-white/30 text-white text-xs font-bold transition-colors cursor-pointer"
-              >
-                <Eye className="w-4 h-4" />
-                <span>Lihat RKAKL Aktif</span>
-              </button>
-            )}
-            <Link
-              to="/ppk/pengajuan"
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white hover:bg-[#F1F7F4] text-[#0E7C5A] text-xs font-bold shadow-sm transition-colors"
-            >
-              <FileText className="w-4 h-4" />
-              <span>Lihat Pengajuan</span>
-            </Link>
-          </div>
-        </div>
-
-        <div
-          className="absolute -right-10 -top-20 w-[280px] h-[280px] rounded-full bg-white/8 pointer-events-none"
-          aria-hidden="true"
-        />
-        <div
-          className="absolute right-28 -bottom-20 w-[190px] h-[190px] rounded-full bg-white/8 pointer-events-none"
-          aria-hidden="true"
-        />
-      </div>
+      <HeroBanner
+        eyebrow="DASHBOARD"
+        title="Selamat datang, PPK"
+        description="Kelola dan otorisasi komitmen pengadaan barang & jasa serta persetujuan dokumen pembayaran per-termin."
+        className="mb-6"
+      />
 
       {/* 4 Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-[20px] p-5 border border-[#E4EBE8] shadow-[0_4px_14px_rgba(13,51,38,0.04)]">
-          <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-xl bg-[#E4F6EC] flex items-center justify-center text-[#0E7C5A]">
+        <StatCard
+          icon={FileText}
+          label="Total Pengajuan"
+          value={isLoading ? '-' : total}
+          iconBg="bg-[#E4F6EC]"
+          iconColor="text-[#0E7C5A]"
+        />
+        <StatCard
+          icon={Clock}
+          label="Menunggu Review"
+          value={isLoading ? '-' : menunggu}
+          iconBg="bg-[#FEF3DC]"
+          iconColor="text-[#9A5B00]"
+        />
+        <StatCard
+          icon={CheckCircle2}
+          label="Disetujui"
+          value={isLoading ? '-' : disetujui}
+          iconBg="bg-[#E4F6EC]"
+          iconColor="text-[#0B7A4E]"
+        />
+        <StatCard
+          icon={XCircle}
+          label="Ditolak"
+          value={isLoading ? '-' : ditolak}
+          iconBg="bg-[#FDECEC]"
+          iconColor="text-[#D92D20]"
+        />
+      </div>
+
+      {/* Banner RKAKL Aktif (Jika Tersedia) */}
+      {activeRkakl && (
+        <div className="mb-6 bg-white rounded-[22px] border border-[#E4EBE8] p-5 shadow-[0_4px_16px_rgba(13,51,38,0.04)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-[#E8F5EF] flex items-center justify-center text-[#0E7C5A] shrink-0">
               <FileText className="w-5 h-5" />
             </div>
-            <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#E4F6EC] text-[#0B7A4E]">
-              +3 bulan ini
-            </span>
-          </div>
-          <p className="text-xs text-[#5F6F6A] font-medium mt-4">Total Pengajuan</p>
-          <p className="text-3xl font-extrabold text-[#14201C] mt-1">{total}</p>
-          <p className="text-[11px] text-[#8A9A95] mt-1">Seluruh permohonan masuk</p>
-        </div>
-
-        <div className="bg-white rounded-[20px] p-5 border border-[#E4EBE8] shadow-[0_4px_14px_rgba(13,51,38,0.04)]">
-          <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-xl bg-[#FEF3DC] flex items-center justify-center text-[#9A5B00]">
-              <Clock className="w-5 h-5" />
-            </div>
-            <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#FEF3DC] text-[#9A5B00]">
-              Perlu ditindak
-            </span>
-          </div>
-          <p className="text-xs text-[#5F6F6A] font-medium mt-4">Menunggu Review</p>
-          <p className="text-3xl font-extrabold text-[#14201C] mt-1">{menunggu}</p>
-          <p className="text-[11px] text-[#8A9A95] mt-1">Menunggu keputusan PPK</p>
-        </div>
-
-        <div className="bg-white rounded-[20px] p-5 border border-[#E4EBE8] shadow-[0_4px_14px_rgba(13,51,38,0.04)]">
-          <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-xl bg-[#E4F6EC] flex items-center justify-center text-[#0E7C5A]">
-              <CheckCircle2 className="w-5 h-5" />
-            </div>
-            <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#E4F6EC] text-[#0B7A4E]">
-              78% selesai
-            </span>
-          </div>
-          <p className="text-xs text-[#5F6F6A] font-medium mt-4">Disetujui</p>
-          <p className="text-3xl font-extrabold text-[#14201C] mt-1">{disetujui}</p>
-          <p className="text-[11px] text-[#8A9A95] mt-1">Telah ditandatangani PPK</p>
-        </div>
-
-        <div className="bg-white rounded-[20px] p-5 border border-[#E4EBE8] shadow-[0_4px_14px_rgba(13,51,38,0.04)]">
-          <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-xl bg-[#FDECEC] flex items-center justify-center text-[#D92D20]">
-              <XCircle className="w-5 h-5" />
-            </div>
-            <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#FDECEC] text-[#D92D20]">
-              Dikembalikan
-            </span>
-          </div>
-          <p className="text-xs text-[#5F6F6A] font-medium mt-4">Ditolak</p>
-          <p className="text-3xl font-extrabold text-[#14201C] mt-1">{ditolak}</p>
-          <p className="text-[11px] text-[#8A9A95] mt-1">Dikembalikan ke PPBJ</p>
-        </div>
-      </div>
-
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <div className="lg:col-span-2 bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)]">
-          <div className="flex items-start justify-between mb-6">
             <div>
-              <h2 className="text-[15px] font-bold text-[#14201C]">Total Pengajuan per Bulan</h2>
-              <p className="text-xs text-[#8A9A95] mt-0.5">Periode Januari - Desember 2026</p>
-            </div>
-            <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#E4F6EC] text-[#0B7A4E]">
-              180 Pengajuan
-            </span>
-          </div>
-
-          <div className="relative h-56 flex">
-            <div className="flex flex-col justify-between text-[11px] text-[#9AA8A3] pr-3 pb-6 select-none">
-              <span>480</span>
-              <span>360</span>
-              <span>240</span>
-              <span>120</span>
-              <span>0</span>
-            </div>
-
-            <div className="flex-1 relative flex items-end justify-between gap-2 pb-6 pt-2 border-b border-[#EEF3F0]">
-              <div className="absolute inset-0 bottom-6 flex flex-col justify-between pointer-events-none">
-                {[0, 1, 2, 3, 4].map((line) => (
-                  <div key={line} className="w-full border-t border-dashed border-[#EEF3F0]" />
-                ))}
-              </div>
-
-              {MONTHLY_CHART_DATA.map((item, idx) => {
-                const heightPct = Math.round((item.count / 480) * 100);
-                const isActive = hoveredBar === idx;
-                return (
-                  <div
-                    key={item.month}
-                    onMouseEnter={() => onHoverBar(idx)}
-                    className="relative flex-1 flex flex-col items-center h-full justify-end group cursor-pointer z-10"
-                  >
-                    {isActive && (
-                      <div className="absolute -top-6 px-2 py-0.5 rounded-md bg-[#0E7C5A] text-white text-[10px] font-bold shadow-xs">
-                        {item.count}
-                      </div>
-                    )}
-                    <div
-                      style={{ height: `${heightPct}%` }}
-                      className={`w-full max-w-[34px] rounded-t-lg transition-all duration-200 ${
-                        isActive ? 'bg-[#0E7C5A]' : 'bg-[#CBE7DC] group-hover:bg-[#8FD1B6]'
-                      }`}
-                    />
-                    <span
-                      className={`absolute -bottom-5 text-[11px] ${
-                        isActive ? 'font-bold text-[#0E7C5A]' : 'text-[#8A9A95]'
-                      }`}
-                    >
-                      {item.month}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)] flex flex-col justify-between">
-          <div>
-            <h2 className="text-[15px] font-bold text-[#14201C]">Status Permohonan</h2>
-            <p className="text-xs text-[#8A9A95] mt-0.5">Distribusi saat ini</p>
-          </div>
-
-          <div className="my-5 flex items-center justify-center">
-            <div
-              className="w-36 h-36 rounded-full flex items-center justify-center relative"
-              style={{
-                background:
-                  'conic-gradient(#0E7C5A 0% 67%, #F59E0B 67% 89%, #EF4444 89% 100%)',
-              }}
-            >
-              <div className="w-24 h-24 rounded-full bg-white flex flex-col items-center justify-center">
-                <span className="text-2xl font-extrabold text-[#14201C] leading-none">{total}</span>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#8A9A95] mt-1">
-                  TOTAL
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#E4F6EC] text-[#0B7A4E]">
+                  RKAKL AKTIF {activeRkakl.tahun_anggaran || '2026'}
                 </span>
+                <span className="text-xs text-[#8A9A95]">v{activeRkakl.versi ?? 1}</span>
               </div>
+              <p className="text-sm font-bold text-[#14201C] mt-1">{activeRkakl.nama_asli}</p>
             </div>
           </div>
-
-          <div className="space-y-2.5 text-xs">
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2 text-[#5F6F6A]">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#0E7C5A]" />
-                Disetujui
-              </span>
-              <span className="font-bold text-[#14201C]">{disetujui}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2 text-[#5F6F6A]">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]" />
-                Menunggu Review
-              </span>
-              <span className="font-bold text-[#14201C]">{menunggu}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2 text-[#5F6F6A]">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444]" />
-                Ditolak
-              </span>
-              <span className="font-bold text-[#14201C]">{ditolak}</span>
-            </div>
-          </div>
+          <button
+            type="button"
+            onClick={() => onPreviewRkakl(activeRkakl)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0E7C5A] hover:bg-[#0B684A] text-white text-xs font-bold transition shadow-[0_4px_12px_rgba(14,124,90,0.2)] cursor-pointer self-start sm:self-auto"
+          >
+            <Eye className="w-4 h-4" />
+            <span>Pratinjau RKAKL</span>
+          </button>
         </div>
-      </div>
+      )}
 
-      {/* Pengajuan Masuk Terbaru */}
+      {/* Organism: Pengajuan Masuk Terbaru */}
       <div className="bg-white rounded-[22px] border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)] overflow-hidden">
         <div className="px-6 py-5 border-b border-[#F0F4F2] flex items-center justify-between">
           <div>
@@ -359,53 +140,11 @@ export const PpkDashboardTemplate: FC<PpkDashboardTemplateProps> = ({
           </Link>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-[#EEF3F0] border-b border-[#E2EAE6] text-[10px] font-bold uppercase tracking-wider text-[#6B7280]">
-                <th className="py-3.5 px-6">NOMOR SURAT</th>
-                <th className="py-3.5 px-4">JUDUL PENGADAAN</th>
-                <th className="py-3.5 px-4">UNIT PEMOHON</th>
-                <th className="py-3.5 px-4">TANGGAL</th>
-                <th className="py-3.5 px-4">NOMINAL</th>
-                <th className="py-3.5 px-4">STATUS</th>
-                <th className="py-3.5 px-6 text-center">AKSI</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#F0F4F2] text-xs">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={7} className="py-12 text-center text-[#8A9A95]">
-                    <div className="flex flex-col items-center justify-center gap-2">
-                      <div className="w-6 h-6 border-2 border-[#0E7C5A] border-t-transparent rounded-full animate-spin" />
-                      <p className="text-xs text-[#5F6F6A]">Memuat pengajuan terbaru PPK...</p>
-                    </div>
-                  </td>
-                </tr>
-              ) : rows.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="py-8 text-center text-[#8A9A95]">
-                    Belum ada pengajuan masuk.
-                  </td>
-                </tr>
-              ) : (
-                rows.map((row) => (
-                  <tr key={`${row.sourceType ?? 'pengadaan'}-${row.id}`} className="hover:bg-[#FAFDFB] transition">
-                    <td className="py-4 px-6 font-bold text-[#0E7C5A]">{row.nomor_surat}</td>
-                    <td className="py-4 px-4 font-bold text-[#14201C]">{row.judul}</td>
-                    <td className="py-4 px-4 text-[#5F6F6A]">{row.unit}</td>
-                    <td className="py-4 px-4 text-[#5F6F6A]">{formatTanggal(row.tanggal)}</td>
-                    <td className="py-4 px-4 font-bold text-[#14201C]">{formatRupiah(row.nominal)}</td>
-                    <td className="py-4 px-4">{renderStatusBadge(row.status)}</td>
-                    <td className="py-4 px-6 text-center">
-                      <RowActionMenu item={row} viewHref={getDetailHref(row)} />
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        <PpkPengajuanTable
+          rows={rows}
+          isLoading={isLoading}
+          emptyMessage="Belum ada pengajuan masuk."
+        />
       </div>
     </PpLayout>
   );

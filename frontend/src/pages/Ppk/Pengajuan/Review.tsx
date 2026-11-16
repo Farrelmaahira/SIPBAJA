@@ -57,49 +57,51 @@ export const PpkPengajuanReview: FC<PpkReviewProps> = ({
 
   useEffect(() => {
     if (!id) return;
-    let isMounted = true;
+    const controller = new AbortController();
     setIsLoading(true);
 
     if (isPermohonanMode) {
       ppkService
-        .getPermohonanDetail(id)
+        .getPermohonanDetail(id, controller.signal)
         .then((res) => {
-          if (!isMounted) return;
           setPermohonanDetail(res.data ?? res.detail ?? null);
           if (res.recentNotifications) setRecentNotifications(res.recentNotifications);
           if (res.unreadNotificationsCount !== undefined) {
             setUnreadNotificationsCount(res.unreadNotificationsCount);
           }
         })
-        .catch((err) => {
-          console.error('Failed to fetch PPK permohonan detail:', err);
+        .catch((err: unknown) => {
+          if (!controller.signal.aborted) {
+            console.error('Failed to fetch PPK permohonan detail:', err);
+          }
         })
         .finally(() => {
-          if (isMounted) setIsLoading(false);
+          if (!controller.signal.aborted) setIsLoading(false);
         });
     } else if (!initialDetail) {
       ppkService
-        .getPengajuanReview(id)
+        .getPengajuanReview(id, controller.signal)
         .then((res) => {
-          if (!isMounted) return;
           setPengadaanDetail(res.detail ?? res.data ?? {});
           if (res.recentNotifications) setRecentNotifications(res.recentNotifications);
           if (res.unreadNotificationsCount !== undefined) {
             setUnreadNotificationsCount(res.unreadNotificationsCount);
           }
         })
-        .catch((err) => {
-          console.error('Failed to fetch PPK pengajuan review:', err);
+        .catch((err: unknown) => {
+          if (!controller.signal.aborted) {
+            console.error('Failed to fetch PPK pengajuan review:', err);
+          }
         })
         .finally(() => {
-          if (isMounted) setIsLoading(false);
+          if (!controller.signal.aborted) setIsLoading(false);
         });
     } else {
       setIsLoading(false);
     }
 
     return () => {
-      isMounted = false;
+      controller.abort();
     };
   }, [id, isPermohonanMode, initialDetail]);
 

@@ -1,10 +1,10 @@
 import { useState, useEffect, type FC } from 'react';
 import { LayoutGrid, FileText } from 'lucide-react';
+import usePpkDashboard from '../../hooks/usePpkDashboard';
 import ppkService from '../../services/ppkService';
 import PpkDashboardTemplate from '../../components/templates/PpkDashboardTemplate';
 import DocumentPreviewModal from '../../components/organisms/DocumentPreviewModal';
 import type { PpNavItem } from '../../components/templates/PpLayout';
-import type { NotificationItem } from '../../types/notification';
 import type {
   PpPengadaanItem,
   PpkDashboardStats,
@@ -24,118 +24,48 @@ export const PPK_NAV_ITEMS: PpNavItem[] = [
     label: 'List Pengajuan',
     href: '/ppk/pengajuan',
     icon: FileText,
-    badge: 4,
-  },
-];
-
-const FALLBACK_ROWS: PpkTableRow[] = [
-  {
-    id: 1,
-    nomor_surat: '009/PNJ/2026',
-    judul: 'Pengadaan Kursi Kuliah',
-    unit: 'Jurusan Teknik Sipil',
-    tanggal: '2026-04-02',
-    nominal: 45000000,
-    status: 'menunggu_persetujuan',
-    sourceType: 'pengadaan',
-  },
-  {
-    id: 2,
-    nomor_surat: '008/PNJ/2026',
-    judul: 'Pengadaan Alat Ukur Tanah',
-    unit: 'Jurusan Teknik Sipil',
-    tanggal: '2026-03-30',
-    nominal: 62000000,
-    status: 'menunggu_persetujuan',
-    sourceType: 'pengadaan',
-  },
-  {
-    id: 3,
-    nomor_surat: '007/PNJ/2026',
-    judul: 'Pengadaan Kamera Dokumentasi',
-    unit: 'Humas PNJ',
-    tanggal: '2026-03-28',
-    nominal: 28000000,
-    status: 'disetujui',
-    sourceType: 'pengadaan',
-  },
-  {
-    id: 4,
-    nomor_surat: '006/PNJ/2026',
-    judul: 'Pengadaan Lisensi Software',
-    unit: 'UPT Komputer',
-    tanggal: '2026-03-26',
-    nominal: 19500000,
-    status: 'ditolak',
-    sourceType: 'pengadaan',
   },
 ];
 
 export const PpkDashboard: FC = () => {
-  const [hoveredBar, setHoveredBar] = useState<number>(7);
-  const [stats, setStats] = useState<PpkDashboardStats>({});
-  const [pengajuanTerbaru, setPengajuanTerbaru] = useState<PpPengadaanItem[]>([]);
+  const { data, isLoading } = usePpkDashboard();
   const [activeRkakl, setActiveRkakl] = useState<PpkRkaklDoc | null>(null);
-  const [previewRkakl, setPreviewRkakl] = useState<PpkRkaklDoc | null>(null);
-  const [recentNotifications, setRecentNotifications] = useState<NotificationItem[]>([]);
-  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState<number>(0);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [previewDoc, setPreviewDoc] = useState<PpkRkaklDoc | null>(null);
 
   useEffect(() => {
-    let isMounted = true;
-    setIsLoading(true);
-
-    Promise.allSettled([ppkService.getDashboard(), ppkService.getRkakl()])
-      .then(([dashResult, rkaklResult]) => {
-        if (!isMounted) return;
-
-        if (dashResult.status === 'fulfilled') {
-          const data = dashResult.value;
-          if (data.stats) setStats(data.stats);
-          if (data.pengajuanTerbaru) setPengajuanTerbaru(data.pengajuanTerbaru);
-          if (data.recentNotifications) setRecentNotifications(data.recentNotifications);
-          if (data.unreadNotificationsCount !== undefined) {
-            setUnreadNotificationsCount(data.unreadNotificationsCount);
-          }
-        }
-
-        if (rkaklResult.status === 'fulfilled') {
-          const rkakl = rkaklResult.value;
-          setActiveRkakl(rkakl.activeDoc ?? rkakl.data?.active_doc ?? null);
-        }
+    const controller = new AbortController();
+    ppkService
+      .getRkakl(undefined, controller.signal)
+      .then((res) => {
+        const doc = res.activeDoc || res.data?.active_doc || null;
+        if (doc) setActiveRkakl(doc);
       })
-      .finally(() => {
-        if (isMounted) setIsLoading(false);
+      .catch((err) => {
+        if (!controller.signal.aborted) {
+          console.error('Failed to fetch PPK RKAKL data:', err);
+        }
       });
 
     return () => {
-      isMounted = false;
+      controller.abort();
     };
   }, []);
 
-  const dbRows: PpkTableRow[] = (pengajuanTerbaru || []).map((item, idx) => {
-    const fb = FALLBACK_ROWS[idx % FALLBACK_ROWS.length];
+  const stats: PpkDashboardStats = data?.stats || {};
+  const rows: PpkTableRow[] = (data?.pengajuanTerbaru || []).map((item: PpPengadaanItem) => {
     const permohonan = item.permohonan || item.Permohonan;
-    const unitObj = permohonan?.unit || permohonan?.Unit;
-
+    const unit = permohonan?.unit || permohonan?.Unit;
     return {
       id: item.id,
-      nomor_surat: permohonan?.nomor_surat || fb.nomor_surat,
-      judul: permohonan?.judul || fb.judul,
-      unit: unitObj?.nama || fb.unit,
-      tanggal: item.created_at || fb.tanggal,
-      nominal:
-        item.nilai_kontrak ??
-        item.nominal ??
-        permohonan?.nominal ??
-        permohonan?.estimasi_anggaran ??
-        fb.nominal,
-      status: idx === 0 || idx === 1 ? 'menunggu_persetujuan' : item.status || fb.status,
+      nomor_surat: permohonan?.nomor_surat || '-',
+      judul: permohonan?.judul || '-',
+      unit: unit?.nama || '-',
+      tanggal: item.created_at || permohonan?.created_at || '-',
+      nominal: Number(item.nominal) || 0,
+      status: item.status || 'menunggu_persetujuan',
       sourceType: 'pengadaan',
     };
   });
-
-  const rows = dbRows.length > 0 ? dbRows : FALLBACK_ROWS;
 
   return (
     <>
@@ -145,18 +75,19 @@ export const PpkDashboard: FC = () => {
         rows={rows}
         activeRkakl={activeRkakl}
         isLoading={isLoading}
-        hoveredBar={hoveredBar}
-        onHoverBar={setHoveredBar}
-        onPreviewRkakl={setPreviewRkakl}
-        recentNotifications={recentNotifications}
-        unreadNotificationsCount={unreadNotificationsCount}
+        hoveredBar={-1}
+        onHoverBar={() => {}}
+        onPreviewRkakl={setPreviewDoc}
+        recentNotifications={data?.recentNotifications || []}
+        unreadNotificationsCount={data?.unreadNotificationsCount || 0}
       />
+
       <DocumentPreviewModal
-        isOpen={Boolean(previewRkakl)}
-        onClose={() => setPreviewRkakl(null)}
+        isOpen={Boolean(previewDoc)}
+        onClose={() => setPreviewDoc(null)}
         category="Dokumen RKAKL Aktif (Read-Only)"
-        filename={previewRkakl?.nama_asli}
-        size={`Versi ${previewRkakl?.versi ?? 1} • PDF`}
+        filename={previewDoc?.nama_asli}
+        size={`Versi ${previewDoc?.versi ?? 1} • PDF`}
       />
     </>
   );

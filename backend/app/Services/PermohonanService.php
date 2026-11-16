@@ -486,7 +486,6 @@ class PermohonanService
         ];
     }
 
-    // [BARU - Perencanaan: ringkasan statistik dan permohonan masuk terbaru] ditambahkan untuk kebutuhan fitur Dashboard Perencanaan.
     /**
      * @return array<string, mixed>
      */
@@ -513,7 +512,6 @@ class PermohonanService
         ];
     }
 
-    // [BARU - Perencanaan: paginasi daftar permohonan dengan filter lengkap] ditambahkan untuk kebutuhan fitur List Pengajuan Perencanaan.
     /**
      * @param  array<string, mixed>  $filters
      */
@@ -577,7 +575,6 @@ class PermohonanService
             ->withQueryString();
     }
 
-    // [BARU - Perencanaan: detail permohonan beserta pratinjau RKAKL dan opsi MAK] ditambahkan untuk kebutuhan fitur Detail Permohonan Perencanaan.
     /**
      * @return array<string, mixed>
      */
@@ -642,7 +639,6 @@ class PermohonanService
         ];
     }
 
-    // [BARU - Perencanaan: kompatibilitas endpoint deprecated kirim-pengadaan] ditambahkan untuk menjaga kompatibilitas endpoint lama.
     /**
      * @deprecated Penerusan ke PPBJ kini berjalan otomatis setelah Bidang 2 dan PPK menyetujui secara paralel.
      */
@@ -676,7 +672,6 @@ class PermohonanService
         });
     }
 
-    // [BARU - PPK: daftar Dokumen Turunan / permohonan yang terikat Jenis MAK milik PPK] ditambahkan untuk kebutuhan fitur persetujuan awal permohonan oleh PPK.
     /**
      * @param  array<string, mixed>  $filters
      */
@@ -717,7 +712,6 @@ class PermohonanService
             ->withQueryString();
     }
 
-    // [BARU - PPK: detail permohonan yang terikat Jenis MAK milik PPK] ditambahkan untuk kebutuhan fitur detail persetujuan awal permohonan oleh PPK.
     /**
      * @return array<string, mixed>
      */

@@ -100,14 +100,15 @@ export const PpkPembayaranTemplate: FC<PpkPembayaranTemplateProps> = ({
     pengadaan?.nominal ??
     permohonan?.nominal ??
     permohonan?.estimasi_anggaran ??
-    100000000;
+    0;
 
-  const formatCurrency = (val?: number) => {
+  const formatCurrency = (val?: number | string | unknown) => {
+    const num = typeof val === 'number' ? val : Number(val) || 0;
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
       currency: 'IDR',
       maximumFractionDigits: 0,
-    }).format(val || 100000000);
+    }).format(num);
   };
 
   const formatDate = (dateString?: string, fallback = '04 Maret 2027') => {
