@@ -290,6 +290,84 @@ class PengajuanBidang2DetailTest extends TestCase
         $response->assertStatus(422)->assertJsonValidationErrors(['alasan']);
     }
 
+    private function createSamplePermohonanBaru(): Permohonan
+    {
+        $pemohon = $this->getPemohonUser();
+        $unit = Unit::firstOrCreate(['nama' => 'Jurusan Teknik Informatika & Komputer']);
+
+        $permohonan = Permohonan::create([
+            'unit_id' => $unit->id,
+            'created_by' => $pemohon->id,
+            'nomor_surat' => '222-BARU-001',
+            'judul' => 'Pengadaan Server Baru',
+            'ringkasan_tujuan' => 'Kebutuhan server praktikum cloud',
+            'estimasi_anggaran' => 75000000,
+            'revisi_ke' => 0,
+            'status' => 'diajukan',
+            'created_at' => now(),
+        ]);
+
+        Dokumen::create([
+            'ref_type' => 'permohonan',
+            'ref_id' => $permohonan->id,
+            'tipe_dokumen' => 'surat_permohonan',
+            'versi' => 1,
+            'nama_asli' => 'Surat_Permohonan_Server_Baru.pdf',
+            'nama_hash' => 'hash_surat_server.pdf',
+            'mime_type' => 'application/pdf',
+            'ukuran_bytes' => 2048000,
+            'uploaded_by' => $pemohon->id,
+        ]);
+
+        return $permohonan;
+    }
+
+    public function test_bidang2_sees_empty_mak_and_no_dummy_data_for_new_permohonan(): void
+    {
+        $bidang2 = $this->getBidang2User();
+        $permohonan = $this->createSamplePermohonanBaru();
+
+        $response = $this->actingAs($bidang2, 'sanctum')->getJson("/api/v1/bidang-2/pengajuan/{$permohonan->id}");
+
+        $response->assertStatus(200);
+        $this->assertFalse($response->json('permohonan.is_mak_determined'));
+        $this->assertEmpty($response->json('permohonan.mak_list'));
+        $this->assertNull($response->json('permohonan.catatan_perencanaan.catatan'));
+        $this->assertStringNotContainsString('532111', json_encode($response->json('permohonan.catatan_perencanaan')));
+    }
+
+    public function test_bidang2_cannot_approve_permohonan_before_perencanaan_assigns_mak(): void
+    {
+        $bidang2 = $this->getBidang2User();
+        $permohonan = $this->createSamplePermohonanBaru();
+
+        $fileMemo = UploadedFile::fake()->create('Memo_Persetujuan_Baru.pdf', 1024, 'application/pdf');
+
+        $response = $this->actingAs($bidang2, 'sanctum')->post("/api/v1/bidang-2/pengajuan/{$permohonan->id}/approve", [
+            'file_memo' => $fileMemo,
+        ], ['Accept' => 'application/json']);
+
+        $response->assertStatus(422);
+        $response->assertJson([
+            'message' => 'Persetujuan permohonan belum dapat diproses karena Jenis MAK belum ditentukan oleh Tim Perencanaan.',
+        ]);
+    }
+
+    public function test_bidang2_cannot_reject_permohonan_before_perencanaan_assigns_mak(): void
+    {
+        $bidang2 = $this->getBidang2User();
+        $permohonan = $this->createSamplePermohonanBaru();
+
+        $response = $this->actingAs($bidang2, 'sanctum')->postJson("/api/v1/bidang-2/pengajuan/{$permohonan->id}/reject", [
+            'alasan' => 'Permohonan ditolak karena alasan teknis.',
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJson([
+            'message' => 'Penolakan permohonan belum dapat diproses karena Jenis MAK belum ditentukan oleh Tim Perencanaan.',
+        ]);
+    }
+
     public function test_bidang2_can_download_approved_memo(): void
     {
         $bidang2 = $this->getBidang2User();

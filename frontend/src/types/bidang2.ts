@@ -16,10 +16,10 @@ export interface Bidang2DokumenItem {
 }
 
 export interface CatatanPerencanaanData {
-  pemeriksa_nama: string;
-  pemeriksa_peran: string;
-  tanggal: string | null;
-  catatan: string;
+  pemeriksa_nama?: string | null;
+  pemeriksa_peran?: string | null;
+  tanggal?: string | null;
+  catatan?: string | null;
   [key: string]: unknown;
 }
 
@@ -51,6 +51,7 @@ export interface Bidang2DetailPengajuan {
   status: string;
   tanggal_pengajuan: string;
   created_at?: string | null;
+  is_mak_determined?: boolean;
   mak_list: Bidang2PermohonanMakItem[];
   dokumen: Bidang2DokumenItem | null;
   catatan_perencanaan: CatatanPerencanaanData;

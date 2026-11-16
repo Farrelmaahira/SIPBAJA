@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { Eye, XCircle, CheckCircle2, Download } from 'lucide-react';
+import { Eye, XCircle, CheckCircle2, Download, Clock } from 'lucide-react';
 import type { RkaklAktifInfo, KeputusanBidang2Data } from '../../../types/bidang2';
 
 export interface KeputusanBidang2CardProps {
@@ -9,6 +9,7 @@ export interface KeputusanBidang2CardProps {
   onOpenSetujuModal: () => void;
   status: string;
   keputusan?: KeputusanBidang2Data | null;
+  isMakDetermined?: boolean;
 }
 
 export const KeputusanBidang2Card: FC<KeputusanBidang2CardProps> = ({
@@ -18,6 +19,7 @@ export const KeputusanBidang2Card: FC<KeputusanBidang2CardProps> = ({
   onOpenSetujuModal,
   status,
   keputusan,
+  isMakDetermined = true,
 }) => {
   const isApproved = status === 'disetujui' || keputusan?.keputusan === 'disetujui';
   const isRejected = status === 'ditolak' || keputusan?.keputusan === 'ditolak';
@@ -93,27 +95,43 @@ export const KeputusanBidang2Card: FC<KeputusanBidang2CardProps> = ({
         </div>
       )}
 
-      {/* Jika belum diputuskan: Tampilkan Tombol Keputusan */}
+      {/* Jika belum diputuskan */}
       {!isApproved && !isRejected && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-          <button
-            type="button"
-            onClick={onOpenTolakModal}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl border border-[#FDA29B] bg-[#FFF0ED] text-xs md:text-sm font-semibold text-[#D92D20] hover:bg-[#FEE4E2] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D92D20] cursor-pointer"
-          >
-            <XCircle className="w-4 h-4 stroke-[2.2]" />
-            <span>Tolak Permohonan</span>
-          </button>
+        <>
+          {!isMakDetermined ? (
+            <div className="p-4 rounded-2xl bg-[#FFF9EB] border border-[#FEDF89] text-[#B54708] space-y-1">
+              <div className="flex items-center gap-2">
+                <Clock className="w-5 h-5 shrink-0 text-[#F79009]" />
+                <span className="text-xs md:text-sm font-bold">
+                  Persetujuan Belum Tersedia
+                </span>
+              </div>
+              <p className="text-xs text-[#7A271A] leading-relaxed pl-7">
+                Persetujuan atau penolakan permohonan baru dapat dilakukan setelah Tim Perencanaan memverifikasi dan menetapkan Jenis MAK.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+              <button
+                type="button"
+                onClick={onOpenTolakModal}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl border border-[#FDA29B] bg-[#FFF0ED] text-xs md:text-sm font-semibold text-[#D92D20] hover:bg-[#FEE4E2] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D92D20] cursor-pointer"
+              >
+                <XCircle className="w-4 h-4 stroke-[2.2]" />
+                <span>Tolak Permohonan</span>
+              </button>
 
-          <button
-            type="button"
-            onClick={onOpenSetujuModal}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-[#0E7C5A] text-xs md:text-sm font-semibold text-white hover:bg-[#0A5C43] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C5A] cursor-pointer shadow-sm"
-          >
-            <CheckCircle2 className="w-4 h-4 stroke-[2.2]" />
-            <span>Setujui Permohonan</span>
-          </button>
-        </div>
+              <button
+                type="button"
+                onClick={onOpenSetujuModal}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-[#0E7C5A] text-xs md:text-sm font-semibold text-white hover:bg-[#0A5C43] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C5A] cursor-pointer shadow-sm"
+              >
+                <CheckCircle2 className="w-4 h-4 stroke-[2.2]" />
+                <span>Setujui Permohonan</span>
+              </button>
+            </div>
+          )}
+        </>
       )}
     </section>
   );
