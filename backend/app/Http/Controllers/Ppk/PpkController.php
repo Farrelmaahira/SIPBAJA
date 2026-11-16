@@ -30,22 +30,6 @@ class PpkController extends Controller
         private NotificationService $notificationService
     ) {}
 
-    public function dashboard(): JsonResponse
-    {
-        $user = auth()->user();
-        $data = $this->pengadaanService->getDashboardPpk($user);
-        $permohonanPaginator = $this->permohonanService->paginatePermohonanUntukPpk($user, [], 5);
-        $notifData = $this->notificationService->getRecentAndUnreadCount((int) auth()->id());
-
-        return response()->json([
-            'stats' => $data['stats'],
-            'pengajuanTerbaru' => $data['pengajuan_terbaru'],
-            'permohonanTerbaru' => $permohonanPaginator->items(),
-            'recentNotifications' => $notifData['recentNotifications'],
-            'unreadNotificationsCount' => $notifData['unreadNotificationsCount'],
-        ]);
-    }
-
     public function indexPermohonan(Request $request): JsonResponse
     {
         $filters = [

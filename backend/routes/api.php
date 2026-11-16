@@ -23,6 +23,7 @@ use App\Http\Controllers\Perlengkapan\DashboardPerlengkapanController;
 use App\Http\Controllers\Pp\PpController;
 use App\Http\Controllers\PPBJ\DashboardPpbjController;
 use App\Http\Controllers\PPBJ\PermohonanController as PpbjPermohonanController;
+use App\Http\Controllers\Ppk\DashboardPpkController;
 use App\Http\Controllers\Ppk\PpkController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -138,7 +139,7 @@ Route::prefix('v1')->group(function () {
 
         // PPK Routes
         Route::prefix('ppk')->middleware('role:PPK')->group(function () {
-            Route::get('dashboard', [PpkController::class, 'dashboard'])->name('api.ppk.dashboard');
+            Route::get('dashboard', DashboardPpkController::class)->name('api.ppk.dashboard');
             Route::get('permohonan', [PpkController::class, 'indexPermohonan'])->name('api.ppk.permohonan.index');
             Route::get('permohonan/{permohonan}', [PpkController::class, 'showPermohonan'])->name('api.ppk.permohonan.show');
             Route::post('permohonan/{permohonan}/approve', [PpkController::class, 'approvePermohonan'])->name('api.ppk.permohonan.approve');
