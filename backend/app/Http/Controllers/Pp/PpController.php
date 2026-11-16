@@ -20,23 +20,6 @@ class PpController extends Controller
     ) {}
 
     /**
-     * Tampilan Halaman Dashboard PP.
-     */
-    public function dashboard(Request $request): JsonResponse
-    {
-        $dashboardData = $this->pengadaanService->getDashboardPp();
-        $notifData = $this->notificationService->getRecentAndUnreadCount((int) $request->user()->id);
-
-        return response()->json([
-            'stats' => $dashboardData['stats'],
-            'chart' => $dashboardData['chart'],
-            'pengadaanPerluReview' => $dashboardData['pengadaan_perlu_review'],
-            'recentNotifications' => $notifData['recentNotifications'],
-            'unreadNotificationsCount' => $notifData['unreadNotificationsCount'],
-        ]);
-    }
-
-    /**
      * Tampilan Halaman List Pengajuan dengan pencarian & filter status.
      */
     public function index(Request $request): JsonResponse
