@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\ApprovalPengadaan;
 use App\Models\Dokumen;
 use App\Models\JenisPengadaan;
 use App\Models\LevelPengadaan;
@@ -317,7 +316,6 @@ class PengadaanService
         return (int) ($levels->first()?->id ?? 1);
     }
 
-    // [BARU - Perencanaan: lihat detail Dokumen Pengadaan] ditambahkan untuk kebutuhan fitur lihat Dokumen Pengadaan oleh Perencanaan.
     /**
      * @return array<string, mixed>
      */
@@ -364,7 +362,6 @@ class PengadaanService
         ];
     }
 
-    // [BARU - Perencanaan: perbaikan Jenis MAK pada Dokumen Pengadaan] ditambahkan untuk kebutuhan fitur perbaikan Jenis MAK oleh Perencanaan.
     /**
      * @throws ValidationException
      */
@@ -463,7 +460,6 @@ class PengadaanService
         });
     }
 
-    // [BARU - PP: query dasar pengadaan khusus level perlu_review_pp = true] ditambahkan untuk kebutuhan fitur daftar dan review PP.
     protected function baseQueryPp(): Builder
     {
         return Pengadaan::query()
@@ -480,7 +476,6 @@ class PengadaanService
             ]);
     }
 
-    // [BARU - PP: ringkasan statistik dan pengadaan perlu review untuk Dashboard PP] ditambahkan untuk kebutuhan fitur Dashboard PP.
     /**
      * @return array<string, mixed>
      */
@@ -541,7 +536,6 @@ class PengadaanService
         ];
     }
 
-    // [BARU - PP: paginasi daftar pengadaan level 50-200 juta] ditambahkan untuk kebutuhan fitur List Pengajuan PP.
     /**
      * @param  array<string, mixed>  $filters
      */
@@ -577,7 +571,6 @@ class PengadaanService
             ->withQueryString();
     }
 
-    // [BARU - PP & PPK: detail lengkap dokumen pengadaan] ditambahkan untuk kebutuhan fitur Review dan Detail Pengadaan.
     /**
      * @return array<string, mixed>
      */
@@ -634,7 +627,6 @@ class PengadaanService
         ];
     }
 
-    // [BARU - PPK: query dasar pengadaan yang terikat dengan akun PPK yang login] ditambahkan untuk kebutuhan pembatasan akses PPK.
     protected function baseQueryPpk(User $ppk): Builder
     {
         return Pengadaan::query()
@@ -654,7 +646,6 @@ class PengadaanService
             ]);
     }
 
-    // [BARU - PPK: ringkasan statistik dan pengajuan terbaru untuk Dashboard PPK] ditambahkan untuk kebutuhan fitur Dashboard PPK.
     /**
      * @return array<string, mixed>
      */
@@ -683,7 +674,6 @@ class PengadaanService
         ];
     }
 
-    // [BARU - PPK: paginasi daftar pengadaan milik PPK yang login] ditambahkan untuk kebutuhan fitur List Pengajuan PPK.
     /**
      * @param  array<string, mixed>  $filters
      */

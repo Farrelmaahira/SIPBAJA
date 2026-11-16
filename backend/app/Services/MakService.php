@@ -58,7 +58,6 @@ class MakService
         return true;
     }
 
-    // [BARU - Perencanaan: paginasi daftar Jenis MAK] ditambahkan untuk kebutuhan fitur manajemen Jenis MAK Perencanaan.
     public function paginateUntukPerencanaan(?string $q = ''): LengthAwarePaginator
     {
         return Mak::query()
@@ -77,7 +76,6 @@ class MakService
             ->withQueryString();
     }
 
-    // [BARU - Perencanaan: daftar akun dengan peran PPK] ditambahkan untuk kebutuhan fitur pilihan PPK pada Jenis MAK.
     /**
      * @return Collection<int, User>
      */
@@ -88,7 +86,6 @@ class MakService
             ->get(['id', 'nama', 'email']);
     }
 
-    // [BARU - Perencanaan: tambah Jenis MAK dengan validasi role PPK] ditambahkan untuk kebutuhan fitur tambah Jenis MAK.
     /**
      * @param  array<string, mixed>  $data
      *
@@ -132,7 +129,6 @@ class MakService
         });
     }
 
-    // [BARU - Perencanaan: perbarui Jenis MAK dengan validasi role PPK] ditambahkan untuk kebutuhan fitur ubah Jenis MAK.
     /**
      * @param  array<string, mixed>  $data
      *
@@ -174,7 +170,6 @@ class MakService
         });
     }
 
-    // [BARU - Perencanaan: soft delete Jenis MAK dengan cek keterikatan dokumen turunan berjalan] ditambahkan untuk kebutuhan fitur hapus Jenis MAK.
     /**
      * @throws ValidationException
      */

@@ -145,7 +145,7 @@ class AdminCrudApiTest extends TestCase
         $response = $this->actingAs($this->admin(), 'sanctum')->deleteJson("/api/v1/admin/mak/{$mak->id}");
 
         $response->assertStatus(204);
-        $this->assertDatabaseMissing('maks', ['id' => $mak->id]);
+        $this->assertSoftDeleted('maks', ['id' => $mak->id]);
     }
 
     public function test_admin_can_get_role_permissions(): void
