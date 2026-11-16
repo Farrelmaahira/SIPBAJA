@@ -20,6 +20,7 @@ use App\Http\Controllers\Perencanaan\PerencanaanMakController;
 use App\Http\Controllers\Perencanaan\PerencanaanProfilController;
 use App\Http\Controllers\Perencanaan\PerencanaanRkaklController;
 use App\Http\Controllers\Perlengkapan\DashboardPerlengkapanController;
+use App\Http\Controllers\Pp\DashboardPpController;
 use App\Http\Controllers\Pp\PpController;
 use App\Http\Controllers\PPBJ\DashboardPpbjController;
 use App\Http\Controllers\PPBJ\PermohonanController as PpbjPermohonanController;
@@ -142,7 +143,7 @@ Route::prefix('v1')->group(function () {
 
         // PP Routes
         Route::prefix('pp')->middleware('role:PP')->group(function () {
-            Route::get('dashboard', [PpController::class, 'dashboard'])->name('api.pp.dashboard');
+            Route::get('dashboard', DashboardPpController::class)->name('api.pp.dashboard');
             Route::get('pengajuan', [PpController::class, 'index'])->name('api.pp.pengajuan.index');
             Route::get('pengajuan/{pengadaan}/review', [PpController::class, 'review'])->name('api.pp.pengajuan.review');
             Route::post('pengajuan/{pengadaan}/approve', [PpController::class, 'approve'])->name('api.pp.pengajuan.approve');

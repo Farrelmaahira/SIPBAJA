@@ -316,6 +316,7 @@ class PengadaanService
         return (int) ($levels->first()?->id ?? 1);
     }
 
+    // [BARU - Perencanaan: lihat detail Dokumen Pengadaan] ditambahkan untuk kebutuhan fitur lihat Dokumen Pengadaan oleh Perencanaan.
     /**
      * @return array<string, mixed>
      */
@@ -342,8 +343,8 @@ class PengadaanService
         }) || in_array($pengadaan->status, ['disetujui', 'selesai'], true);
 
         $opsiPermohonanMak = $pengadaan->Permohonan?->PermohonanMak
-                ?->filter(fn($pm) => $pm->Mak !== null)
-            ->map(fn($pm) => [
+            ?->filter(fn ($pm) => $pm->Mak !== null)
+            ->map(fn ($pm) => [
                 'permohonan_mak_id' => (int) $pm->id,
                 'mak_id' => (int) $pm->mak_id,
                 'kode' => (string) ($pm->Mak->kode ?? $pm->Mak->nama),
@@ -357,11 +358,12 @@ class PengadaanService
         return [
             'pengadaan' => $pengadaan,
             'dokumen_pengadaan' => $pengadaan->Dokumen,
-            'bisa_ubah_mak' => !$ppkSudahSetuju,
+            'bisa_ubah_mak' => ! $ppkSudahSetuju,
             'opsi_permohonan_mak' => $opsiPermohonanMak,
         ];
     }
 
+    // [BARU - Perencanaan: perbaikan Jenis MAK pada Dokumen Pengadaan] ditambahkan untuk kebutuhan fitur perbaikan Jenis MAK oleh Perencanaan.
     /**
      * @throws ValidationException
      */
@@ -387,7 +389,7 @@ class PengadaanService
             ->where('permohonan_id', $pengadaan->permohonan_id)
             ->first();
 
-        if (!$permohonanMakBaru || !$permohonanMakBaru->Mak) {
+        if (! $permohonanMakBaru || ! $permohonanMakBaru->Mak) {
             throw ValidationException::withMessages([
                 'permohonan_mak_id' => ['Jenis MAK harus dipilih dari daftar Jenis MAK yang sudah ditetapkan pada permohonan ini.'],
             ]);
@@ -416,7 +418,7 @@ class PengadaanService
             $namaMakBaru = $permohonanMakBaru->Mak?->nama ?? '-';
 
             // Notifikasi ke PPBJ
-            $ppbjUsers = User::whereHas('Role', fn($q) => $q->where('nama', 'PPBJ'))->pluck('id');
+            $ppbjUsers = User::whereHas('Role', fn ($q) => $q->where('nama', 'PPBJ'))->pluck('id');
             foreach ($ppbjUsers as $ppbjId) {
                 $notifService->send(
                     user: (int) $ppbjId,
@@ -460,10 +462,11 @@ class PengadaanService
         });
     }
 
+    // [BARU - PP: query dasar pengadaan khusus level perlu_review_pp = true] ditambahkan untuk kebutuhan fitur daftar dan review PP.
     protected function baseQueryPp(): Builder
     {
         return Pengadaan::query()
-            ->whereHas('Level', fn($q) => $q->where('perlu_review_pp', true))
+            ->whereHas('Level', fn ($q) => $q->where('perlu_review_pp', true))
             ->with([
                 'Permohonan.Unit',
                 'Permohonan.Creator',
@@ -476,15 +479,16 @@ class PengadaanService
             ]);
     }
 
+    // [BARU - PP: ringkasan statistik dan pengadaan perlu review untuk Dashboard PP] ditambahkan untuk kebutuhan fitur Dashboard PP.
     /**
      * @return array<string, mixed>
      */
     public function getDashboardPp(): array
     {
+<<<<<<< HEAD
         $base = Pengadaan::query()->whereHas('Level', fn($q) => $q->where('perlu_review_pp', true));
-
+=======
         $total = (clone $base)->count();
-        $menunggu = (clone $base)->whereIn('status', ['menunggu_persetujuan', 'menunggu_review'])->count();
         $disetujui = (clone $base)->whereIn('status', ['disetujui', 'diteruskan', 'selesai'])->count();
         $ditolak = (clone $base)->where('status', 'ditolak')->count();
 
@@ -536,6 +540,10 @@ class PengadaanService
         ];
     }
 
+<<<<<<< HEAD
+=======
+    // [BARU - PP: paginasi daftar pengadaan level 50-200 juta] ditambahkan untuk kebutuhan fitur List Pengajuan PP.
+>>>>>>> feat/pp
     /**
      * @param  array<string, mixed>  $filters
      */
@@ -551,6 +559,7 @@ class PengadaanService
             });
         }
 
+<<<<<<< HEAD
         if (!empty($filters['statuses']) && is_array($filters['statuses'])) {
             $query->whereIn('status', $filters['statuses']);
         } elseif (!empty($filters['status']) && $filters['status'] !== 'semua') {
@@ -568,6 +577,25 @@ class PengadaanService
         if (!empty($filters['unit_id']) && is_numeric($filters['unit_id'])) {
             $unitId = (int) $filters['unit_id'];
             $query->whereHas('Permohonan', fn($q) => $q->where('unit_id', $unitId));
+=======
+        if (! empty($filters['statuses']) && is_array($filters['statuses'])) {
+            $query->whereIn('status', $filters['statuses']);
+        } elseif (! empty($filters['status']) && $filters['status'] !== 'semua') {
+            $query->where('status', $filters['status']);
+        }
+
+        if (! empty($filters['bulan']) && is_numeric($filters['bulan'])) {
+            $query->whereMonth('created_at', (int) $filters['bulan']);
+        }
+
+        if (! empty($filters['tahun']) && is_numeric($filters['tahun'])) {
+            $query->whereYear('created_at', (int) $filters['tahun']);
+        }
+
+        if (! empty($filters['unit_id']) && is_numeric($filters['unit_id'])) {
+            $unitId = (int) $filters['unit_id'];
+            $query->whereHas('Permohonan', fn ($q) => $q->where('unit_id', $unitId));
+>>>>>>> feat/pp
         }
 
         return $query
@@ -576,6 +604,10 @@ class PengadaanService
             ->withQueryString();
     }
 
+<<<<<<< HEAD
+=======
+    // [BARU - PP & PPK: detail lengkap dokumen pengadaan] ditambahkan untuk kebutuhan fitur Review dan Detail Pengadaan.
+>>>>>>> feat/pp
     /**
      * @return array<string, mixed>
      */
@@ -595,7 +627,11 @@ class PengadaanService
             'Penerimaan',
         ]);
 
+<<<<<<< HEAD
         if ($actor && $actor->hasRole('PP') && !$pengadaan->Level?->perlu_review_pp) {
+=======
+        if ($actor && $actor->hasRole('PP') && ! $pengadaan->Level?->perlu_review_pp) {
+>>>>>>> feat/pp
             abort(403, 'Dokumen pengadaan ini tidak berada dalam kewenangan review PP (Rp50.000.000 - Rp200.000.000).');
         }
 
@@ -604,7 +640,11 @@ class PengadaanService
             if ($pengadaan->ppk_id !== null || $makPpkId !== null) {
                 $cocok = ((int) $pengadaan->ppk_id === (int) $actor->id)
                     || ((int) $makPpkId === (int) $actor->id);
+<<<<<<< HEAD
                 if (!$cocok) {
+=======
+                if (! $cocok) {
+>>>>>>> feat/pp
                     abort(403, 'Anda tidak memiliki akses pada dokumen pengadaan milik PPK lain.');
                 }
             }
@@ -632,12 +672,20 @@ class PengadaanService
         ];
     }
 
+<<<<<<< HEAD
+=======
+    // [BARU - PPK: query dasar pengadaan yang terikat dengan akun PPK yang login] ditambahkan untuk kebutuhan pembatasan akses PPK.
+>>>>>>> feat/pp
     protected function baseQueryPpk(User $ppk): Builder
     {
         return Pengadaan::query()
             ->where(function (Builder $q) use ($ppk) {
                 $q->where('ppk_id', $ppk->id)
+<<<<<<< HEAD
                     ->orWhereHas('PermohonanMak.Mak', fn($sub) => $sub->where('ppk_user_id', $ppk->id));
+=======
+                    ->orWhereHas('PermohonanMak.Mak', fn ($sub) => $sub->where('ppk_user_id', $ppk->id));
+>>>>>>> feat/pp
             })
             ->with([
                 'Permohonan.Unit',
@@ -651,6 +699,10 @@ class PengadaanService
             ]);
     }
 
+<<<<<<< HEAD
+=======
+    // [BARU - PPK: ringkasan statistik dan pengajuan terbaru untuk Dashboard PPK] ditambahkan untuk kebutuhan fitur Dashboard PPK.
+>>>>>>> feat/pp
     /**
      * @return array<string, mixed>
      */
@@ -679,6 +731,10 @@ class PengadaanService
         ];
     }
 
+<<<<<<< HEAD
+=======
+    // [BARU - PPK: paginasi daftar pengadaan milik PPK yang login] ditambahkan untuk kebutuhan fitur List Pengajuan PPK.
+>>>>>>> feat/pp
     /**
      * @param  array<string, mixed>  $filters
      */
@@ -694,7 +750,11 @@ class PengadaanService
             });
         }
 
+<<<<<<< HEAD
         if (!empty($filters['statuses']) && is_array($filters['statuses'])) {
+=======
+        if (! empty($filters['statuses']) && is_array($filters['statuses'])) {
+>>>>>>> feat/pp
             $mapped = [];
             foreach ($filters['statuses'] as $st) {
                 if ($st === 'review_pembayaran') {
@@ -705,6 +765,7 @@ class PengadaanService
                 }
             }
             $query->whereIn('status', array_unique($mapped));
+<<<<<<< HEAD
         } elseif (!empty($filters['status']) && $filters['status'] !== 'semua') {
             $query->where('status', $filters['status']);
         }
@@ -720,6 +781,23 @@ class PengadaanService
         if (!empty($filters['unit_id']) && is_numeric($filters['unit_id'])) {
             $unitId = (int) $filters['unit_id'];
             $query->whereHas('Permohonan', fn($q) => $q->where('unit_id', $unitId));
+=======
+        } elseif (! empty($filters['status']) && $filters['status'] !== 'semua') {
+            $query->where('status', $filters['status']);
+        }
+
+        if (! empty($filters['bulan']) && is_numeric($filters['bulan'])) {
+            $query->whereMonth('created_at', (int) $filters['bulan']);
+        }
+
+        if (! empty($filters['tahun']) && is_numeric($filters['tahun'])) {
+            $query->whereYear('created_at', (int) $filters['tahun']);
+        }
+
+        if (! empty($filters['unit_id']) && is_numeric($filters['unit_id'])) {
+            $unitId = (int) $filters['unit_id'];
+            $query->whereHas('Permohonan', fn ($q) => $q->where('unit_id', $unitId));
+>>>>>>> feat/pp
         }
 
         return $query

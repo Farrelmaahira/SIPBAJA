@@ -518,6 +518,7 @@ class PermohonanService
         ];
     }
 
+    // [BARU - Perencanaan: ringkasan statistik dan permohonan masuk terbaru] ditambahkan untuk kebutuhan fitur Dashboard Perencanaan.
     /**
      * @return array<string, mixed>
      */
@@ -544,6 +545,7 @@ class PermohonanService
         ];
     }
 
+    // [BARU - Perencanaan: paginasi daftar permohonan dengan filter lengkap] ditambahkan untuk kebutuhan fitur List Pengajuan Perencanaan.
     /**
      * @param  array<string, mixed>  $filters
      */
@@ -607,6 +609,7 @@ class PermohonanService
             ->withQueryString();
     }
 
+    // [BARU - Perencanaan: detail permohonan beserta pratinjau RKAKL dan opsi MAK] ditambahkan untuk kebutuhan fitur Detail Permohonan Perencanaan.
     /**
      * @return array<string, mixed>
      */
@@ -671,6 +674,7 @@ class PermohonanService
         ];
     }
 
+    // [BARU - Perencanaan: kompatibilitas endpoint deprecated kirim-pengadaan] ditambahkan untuk menjaga kompatibilitas endpoint lama.
     /**
      * @deprecated Penerusan ke PPBJ kini berjalan otomatis setelah Bidang 2 dan PPK menyetujui secara paralel.
      */
@@ -704,6 +708,7 @@ class PermohonanService
         });
     }
 
+    // [BARU - PPK: daftar Dokumen Turunan / permohonan yang terikat Jenis MAK milik PPK] ditambahkan untuk kebutuhan fitur persetujuan awal permohonan oleh PPK.
     /**
      * @param  array<string, mixed>  $filters
      */
@@ -720,9 +725,7 @@ class PermohonanService
             });
         }
 
-        if (!empty($filters['statuses']) && is_array($filters['statuses'])) {
-            $query->whereIn('status', $filters['statuses']);
-        } elseif (!empty($filters['status']) && $filters['status'] !== 'semua') {
+        if (!empty($filters['status']) && $filters['status'] !== 'semua') {
             $query->where('status', $filters['status']);
         }
 
@@ -734,16 +737,13 @@ class PermohonanService
             $query->whereYear('created_at', (int) $filters['tahun']);
         }
 
-        if (!empty($filters['unit_id']) && is_numeric($filters['unit_id'])) {
-            $query->where('unit_id', (int) $filters['unit_id']);
-        }
-
         return $query
             ->orderByDesc('id')
             ->paginate($perPage)
             ->withQueryString();
     }
 
+    // [BARU - PPK: detail permohonan yang terikat Jenis MAK milik PPK] ditambahkan untuk kebutuhan fitur detail persetujuan awal permohonan oleh PPK.
     /**
      * @return array<string, mixed>
      */
@@ -770,23 +770,12 @@ class PermohonanService
             ->orderByDesc('versi')
             ->get();
 
-        $rkaklDoc = Dokumen::where('ref_type', 'rkakl')->orderByDesc('versi')->orderByDesc('id')->first();
-        $rkaklInfo = $rkaklDoc ? [
-            'id' => $rkaklDoc->id,
-            'nama_asli' => $rkaklDoc->nama_asli,
-            'versi' => $rkaklDoc->versi,
-            'ukuran_bytes' => (int) ($rkaklDoc->ukuran_bytes ?? 0),
-            'mime_type' => $rkaklDoc->mime_type ?? 'application/pdf',
-            'download_url' => "/api/v1/ppk/rkakl/dokumen/{$rkaklDoc->id}",
-        ] : null;
-
         return [
             'permohonan' => $permohonan,
             'dokumen_permohonan' => $dokumenPermohonan,
             'permohonan_mak_ppk' => $permohonan->PermohonanMak
                 ->filter(fn($pm) => (int) ($pm->Mak?->ppk_user_id ?? 0) === (int) $ppk->id)
                 ->values(),
-            'rkakl_active' => $rkaklInfo,
         ];
     }
 }
