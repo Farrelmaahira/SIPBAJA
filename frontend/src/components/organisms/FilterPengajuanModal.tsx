@@ -9,6 +9,8 @@ export interface FilterStatusOption {
   dotClass?: string;
 }
 
+export type FilterOption = FilterStatusOption;
+
 export const STATUS_OPTIONS: FilterStatusOption[] = [
   {
     key: 'menunggu_persetujuan',

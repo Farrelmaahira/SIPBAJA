@@ -8,7 +8,23 @@ class ReviewPengadaanRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->hasRole('PP') ?? false;
+        return $this->user() !== null && ($this->user()->hasRole('PP') || $this->user()->hasRole('PPK'));
+    }
+
+    public function alasanPenolakan(): string
+    {
+        return (string) ($this->validated('alasan') ?? $this->validated('catatan') ?? $this->input('alasan') ?? $this->input('catatan') ?? '');
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if (! $this->filled('alasan') && $this->filled('catatan')) {
+            $this->merge(['alasan' => $this->input('catatan')]);
+        }
+
+        if (! $this->filled('catatan') && $this->filled('alasan')) {
+            $this->merge(['catatan' => $this->input('alasan')]);
+        }
     }
 
     /**
@@ -18,6 +34,7 @@ class ReviewPengadaanRequest extends FormRequest
     {
         return [
             'alasan' => ['required', 'string', 'min:5', 'max:500'],
+            'catatan' => ['nullable', 'string', 'min:5', 'max:500'],
         ];
     }
 
@@ -27,9 +44,11 @@ class ReviewPengadaanRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'alasan.required' => 'Alasan penolakan dokumen pengadaan wajib diisi.',
-            'alasan.min' => 'Alasan penolakan minimal berisi 5 karakter.',
-            'alasan.max' => 'Alasan penolakan maksimal 500 karakter.',
+            'alasan.required' => 'Catatan revisi atau alasan penolakan dokumen pengadaan wajib diisi.',
+            'alasan.min' => 'Catatan revisi minimal berisi 5 karakter.',
+            'alasan.max' => 'Catatan revisi maksimal 500 karakter.',
+            'catatan.min' => 'Catatan revisi minimal berisi 5 karakter.',
+            'catatan.max' => 'Catatan revisi maksimal 500 karakter.',
         ];
     }
 }
