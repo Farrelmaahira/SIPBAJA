@@ -474,10 +474,12 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
                               <p className="text-xs font-bold text-[#14201C]">
                                 {child.judul || `Paket Pengadaan #${child.id}`}
                               </p>
-                              <p className="text-[11px] text-[#8A9A95] mt-0.5">
-                                Nilai: <strong className="text-[#0E7C5A]">{formatRupiah(child.nilai)}</strong> •
-                                Status: <span className="font-semibold">{child.status}</span>
-                              </p>
+                              <div className="text-[11px] text-[#8A9A95] mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                <span>Nilai: <strong className="text-[#0E7C5A]">{formatRupiah(child.nilai)}</strong></span>
+                                <span>•</span>
+                                <span>Status:</span>
+                                <StatusPill status={child.status} />
+                              </div>
                             </div>
                             {isLocked && (
                               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#FEF3DC] text-[#9A5B00]">
