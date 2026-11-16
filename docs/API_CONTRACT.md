@@ -676,6 +676,74 @@ Prefix Rute: `/api/v1/bidang-2`
     }
     ```
 - **List Pengajuan:** `GET /api/v1/bidang-2/pengajuan?status=semua&search=`
+- **Detail Pengajuan:** `GET /api/v1/bidang-2/pengajuan/{id}`
+  - **Success Response (200 OK):**
+    ```json
+    {
+      "permohonan": {
+        "id": 1,
+        "nomor_surat": "111-FFF-111",
+        "judul": "Pengadaan Komputer",
+        "ringkasan_tujuan": "Kebutuhan praktikum mahasiswa di laboratorium",
+        "unit_nama": "Jurusan Teknik Informatika & Komputer",
+        "estimasi_anggaran": 100000000,
+        "revisi_ke": 0,
+        "status": "menunggu_bidang2",
+        "tanggal_pengajuan": "04 Maret 2027",
+        "created_at": "2027-03-04T08:00:00Z",
+        "mak_list": [
+          { "id": 1, "kode": "532111", "nama": "Belanja Modal Peralatan dan Mesin" }
+        ],
+        "dokumen": {
+          "id": 10,
+          "nama_asli": "Surat_Permohonan_Pengadaan_Komputer.pdf",
+          "ukuran_bytes": 8388608,
+          "mime_type": "application/pdf",
+          "download_url": "/api/v1/bidang-2/permohonan/1/dokumen"
+        },
+        "catatan_perencanaan": {
+          "pemeriksa_nama": "Tim Perencanaan",
+          "pemeriksa_peran": "Tim Perencanaan",
+          "tanggal": "05 Maret 2027, 09:30",
+          "catatan": "Jenis MAK 532111 telah diverifikasi. Mohon periksa kesesuaian nominal dengan Dokumen RKAKL terbaru sebelum memberi keputusan."
+        },
+        "rkakl_aktif": {
+          "versi": 3,
+          "nama_asli": "RKAKL_TA_2026_Satker_Politeknik_v3.pdf",
+          "updated_at": "12 Okt 2026",
+          "download_url": "/api/v1/bidang-2/rkakl"
+        },
+        "keputusan_bidang2": null
+      }
+    }
+    ```
+- **Persetujuan Permohonan (Approval dengan Memo):** `POST /api/v1/bidang-2/pengajuan/{id}/approve`
+  - **Content-Type:** `multipart/form-data`
+  - **Form Data:**
+    - `file_memo`: file (PDF), required, max 20480 KB (20 MB).
+  - **Success Response (200 OK):**
+    ```json
+    {
+      "message": "Permohonan berhasil disetujui dan memo persetujuan telah tersimpan.",
+      "permohonan": { "id": 1, "status": "disetujui" }
+    }
+    ```
+- **Penolakan Permohonan (Rejection dengan Alasan):** `POST /api/v1/bidang-2/pengajuan/{id}/reject`
+  - **Content-Type:** `application/json`
+  - **Request Body:**
+    ```json
+    {
+      "alasan": "Estimasi anggaran melebihi alokasi MAK semester ini. Harap disesuaikan."
+    }
+    ```
+  - **Success Response (200 OK):**
+    ```json
+    {
+      "message": "Permohonan berhasil ditolak dan catatan telah diteruskan ke pemohon serta Perencanaan.",
+      "permohonan": { "id": 1, "status": "ditolak", "revisi_ke": 1 }
+    }
+    ```
+- **Unduh Memo Persetujuan:** `GET /api/v1/bidang-2/pengajuan/{id}/memo`
 - **List Dokumen RKAKL:** `GET /api/v1/bidang-2/rkakl`
 - **Unduh Dokumen:** `GET /api/v1/bidang-2/permohonan/{permohonanId}/dokumen`
 

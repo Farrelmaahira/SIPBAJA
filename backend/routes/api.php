@@ -110,8 +110,19 @@ Route::prefix('v1')->group(function () {
         Route::prefix('bidang-2')->middleware('role:Bidang 2')->group(function () {
             Route::get('dashboard', DashboardBidang2Controller::class)->name('api.bidang2.dashboard');
             Route::get('pengajuan', [PengajuanBidang2Controller::class, 'index'])->name('api.bidang2.pengajuan.index');
+            Route::get('pengajuan/{permohonan}', [PengajuanBidang2Controller::class, 'show'])->name('api.bidang2.pengajuan.show');
+            Route::post('pengajuan/{permohonan}/approve', [PengajuanBidang2Controller::class, 'approve'])->name('api.bidang2.pengajuan.approve');
+            Route::post('pengajuan/{permohonan}/reject', [PengajuanBidang2Controller::class, 'reject'])->name('api.bidang2.pengajuan.reject');
+            Route::get('pengajuan/{permohonan}/memo', [PengajuanBidang2Controller::class, 'downloadMemo'])->name('api.bidang2.pengajuan.memo.download');
             Route::get('rkakl', [RkaklBidang2Controller::class, 'index'])->name('api.bidang2.rkakl.index');
+            Route::get('rkakl/dokumen', [RkaklBidang2Controller::class, 'downloadDokumen'])->name('api.bidang2.rkakl.dokumen.latest');
+            Route::get('rkakl/dokumen/{dokumen}', [RkaklBidang2Controller::class, 'downloadDokumen'])->name('api.bidang2.rkakl.dokumen.download');
             Route::get('permohonan/{permohonan}/dokumen', [PermohonanPemohonController::class, 'downloadDokumen'])->name('api.bidang2.permohonan.dokumen.download');
+            Route::get('notifications', [NotificationController::class, 'index'])->name('api.bidang2.notifications.index');
+            Route::get('notifications/summary', [NotificationController::class, 'summary'])->name('api.bidang2.notifications.summary');
+            Route::post('notifications/read-all', [NotificationController::class, 'markAllRead'])->name('api.bidang2.notifications.readAll');
+            Route::post('notifications/{notification}/read', [NotificationController::class, 'markOneRead'])->name('api.bidang2.notifications.readOne');
+            Route::get('profil', [PerencanaanProfilController::class, 'index'])->name('api.bidang2.profil.index');
         });
 
         // PPBJ Routes
