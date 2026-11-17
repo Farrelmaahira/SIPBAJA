@@ -1,3 +1,5 @@
+import { DokumenItem } from "./dokumen";
+
 export type PpbjTabKey = 'permohonan' | 'pengadaan' | 'termin';
 
 export interface PpbjStatItem {
@@ -23,18 +25,19 @@ export interface PpbjPermohonanItem {
 
 export interface PpbjPengadaanItem {
   id: number;
-  nomorSurat: string;
-  judul: string;
-  unitNama: string;
   makNama: string;
-  jenisNama: string;
-  metodeNama: string;
-  levelNama: string;
+  jenis: string;
+  metode: string;
+  level: string;
+  permohonan: PpbjPermohonanItem;
   ppkNama: string;
   nominal: number;
   revisiKe: number;
+  mak: string;
+  reviewPp: boolean;
   status: string;
   tanggalDibuat: string;
+  dokumenList: DokumenItem[];
 }
 
 export interface PpbjTerminItem {

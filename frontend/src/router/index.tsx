@@ -77,6 +77,8 @@ import Error419 from '../pages/Errors/419';
 import Error429 from '../pages/Errors/429';
 import Error500 from '../pages/Errors/500';
 import Error503 from '../pages/Errors/503';
+import { PpbjPengadaanIndex } from '@/pages/Ppbj/Pengadaan/Index';
+import PpbjPengadaanShow from '@/pages/Ppbj/Pengadaan/Show';
 
 export { ProtectedRoute } from './ProtectedRoute';
 export { RoleRoute } from './RoleRoute';
@@ -234,6 +236,8 @@ export const AppRoutes: FC = () => {
           <Route path="/ppbj/dashboard" element={<PpbjDashboard />} />
           <Route path="/ppbj/permohonan" element={<PpbjPermohonanIndex />} />
           <Route path="/ppbj/permohonan/:id" element={<PpbjPermohonanShow />} />
+          <Route path='/ppbj/pengadaan' element={<PpbjPengadaanIndex />} />
+          <Route path='/ppbj/pengadaan/:id' element={<PpbjPengadaanShow />} />
         </Route>
 
         {/* PP Routes */}
