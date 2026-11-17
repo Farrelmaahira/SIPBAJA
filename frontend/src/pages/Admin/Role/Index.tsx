@@ -4,7 +4,7 @@ import { adminService } from '../../../services/adminService';
 import RoleTemplate, {
   type RoleRowItem,
   type RoleFormData,
-} from '../../../components/templates/RoleTemplate';
+} from '../../../components/templates/Admin/RoleTemplate';
 import Pagination, { type PaginationMeta } from '../../../components/molecules/Pagination';
 
 const EMPTY_FORM: RoleFormData = {

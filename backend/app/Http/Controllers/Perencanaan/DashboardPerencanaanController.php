@@ -3,18 +3,18 @@
 namespace App\Http\Controllers\Perencanaan;
 
 use App\Http\Controllers\Controller;
-use App\Services\PerencanaanService;
+use App\Services\PermohonanService;
 use Illuminate\Http\JsonResponse;
 
 class DashboardPerencanaanController extends Controller
 {
     public function __construct(
-        private PerencanaanService $perencanaanService
+        private PermohonanService $permohonanService
     ) {}
 
     public function __invoke(): JsonResponse
     {
-        $data = $this->perencanaanService->getDashboardData();
+        $data = $this->permohonanService->getDashboardPerencanaan();
 
         return response()->json([
             'stats' => $data['stats'],

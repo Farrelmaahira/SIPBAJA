@@ -35,6 +35,9 @@ import PerencanaanProfilIndex from '../pages/Perencanaan/Profil/Index';
 // Bidang 2 Pages
 import Bidang2Dashboard from '../pages/Bidang2/Dashboard';
 import Bidang2PengajuanIndex from '../pages/Bidang2/Pengajuan/Index';
+import Bidang2PengajuanShow from '../pages/Bidang2/Pengajuan/Show';
+import Bidang2PengadaanIndex from '../pages/Bidang2/Pengadaan/Index';
+import Bidang2PengadaanShow from '../pages/Bidang2/Pengadaan/Show';
 import Bidang2RkaklIndex from '../pages/Bidang2/Rkakl/Index';
 
 // PPBJ Pages
@@ -211,10 +214,19 @@ export const AppRoutes: FC = () => {
         </Route>
 
         {/* Bidang 2 Routes */}
-        <Route element={<RoleRoute allowedRoles={['Bidang 2', 'bidang-2']} />}>
+        <Route element={<RoleRoute allowedRoles={['Bidang 2', 'bidang-2', 'bidang 2', 'bidang2', 'Wakil Direktur II', 'wakil-direktur-ii', 'Wadir 2', 'wadir-2']} />}>
           <Route path="/bidang-2/dashboard" element={<Bidang2Dashboard />} />
           <Route path="/bidang-2/pengajuan" element={<Bidang2PengajuanIndex />} />
+          <Route path="/bidang-2/pengajuan/:id" element={<Bidang2PengajuanShow />} />
+          <Route path="/bidang-2/pengadaan" element={<Bidang2PengadaanIndex />} />
+          <Route path="/bidang-2/pengadaan/:id" element={<Bidang2PengadaanShow />} />
           <Route path="/bidang-2/rkakl" element={<Bidang2RkaklIndex />} />
+          <Route path="/bidang-2/notifikasi" element={<SharedNotifikasiPage />} />
+          <Route path="/bidang-2/profil" element={<SharedProfilPage />} />
+
+          {/* Redirect legacy non-hyphenated routes */}
+          <Route path="/bidang2/*" element={<Navigate to="/bidang-2/dashboard" replace />} />
+          <Route path="/bidang2" element={<Navigate to="/bidang-2/dashboard" replace />} />
         </Route>
 
         {/* PPBJ Routes */}

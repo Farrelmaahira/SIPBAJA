@@ -23,24 +23,27 @@ export const PengadaanSplitForm: FC<PengadaanSplitFormProps> = ({
   referenceData = {},
   onSubmit,
 }) => {
-  const defaultItem = (): PengadaanItem => ({
-    permohonan_mak_id: '',
-    jenis_id: referenceData.jenis?.[0]?.id ? String(referenceData.jenis[0].id) : '',
-    metode_id: referenceData.metode?.[0]?.id ? String(referenceData.metode[0].id) : '',
-    nominal: '',
-    level_id: '',
-    isLevelOverridden: false,
-    dokumen: null,
-  });
+  const defaultItem = (): PengadaanItem => {
+    const firstLevel = referenceData.level?.[0];
+    const defaultNominal =
+      firstLevel?.min_nominal && Number(firstLevel.min_nominal) > 0
+        ? Number(firstLevel.min_nominal)
+        : Number(firstLevel?.max_nominal || 50000000);
 
-  const [items, setItems] = useState<PengadaanItem[]>([
-    {
-      ...defaultItem(),
+    return {
       permohonan_mak_id: availableMak[0]?.permohonan_mak_id
         ? String(availableMak[0].permohonan_mak_id)
         : '',
-    },
-  ]);
+      jenis_id: referenceData.jenis?.[0]?.id ? String(referenceData.jenis[0].id) : '',
+      metode_id: referenceData.metode?.[0]?.id ? String(referenceData.metode[0].id) : '',
+      nominal: defaultNominal,
+      level_id: firstLevel?.id ? String(firstLevel.id) : '',
+      isLevelOverridden: false,
+      dokumen: null,
+    };
+  };
+
+  const [items, setItems] = useState<PengadaanItem[]>([defaultItem()]);
   const [processing, setProcessing] = useState<boolean>(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -79,14 +82,7 @@ export const PengadaanSplitForm: FC<PengadaanSplitFormProps> = ({
 
   const handleReset = () => {
     if (confirm('Apakah Anda yakin ingin membatalkan dan mereset form dokumen pengadaan?')) {
-      setItems([
-        {
-          ...defaultItem(),
-          permohonan_mak_id: availableMak[0]?.permohonan_mak_id
-            ? String(availableMak[0].permohonan_mak_id)
-            : '',
-        },
-      ]);
+      setItems([defaultItem()]);
       setErrors({});
     }
   };
@@ -106,15 +102,25 @@ export const PengadaanSplitForm: FC<PengadaanSplitFormProps> = ({
     if (onSubmit) {
       setProcessing(true);
       try {
-        await onSubmit({ items });
-        setItems([
-          {
-            ...defaultItem(),
-            permohonan_mak_id: availableMak[0]?.permohonan_mak_id
-              ? String(availableMak[0].permohonan_mak_id)
-              : '',
-          },
-        ]);
+        const preparedItems = items.map((it) => {
+          let nom = it.nominal;
+          if (!nom || Number(nom) === 0) {
+            const matched = (referenceData.level || []).find(
+              (l) => String(l.id) === String(it.level_id)
+            );
+            nom =
+              matched?.min_nominal && Number(matched.min_nominal) > 0
+                ? Number(matched.min_nominal)
+                : Number(matched?.max_nominal || 50000000);
+          }
+          return {
+            ...it,
+            nominal: nom,
+          };
+        });
+
+        await onSubmit({ items: preparedItems });
+        setItems([defaultItem()]);
       } catch (err: unknown) {
         if (err && typeof err === 'object' && 'errors' in err) {
           setErrors(err.errors as Record<string, string>);
@@ -126,7 +132,7 @@ export const PengadaanSplitForm: FC<PengadaanSplitFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6 w-full">
       {/* Realtime Budget Bar Card */}
       <div className="bg-[#F8FAF9] rounded-2xl border border-[#E4EBE8] p-4 sm:p-5">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -187,8 +193,8 @@ export const PengadaanSplitForm: FC<PengadaanSplitFormProps> = ({
         )}
       </div>
 
-      {/* Grid Kartu Dokumen Pengadaan */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* List Kartu Dokumen Pengadaan - Memanjang ke samping, bertumpuk ke bawah */}
+      <div className="flex flex-col gap-6 w-full">
         {items.map((item, index) => (
           <PengadaanSplitRow
             key={index}
@@ -226,15 +232,15 @@ export const PengadaanSplitForm: FC<PengadaanSplitFormProps> = ({
           <button
             type="button"
             onClick={handleReset}
-            className="px-5 py-2.5 rounded-xl border border-[#D0D5DD] bg-white text-sm font-semibold text-[#344054] hover:bg-gray-50 transition-colors shadow-xs"
+            className="px-5 py-2.5 rounded-xl border border-[#D0D5DD] bg-white text-sm font-semibold text-[#344054] hover:bg-gray-50 transition-colors shadow-xs cursor-pointer"
           >
             Batal
           </button>
 
           <button
             type="submit"
-            disabled={processing || isBudgetExceeded || formTotalNominal <= 0}
-            className="min-h-[44px] px-6 py-2.5 rounded-xl bg-[#0E7C5A] text-white hover:bg-[#0B664A] text-sm font-semibold inline-flex items-center justify-center gap-2 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={processing || isBudgetExceeded}
+            className="min-h-[44px] px-6 py-2.5 rounded-xl bg-[#0E7C5A] text-white hover:bg-[#0B664A] text-sm font-semibold inline-flex items-center justify-center gap-2 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             <Send className="w-4 h-4" />
             <span>{processing ? 'Menyimpan...' : 'Kirim Pengadaan'}</span>

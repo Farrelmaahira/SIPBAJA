@@ -1,130 +1,561 @@
-import type { FC } from 'react';
+import { useState, useEffect, useRef, useMemo, type FC, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, ClipboardList } from 'lucide-react';
-import Bidang2PermohonanRow, { type Bidang2PermohonanItem } from '../molecules/Bidang2PermohonanRow';
+import { ArrowRight, Filter, Search, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import StatusPill from '../atoms/StatusPill';
+import RowActionMenu from './RowActionMenu';
+import CrudTable, { type CrudColumn } from './CrudTable';
+import { formatRupiah } from '../../utils/formatters';
 
-const COLS = ['NO PERMOHONAN', 'JUDUL PENGADAAN', 'TANGGAL', 'NILAI PENGAJUAN', 'STATUS', 'AKSI'];
-
-function SkeletonRow() {
-  return (
-    <tr className="border-b border-[#E4EBE8] animate-pulse" aria-hidden="true">
-      <td className="py-4 px-4"><div className="h-4 w-24 bg-[#EEF5F2] rounded" /></td>
-      <td className="py-4 px-4">
-        <div className="h-4 w-44 bg-[#EEF5F2] rounded mb-1" />
-        <div className="h-3 w-28 bg-[#EEF5F2] rounded" />
-      </td>
-      <td className="py-4 px-4"><div className="h-4 w-20 bg-[#EEF5F2] rounded" /></td>
-      <td className="py-4 px-4"><div className="h-4 w-28 bg-[#EEF5F2] rounded" /></td>
-      <td className="py-4 px-4"><div className="h-6 w-20 bg-[#EEF5F2] rounded-full" /></td>
-      <td className="py-4 px-4 text-center"><div className="h-8 w-8 bg-[#EEF5F2] rounded-lg mx-auto" /></td>
-    </tr>
-  );
+export interface Bidang2TableItem {
+  id: number | string;
+  nomor_surat?: string | null;
+  nomor_pengadaan?: string | null;
+  nomor_permohonan?: string | null;
+  judul?: string | null;
+  unit_nama?: string | null;
+  unit?: { id?: number; nama?: string } | null;
+  estimasi_anggaran?: number | string | null;
+  nominal?: number | string | null;
+  status?: string | null;
+  created_at?: string | null;
+  [key: string]: unknown;
 }
 
-function EmptyState() {
-  return (
-    <tr>
-      <td colSpan={COLS.length} className="py-12 px-4 text-center">
-        <div className="w-12 h-12 rounded-2xl bg-[#EEF5F2] text-[#0E7C5A] flex items-center justify-center mx-auto mb-3">
-          <ClipboardList className="w-6 h-6" aria-hidden="true" />
-        </div>
-        <p className="text-sm font-semibold text-[#14201C]">Belum ada riwayat permohonan</p>
-        <p className="text-xs text-[#5F6F6A] mt-1">
-          Permohonan pengadaan yang diproses akan tercatat otomatis pada riwayat ini.
-        </p>
-      </td>
-    </tr>
-  );
+export interface Bidang2PaginationInfo {
+  currentPage: number;
+  lastPage: number;
+  total: number;
+  from: number;
+  to: number;
 }
 
-function ErrorState() {
-  return (
-    <tr>
-      <td colSpan={COLS.length} className="py-12 px-4 text-center">
-        <p className="text-sm font-medium text-[#B42318]">Gagal memuat data riwayat permohonan.</p>
-        <p className="text-xs text-[#8A9A95] mt-1">Silakan muat ulang halaman untuk mencoba kembali.</p>
-      </td>
-    </tr>
-  );
+export interface FilterStatusOption {
+  key?: string;
+  value?: string;
+  label: string;
+  pillClass?: string;
+  dotClass?: string;
 }
 
 export interface Bidang2PermohonanTableProps {
-  rows?: Bidang2PermohonanItem[];
+  variant?: 'permohonan' | 'pengadaan';
+  isFullList?: boolean;
+  title?: string;
+  subtitle?: string;
+  viewAllHref?: string;
+  rows?: Bidang2TableItem[];
   isLoading?: boolean;
   isError?: boolean;
-  onDetail?: (permohonan: Bidang2PermohonanItem) => void;
+  onDetail?: (item: Bidang2TableItem) => void;
+  // Toolbar props for full list mode
+  searchQuery?: string;
+  onSearchChange?: (val: string) => void;
+  onSearchSubmit?: (e?: FormEvent) => void;
+  selectedStatuses?: string[];
+  onApplyFilter?: (statuses: string[]) => void;
+  filterOptions?: FilterStatusOption[];
+  totalCount?: number;
+  // Pagination props for full list mode
+  pagination?: Bidang2PaginationInfo;
+  onPageChange?: (page: number) => void;
 }
 
+
+function generatePaginationPages(currentPage: number, lastPage: number): (number | 'ellipsis')[] {
+  if (lastPage <= 7) {
+    return Array.from({ length: lastPage }, (_, i) => i + 1);
+  }
+
+  if (currentPage <= 3) {
+    return [1, 2, 3, 4, 'ellipsis', lastPage];
+  }
+
+  if (currentPage >= lastPage - 2) {
+    return [1, 'ellipsis', lastPage - 3, lastPage - 2, lastPage - 1, lastPage];
+  }
+
+  return [1, 'ellipsis', currentPage - 1, currentPage, currentPage + 1, 'ellipsis', lastPage];
+}
+
+const DEFAULT_FILTER_OPTIONS: FilterStatusOption[] = [
+  {
+    key: 'menunggu_bidang2',
+    label: 'Review Permohonan',
+    pillClass: 'bg-[#EFF4FE] text-[#2F68D6] border border-[#D0E1FD]',
+    dotClass: 'bg-[#2F68D6]',
+  },
+  {
+    key: 'disetujui',
+    label: 'Disetujui',
+    pillClass: 'bg-[#E8F5E9] text-[#0E7C5A] border border-[#C8E6C9]',
+    dotClass: 'bg-[#0E7C5A]',
+  },
+  {
+    key: 'ditolak',
+    label: 'Ditolak',
+    pillClass: 'bg-[#FDECEC] text-[#E5484D] border border-[#FECDCA]',
+    dotClass: 'bg-[#E5484D]',
+  },
+];
+
+const DEFAULT_EMPTY_STATUSES: string[] = [];
+const DEFAULT_EMPTY_ROWS: Bidang2TableItem[] = [];
+
 export const Bidang2PermohonanTable: FC<Bidang2PermohonanTableProps> = ({
-  rows = [],
+  variant = 'permohonan',
+  isFullList = false,
+  title,
+  subtitle,
+  viewAllHref,
+  rows = DEFAULT_EMPTY_ROWS,
   isLoading = false,
   isError = false,
   onDetail,
+  searchQuery,
+  onSearchChange,
+  onSearchSubmit,
+  selectedStatuses = DEFAULT_EMPTY_STATUSES,
+  onApplyFilter,
+  filterOptions = DEFAULT_FILTER_OPTIONS,
+  totalCount,
+  pagination,
+  onPageChange,
 }) => {
+  const isPengadaan = variant === 'pengadaan';
+
+  const defaultTitle = isPengadaan
+    ? 'Riwayat Pengadaan Terbaru'
+    : isFullList
+    ? 'Daftar Permohonan'
+    : 'Riwayat Permohonan Terbaru';
+
+  const defaultSubtitle = isPengadaan
+    ? '4 pengadaan terakhir yang telah diproses'
+    : isFullList
+    ? 'Permohonan dan pengajuan yang perlu direview Bidang 2'
+    : '4 permohonan terakhir yang telah diproses';
+
+  const defaultHref = isPengadaan ? '/bidang-2/pengadaan' : '/bidang-2/pengajuan';
+
+  const displayTitle = title || defaultTitle;
+  const displaySubtitle = subtitle || defaultSubtitle;
+  const targetHref = viewAllHref || defaultHref;
+
+  const displayedRows = isFullList ? rows : rows.slice(0, 4);
+  const displayTotal = totalCount !== undefined ? totalCount : rows.length;
+
+  // Popover State
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [tempStatuses, setTempStatuses] = useState<string[]>(selectedStatuses);
+  const filterContainerRef = useRef<HTMLDivElement>(null);
+
+  const selectedStatusesKey = selectedStatuses.join(',');
+
+  useEffect(() => {
+    setTempStatuses(selectedStatuses);
+  }, [selectedStatusesKey, isFilterOpen]);
+
+  // Click outside & ESC listener for the filter popover
+  useEffect(() => {
+    if (!isFilterOpen) return;
+
+    function handleClickOutside(e: MouseEvent) {
+      if (filterContainerRef.current && !filterContainerRef.current.contains(e.target as Node)) {
+        setIsFilterOpen(false);
+      }
+    }
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        setIsFilterOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isFilterOpen]);
+
+  const toggleStatus = (key: string) => {
+    if (tempStatuses.includes(key)) {
+      setTempStatuses(tempStatuses.filter((s) => s !== key));
+    } else {
+      setTempStatuses([...tempStatuses, key]);
+    }
+  };
+
+  const handleResetFilter = () => {
+    setTempStatuses([]);
+    onApplyFilter?.([]);
+    setIsFilterOpen(false);
+  };
+
+  const handleApplyFilterAction = () => {
+    onApplyFilter?.(tempStatuses);
+    setIsFilterOpen(false);
+  };
+
+  const activeFilterCount = selectedStatuses.length;
+
+  const renderStatus = (status?: string | null) => {
+    if (isPengadaan) {
+      return <StatusPill status="review_pengajuan" label="Review Pengajuan" />;
+    }
+    const s = String(status || '').toLowerCase();
+    if (s === 'disetujui' || s === 'selesai') {
+      return <StatusPill status="disetujui" label="Disetujui" />;
+    }
+    if (s === 'ditolak' || s === 'batal') {
+      return <StatusPill status="ditolak" label="Ditolak" />;
+    }
+    return <StatusPill status="review_permohonan" label="Review Permohonan" />;
+  };
+
+  const columns: CrudColumn<Bidang2TableItem>[] = useMemo(() => {
+    return [
+      {
+        key: 'nomor',
+        header: isPengadaan ? 'No. Pengadaan / No. Permohonan' : 'No. Permohonan',
+        render: (row) => {
+          const itemHref = isPengadaan
+            ? `/bidang-2/pengadaan/${row.id}`
+            : `/bidang-2/pengajuan/${row.id}`;
+
+          const nomorDisplay =
+            row.nomor_surat ||
+            row.nomor_permohonan ||
+            row.nomor_pengadaan ||
+            `0101${row.id}-FF-11`;
+
+          if (isPengadaan) {
+            return (
+              <div>
+                <p className="font-bold text-[#14201C]">
+                  {row.nomor_pengadaan || `PGD-${String(row.id).padStart(4, '0')}`}
+                </p>
+                <p className="text-[11px] text-[#8A9A95] mt-0.5">
+                  {row.nomor_permohonan || `Permohonan #${row.id}`}
+                </p>
+              </div>
+            );
+          }
+
+          if (onDetail) {
+            return (
+              <button
+                type="button"
+                onClick={() => onDetail(row)}
+                className="font-bold text-[#0E7C5A] hover:underline cursor-pointer text-left"
+              >
+                {nomorDisplay}
+              </button>
+            );
+          }
+
+          return (
+            <Link to={itemHref} className="font-bold text-[#0E7C5A] hover:underline">
+              {nomorDisplay}
+            </Link>
+          );
+        },
+      },
+      {
+        key: 'judul',
+        header: isPengadaan ? 'Nama Paket Pengadaan' : 'Judul Permohonan',
+        render: (row) => (
+          <span className="font-bold text-[#14201C] line-clamp-1" title={row.judul || undefined}>
+            {row.judul || 'Tanpa Judul Pengadaan'}
+          </span>
+        ),
+      },
+      {
+        key: 'unit',
+        header: 'Diajukan Oleh',
+        render: (row) => (
+          <span className="text-[#14201C] whitespace-nowrap">
+            {row.unit_nama || row.unit?.nama || 'Unit Kampus'}
+          </span>
+        ),
+      },
+      {
+        key: 'nominal',
+        header: 'Nilai Pengajuan',
+        render: (row) => {
+          const nominal =
+            row.nominal !== undefined && row.nominal !== null
+              ? Number(row.nominal)
+              : Number(row.estimasi_anggaran || 0);
+          return (
+            <span className="font-bold text-[#14201C] whitespace-nowrap">
+              {formatRupiah(nominal)}
+            </span>
+          );
+        },
+      },
+      {
+        key: 'status',
+        header: 'Status',
+        render: (row) => renderStatus(row.status),
+      },
+      {
+        key: 'aksi',
+        header: <span className="block text-center">Aksi</span>,
+        render: (row) => {
+          const itemHref = isPengadaan
+            ? `/bidang-2/pengadaan/${row.id}`
+            : `/bidang-2/pengajuan/${row.id}`;
+          return (
+            <div className="flex justify-center">
+              <RowActionMenu
+                item={{ ...row, status: row.status ?? undefined }}
+                viewHref={itemHref}
+              />
+            </div>
+          );
+        },
+      },
+    ];
+  }, [isPengadaan, onDetail]);
+
   return (
     <section
-      className="bg-white border border-[#E4EBE8] rounded-[18px] shadow-[0_1px_3px_rgba(20,32,28,0.04)] overflow-hidden"
-      aria-labelledby="bidang2-permohonan-table-title"
+      className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)] overflow-visible"
+      aria-label={displayTitle}
       aria-busy={isLoading || undefined}
     >
-      <div className="flex items-center justify-between px-6 py-4 border-b border-[#E4EBE8]">
+      {/* Header Card */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5">
         <div>
-          <h2
-            id="bidang2-permohonan-table-title"
-            className="text-[15px] font-bold text-[#14201C] tracking-tight"
-          >
-            Riwayat Permohonan Terbaru
+          <h2 className="text-base font-bold text-[#14201C] tracking-tight">
+            {displayTitle}
           </h2>
-          <p className="text-[12px] text-[#5F6F6A] mt-0.5">
-            {isLoading ? 'Memuat...' : `${rows.length} permohonan terakhir yang telah diproses`}
+          <p className="text-xs text-[#8A9A95] mt-0.5">
+            {displaySubtitle}
           </p>
         </div>
 
-        <Link
-          to="/bidang-2/pengajuan"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0E7C5A] hover:text-[#0B6B4D] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C5A] rounded px-2 py-1"
-        >
-          <span>Lihat Semua</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </Link>
+        {!isFullList && (
+          <Link
+            to={targetHref}
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0E7C5A] hover:underline cursor-pointer self-start sm:self-auto"
+          >
+            <span>Lihat Semua</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        )}
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[680px] border-collapse">
-          <thead>
-            <tr className="border-b border-[#E4EBE8] bg-[#FAFCFB]">
-              {COLS.map((col, idx) => (
-                <th
-                  key={col}
-                  className={`py-3 px-4 text-[11px] font-bold text-[#8A9A95] uppercase tracking-wider whitespace-nowrap ${
-                    idx === COLS.length - 1 ? 'text-center' : 'text-left'
+      {/* Toolbar for Full List mode */}
+      {isFullList && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5">
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Filter Button with Dropdown Popover */}
+            {onApplyFilter && (
+              <div className="relative inline-block" ref={filterContainerRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsFilterOpen((prev) => !prev)}
+                  className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                    activeFilterCount > 0
+                      ? 'bg-[#E8F5EF] text-[#0E7C5A] border-[#0E7C5A]'
+                      : 'bg-white text-[#14201C] border-[#E4EBE8] hover:bg-[#F4F7F5]'
                   }`}
-                  scope="col"
+                  aria-expanded={isFilterOpen}
+                  aria-label="Filter status permohonan"
                 >
-                  {col}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading ? (
-              Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} />)
-            ) : isError ? (
-              <ErrorState />
-            ) : rows.length === 0 ? (
-              <EmptyState />
-            ) : (
-              rows.map((row) => (
-                <Bidang2PermohonanRow
-                  key={row.id}
-                  permohonan={row}
-                  onDetail={onDetail}
-                />
-              ))
+                  <Filter className="w-3.5 h-3.5" />
+                  <span>Filter</span>
+                  {activeFilterCount > 0 && (
+                    <span className="w-4 h-4 rounded-full bg-[#0E7C5A] text-white text-[10px] flex items-center justify-center font-bold">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Dropdown Popover without page-blocking backdrop overlay */}
+                {isFilterOpen && (
+                  <div
+                    className="absolute left-0 top-full mt-2 w-72 rounded-2xl bg-white border border-[#E4EBE8] shadow-[0_14px_36px_rgba(13,51,38,0.14)] p-4 z-40 animate-scale-up"
+                    role="dialog"
+                    aria-label="Filter status permohonan"
+                  >
+                    <div className="flex items-center justify-between pb-3 border-b border-[#F0F4F2]">
+                      <h3 className="text-sm font-bold text-[#14201C]">Filter</h3>
+                      <button
+                        type="button"
+                        onClick={() => setIsFilterOpen(false)}
+                        className="p-1 rounded-lg text-[#8A9A95] hover:bg-[#F4F7F5] hover:text-[#14201C] transition-colors cursor-pointer"
+                        aria-label="Tutup filter"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div className="py-3">
+                      <p className="text-[10px] font-bold text-[#8A9A95] uppercase tracking-wider mb-2.5">
+                        Status Permohonan
+                      </p>
+                      <div className="space-y-2.5">
+                        {filterOptions.map((opt) => {
+                          const optKey = opt.key || opt.value || '';
+                          const isChecked = tempStatuses.includes(optKey);
+                          return (
+                            <label
+                              key={optKey}
+                              className="flex items-center gap-2.5 cursor-pointer select-none group"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => toggleStatus(optKey)}
+                                className="w-4 h-4 rounded border-[#CFDBD5] text-[#0E7C5A] focus:ring-[#0E7C5A] accent-[#0E7C5A] cursor-pointer"
+                              />
+                              <span
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
+                                  opt.pillClass || 'bg-slate-100 text-slate-800'
+                                }`}
+                              >
+                                <span className={`w-1.5 h-1.5 rounded-full ${opt.dotClass || 'bg-slate-500'}`} />
+                                {opt.label}
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-3 border-t border-[#F0F4F2]">
+                      <button
+                        type="button"
+                        onClick={handleResetFilter}
+                        className="flex-1 py-2 px-3 rounded-xl border border-[#E4EBE8] text-xs font-bold text-[#5F6F6A] hover:bg-[#F4F7F5] transition-colors cursor-pointer"
+                      >
+                        Reset
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleApplyFilterAction}
+                        className="flex-1 py-2 px-3 rounded-xl bg-[#0E7C5A] hover:bg-[#0B6549] text-xs font-bold text-white transition-colors cursor-pointer shadow-xs"
+                      >
+                        Terapkan
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
-          </tbody>
-        </table>
+
+            {onSearchChange && (
+              <form onSubmit={onSearchSubmit} className="relative">
+                <Search className="w-4 h-4 text-[#8A9A95] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  value={searchQuery || ''}
+                  onChange={(e) => onSearchChange(e.target.value)}
+                  placeholder="Cari nomor atau judul..."
+                  className="w-64 sm:w-80 pl-10 pr-4 py-2.5 rounded-xl border border-[#E4EBE8] text-xs text-[#14201C] focus:ring-2 focus:ring-[#0E7C5A] focus:border-transparent outline-none bg-white placeholder-[#8A9A95]"
+                />
+              </form>
+            )}
+          </div>
+
+          <span className="text-xs text-[#8A9A95] font-medium self-end sm:self-center">
+            {displayTotal} pengajuan
+          </span>
+        </div>
+      )}
+
+      {/* Table Container */}
+      <div className="overflow-x-auto -mx-6 px-6">
+        {isError ? (
+          <div className="py-12 text-center text-[#B42318] bg-white rounded-xl border border-[#FECDCA]">
+            <p className="font-semibold text-sm">
+              Gagal memuat data {isPengadaan ? 'pengadaan' : 'permohonan'}.
+            </p>
+            <p className="text-xs text-[#8A9A95] mt-1">Silakan coba muat ulang halaman.</p>
+          </div>
+        ) : (
+          <CrudTable<Bidang2TableItem>
+            columns={columns}
+            rows={displayedRows}
+            isLoading={isLoading}
+            emptyTitle={`Belum ada ${isPengadaan ? 'pengadaan' : 'permohonan'} ditemukan.`}
+            emptyDescription={
+              isFullList
+                ? 'Coba sesuaikan kata kunci pencarian atau filter status.'
+                : 'Data yang ditambahkan akan ditampilkan di sini.'
+            }
+            className="border-0 shadow-none rounded-none !p-0"
+          />
+        )}
       </div>
+
+      {/* Pagination Section for Full List Mode */}
+      {isFullList && pagination && !isLoading && !isError && pagination.total > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-5 mt-2 border-t border-[#F0F4F2]">
+          <p className="text-xs text-[#8A9A95]">
+            Menampilkan {pagination.from}–{pagination.to} dari {pagination.total} permohonan
+          </p>
+
+          <div className="flex items-center gap-1.5" role="navigation" aria-label="Navigasi Halaman">
+            {/* Tombol Sebelumnya */}
+            <button
+              type="button"
+              onClick={() => onPageChange?.(pagination.currentPage - 1)}
+              disabled={pagination.currentPage <= 1}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-[#5F6F6A] hover:bg-[#F4F7F5] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              aria-label="Halaman sebelumnya"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+
+            {/* Nomor Halaman */}
+            {generatePaginationPages(pagination.currentPage, pagination.lastPage).map((p, idx) => {
+              if (p === 'ellipsis') {
+                return (
+                  <span
+                    key={`ellipsis-${idx}`}
+                    className="w-8 h-8 flex items-center justify-center text-xs text-[#8A9A95] select-none"
+                  >
+                    ...
+                  </span>
+                );
+              }
+              const isActive = p === pagination.currentPage;
+              return (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => onPageChange?.(p)}
+                  className={`w-8 h-8 rounded-full text-xs font-semibold flex items-center justify-center transition-colors cursor-pointer ${
+                    isActive
+                      ? 'bg-[#0E7C5A] text-white shadow-xs'
+                      : 'text-[#5F6F6A] hover:bg-[#F4F7F5] hover:text-[#14201C]'
+                  }`}
+                  aria-current={isActive ? 'page' : undefined}
+                >
+                  {p}
+                </button>
+              );
+            })}
+
+            {/* Tombol Berikutnya */}
+            <button
+              type="button"
+              onClick={() => onPageChange?.(pagination.currentPage + 1)}
+              disabled={pagination.currentPage >= pagination.lastPage}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-[#5F6F6A] hover:bg-[#F4F7F5] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              aria-label="Halaman berikutnya"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </section>
   );
 };
