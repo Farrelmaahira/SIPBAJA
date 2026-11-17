@@ -1,10 +1,11 @@
 import type { FC, FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import AppLayout from '../General/AppLayout';
 import HeroBanner from '../../organisms/HeroBanner';
 import CrudTable, { type CrudColumn } from '../../organisms/CrudTable';
 import StatusPill from '../../atoms/StatusPill';
+import TableToolbar from '../../molecules/TableToolbar';
+import TableFooter from '../../molecules/TableFooter';
 import { BIDANG2_NAV_ITEMS } from '../../../constants/bidang2Nav';
 import { formatRupiah } from '../../../utils/formatters';
 import type { Bidang2TableItem } from '../../organisms/Bidang2PermohonanTable';
@@ -99,52 +100,23 @@ export const Bidang2PengadaanIndexTemplate: FC<Bidang2PengadaanIndexTemplateProp
   ];
 
   const toolbar = (
-    <div className="flex flex-wrap items-center justify-between gap-3 w-full">
-      <form onSubmit={onSearchSubmit} className="relative">
-        <Search className="w-4 h-4 text-[#8A9A95] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Cari nomor pengadaan atau judul..."
-          className="w-64 sm:w-80 pl-10 pr-4 py-2.5 rounded-xl border border-[#E4EBE8] text-xs text-[#14201C] focus:ring-2 focus:ring-[#0E7C5A] focus:border-transparent outline-none bg-white placeholder-[#8A9A95]"
-        />
-      </form>
-
-      <span className="text-xs text-[#8A9A95] font-medium">
-        {pagination.total} pengadaan
-      </span>
-    </div>
+    <TableToolbar
+      searchValue={searchQuery}
+      onSearchChange={onSearchChange}
+      onSearchSubmit={onSearchSubmit}
+      searchPlaceholder="Cari nomor pengadaan atau judul..."
+      total={`${pagination.total} pengadaan`}
+    />
   );
 
-  const footer = pagination.lastPage > 1 && onPageChange ? (
-    <div className="flex items-center justify-between pt-5 border-t border-[#F0F4F2]">
-      <span className="text-xs text-[#8A9A95]">
-        Halaman <strong className="text-[#14201C]">{pagination.currentPage}</strong> dari{' '}
-        <strong className="text-[#14201C]">{pagination.lastPage}</strong>
-      </span>
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          disabled={pagination.currentPage <= 1 || isLoading}
-          onClick={() => onPageChange(pagination.currentPage - 1)}
-          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[#E4EBE8] text-xs font-semibold text-[#14201C] hover:bg-[#F4F7F5] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-        >
-          <ChevronLeft className="w-3.5 h-3.5" />
-          <span>Sebelumnya</span>
-        </button>
-        <button
-          type="button"
-          disabled={pagination.currentPage >= pagination.lastPage || isLoading}
-          onClick={() => onPageChange(pagination.currentPage + 1)}
-          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[#E4EBE8] text-xs font-semibold text-[#14201C] hover:bg-[#F4F7F5] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-        >
-          <span>Selanjutnya</span>
-          <ChevronRight className="w-3.5 h-3.5" />
-        </button>
-      </div>
-    </div>
-  ) : null;
+  const footer = (
+    <TableFooter
+      currentPage={pagination.currentPage}
+      lastPage={pagination.lastPage}
+      isLoading={isLoading}
+      onPageChange={onPageChange}
+    />
+  );
 
   return (
     <AppLayout

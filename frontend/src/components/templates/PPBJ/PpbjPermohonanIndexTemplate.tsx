@@ -1,11 +1,9 @@
 import type { FC } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
 import AppLayout from '../General/AppLayout';
 import HeroBanner from '../../organisms/HeroBanner';
 import { CrudTable, type CrudColumn } from '../../organisms/CrudTable';
+import TableToolbar from '../../molecules/TableToolbar';
 import StatusPill from '../../atoms/StatusPill';
-import SearchBar from '../../molecules/SearchBar';
 import { PPBJ_NAV_ITEMS } from '../../../constants/ppbjNav';
 import { formatRupiah, formatTanggalIndo } from '../../../utils/formatters';
 import type { PpbjPermohonanItem } from '../../../types/ppbj';
@@ -26,8 +24,6 @@ export const PpbjPermohonanIndexTemplate: FC<PpbjPermohonanIndexTemplateProps> =
   onSearchChange,
   isLoading = false,
 }) => {
-  const navigate = useNavigate();
-
   const columns: CrudColumn<PpbjPermohonanItem>[] = [
     {
       key: 'nomorSurat',
@@ -84,20 +80,6 @@ export const PpbjPermohonanIndexTemplate: FC<PpbjPermohonanIndexTemplateProps> =
         />
       ),
     },
-    {
-      key: 'actions',
-      header: <span className="sr-only">Aksi</span>,
-      render: (item) => (
-        <button
-          type="button"
-          onClick={() => navigate(`/ppbj/permohonan/${item.id}`)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#E4EBE8] bg-white text-xs font-semibold text-[#0E7C5A] hover:bg-[#F3F6F5] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C5A] cursor-pointer"
-        >
-          <span>Paketkan</span>
-          <ChevronRight className="w-3.5 h-3.5" />
-        </button>
-      ),
-    },
   ];
 
   return (
@@ -114,47 +96,34 @@ export const PpbjPermohonanIndexTemplate: FC<PpbjPermohonanIndexTemplateProps> =
       ]}
     >
       <div className="space-y-6">
-        {/* Hero Banner Organism */}
         <HeroBanner
           eyebrow="DAFTAR PERMOHONAN"
           title="List Permohonan"
           description="Pantau dan kelola seluruh permohonan pengadaan yang ditangani PPBJ."
         />
-
-        {/* Card Container for Table & Search */}
-        <section
-          aria-label="Daftar Permohonan Pengadaan"
-          className="bg-white rounded-[22px] border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)] p-6 space-y-5"
-        >
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-base font-bold text-[#14201C]">
-                Daftar Permohonan
-              </h2>
-              <p className="text-xs text-[#5F6F6A] mt-0.5">
-                Permohonan dan pengajuan pengadaan yang ditangani PPBJ ({items.length} permohonan)
-              </p>
-            </div>
-
-            <div className="w-full md:w-72">
-              <SearchBar
-                value={searchQuery}
-                onChange={(e) => onSearchChange?.(e.target.value)}
-                placeholder="Cari nomor atau judul…"
-                className="!min-h-[40px] text-xs"
-              />
-            </div>
-          </div>
-
-          <CrudTable<PpbjPermohonanItem>
-            columns={columns}
-            rows={items}
-            isLoading={isLoading}
-            emptyTitle="Tidak ada permohonan ditemukan"
-            emptyDescription="Belum ada permohonan pengadaan yang sesuai dengan pencarian Anda."
-            className="border-none shadow-none rounded-xl"
-          />
-        </section>
+        <CrudTable<PpbjPermohonanItem>
+          title="Daftar Permohonan Pengadaan"
+          subtitle="Seluruh permohonan pengadaan yang masuk untuk ditinjau"
+          columns={columns}
+          rows={items}
+          isLoading={isLoading}
+          emptyTitle="Tidak ada permohonan ditemukan"
+          emptyDescription="Belum ada permohonan pengadaan yang sesuai dengan pencarian Anda."
+          className="border-none shadow-none rounded-xl"
+          toolbar={
+            <TableToolbar
+              searchValue={searchQuery}
+              onSearchChange={onSearchChange}
+            />
+          }
+          actions={[
+            {
+              key: 'view',
+              label: 'Detail',
+              href: row => `/ppbj/permohonan/${row.id}`
+            }
+          ]}
+        />
       </div>
     </AppLayout>
   );

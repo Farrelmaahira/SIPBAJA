@@ -1,11 +1,11 @@
 import { type FC, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { SlidersHorizontal, ChevronLeft, ChevronRight, FileText, Eye } from 'lucide-react';
+import { FileText, Eye } from 'lucide-react';
 import AppLayout, { type AppNavItem } from '../General/AppLayout';
 import HeroBanner from '../../organisms/HeroBanner';
 import CrudTable, { type CrudColumn } from '../../organisms/CrudTable';
-import SearchBar from '../../molecules/SearchBar';
-import SelectInput from '../../molecules/SelectInput';
+import TableToolbar from '../../molecules/TableToolbar';
+import TableFooter from '../../molecules/TableFooter';
 import StatusPill from '../../atoms/StatusPill';
 import FilterPengajuanModal, { type FilterOption } from '../../organisms/FilterPengajuanModal';
 import { formatRupiah, formatTanggal } from '../../../utils/formatters';
@@ -33,21 +33,6 @@ export const PPK_FILTER_OPTIONS: FilterOption[] = [
     label: 'Ditolak',
     dotClass: 'bg-[#EF4444]',
   },
-];
-
-const BULAN_OPTIONS = [
-  { value: '1', label: 'Januari' },
-  { value: '2', label: 'Februari' },
-  { value: '3', label: 'Maret' },
-  { value: '4', label: 'April' },
-  { value: '5', label: 'Mei' },
-  { value: '6', label: 'Juni' },
-  { value: '7', label: 'Juli' },
-  { value: '8', label: 'Agustus' },
-  { value: '9', label: 'September' },
-  { value: '10', label: 'Oktober' },
-  { value: '11', label: 'November' },
-  { value: '12', label: 'Desember' },
 ];
 
 export interface PpkPengajuanIndexTemplateProps {
@@ -101,13 +86,6 @@ export const PpkPengajuanIndexTemplate: FC<PpkPengajuanIndexTemplateProps> = ({
   recentNotifications,
   unreadNotificationsCount,
 }) => {
-  const currentYear = new Date().getFullYear();
-  const tahunOptions = [
-    { value: String(currentYear), label: String(currentYear) },
-    { value: String(currentYear - 1), label: String(currentYear - 1) },
-    { value: String(currentYear - 2), label: String(currentYear - 2) },
-  ];
-
   const currentPage = meta.current_page || 1;
   const lastPage = meta.last_page || 1;
 
@@ -203,82 +181,29 @@ export const PpkPengajuanIndexTemplate: FC<PpkPengajuanIndexTemplateProps> = ({
       </div>
 
       {/* Search & Filter */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <form onSubmit={onSearchSubmit} className="flex-1 max-w-md">
-          <SearchBar
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Cari nomor surat atau judul..."
-          />
-        </form>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <SelectInput
-            value={bulan}
-            onChange={(e) => onBulanChange(e.target.value)}
-            options={BULAN_OPTIONS}
-            placeholder="Semua Bulan"
-            className="w-36"
-          />
-
-          <SelectInput
-            value={tahun}
-            onChange={(e) => onTahunChange(e.target.value)}
-            options={tahunOptions}
-            placeholder="Semua Tahun"
-            className="w-36"
-          />
-
-          <button
-            type="button"
-            onClick={onOpenFilter}
-            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-semibold transition cursor-pointer ${
-              selectedStatuses.length > 0
-                ? 'bg-[#E8F5EF] text-[#0E7C5A] border-[#0E7C5A]'
-                : 'bg-[#F7FAF9] text-[#14201C] border-[#E4EBE8] hover:bg-[#EEF3F0]'
-            }`}
-          >
-            <SlidersHorizontal className="w-4 h-4" />
-            <span>Status</span>
-            {selectedStatuses.length > 0 && (
-              <span className="w-5 h-5 rounded-full bg-[#0E7C5A] text-white text-[10px] flex items-center justify-center font-bold">
-                {selectedStatuses.length}
-              </span>
-            )}
-          </button>
-        </div>
-      </div>
+      <TableToolbar
+        searchValue={search}
+        onSearchChange={onSearchChange}
+        onSearchSubmit={onSearchSubmit}
+        filterStatusLabel="Status"
+        filterStatusCount={selectedStatuses.length}
+        onFilterStatusClick={onOpenFilter}
+        selectedBulan={bulan}
+        onBulanChange={onBulanChange}
+        selectedTahun={tahun}
+        onTahunChange={onTahunChange}
+      />
     </div>
   );
 
-  const footer = lastPage > 1 && onPageChange ? (
-    <div className="flex items-center justify-between pt-5 border-t border-[#F0F4F2]">
-      <span className="text-xs text-[#8A9A95]">
-        Halaman <strong className="text-[#14201C]">{currentPage}</strong> dari{' '}
-        <strong className="text-[#14201C]">{lastPage}</strong>
-      </span>
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          disabled={currentPage <= 1 || isLoading}
-          onClick={() => onPageChange(currentPage - 1)}
-          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[#E4EBE8] text-xs font-semibold text-[#14201C] hover:bg-[#F4F7F5] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-        >
-          <ChevronLeft className="w-3.5 h-3.5" />
-          <span>Sebelumnya</span>
-        </button>
-        <button
-          type="button"
-          disabled={currentPage >= lastPage || isLoading}
-          onClick={() => onPageChange(currentPage + 1)}
-          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[#E4EBE8] text-xs font-semibold text-[#14201C] hover:bg-[#F4F7F5] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-        >
-          <span>Selanjutnya</span>
-          <ChevronRight className="w-3.5 h-3.5" />
-        </button>
-      </div>
-    </div>
-  ) : null;
+  const footer = (
+    <TableFooter
+      currentPage={currentPage}
+      lastPage={lastPage}
+      isLoading={isLoading}
+      onPageChange={onPageChange}
+    />
+  );
 
   return (
     <AppLayout

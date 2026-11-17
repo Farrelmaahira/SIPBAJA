@@ -1,12 +1,13 @@
 import type { FC, FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { SlidersHorizontal, Search, X, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import AppLayout from '../General/AppLayout';
 import HeroBanner from '../../organisms/HeroBanner';
 import FilterPermohonanModal from '../../molecules/FilterPermohonanModal';
+import TableToolbar from '../../molecules/TableToolbar';
+import TableFooter from '../../molecules/TableFooter';
 import CrudTable, { type CrudColumn } from '../../organisms/CrudTable';
 import Modal from '../../organisms/Modal';
-import Pagination from '../../molecules/Pagination';
 import StatusPill from '../../atoms/StatusPill';
 import { PEMOHON_NAV_ITEMS } from '../../../constants/pemohonNav';
 import { formatRupiah, formatTanggal } from '../../../utils/formatPermohonan';
@@ -118,52 +119,17 @@ export const PemohonPermohonanIndexTemplate: FC<
     ];
 
     const toolbar = (
-      <>
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <button
-            type="button"
-            onClick={() => onToggleFilterModal(true)}
-            className={`inline-flex items-center gap-2 min-h-[44px] px-4 py-2 rounded-xl border text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C5A] cursor-pointer shrink-0 ${isFilterActive
-              ? 'border-[#0E7C5A] bg-[#EEF5F2] text-[#0E7C5A]'
-              : 'border-[#E4EBE8] bg-white text-[#14201C] hover:bg-[#F3F6F5]'
-              }`}
-          >
-            <SlidersHorizontal className="w-4 h-4" />
-            <span>Filter</span>
-            {isFilterActive && (
-              <span
-                className="w-2 h-2 rounded-full bg-[#0E7C5A]"
-                aria-label="Filter aktif"
-              />
-            )}
-          </button>
-
-          <form onSubmit={onSearchSubmit} className="relative w-full sm:w-80">
-            <Search className="w-4 h-4 text-[#8A9A95] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Cari nomor atau judul..."
-              className="w-full pl-10 pr-9 py-2.5 min-h-[44px] text-sm rounded-xl border border-[#E4EBE8] bg-white text-[#14201C] placeholder:text-[#8A9A95] focus:outline-none focus:ring-2 focus:ring-[#0E7C5A] focus:border-[#0E7C5A] transition-colors"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={onClearSearch}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-[#8A9A95] hover:text-[#14201C] rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C5A] cursor-pointer"
-                aria-label="Bersihkan pencarian"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </form>
-        </div>
-
-        <p className="text-sm text-[#5F6F6A] font-medium shrink-0">
-          {isLoading ? 'Memuat data...' : `${pagination.total} permohonan`}
-        </p>
-      </>
+      <TableToolbar
+        searchValue={searchQuery}
+        onSearchChange={onSearchChange}
+        onSearchSubmit={onSearchSubmit}
+        onClearSearch={onClearSearch}
+        searchPlaceholder="Cari nomor atau judul..."
+        filterStatusLabel="Filter"
+        filterStatusCount={isFilterActive ? 1 : 0}
+        onFilterStatusClick={() => onToggleFilterModal(true)}
+        total={isLoading ? 'Memuat data...' : `${pagination.total} permohonan`}
+      />
     );
 
     return (
@@ -220,12 +186,10 @@ export const PemohonPermohonanIndexTemplate: FC<
               onEdit={(item) => onEdit(item)}
               onDelete={(item) => onDelete(item)}
               footer={
-                <Pagination
+                <TableFooter
                   currentPage={pagination.currentPage}
                   lastPage={pagination.lastPage}
-                  total={pagination.total}
-                  from={pagination.from}
-                  to={pagination.to}
+                  isLoading={isLoading}
                   onPageChange={onPageChange}
                 />
               }

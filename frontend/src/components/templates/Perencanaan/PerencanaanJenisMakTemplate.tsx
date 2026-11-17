@@ -1,9 +1,10 @@
 import type { FC, FormEvent } from 'react';
-import { Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import AppLayout from '../General/AppLayout';
 import JenisMakTable from '../../organisms/JenisMakTable';
 import JenisMakFormModal from '../../organisms/JenisMakFormModal';
 import HapusJenisMakModal from '../../organisms/HapusJenisMakModal';
+import TableFooter from '../../molecules/TableFooter';
 import type { JenisMakRow, PpkOption } from '../../../types/perencanaan';
 import { PERENCANAAN_NAV_ITEMS } from '../../../pages/Perencanaan/Dashboard';
 
@@ -161,34 +162,12 @@ export const PerencanaanJenisMakTemplate: FC<PerencanaanJenisMakTemplateProps> =
           onDelete={onOpenDeleteModal}
         />
 
-        {lastPage > 1 && onPageChange && (
-          <div className="flex items-center justify-between pt-5 mt-4 border-t border-[#F0F4F2]">
-            <span className="text-xs text-[#8A9A95]">
-              Halaman <strong className="text-[#14201C]">{currentPage}</strong> dari{' '}
-              <strong className="text-[#14201C]">{lastPage}</strong>
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                disabled={currentPage <= 1 || isLoading}
-                onClick={() => onPageChange(currentPage - 1)}
-                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[#E4EBE8] text-xs font-semibold text-[#14201C] hover:bg-[#F4F7F5] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              >
-                <ChevronLeft className="w-3.5 h-3.5" />
-                <span>Sebelumnya</span>
-              </button>
-              <button
-                type="button"
-                disabled={currentPage >= lastPage || isLoading}
-                onClick={() => onPageChange(currentPage + 1)}
-                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[#E4EBE8] text-xs font-semibold text-[#14201C] hover:bg-[#F4F7F5] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              >
-                <span>Selanjutnya</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-        )}
+        <TableFooter
+          currentPage={currentPage}
+          lastPage={lastPage}
+          isLoading={isLoading}
+          onPageChange={onPageChange}
+        />
       </div>
 
       {/* Modals */}
