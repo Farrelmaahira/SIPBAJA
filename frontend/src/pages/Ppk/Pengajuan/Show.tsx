@@ -1,10 +1,10 @@
 import { useState, useEffect, type FC } from 'react';
 import { useParams } from 'react-router-dom';
 import ppkService from '../../../services/ppkService';
-import PpPengajuanShowTemplate from '../../../components/templates/PpPengajuanShowTemplate';
 import { PPK_NAV_ITEMS } from '../Dashboard';
 import type { NotificationItem } from '../../../types/notification';
-import type { PpPengadaanDetailPayload } from '../../../types/ppk';
+import type { PpPengadaanDetailPayload } from '../../../types/pp';
+import PpPengajuanShowTemplate from '../../../components/templates/PpPengajuanShowTemplate';
 
 export interface PpkShowProps {
   detail?: PpPengadaanDetailPayload;
@@ -25,26 +25,32 @@ export const PpkPengajuanShow: FC<PpkShowProps> = ({
   const [galleryOpen, setGalleryOpen] = useState<boolean>(false);
 
   useEffect(() => {
-    if (!initialDetail && id) {
-      let isMounted = true;
-      ppkService
-        .getPengajuanShow(id)
-        .then((res) => {
-          if (!isMounted) return;
-          setDetail(res.detail ?? res.data ?? {});
-          if (res.recentNotifications) setRecentNotifications(res.recentNotifications);
-          if (res.unreadNotificationsCount !== undefined) {
-            setUnreadNotificationsCount(res.unreadNotificationsCount);
-          }
-        })
-        .catch((err) => {
-          console.error('Failed to fetch PPK pengajuan show:', err);
-        });
-
-      return () => {
-        isMounted = false;
-      };
+    if (initialDetail) {
+      setDetail(initialDetail);
+      return;
     }
+    if (!id) return;
+
+    const controller = new AbortController();
+    ppkService
+      .getPengajuanShow(id, controller.signal)
+      .then((res) => {
+        const payload = res.detail || res.data || {};
+        setDetail(payload);
+        if (res.recentNotifications) setRecentNotifications(res.recentNotifications);
+        if (res.unreadNotificationsCount !== undefined) {
+          setUnreadNotificationsCount(res.unreadNotificationsCount);
+        }
+      })
+      .catch((err: unknown) => {
+        if (!controller.signal.aborted) {
+          console.error('Failed to fetch PPK pengajuan show:', err);
+        }
+      });
+
+    return () => {
+      controller.abort();
+    };
   }, [id, initialDetail]);
 
   return (
