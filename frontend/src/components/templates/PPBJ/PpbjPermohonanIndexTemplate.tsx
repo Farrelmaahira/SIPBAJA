@@ -1,8 +1,9 @@
-import type { FC } from 'react';
+import type { FC, FormEvent } from 'react';
 import AppLayout from '../General/AppLayout';
 import HeroBanner from '../../organisms/HeroBanner';
 import { CrudTable, type CrudColumn } from '../../organisms/CrudTable';
 import TableToolbar from '../../molecules/TableToolbar';
+import TableFooter from '../../molecules/TableFooter';
 import StatusPill from '../../atoms/StatusPill';
 import { PPBJ_NAV_ITEMS } from '../../../constants/ppbjNav';
 import { formatRupiah, formatTanggalIndo } from '../../../utils/formatters';
@@ -12,17 +13,44 @@ import type { AppTopbarUser } from '../../organisms/AppTopbar';
 export interface PpbjPermohonanIndexTemplateProps {
   user?: AppTopbarUser | null;
   items?: PpbjPermohonanItem[];
+  totalCount?: number;
   searchQuery?: string;
-  onSearchChange?: (val: string) => void;
+  selectedStatuses?: string[];
+  selectedBulan?: string;
+  selectedTahun?: string;
+  currentPage?: number;
+  lastPage?: number;
   isLoading?: boolean;
+  errorMessage?: string;
+  filterModalOpen?: boolean;
+  onSearchChange?: (val: string) => void;
+  onSearchSubmit?: (e: FormEvent) => void;
+  onBulanChange?: (bulan: string) => void;
+  onTahunChange?: (tahun: string) => void;
+  onPageChange?: (page: number) => void;
+  onOpenFilterModal?: () => void;
+  onCloseFilterModal?: () => void;
+  onApplyFilter?: (statuses: string[]) => void;
 }
 
 export const PpbjPermohonanIndexTemplate: FC<PpbjPermohonanIndexTemplateProps> = ({
   user = null,
   items = [],
+  totalCount = 0,
   searchQuery = '',
-  onSearchChange,
+  selectedStatuses = [],
+  selectedBulan = '',
+  selectedTahun = '',
+  currentPage = 1,
+  lastPage = 1,
   isLoading = false,
+  errorMessage = '',
+  onSearchChange,
+  onSearchSubmit,
+  onBulanChange,
+  onTahunChange,
+  onPageChange,
+  onOpenFilterModal,
 }) => {
   const columns: CrudColumn<PpbjPermohonanItem>[] = [
     {
@@ -101,6 +129,13 @@ export const PpbjPermohonanIndexTemplate: FC<PpbjPermohonanIndexTemplateProps> =
           title="List Permohonan"
           description="Pantau dan kelola seluruh permohonan pengadaan yang ditangani PPBJ."
         />
+
+        {errorMessage && (
+          <div className="p-4 rounded-xl bg-[#FEF3F2] border border-[#FECDCA] text-xs font-medium text-[#B42318]">
+            {errorMessage}
+          </div>
+        )}
+
         <CrudTable<PpbjPermohonanItem>
           title="Daftar Permohonan Pengadaan"
           subtitle="Seluruh permohonan pengadaan yang masuk untuk ditinjau"
@@ -112,18 +147,35 @@ export const PpbjPermohonanIndexTemplate: FC<PpbjPermohonanIndexTemplateProps> =
           className="border-none shadow-none rounded-xl"
           toolbar={
             <TableToolbar
+              filterStatusCount={selectedStatuses.length}
+              onFilterStatusClick={onOpenFilterModal}
               searchValue={searchQuery}
               onSearchChange={onSearchChange}
+              onSearchSubmit={onSearchSubmit}
+              selectedBulan={selectedBulan}
+              onBulanChange={onBulanChange}
+              selectedTahun={selectedTahun}
+              onTahunChange={onTahunChange}
+              total={totalCount > 0 ? `${totalCount} permohonan` : undefined}
             />
           }
           actions={[
             {
               key: 'view',
               label: 'Detail',
-              href: row => `/ppbj/permohonan/${row.id}`
-            }
+              href: (row) => `/ppbj/permohonan/${row.id}`,
+            },
           ]}
         />
+
+        {lastPage > 1 && (
+          <TableFooter
+            currentPage={currentPage}
+            lastPage={lastPage}
+            isLoading={isLoading}
+            onPageChange={onPageChange}
+          />
+        )}
       </div>
     </AppLayout>
   );
