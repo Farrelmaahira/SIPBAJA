@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, type FC, FormEvent } from 'react';
+import { useEffect, useState, useMemo, type FC, type FormEvent } from 'react';
 import ppbjService from '../../../services/ppbjService';
 import { useAuth } from '../../../hooks/useAuth';
 import PpbjPermohonanIndexTemplate from '../../../components/templates/PPBJ/PpbjPermohonanIndexTemplate';
@@ -7,22 +7,22 @@ import type { AppTopbarUser } from '../../../components/organisms/AppTopbar';
 
 export const PpbjPermohonanIndex: FC = () => {
   const { user } = useAuth();
-  const [filterModalOpen, setFilterModalOpen] = useState(false);
+  const [filterModalOpen, setFilterModalOpen] = useState<boolean>(false);
   const [items, setItems] = useState<PpbjPermohonanItem[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [totalCount, setTotalCount] = useState<number>(0);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedBulan, setSelectedBulan] = useState<string>('');
   const [selectedTahun, setSelectedTahun] = useState<string>('');
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [lastPage, setLastPage] = useState<number>(1);
+  const [lastPage] = useState<number>(1);
   const [errorMessage, setErrorMessage] = useState<string>('');
 
   useEffect(() => {
     let isMounted = true;
     const controller = new AbortController();
     setIsLoading(true);
+    setErrorMessage('');
 
     ppbjService
       .getPermohonanList(controller.signal)
@@ -33,6 +33,7 @@ export const PpbjPermohonanIndex: FC = () => {
       .catch((err) => {
         if (!controller.signal.aborted) {
           console.error('Failed to fetch PPBJ permohonan:', err);
+          setErrorMessage('Gagal memuat daftar permohonan pengadaan.');
         }
       })
       .finally(() => {
@@ -60,6 +61,10 @@ export const PpbjPermohonanIndex: FC = () => {
     setSelectedTahun(tahun);
   };
 
+  const handleSearchSubmit = (e: FormEvent) => {
+    e.preventDefault();
+  };
+
   const filteredItems = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return items;
@@ -75,6 +80,7 @@ export const PpbjPermohonanIndex: FC = () => {
     <PpbjPermohonanIndexTemplate
       user={user as AppTopbarUser | null}
       items={filteredItems}
+      totalCount={filteredItems.length}
       searchQuery={searchQuery}
       selectedStatuses={selectedStatuses}
       selectedBulan={selectedBulan}
@@ -85,7 +91,7 @@ export const PpbjPermohonanIndex: FC = () => {
       errorMessage={errorMessage}
       filterModalOpen={filterModalOpen}
       onSearchChange={setSearchQuery}
-      onSearchSubmit={() => { }}
+      onSearchSubmit={handleSearchSubmit}
       onBulanChange={handleBulanChange}
       onTahunChange={handleTahunChange}
       onPageChange={setCurrentPage}
