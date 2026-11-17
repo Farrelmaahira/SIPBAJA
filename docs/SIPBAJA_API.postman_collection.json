@@ -1936,10 +1936,10 @@
                 }
               ]
             },
-            "description": "",
+            "description": "Memverifikasi permohonan dengan memilih satu atau beberapa Jenis MAK dan menyertakan catatan arahan opsional untuk PPBJ.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"mak_ids\": [\n    1\n  ]\n}",
+              "raw": "{\n  \"mak_ids\": [\n    1,\n    2\n  ],\n  \"catatan\": \"Anggaran tersedia pada RKAKL TA 2026. Diteruskan ke PPBJ untuk proses mapping MAK.\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2000,7 +2000,7 @@
           "response": []
         },
         {
-          "name": "Kirim ke Pengadaan (PPBJ)",
+          "name": "[DEPRECATED] Kirim ke Pengadaan (PPBJ)",
           "request": {
             "method": "POST",
             "header": [
@@ -2036,7 +2036,7 @@
                 }
               ]
             },
-            "description": "",
+            "description": "DEPRECATED: Penerusan ke PPBJ kini berjalan otomatis setelah Bidang 2 dan PPK menyetujui secara paralel.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"mak_id\": 1\n}",
@@ -2400,6 +2400,279 @@
             "description": ""
           },
           "response": []
+        },
+        {
+          "name": "Download Dokumen Permohonan",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/perencanaan/pengajuan/:permohonan/dokumen?dokumen_id=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "perencanaan",
+                "pengajuan",
+                ":permohonan",
+                "dokumen"
+              ],
+              "query": [
+                {
+                  "key": "dokumen_id",
+                  "value": "1",
+                  "description": "ID spesifik dokumen pendukung (opsional, kosongkan untuk surat utama)"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "permohonan",
+                  "value": "1",
+                  "description": "ID permohonan"
+                }
+              ]
+            },
+            "description": "Mengunduh atau melihat stream berkas surat permohonan / lampiran pendukung."
+          },
+          "response": []
+        },
+        {
+          "name": "Detail Dokumen Pengadaan & Konteks MAK",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/perencanaan/pengadaan/:pengadaan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "perencanaan",
+                "pengadaan",
+                ":pengadaan"
+              ],
+              "variable": [
+                {
+                  "key": "pengadaan",
+                  "value": "1",
+                  "description": "ID dokumen pengadaan"
+                }
+              ]
+            },
+            "description": "Melihat rincian dokumen pengadaan turunan beserta opsi MAK permohonan induk untuk perbaikan jenis MAK."
+          },
+          "response": []
+        },
+        {
+          "name": "Perbaiki Jenis MAK Dokumen Pengadaan",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/perencanaan/pengadaan/:pengadaan/jenis-mak",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "perencanaan",
+                "pengadaan",
+                ":pengadaan",
+                "jenis-mak"
+              ],
+              "variable": [
+                {
+                  "key": "pengadaan",
+                  "value": "1",
+                  "description": "ID dokumen pengadaan"
+                }
+              ]
+            },
+            "description": "Memperbaiki Jenis MAK pada Dokumen Pengadaan turunan selama belum dikunci/disetujui oleh PPK.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"permohonan_mak_id\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "RKAKL - Download Dokumen Terkini",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/perencanaan/rkakl/dokumen",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "perencanaan",
+                "rkakl",
+                "dokumen"
+              ]
+            },
+            "description": "Mengunduh atau melihat stream berkas Dokumen RKAKL aktif terkini."
+          },
+          "response": []
+        },
+        {
+          "name": "RKAKL - Download Dokumen by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/perencanaan/rkakl/dokumen/:dokumen",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "perencanaan",
+                "rkakl",
+                "dokumen",
+                ":dokumen"
+              ],
+              "variable": [
+                {
+                  "key": "dokumen",
+                  "value": "1",
+                  "description": "ID dokumen RKAKL"
+                }
+              ]
+            },
+            "description": "Mengunduh atau melihat stream berkas Dokumen RKAKL berdasarkan ID dokumen."
+          },
+          "response": []
+        },
+        {
+          "name": "RKAKL - Ganti Dokumen (ID)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/perencanaan/rkakl/:dokumen/ganti",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "perencanaan",
+                "rkakl",
+                ":dokumen",
+                "ganti"
+              ],
+              "variable": [
+                {
+                  "key": "dokumen",
+                  "value": "1",
+                  "description": "ID dokumen RKAKL yang akan diganti"
+                }
+              ]
+            },
+            "description": "Mengganti berkas Dokumen RKAKL yang ada dengan versi berkas terbaru.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "berkas",
+                  "type": "file",
+                  "description": "Berkas PDF/JPG/PNG RKAKL versi baru (maks 10MB)"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "RKAKL - Hapus Dokumen",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/perencanaan/rkakl/:dokumen",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "perencanaan",
+                "rkakl",
+                ":dokumen"
+              ],
+              "variable": [
+                {
+                  "key": "dokumen",
+                  "value": "1",
+                  "description": "ID dokumen RKAKL yang akan dihapus"
+                }
+              ]
+            },
+            "description": "Menghapus berkas Dokumen RKAKL beserta riwayat terkait."
+          },
+          "response": []
         }
       ]
     },
@@ -2533,6 +2806,403 @@
               ]
             },
             "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Detail Pengajuan",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bidang-2/pengajuan/:permohonan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bidang-2",
+                "pengajuan",
+                ":permohonan"
+              ],
+              "variable": [
+                {
+                  "key": "permohonan",
+                  "value": "1",
+                  "description": "ID permohonan"
+                }
+              ]
+            },
+            "description": "Melihat rincian permohonan pengadaan untuk verifikasi dan persetujuan Wakil Direktur Bidang 2."
+          },
+          "response": []
+        },
+        {
+          "name": "Approve Pengajuan (dengan Memo)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bidang-2/pengajuan/:permohonan/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bidang-2",
+                "pengajuan",
+                ":permohonan",
+                "approve"
+              ],
+              "variable": [
+                {
+                  "key": "permohonan",
+                  "value": "1",
+                  "description": "ID permohonan"
+                }
+              ]
+            },
+            "description": "Menyetujui permohonan dengan mengunggah Memo Persetujuan resmi dari Wakil Direktur Bidang 2.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "memo",
+                  "type": "file",
+                  "description": "Berkas Memo Persetujuan Bidang 2 (PDF/JPG/PNG maks 10MB)"
+                },
+                {
+                  "key": "catatan",
+                  "value": "Disetujui untuk diproses ke tahap PPBJ.",
+                  "type": "text",
+                  "description": "Catatan persetujuan opsional"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reject Pengajuan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bidang-2/pengajuan/:permohonan/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bidang-2",
+                "pengajuan",
+                ":permohonan",
+                "reject"
+              ],
+              "variable": [
+                {
+                  "key": "permohonan",
+                  "value": "1",
+                  "description": "ID permohonan"
+                }
+              ]
+            },
+            "description": "Menolak permohonan dengan memberikan catatan alasan penolakan.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"alasan\": \"Alokasi anggaran belum mencukupi untuk tahun anggaran berjalan.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Download Memo Persetujuan Bidang 2",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bidang-2/pengajuan/:permohonan/memo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bidang-2",
+                "pengajuan",
+                ":permohonan",
+                "memo"
+              ],
+              "variable": [
+                {
+                  "key": "permohonan",
+                  "value": "1",
+                  "description": "ID permohonan"
+                }
+              ]
+            },
+            "description": "Mengunduh berkas Memo Persetujuan yang diunggah oleh Wakil Direktur Bidang 2."
+          },
+          "response": []
+        },
+        {
+          "name": "RKAKL - Download Dokumen Terkini",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bidang-2/rkakl/dokumen",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bidang-2",
+                "rkakl",
+                "dokumen"
+              ]
+            },
+            "description": "Mengunduh dokumen acuan RKAKL aktif terkini untuk Bidang 2."
+          },
+          "response": []
+        },
+        {
+          "name": "RKAKL - Download Dokumen by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bidang-2/rkakl/dokumen/:dokumen",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bidang-2",
+                "rkakl",
+                "dokumen",
+                ":dokumen"
+              ],
+              "variable": [
+                {
+                  "key": "dokumen",
+                  "value": "1",
+                  "description": "ID dokumen RKAKL"
+                }
+              ]
+            },
+            "description": "Mengunduh dokumen acuan RKAKL berdasarkan ID dokumen."
+          },
+          "response": []
+        },
+        {
+          "name": "Profil Bidang 2",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bidang-2/profil",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bidang-2",
+                "profil"
+              ]
+            },
+            "description": "Melihat profil akun Bidang 2."
+          },
+          "response": []
+        },
+        {
+          "name": "Notifikasi - List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bidang-2/notifications?tab=semua",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bidang-2",
+                "notifications"
+              ],
+              "query": [
+                {
+                  "key": "tab",
+                  "value": "semua",
+                  "description": "Filter tab: semua / belum_dibaca"
+                }
+              ]
+            },
+            "description": "Melihat daftar notifikasi untuk peran Bidang 2."
+          },
+          "response": []
+        },
+        {
+          "name": "Notifikasi - Summary Topbar",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bidang-2/notifications/summary?limit=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bidang-2",
+                "notifications",
+                "summary"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "description": "Jumlah notifikasi teratas"
+                }
+              ]
+            },
+            "description": "Melihat ringkasan notifikasi teratas untuk topbar lonceng."
+          },
+          "response": []
+        },
+        {
+          "name": "Notifikasi - Mark All Read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bidang-2/notifications/read-all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bidang-2",
+                "notifications",
+                "read-all"
+              ]
+            },
+            "description": "Menandai seluruh notifikasi Bidang 2 sebagai telah dibaca."
+          },
+          "response": []
+        },
+        {
+          "name": "Notifikasi - Mark One Read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bidang-2/notifications/:notification/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bidang-2",
+                "notifications",
+                ":notification",
+                "read"
+              ],
+              "variable": [
+                {
+                  "key": "notification",
+                  "value": "1",
+                  "description": "ID notifikasi"
+                }
+              ]
+            },
+            "description": "Menandai satu notifikasi Bidang 2 sebagai telah dibaca."
           },
           "response": []
         }
@@ -2763,6 +3433,174 @@
               ]
             },
             "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Download Dokumen Permohonan",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ppbj/permohonan/:permohonan/dokumen?dokumen_id=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ppbj",
+                "permohonan",
+                ":permohonan",
+                "dokumen"
+              ],
+              "query": [
+                {
+                  "key": "dokumen_id",
+                  "value": "1",
+                  "description": "ID spesifik dokumen (opsional)"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "permohonan",
+                  "value": "1",
+                  "description": "ID permohonan"
+                }
+              ]
+            },
+            "description": "Mengunduh berkas surat permohonan dan lampiran untuk dipelajari oleh PPBJ."
+          },
+          "response": []
+        },
+        {
+          "name": "Simpan Permohonan Baru (PPBJ)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ppbj/permohonan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ppbj",
+                "permohonan"
+              ]
+            },
+            "description": "Menyimpan permohonan langsung oleh PPBJ jika diperlukan.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"judul\": \"Pengadaan Peralatan Laboratorium Elektronika\",\n  \"estimasi_anggaran\": 50000000,\n  \"unit_id\": 1,\n  \"ringkasan_tujuan\": \"Kebutuhan praktikum semester genap.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Permohonan",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ppbj/permohonan/:permohonan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ppbj",
+                "permohonan",
+                ":permohonan"
+              ],
+              "variable": [
+                {
+                  "key": "permohonan",
+                  "value": "1",
+                  "description": "ID permohonan"
+                }
+              ]
+            },
+            "description": "Memperbarui data permohonan oleh PPBJ.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"judul\": \"Pengadaan Peralatan Laboratorium Elektronika (Revisi)\",\n  \"estimasi_anggaran\": 48000000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Hapus / Batalkan Permohonan",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ppbj/permohonan/:permohonan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ppbj",
+                "permohonan",
+                ":permohonan"
+              ],
+              "variable": [
+                {
+                  "key": "permohonan",
+                  "value": "1",
+                  "description": "ID permohonan"
+                }
+              ]
+            },
+            "description": "Membatalkan atau menghapus permohonan."
           },
           "response": []
         }
@@ -3394,11 +4232,6 @@
                 "key": "Accept",
                 "value": "application/json",
                 "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
               }
             ],
             "url": {
@@ -3423,15 +4256,22 @@
                 }
               ]
             },
-            "description": "",
+            "description": "Menyetujui dokumen pembayaran dengan mengunggah Memo Persetujuan Pembayaran resmi.",
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"filename\": \"Memo_Persetujuan_042_TI_PNJ_2026.pdf\",\n  \"catatan\": \"Disetujui untuk diproses pembayaran termin 1.\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "memo",
+                  "type": "file",
+                  "description": "Berkas Memo Persetujuan Pembayaran resmi (PDF/JPG/PNG max 10MB)"
+                },
+                {
+                  "key": "catatan",
+                  "value": "Disetujui untuk diproses pembayaran termin 1.",
+                  "type": "text",
+                  "description": "Catatan persetujuan pembayaran opsional"
                 }
-              }
+              ]
             }
           },
           "response": []
@@ -3609,6 +4449,295 @@
               ]
             },
             "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "List Permohonan (Awal / Turunan MAK)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ppk/permohonan?q=&status=diteruskan&bulan=&tahun=&unit_id=",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ppk",
+                "permohonan"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "",
+                  "description": "Pencarian nomor surat atau judul"
+                },
+                {
+                  "key": "status",
+                  "value": "diteruskan",
+                  "description": "Filter status permohonan"
+                },
+                {
+                  "key": "bulan",
+                  "value": "",
+                  "description": "Filter bulan 1-12"
+                },
+                {
+                  "key": "tahun",
+                  "value": "",
+                  "description": "Filter tahun"
+                },
+                {
+                  "key": "unit_id",
+                  "value": "",
+                  "description": "Filter unit kerja"
+                }
+              ]
+            },
+            "description": "Melihat daftar permohonan pengadaan yang terikat dengan Jenis MAK di bawah tanggung jawab akun PPK yang sedang login."
+          },
+          "response": []
+        },
+        {
+          "name": "Detail Permohonan (Awal / Turunan MAK)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ppk/permohonan/:permohonan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ppk",
+                "permohonan",
+                ":permohonan"
+              ],
+              "variable": [
+                {
+                  "key": "permohonan",
+                  "value": "1",
+                  "description": "ID permohonan"
+                }
+              ]
+            },
+            "description": "Melihat rincian permohonan pengadaan, dokumen permohonan, dan MAK PPK sebelum disetujui."
+          },
+          "response": []
+        },
+        {
+          "name": "Approve Permohonan (dengan Memo)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ppk/permohonan/:permohonan/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ppk",
+                "permohonan",
+                ":permohonan",
+                "approve"
+              ],
+              "variable": [
+                {
+                  "key": "permohonan",
+                  "value": "1",
+                  "description": "ID permohonan"
+                }
+              ]
+            },
+            "description": "Menyetujui permohonan awal oleh PPK secara paralel dengan Bidang 2 dengan mengunggah Memo Persetujuan.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "memo",
+                  "type": "file",
+                  "description": "Berkas Memo Persetujuan Surat Permohonan resmi (PDF/JPG/PNG max 10MB)"
+                },
+                {
+                  "key": "catatan",
+                  "value": "Disetujui sesuai pagu MAK tahun berjalan.",
+                  "type": "text",
+                  "description": "Catatan arahan persetujuan opsional"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reject Permohonan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ppk/permohonan/:permohonan/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ppk",
+                "permohonan",
+                ":permohonan",
+                "reject"
+              ],
+              "variable": [
+                {
+                  "key": "permohonan",
+                  "value": "1",
+                  "description": "ID permohonan"
+                }
+              ]
+            },
+            "description": "Menolak permohonan awal oleh PPK beserta catatan alasan.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"alasan\": \"Rincian kebutuhan belum sesuai pagu anggaran MAK.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "RKAKL - Get Data",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ppk/rkakl?tahun=2026",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ppk",
+                "rkakl"
+              ],
+              "query": [
+                {
+                  "key": "tahun",
+                  "value": "2026",
+                  "description": "Filter tahun anggaran"
+                }
+              ]
+            },
+            "description": "Melihat data dokumen acuan RKAKL aktif untuk referensi PPK."
+          },
+          "response": []
+        },
+        {
+          "name": "RKAKL - Download Dokumen Terkini",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ppk/rkakl/dokumen",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ppk",
+                "rkakl",
+                "dokumen"
+              ]
+            },
+            "description": "Mengunduh berkas Dokumen RKAKL aktif terkini untuk PPK."
+          },
+          "response": []
+        },
+        {
+          "name": "RKAKL - Download Dokumen by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ppk/rkakl/dokumen/:dokumen",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ppk",
+                "rkakl",
+                "dokumen",
+                ":dokumen"
+              ],
+              "variable": [
+                {
+                  "key": "dokumen",
+                  "value": "1",
+                  "description": "ID dokumen RKAKL"
+                }
+              ]
+            },
+            "description": "Mengunduh berkas Dokumen RKAKL berdasarkan ID dokumen."
           },
           "response": []
         }
