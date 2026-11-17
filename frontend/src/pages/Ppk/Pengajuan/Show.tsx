@@ -4,7 +4,7 @@ import ppkService from '../../../services/ppkService';
 import { PPK_NAV_ITEMS } from '../Dashboard';
 import type { NotificationItem } from '../../../types/notification';
 import type { PpPengadaanDetailPayload } from '../../../types/pp';
-import PpPengajuanShowTemplate from '../../../components/templates/PpPengajuanShowTemplate';
+import PpPengajuanShowTemplate from '../../../components/templates/PP/PpPengajuanShowTemplate';
 
 export interface PpkShowProps {
   detail?: PpPengadaanDetailPayload;

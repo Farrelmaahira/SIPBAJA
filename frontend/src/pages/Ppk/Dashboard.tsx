@@ -2,9 +2,9 @@ import { useState, useEffect, type FC } from 'react';
 import { LayoutGrid, FileText } from 'lucide-react';
 import usePpkDashboard from '../../hooks/usePpkDashboard';
 import ppkService from '../../services/ppkService';
-import PpkDashboardTemplate from '../../components/templates/PpkDashboardTemplate';
+import PpkDashboardTemplate from '../../components/templates/PPK/PpkDashboardTemplate';
 import DocumentPreviewModal from '../../components/organisms/DocumentPreviewModal';
-import type { PpNavItem } from '../../components/templates/PpLayout';
+import type { PpNavItem } from '../../components/templates/PP/PpLayout';
 import type {
   PpPengadaanItem,
   PpkDashboardStats,

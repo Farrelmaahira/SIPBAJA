@@ -1,5 +1,5 @@
 import { useState, useEffect, type FC, type FormEvent } from 'react';
-import PerencanaanPengajuanIndexTemplate from '../../../components/templates/PerencanaanPengajuanIndexTemplate';
+import PerencanaanPengajuanIndexTemplate from '../../../components/templates/Perencanaan/PerencanaanPengajuanIndexTemplate';
 import perencanaanService from '../../../services/perencanaanService';
 import type { PermohonanTerbaruItem } from '../../../types/perencanaan';
 

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import useBidang2Pengajuan from '../../../hooks/useBidang2Pengajuan';
 import bidang2Service from '../../../services/bidang2Service';
-import Bidang2PengajuanIndexTemplate from '../../../components/templates/Bidang2PengajuanIndexTemplate';
+import Bidang2PengajuanIndexTemplate from '../../../components/templates/Bidang2/Bidang2PengajuanIndexTemplate';
 
 export const PengajuanIndex: FC = () => {
   const { user } = useAuth();

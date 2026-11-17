@@ -4,7 +4,7 @@ import { adminService } from '../../../services/adminService';
 import UnitKerjaTemplate, {
   type UnitKerjaItem,
   type UnitKerjaFormData,
-} from '../../../components/templates/UnitKerjaTemplate';
+} from '../../../components/templates/Admin/UnitKerjaTemplate';
 import Pagination, { type PaginationMeta } from '../../../components/molecules/Pagination';
 
 const EMPTY_FORM: UnitKerjaFormData = {

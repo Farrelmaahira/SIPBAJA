@@ -1,6 +1,6 @@
 import { useState, type FC } from 'react';
 import usePpDashboard from '../../hooks/usePpDashboard';
-import PpDashboardTemplate from '../../components/templates/PpDashboardTemplate';
+import PpDashboardTemplate from '../../components/templates/PP/PpDashboardTemplate';
 import type {
   PpDashboardStats,
   PpChartData,

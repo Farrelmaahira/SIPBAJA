@@ -1,7 +1,7 @@
 import { useState, type FC } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import AppLayout, { type AppNavItem } from '../../components/templates/AppLayout';
+import AppLayout, { type AppNavItem } from '../../components/templates/General/AppLayout';
 import UserProfileSection from '../../components/organisms/UserProfileSection';
 import LogoutModal from '../../components/organisms/LogoutModal';
 import { useAuth } from '../../hooks/useAuth';

@@ -43,7 +43,7 @@ export const Pagination: FC<PaginationProps> = ({
 
   return (
     <div
-      className={`flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#5F6F6A] pt-4 select-none ${className}`}
+      className={`mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#5F6F6A] pt-4 select-none ${className}`}
       aria-label="Navigasi Halaman"
     >
       <span>

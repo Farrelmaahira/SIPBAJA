@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import useBidang2Dashboard from '../../hooks/useBidang2Dashboard';
-import Bidang2DashboardTemplate from '../../components/templates/Bidang2DashboardTemplate';
+import Bidang2DashboardTemplate from '../../components/templates/Bidang2/Bidang2DashboardTemplate';
 import type { PermohonanDetailData } from '../../components/organisms/DetailPermohonanModal';
 import type { Bidang2PermohonanItem } from '../../components/molecules/Bidang2PermohonanRow';
 

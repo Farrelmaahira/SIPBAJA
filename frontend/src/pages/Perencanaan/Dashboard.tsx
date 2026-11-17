@@ -1,7 +1,7 @@
 import { useState, useEffect, type FC } from 'react';
 import { LayoutGrid, FileText, Tag, FileSpreadsheet } from 'lucide-react';
 import perencanaanService from '../../services/perencanaanService';
-import PerencanaanDashboardTemplate from '../../components/templates/PerencanaanDashboardTemplate';
+import PerencanaanDashboardTemplate from '../../components/templates/Perencanaan/PerencanaanDashboardTemplate';
 import type {
   PerencanaanDashboardStats,
   PermohonanTerbaruItem,

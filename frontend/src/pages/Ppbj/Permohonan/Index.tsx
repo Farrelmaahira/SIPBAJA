@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, type FC, FormEvent } from 'react';
 import ppbjService from '../../../services/ppbjService';
 import { useAuth } from '../../../hooks/useAuth';
-import PermohonanIndexTemplate from '../../../components/templates/PermohonanIndexTemplate';
+import PpbjPermohonanIndexTemplate from '../../../components/templates/PPBJ/PpbjPermohonanIndexTemplate';
 import type { PpbjPermohonanItem } from '../../../types/ppbj';
 import type { AppTopbarUser } from '../../../components/organisms/AppTopbar';
 
@@ -72,9 +72,9 @@ export const PpbjPermohonanIndex: FC = () => {
   }, [items, searchQuery]);
 
   return (
-    <PermohonanIndexTemplate
-      items={items}
-      totalCount={totalCount}
+    <PpbjPermohonanIndexTemplate
+      user={user as AppTopbarUser | null}
+      items={filteredItems}
       searchQuery={searchQuery}
       selectedStatuses={selectedStatuses}
       selectedBulan={selectedBulan}

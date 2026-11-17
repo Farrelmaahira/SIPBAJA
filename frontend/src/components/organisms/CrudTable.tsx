@@ -439,7 +439,7 @@ export function CrudTable<T extends Record<string, any> = Record<string, any>>({
         </table>
       </div>
 
-      {footer && <div className="mt-4">{footer}</div>}
+      {footer}
     </section>
   );
 }

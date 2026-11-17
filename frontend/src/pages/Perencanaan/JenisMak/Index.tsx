@@ -1,5 +1,5 @@
 import { useState, useEffect, type FC, type FormEvent } from 'react';
-import PerencanaanJenisMakTemplate from '../../../components/templates/PerencanaanJenisMakTemplate';
+import PerencanaanJenisMakTemplate from '../../../components/templates/Perencanaan/PerencanaanJenisMakTemplate';
 import perencanaanService from '../../../services/perencanaanService';
 import { extractServerErrors } from '../../../utils/fileValidation';
 import type {

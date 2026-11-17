@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../../hooks/useAuth';
 import pemohonService from '../../../services/pemohonService';
-import PermohonanCreateTemplate from '../../../components/templates/PermohonanCreateTemplate';
+import PemohonPermohonanCreateTemplate from '../../../components/templates/Pemohon/PemohonPermohonanCreateTemplate';
 import type {
   PermohonanFormData,
   PermohonanFormErrors,
@@ -64,7 +64,7 @@ export const PermohonanCreate: FC = () => {
   };
 
   return (
-    <PermohonanCreateTemplate
+    <PemohonPermohonanCreateTemplate
       user={user}
       data={data}
       setData={setData}

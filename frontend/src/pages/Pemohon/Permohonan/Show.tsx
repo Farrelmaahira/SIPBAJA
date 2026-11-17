@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, type FC } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import pemohonService from '../../../services/pemohonService';
-import PemohonPermohonanShowTemplate from '../../../components/templates/PemohonPermohonanShowTemplate';
+import PemohonPermohonanShowTemplate from '../../../components/templates/Pemohon/PemohonPermohonanShowTemplate';
 import type { PermohonanDetailInfo } from '../../../types/permohonan';
 
 export const PermohonanShow: FC = () => {
