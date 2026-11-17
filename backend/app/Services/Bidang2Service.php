@@ -203,11 +203,13 @@ class Bidang2Service
             ]);
 
             // 3. Catat keputusan persetujuan pada approval_permohonan
+            $revisiAktif = (int) ($permohonan->revisi_ke ?? 0);
+
             ApprovalPermohonan::updateOrCreate(
                 [
                     'permohonan_id' => $permohonan->id,
                     'tahap' => 'BIDANG2',
-                    'revisi_ke' => $permohonan->revisi_ke ?? 0,
+                    'revisi_ke' => $revisiAktif,
                 ],
                 [
                     'keputusan' => 'disetujui',
@@ -217,17 +219,39 @@ class Bidang2Service
                 ]
             );
 
-            // 4. Update status permohonan
-            $permohonan->update(['status' => 'disetujui']);
+            // 4. Update status permohonan (Dual Approval: disetujui jika PPK dan Bidang 2 sama-sama menyetujui)
+            $ppkSetuju = ApprovalPermohonan::where('permohonan_id', $permohonan->id)
+                ->where('tahap', 'PPK')
+                ->where('revisi_ke', $revisiAktif)
+                ->where('keputusan', 'disetujui')
+                ->exists();
+
+            $statusBaru = $ppkSetuju ? 'disetujui' : 'diteruskan';
+            $permohonan->update(['status' => $statusBaru]);
 
             // 5. Catat audit trail status_history
             StatusHistory::create([
                 'ref_type' => 'permohonan',
                 'ref_id' => $permohonan->id,
                 'status_lama' => $statusLama,
-                'status_baru' => 'disetujui',
+                'status_baru' => $statusBaru,
                 'actor_id' => $actor->id,
             ]);
+
+            // Jika kedua pihak telah setuju, broadcast notifikasi ke PPBJ
+            if ($ppkSetuju) {
+                $ppbjUsers = User::whereHas('Role', fn ($q) => $q->where('nama', 'PPBJ'))->pluck('id');
+                $notificationService = app(NotificationService::class);
+                foreach ($ppbjUsers as $ppbjId) {
+                    $notificationService->send(
+                        user: (int) $ppbjId,
+                        judul: 'Permohonan Siap Disusun Paket Pengadaan',
+                        pesan: "Permohonan '{$permohonan->judul}' ({$permohonan->nomor_surat}) telah disetujui oleh Bidang 2 dan PPK, serta siap disusun paket pengadaannya.",
+                        refType: 'permohonan',
+                        refId: $permohonan->id,
+                    );
+                }
+            }
 
             return $permohonan;
         });

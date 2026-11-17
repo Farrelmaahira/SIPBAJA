@@ -1,10 +1,8 @@
 import type { FC } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  LayoutGrid,
   FileText,
   Package,
-  ClipboardList,
   CheckCircle2,
   XCircle,
 } from 'lucide-react';
@@ -17,23 +15,8 @@ import PpbjTabbedTable, {
 } from '../molecules/PpbjTabbedTable';
 import type { PpbjStatItem, PpbjDashboardItem } from '../../types/ppbj';
 import type { AppTopbarUser } from '../organisms/AppTopbar';
+import { PPBJ_NAV_ITEMS } from '../../constants/ppbjNav';
 
-export const PPBJ_NAV_ITEMS = [
-  {
-    key: 'dashboard',
-    label: 'Dashboard',
-    icon: LayoutGrid,
-    href: '/ppbj/dashboard',
-    badge: null,
-  },
-  {
-    key: 'permohonan',
-    label: 'List Permohonan',
-    icon: ClipboardList,
-    href: '/ppbj/permohonan',
-    badge: null,
-  },
-];
 
 export interface PpbjDashboardTemplateProps {
   user?: AppTopbarUser | null;
