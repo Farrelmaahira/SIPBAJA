@@ -66,6 +66,8 @@ Route::prefix('v1')->group(function () {
         Route::prefix('admin')->middleware('role:Admin')->group(function () {
             Route::get('dashboard', DashboardAdminController::class)->name('api.admin.dashboard');
             Route::apiResource('pengguna', PenggunaController::class)->names('api.admin.pengguna');
+            Route::post('pengguna/{pengguna}/deactivate', [PenggunaController::class, 'deactivate'])->name('api.admin.pengguna.deactivate');
+            Route::post('pengguna/{pengguna}/activate', [PenggunaController::class, 'activate'])->name('api.admin.pengguna.activate');
             Route::apiResource('unit-kerja', UnitKerjaController::class)->parameters(['unit-kerja' => 'unit'])->names('api.admin.unit-kerja');
             Route::apiResource('mak', MakController::class)->names('api.admin.mak');
             Route::apiResource('role', RoleController::class)->names('api.admin.role');
