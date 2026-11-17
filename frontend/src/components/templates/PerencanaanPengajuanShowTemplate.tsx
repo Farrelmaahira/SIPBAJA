@@ -12,6 +12,7 @@ import {
   Lock,
 } from 'lucide-react';
 import AppLayout from './AppLayout';
+import HeroBanner from '../organisms/HeroBanner';
 import StatusPill from '../atoms/StatusPill';
 import DokumenListCard from '../organisms/DokumenListCard';
 import RiwayatStatusTimeline, { type TimelineStepItem } from '../organisms/RiwayatStatusTimeline';
@@ -74,6 +75,7 @@ export interface PerencanaanPengajuanShowTemplateProps {
   onConfirmApprove: () => void;
   onConfirmReject: (e: FormEvent) => void;
   onAlasanChange: (val: string) => void;
+  onBack: () => void;
 
   recentNotifications?: NotificationItem[];
   unreadNotificationsCount?: number;
@@ -123,13 +125,14 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
   rejectModalOpen,
   alasanPenolakan,
   alasanError = '',
-  catatanApprove = '',
-  onChangeCatatanApprove,
+  catatanApprove: _catatanApprove = '',
+  onChangeCatatanApprove: _onChangeCatatanApprove,
   onCloseApproveModal,
   onCloseRejectModal,
   onConfirmApprove,
   onConfirmReject,
   onAlasanChange,
+  onBack,
   recentNotifications,
   unreadNotificationsCount,
 }) => {
@@ -144,8 +147,8 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
   const permohonanMakOptions: PerencanaanMakItem[] =
     permohonan?.permohonan_mak && permohonan.permohonan_mak.length > 0
       ? permohonan.permohonan_mak
-          .map((pm) => pm.mak)
-          .filter((m): m is PerencanaanMakItem => Boolean(m))
+        .map((pm) => pm.mak)
+        .filter((m): m is PerencanaanMakItem => Boolean(m))
       : maksList.filter((m) => selectedMakIds.includes(m.id));
 
   const timelineSteps: TimelineStepItem[] = [
@@ -262,31 +265,23 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
         </div>
       ) : (
         <>
-          {/* Back Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-            <div>
-              <Link
-                to="/perencanaan/pengajuan"
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#5F6F6A] hover:text-[#0E7C5A] mb-2 transition-colors"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Kembali ke Daftar Pengajuan</span>
-              </Link>
+          {/* Hero Banner with Status Pill & Back CTA */}
+          <HeroBanner
+            eyebrow="DETAIL PENGAJUAN"
+            title={
               <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-xl sm:text-2xl font-extrabold text-[#14201C]">
-                  {permohonan?.judul || 'Detail Permohonan Pengadaan'}
-                </h1>
+                <span>{permohonan?.judul || 'Detail Permohonan'}</span>
                 <StatusPill status={rawStatus} />
               </div>
-              <p className="text-xs text-[#8A9A95] mt-1">
-                No. Permohonan:{' '}
-                <strong className="text-[#14201C]">{permohonan?.nomor_surat || '-'}</strong> •
-                Diajukan pada {formatTanggalIndo(permohonan?.created_at ? String(permohonan.created_at) : undefined)}
-              </p>
-            </div>
-          </div>
+            }
+            description={`Nomor ${permohonan?.nomor_surat || '-'} · Diajukan ${formatTanggalIndo(permohonan?.created_at ? String(permohonan.created_at) : undefined)}`}
+            ctaLabel="Kembali"
+            ctaIcon={ArrowLeft}
+            ctaVariant="translucent"
+            onCta={onBack}
+          />
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start my-5">
             {/* Left Column (8 cols) */}
             <div className="lg:col-span-8 space-y-6">
               {/* Informasi Permohonan Card */}
@@ -360,11 +355,10 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
                     <button
                       type="button"
                       onClick={() => setActiveDocTab('permohonan')}
-                      className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
-                        activeDocTab === 'permohonan'
-                          ? 'bg-white text-[#0E7C5A] shadow-2xs'
-                          : 'text-[#5F6F6A] hover:text-[#14201C]'
-                      }`}
+                      className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${activeDocTab === 'permohonan'
+                        ? 'bg-white text-[#0E7C5A] shadow-2xs'
+                        : 'text-[#5F6F6A] hover:text-[#14201C]'
+                        }`}
                     >
                       <FileText className="w-3.5 h-3.5" />
                       <span>Berkas Permohonan</span>
@@ -372,11 +366,10 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
                     <button
                       type="button"
                       onClick={() => setActiveDocTab('rkakl')}
-                      className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
-                        activeDocTab === 'rkakl'
-                          ? 'bg-white text-[#0E7C5A] shadow-2xs'
-                          : 'text-[#5F6F6A] hover:text-[#14201C]'
-                      }`}
+                      className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${activeDocTab === 'rkakl'
+                        ? 'bg-white text-[#0E7C5A] shadow-2xs'
+                        : 'text-[#5F6F6A] hover:text-[#14201C]'
+                        }`}
                     >
                       <FileSpreadsheet className="w-3.5 h-3.5" />
                       <span>Preview RKAKL</span>
@@ -610,24 +603,6 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
               <strong className="text-[#14201C]">{permohonan?.nomor_surat || ''}</strong> dan
               meneruskannya ke tahap berikutnya?
             </p>
-
-            <div className="text-left">
-              <label className="block text-xs font-bold text-[#14201C] mb-1.5">
-                Catatan / Arahan Mapping MAK (Opsional)
-              </label>
-              <textarea
-                value={catatanApprove}
-                onChange={(e) => onChangeCatatanApprove?.(e.target.value)}
-                placeholder="Misal: Gunakan MAK Belanja Modal untuk pengadaan server, sisanya untuk operasional..."
-                maxLength={1000}
-                rows={3}
-                className="w-full text-xs rounded-xl border border-[#CFDAD6] p-3 text-[#14201C] focus:outline-none focus:border-[#0E7C5A] resize-none"
-              />
-              <div className="flex justify-between items-center text-[10px] text-[#5F6F6A] mt-1">
-                <span>Diteruskan ke pihak PPBJ saat pemetaan MAK.</span>
-                <span>{catatanApprove.length}/1000</span>
-              </div>
-            </div>
 
             <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#F0F4F2]">
               <button
