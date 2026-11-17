@@ -47,4 +47,15 @@ class RoleService
 
         return true;
     }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function getRoleOptions(): array
+    {
+        return Role::query()
+            ->orderBy('nama')
+            ->get(['id', 'nama'])
+            ->toArray();
+    }
 }

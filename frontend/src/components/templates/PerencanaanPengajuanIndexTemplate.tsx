@@ -177,11 +177,10 @@ export const PerencanaanPengajuanIndexTemplate: FC<PerencanaanPengajuanIndexTemp
             <button
               type="button"
               onClick={onOpenFilterModal}
-              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                selectedStatuses.length > 0
-                  ? 'bg-[#E8F5EF] text-[#0E7C5A] border-[#0E7C5A]'
-                  : 'bg-white text-[#14201C] border-[#E4EBE8] hover:bg-[#F4F7F5]'
-              }`}
+              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${selectedStatuses.length > 0
+                ? 'bg-[#E8F5EF] text-[#0E7C5A] border-[#0E7C5A]'
+                : 'bg-white text-[#14201C] border-[#E4EBE8] hover:bg-[#F4F7F5]'
+                }`}
             >
               <Filter className="w-3.5 h-3.5" />
               <span>Filter Status</span>

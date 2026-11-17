@@ -482,7 +482,6 @@ class PengadaanService
     public function getDashboardPp(): array
     {
         $base = Pengadaan::query()->whereHas('Level', fn ($q) => $q->where('perlu_review_pp', true));
-
         $total = (clone $base)->count();
         $menunggu = (clone $base)->whereIn('status', ['menunggu_persetujuan', 'menunggu_review'])->count();
         $disetujui = (clone $base)->whereIn('status', ['disetujui', 'diteruskan', 'selesai'])->count();
@@ -563,6 +562,11 @@ class PengadaanService
 
         if (! empty($filters['tahun']) && is_numeric($filters['tahun'])) {
             $query->whereYear('created_at', (int) $filters['tahun']);
+        }
+
+        if (! empty($filters['unit_id']) && is_numeric($filters['unit_id'])) {
+            $unitId = (int) $filters['unit_id'];
+            $query->whereHas('Permohonan', fn ($q) => $q->where('unit_id', $unitId));
         }
 
         return $query
@@ -712,9 +716,19 @@ class PengadaanService
             $query->whereYear('created_at', (int) $filters['tahun']);
         }
 
+        if (! empty($filters['unit_id']) && is_numeric($filters['unit_id'])) {
+            $unitId = (int) $filters['unit_id'];
+            $query->whereHas('Permohonan', fn ($q) => $q->where('unit_id', $unitId));
+        }
+
         return $query
             ->orderByDesc('created_at')
             ->paginate($perPage)
             ->withQueryString();
+    }
+
+    public function getProfilPengguna(User $user): User
+    {
+        return $user->load(['Role', 'Unit']);
     }
 }

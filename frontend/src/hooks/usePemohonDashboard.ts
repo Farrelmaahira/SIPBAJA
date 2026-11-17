@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
-import api from '../services/api';
+import { useEffect, useMemo, useState, useCallback, type Dispatch, type SetStateAction } from 'react';
+import pemohonService from '../services/pemohonService';
 import { namaBulan } from '../utils/formatPermohonan';
 
 export interface RingkasanPemohon {
@@ -48,36 +48,88 @@ export interface UsePemohonDashboardReturn {
   viewMode: string;
   setViewMode: Dispatch<SetStateAction<string>>;
   gantiTahun: (tahun: number) => Promise<void>;
+  isLoading: boolean;
+  isError: boolean;
   isLoadingYear: boolean;
+  refetch: () => void;
 }
+
+const DEFAULT_RINGKASAN: RingkasanPemohon = {
+  total: 0,
+  menunggu_verifikasi: 0,
+  disetujui: 0,
+  ditolak: 0,
+  tambahan_bulan_ini: 0,
+};
 
 /**
  * Stateful hook for the Pemohon Dashboard page.
  * Manages view mode, active year, and fetches monthly statistics asynchronously via Axios.
  */
-export function usePemohonDashboard({
-  ringkasan: initialRingkasan,
-  permohonanAktif: initialPermohonanAktif,
-  statistikBulanan: initialStatistikBulanan,
-  tahunAktif: initialTahunAktif,
-}: UsePemohonDashboardProps = {}): UsePemohonDashboardReturn {
+export function usePemohonDashboard(
+  initialProps: UsePemohonDashboardProps = {}
+): UsePemohonDashboardReturn {
   const [viewMode, setViewMode] = useState<string>('bulan');
+
+  const [ringkasan, setRingkasan] = useState<RingkasanPemohon>(
+    () => initialProps.ringkasan ?? DEFAULT_RINGKASAN
+  );
+  const [permohonanAktif, setPermohonanAktif] = useState<PermohonanAktifItem[]>(
+    () => initialProps.permohonanAktif ?? []
+  );
   const [statistikBulanan, setStatistikBulanan] = useState<StatistikBulananItem[]>(
-    () => initialStatistikBulanan ?? []
+    () => initialProps.statistikBulanan ?? []
   );
   const [tahunAktif, setTahunAktif] = useState<number>(
-    () => initialTahunAktif ?? new Date().getFullYear()
+    () => initialProps.tahunAktif ?? new Date().getFullYear()
   );
+
+  const [isLoading, setIsLoading] = useState<boolean>(!initialProps.ringkasan);
+  const [isError, setIsError] = useState<boolean>(false);
   const [isLoadingYear, setIsLoadingYear] = useState<boolean>(false);
 
+  const fetchDashboardData = useCallback(async (signal?: AbortSignal) => {
+    setIsLoading(true);
+    setIsError(false);
+    try {
+      const data = await pemohonService.getDashboard(undefined, signal);
+      if (data) {
+        if (data.ringkasan) {
+          setRingkasan(data.ringkasan);
+        }
+        if (data.permohonanAktif) {
+          setPermohonanAktif(data.permohonanAktif);
+        }
+        if (data.statistikBulanan) {
+          setStatistikBulanan(data.statistikBulanan);
+        }
+        if (data.tahunAktif) {
+          setTahunAktif(data.tahunAktif);
+        }
+      }
+    } catch (error: unknown) {
+      if (!signal?.aborted) {
+        setIsError(true);
+        console.error('Failed to fetch Pemohon dashboard data:', error);
+      }
+    } finally {
+      if (!signal?.aborted) {
+        setIsLoading(false);
+      }
+    }
+  }, []);
+
   useEffect(() => {
-    if (initialStatistikBulanan) {
-      setStatistikBulanan(initialStatistikBulanan);
+    // If initialProps were not provided, fetch from backend
+    if (!initialProps.ringkasan && !initialProps.permohonanAktif) {
+      const controller = new AbortController();
+      void fetchDashboardData(controller.signal);
+
+      return () => {
+        controller.abort();
+      };
     }
-    if (initialTahunAktif) {
-      setTahunAktif(initialTahunAktif);
-    }
-  }, [initialStatistikBulanan, initialTahunAktif]);
+  }, [fetchDashboardData, initialProps.ringkasan, initialProps.permohonanAktif]);
 
   /**
    * Switch the active calendar year and asynchronously fetch monthly statistics from the API.
@@ -85,21 +137,14 @@ export function usePemohonDashboard({
   const gantiTahun = async (tahun: number): Promise<void> => {
     setIsLoadingYear(true);
     try {
-      const response = await api.get<{
-        ringkasan?: RingkasanPemohon;
-        permohonanAktif?: PermohonanAktifItem[];
-        statistikBulanan?: StatistikBulananItem[];
-        tahunAktif?: number;
-      }>('/v1/pemohon/dashboard', {
-        params: { tahun },
-      });
+      const data = await pemohonService.getDashboard({ tahun });
 
-      if (response.data) {
-        if (response.data.statistikBulanan) {
-          setStatistikBulanan(response.data.statistikBulanan);
+      if (data) {
+        if (data.statistikBulanan) {
+          setStatistikBulanan(data.statistikBulanan);
         }
-        if (response.data.tahunAktif) {
-          setTahunAktif(response.data.tahunAktif);
+        if (data.tahunAktif) {
+          setTahunAktif(data.tahunAktif);
         } else {
           setTahunAktif(tahun);
         }
@@ -119,21 +164,22 @@ export function usePemohonDashboard({
     }));
   }, [statistikBulanan]);
 
+  const refetch = useCallback(() => {
+    void fetchDashboardData();
+  }, [fetchDashboardData]);
+
   return {
-    ringkasan: initialRingkasan ?? {
-      total: 0,
-      menunggu_verifikasi: 0,
-      disetujui: 0,
-      ditolak: 0,
-      tambahan_bulan_ini: 0,
-    },
-    permohonanAktif: initialPermohonanAktif ?? [],
+    ringkasan,
+    permohonanAktif,
     chartData,
     tahunAktif,
     viewMode,
     setViewMode,
     gantiTahun,
+    isLoading,
+    isError,
     isLoadingYear,
+    refetch,
   };
 }
 

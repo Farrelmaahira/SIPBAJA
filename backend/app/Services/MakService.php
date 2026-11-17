@@ -58,6 +58,11 @@ class MakService
         return true;
     }
 
+    public function count(): int
+    {
+        return Mak::count();
+    }
+
     public function paginateUntukPerencanaan(?string $q = ''): LengthAwarePaginator
     {
         return Mak::query()

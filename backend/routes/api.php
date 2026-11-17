@@ -20,9 +20,11 @@ use App\Http\Controllers\Perencanaan\PerencanaanMakController;
 use App\Http\Controllers\Perencanaan\PerencanaanProfilController;
 use App\Http\Controllers\Perencanaan\PerencanaanRkaklController;
 use App\Http\Controllers\Perlengkapan\DashboardPerlengkapanController;
+use App\Http\Controllers\Pp\DashboardPpController;
 use App\Http\Controllers\Pp\PpController;
 use App\Http\Controllers\PPBJ\DashboardPpbjController;
 use App\Http\Controllers\PPBJ\PermohonanController as PpbjPermohonanController;
+use App\Http\Controllers\Ppk\DashboardPpkController;
 use App\Http\Controllers\Ppk\PpkController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -77,6 +79,7 @@ Route::prefix('v1')->group(function () {
             Route::get('permohonan', [PermohonanPemohonController::class, 'index'])->name('api.pemohon.permohonan.index');
             Route::get('permohonan/create', [PermohonanPemohonController::class, 'create'])->name('api.pemohon.permohonan.create');
             Route::get('permohonan/{permohonan}', [PermohonanPemohonController::class, 'show'])->name('api.pemohon.permohonan.show');
+            Route::delete('permohonan/{permohonan}', [PermohonanPemohonController::class, 'destroy'])->name('api.pemohon.permohonan.destroy');
             Route::post('permohonan', [PermohonanPemohonController::class, 'store'])->name('api.pemohon.permohonan.store');
             Route::post('permohonan/{permohonan}/revisi', [PermohonanPemohonController::class, 'update'])->name('api.pemohon.permohonan.revisi');
             Route::get('permohonan/{permohonan}/dokumen', [PermohonanPemohonController::class, 'downloadDokumen'])->name('api.pemohon.permohonan.dokumen.download');
@@ -114,14 +117,26 @@ Route::prefix('v1')->group(function () {
         Route::prefix('bidang-2')->middleware('role:Bidang 2')->group(function () {
             Route::get('dashboard', DashboardBidang2Controller::class)->name('api.bidang2.dashboard');
             Route::get('pengajuan', [PengajuanBidang2Controller::class, 'index'])->name('api.bidang2.pengajuan.index');
+            Route::get('pengajuan/{permohonan}', [PengajuanBidang2Controller::class, 'show'])->name('api.bidang2.pengajuan.show');
+            Route::post('pengajuan/{permohonan}/approve', [PengajuanBidang2Controller::class, 'approve'])->name('api.bidang2.pengajuan.approve');
+            Route::post('pengajuan/{permohonan}/reject', [PengajuanBidang2Controller::class, 'reject'])->name('api.bidang2.pengajuan.reject');
+            Route::get('pengajuan/{permohonan}/memo', [PengajuanBidang2Controller::class, 'downloadMemo'])->name('api.bidang2.pengajuan.memo.download');
             Route::get('rkakl', [RkaklBidang2Controller::class, 'index'])->name('api.bidang2.rkakl.index');
+            Route::get('rkakl/dokumen', [RkaklBidang2Controller::class, 'downloadDokumen'])->name('api.bidang2.rkakl.dokumen.latest');
+            Route::get('rkakl/dokumen/{dokumen}', [RkaklBidang2Controller::class, 'downloadDokumen'])->name('api.bidang2.rkakl.dokumen.download');
             Route::get('permohonan/{permohonan}/dokumen', [PermohonanPemohonController::class, 'downloadDokumen'])->name('api.bidang2.permohonan.dokumen.download');
+            Route::get('notifications', [NotificationController::class, 'index'])->name('api.bidang2.notifications.index');
+            Route::get('notifications/summary', [NotificationController::class, 'summary'])->name('api.bidang2.notifications.summary');
+            Route::post('notifications/read-all', [NotificationController::class, 'markAllRead'])->name('api.bidang2.notifications.readAll');
+            Route::post('notifications/{notification}/read', [NotificationController::class, 'markOneRead'])->name('api.bidang2.notifications.readOne');
+            Route::get('profil', [PerencanaanProfilController::class, 'index'])->name('api.bidang2.profil.index');
         });
 
         // PPBJ Routes
         Route::prefix('ppbj')->middleware('role:PPBJ')->group(function () {
             Route::get('dashboard', DashboardPpbjController::class)->name('api.ppbj.dashboard');
             Route::apiResource('permohonan', PpbjPermohonanController::class)->names('api.ppbj.permohonan');
+            Route::get('permohonan/{permohonan}/dokumen', [PpbjPermohonanController::class, 'downloadDokumen'])->name('api.ppbj.permohonan.dokumen.download');
             Route::post('permohonan/{id}/pengadaan/draft', [PpbjPermohonanController::class, 'storeDraft'])->name('api.ppbj.permohonan.pengadaan.draft');
             Route::delete('pengadaan/{id}', [PpbjPermohonanController::class, 'destroyDraft'])->name('api.ppbj.pengadaan.destroy');
             Route::post('permohonan/{id}/pengadaan/submit', [PpbjPermohonanController::class, 'submitReviewer'])->name('api.ppbj.permohonan.pengadaan.submit');
@@ -129,7 +144,7 @@ Route::prefix('v1')->group(function () {
 
         // PP Routes
         Route::prefix('pp')->middleware('role:PP')->group(function () {
-            Route::get('dashboard', [PpController::class, 'dashboard'])->name('api.pp.dashboard');
+            Route::get('dashboard', DashboardPpController::class)->name('api.pp.dashboard');
             Route::get('pengajuan', [PpController::class, 'index'])->name('api.pp.pengajuan.index');
             Route::get('pengajuan/{pengadaan}/review', [PpController::class, 'review'])->name('api.pp.pengajuan.review');
             Route::post('pengajuan/{pengadaan}/approve', [PpController::class, 'approve'])->name('api.pp.pengajuan.approve');
@@ -143,7 +158,11 @@ Route::prefix('v1')->group(function () {
 
         // PPK Routes
         Route::prefix('ppk')->middleware('role:PPK')->group(function () {
-            Route::get('dashboard', [PpkController::class, 'dashboard'])->name('api.ppk.dashboard');
+            Route::get('dashboard', DashboardPpkController::class)->name('api.ppk.dashboard');
+            Route::get('permohonan', [PpkController::class, 'indexPermohonan'])->name('api.ppk.permohonan.index');
+            Route::get('permohonan/{permohonan}', [PpkController::class, 'showPermohonan'])->name('api.ppk.permohonan.show');
+            Route::post('permohonan/{permohonan}/approve', [PpkController::class, 'approvePermohonan'])->name('api.ppk.permohonan.approve');
+            Route::post('permohonan/{permohonan}/reject', [PpkController::class, 'rejectPermohonan'])->name('api.ppk.permohonan.reject');
             Route::get('pengajuan', [PpkController::class, 'index'])->name('api.ppk.pengajuan.index');
             Route::get('pengajuan/{pengadaan}/review', [PpkController::class, 'review'])->name('api.ppk.pengajuan.review');
             Route::post('pengajuan/{pengadaan}/approve', [PpkController::class, 'approve'])->name('api.ppk.pengajuan.approve');
@@ -152,6 +171,9 @@ Route::prefix('v1')->group(function () {
             Route::post('pengajuan/{pengadaan}/pembayaran/approve', [PpkController::class, 'approvePembayaran'])->name('api.ppk.pengajuan.pembayaran.approve');
             Route::post('pengajuan/{pengadaan}/pembayaran/reject', [PpkController::class, 'rejectPembayaran'])->name('api.ppk.pengajuan.pembayaran.reject');
             Route::get('pengajuan/{pengadaan}', [PpkController::class, 'show'])->name('api.ppk.pengajuan.show');
+            Route::get('rkakl/dokumen', [PpkController::class, 'downloadRkakl'])->name('api.ppk.rkakl.dokumen.latest');
+            Route::get('rkakl/dokumen/{dokumen}', [PpkController::class, 'downloadRkakl'])->name('api.ppk.rkakl.dokumen.download');
+            Route::get('rkakl', [PpkController::class, 'rkakl'])->name('api.ppk.rkakl.index');
             Route::get('notifikasi', [NotificationController::class, 'index'])->name('api.ppk.notifikasi.index');
             Route::post('notifikasi/read-all', [NotificationController::class, 'markAllRead'])->name('api.ppk.notifikasi.readAll');
             Route::post('notifikasi/{notification}/read', [NotificationController::class, 'markOneRead'])->name('api.ppk.notifikasi.readOne');

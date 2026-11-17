@@ -725,6 +725,74 @@ Prefix Rute: `/api/v1/bidang-2`
     }
     ```
 - **List Pengajuan:** `GET /api/v1/bidang-2/pengajuan?status=semua&search=`
+- **Detail Pengajuan:** `GET /api/v1/bidang-2/pengajuan/{id}`
+  - **Success Response (200 OK):**
+    ```json
+    {
+      "permohonan": {
+        "id": 1,
+        "nomor_surat": "111-FFF-111",
+        "judul": "Pengadaan Komputer",
+        "ringkasan_tujuan": "Kebutuhan praktikum mahasiswa di laboratorium",
+        "unit_nama": "Jurusan Teknik Informatika & Komputer",
+        "estimasi_anggaran": 100000000,
+        "revisi_ke": 0,
+        "status": "menunggu_bidang2",
+        "tanggal_pengajuan": "04 Maret 2027",
+        "created_at": "2027-03-04T08:00:00Z",
+        "mak_list": [
+          { "id": 1, "kode": "532111", "nama": "Belanja Modal Peralatan dan Mesin" }
+        ],
+        "dokumen": {
+          "id": 10,
+          "nama_asli": "Surat_Permohonan_Pengadaan_Komputer.pdf",
+          "ukuran_bytes": 8388608,
+          "mime_type": "application/pdf",
+          "download_url": "/api/v1/bidang-2/permohonan/1/dokumen"
+        },
+        "catatan_perencanaan": {
+          "pemeriksa_nama": "Tim Perencanaan",
+          "pemeriksa_peran": "Tim Perencanaan",
+          "tanggal": "05 Maret 2027, 09:30",
+          "catatan": "Jenis MAK 532111 telah diverifikasi. Mohon periksa kesesuaian nominal dengan Dokumen RKAKL terbaru sebelum memberi keputusan."
+        },
+        "rkakl_aktif": {
+          "versi": 3,
+          "nama_asli": "RKAKL_TA_2026_Satker_Politeknik_v3.pdf",
+          "updated_at": "12 Okt 2026",
+          "download_url": "/api/v1/bidang-2/rkakl"
+        },
+        "keputusan_bidang2": null
+      }
+    }
+    ```
+- **Persetujuan Permohonan (Approval dengan Memo):** `POST /api/v1/bidang-2/pengajuan/{id}/approve`
+  - **Content-Type:** `multipart/form-data`
+  - **Form Data:**
+    - `file_memo`: file (PDF), required, max 20480 KB (20 MB).
+  - **Success Response (200 OK):**
+    ```json
+    {
+      "message": "Permohonan berhasil disetujui dan memo persetujuan telah tersimpan.",
+      "permohonan": { "id": 1, "status": "disetujui" }
+    }
+    ```
+- **Penolakan Permohonan (Rejection dengan Alasan):** `POST /api/v1/bidang-2/pengajuan/{id}/reject`
+  - **Content-Type:** `application/json`
+  - **Request Body:**
+    ```json
+    {
+      "alasan": "Estimasi anggaran melebihi alokasi MAK semester ini. Harap disesuaikan."
+    }
+    ```
+  - **Success Response (200 OK):**
+    ```json
+    {
+      "message": "Permohonan berhasil ditolak dan catatan telah diteruskan ke pemohon serta Perencanaan.",
+      "permohonan": { "id": 1, "status": "ditolak", "revisi_ke": 1 }
+    }
+    ```
+- **Unduh Memo Persetujuan:** `GET /api/v1/bidang-2/pengajuan/{id}/memo`
 - **List Dokumen RKAKL:** `GET /api/v1/bidang-2/rkakl`
 - **Unduh Dokumen:** `GET /api/v1/bidang-2/permohonan/{permohonanId}/dokumen`
 
@@ -824,30 +892,56 @@ Prefix Rute: `/api/v1/ppk`
 
 #### 1. Dashboard, List & Review Pengadaan
 - **Dashboard:** `GET /api/v1/ppk/dashboard`
-- **List Pengajuan:** `GET /api/v1/ppk/pengajuan?q={keyword}&statuses[]={status}`
+- **List Pengajuan:** `GET /api/v1/ppk/pengajuan?q={keyword}&statuses[]={status}&bulan={bulan}&tahun={tahun}&unit_id={unitId}`
+- **Detail Pengajuan:** `GET /api/v1/ppk/pengajuan/{pengadaanId}`
 - **Review Form:** `GET /api/v1/ppk/pengajuan/{pengadaanId}/review`
 
-#### 2. Approve & Reject Dokumen Pengadaan
+#### 2. Persetujuan Awal Permohonan (Dokumen Turunan milik PPK)
+- **List Permohonan untuk PPK:** `GET /api/v1/ppk/permohonan?q={keyword}&status={status}&bulan={bulan}&tahun={tahun}&unit_id={unitId}`
+  - Mengembalikan daftar permohonan yang terikat dengan Jenis MAK milik akun PPK yang login (`mak.ppk_user_id`).
+- **Detail Permohonan untuk PPK:** `GET /api/v1/ppk/permohonan/{permohonanId}`
+  - Response (200 OK): `{ "message": "Detail permohonan untuk PPK berhasil diambil.", "data": { "permohonan": { ... }, "dokumen_permohonan": [...], "permohonan_mak_ppk": [...], "rkakl_active": { ... } } }`
+  - Error Response (403 Forbidden): jika permohonan tidak terikat Jenis MAK milik PPK yang login.
+- **Approve Permohonan oleh PPK:** `POST /api/v1/ppk/permohonan/{permohonanId}/approve`
+  - **Request Body (`multipart/form-data`):**
+    - `memo`: Berkas wajib (`pdf`, `jpg`, `jpeg`, `png`, maks. `10 MB`).
+    - `catatan`: String opsional (maks. `1000` karakter).
+  - **Success Response (200 OK):**
+    ```json
+    {
+      "message": "Permohonan beserta Memo Persetujuan Surat Permohonan berhasil disetujui oleh PPK.",
+      "data": { "id": 1, "status": "disetujui" }
+    }
+    ```
+  - **Error Response (422):** `{ "errors": { "memo": ["Berkas Memo Persetujuan Surat Permohonan wajib diunggah."] } }`
+- **Reject Permohonan oleh PPK:** `POST /api/v1/ppk/permohonan/{permohonanId}/reject`
+  - **Request Body (JSON):** `{ "alasan": "Rincian kebutuhan belum sesuai anggaran MAK." }`
+  - **Success Response (200 OK):** `{ "message": "Permohonan telah ditolak oleh PPK beserta catatan alasan." }`
+
+#### 3. Approve & Reject Dokumen Pengadaan
 - **Approve:** `POST /api/v1/ppk/pengajuan/{pengadaanId}/approve`
-  - Response (200 OK): `{ "message": "Dokumen pengadaan berhasil disetujui oleh PPK." }`
+  - Response (200 OK): `{ "message": "Dokumen pengadaan berhasil disetujui oleh PPK dan diteruskan ke PPBJ." }`
 - **Reject:** `POST /api/v1/ppk/pengajuan/{pengadaanId}/reject`
   - Body: `{ "alasan": "Spesifikasi perlu verifikasi teknis ulang." }`
   - Response (200 OK): `{ "message": "Dokumen pengadaan ditolak dan dikembalikan ke PPBJ." }`
 
-#### 3. Review & Persetujuan Dokumen Pembayaran
+#### 4. Review & Persetujuan Dokumen Pembayaran
 - **Detail Form Pembayaran:** `GET /api/v1/ppk/pengajuan/{pengadaanId}/pembayaran`
-- **Approve Pembayaran:** `POST /api/v1/ppk/pengajuan/{pengadaanId}/pembayaran/approve`
-  - Body (JSON):
-    ```json
-    {
-      "filename": "Memo_Persetujuan_042_TI_PNJ_2026.pdf",
-      "catatan": "Disetujui untuk termin pertama 100% barang diterima."
-    }
-    ```
-  - Response (200 OK): `{ "message": "Dokumen pembayaran beserta Memo Persetujuan berhasil disetujui." }`
+- **Approve Pembayaran (Diperketat):** `POST /api/v1/ppk/pengajuan/{pengadaanId}/pembayaran/approve`
+  - **Request Body (`multipart/form-data`):**
+    - `memo`: Berkas wajib Memo Persetujuan Pembayaran (`pdf`, `jpg`, `jpeg`, `png`, maks. `10 MB`).
+    - `catatan`: String opsional (maks. `1000` karakter).
+  - **Success Response (200 OK):** `{ "message": "Dokumen pembayaran beserta Memo Persetujuan berhasil disetujui." }`
+  - **Error Response (422):** `{ "errors": { "memo": ["Berkas Memo Persetujuan Pembayaran wajib diunggah."] } }`
 - **Reject Pembayaran:** `POST /api/v1/ppk/pengajuan/{pengadaanId}/pembayaran/reject`
   - Body: `{ "alasan": "Faktur pajak belum valid." }`
   - Response (200 OK): `{ "message": "Dokumen pembayaran telah ditolak beserta catatan revisi." }`
+
+#### 5. Lihat Dokumen RKAKL (Read-Only untuk PPK)
+- **Daftar & Dokumen RKAKL Aktif:** `GET /api/v1/ppk/rkakl?tahun={tahun}`
+  - Response (200 OK): `{ "message": "Data Dokumen RKAKL berhasil diambil.", "data": { "active_doc": { ... }, "history": [...], "items": [...], "tahun": "2026" } }`
+- **Unduh / Preview Inline RKAKL:** `GET /api/v1/ppk/rkakl/dokumen/{dokumenId?}`
+  - Response (200 OK): Stream berkas PDF (`application/pdf`).
 
 ---
 

@@ -1,24 +1,19 @@
 import { useEffect, useState, type FC, type ChangeEvent } from 'react';
 import axios from 'axios';
-import api from '../../../services/api';
+import { adminService } from '../../../services/adminService';
 import RoleTemplate, {
   type RoleRowItem,
   type RoleFormData,
 } from '../../../components/templates/RoleTemplate';
+import Pagination, { type PaginationMeta } from '../../../components/molecules/Pagination';
 
 const EMPTY_FORM: RoleFormData = {
   nama: '',
 };
 
-interface PaginationLink {
-  url: string | null;
-  label: string;
-  active: boolean;
-}
-
 export const RoleIndex: FC = () => {
   const [roles, setRoles] = useState<RoleRowItem[]>([]);
-  const [paginationLinks, setPaginationLinks] = useState<PaginationLink[]>([]);
+  const [paginationMeta, setPaginationMeta] = useState<PaginationMeta | null>(null);
   const [query, setQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,29 +30,23 @@ export const RoleIndex: FC = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const fetchRoles = async (searchQuery = query, page = currentPage) => {
+  const fetchRoles = async (searchQuery = query, page = currentPage, signal?: AbortSignal) => {
     setIsLoading(true);
     try {
-      const res = await api.get<{
-        roles?: {
-          data?: RoleRowItem[];
-          links?: PaginationLink[];
-        };
-        data?: RoleRowItem[];
-      }>('/v1/admin/role', {
-        params: { q: searchQuery, page },
-      });
+      const data = await adminService.getRoles({ q: searchQuery, page }, signal);
 
-      const data = res.data;
       if (data.roles?.data) {
-        setRoles(data.roles.data);
-        setPaginationLinks(data.roles.links || []);
-      } else if (Array.isArray(data.data)) {
-        setRoles(data.data);
-      } else if (Array.isArray(data)) {
-        setRoles(data as RoleRowItem[]);
+        setRoles(data.roles.data as unknown as RoleRowItem[]);
+        setPaginationMeta({
+          current_page: data.roles.current_page,
+          last_page: data.roles.last_page,
+          total: data.roles.total,
+          from: data.roles.from,
+          to: data.roles.to,
+        });
       }
     } catch (err) {
+      if (axios.isCancel(err)) return;
       console.error('Failed to fetch role list:', err);
     } finally {
       setIsLoading(false);
@@ -65,13 +54,16 @@ export const RoleIndex: FC = () => {
   };
 
   useEffect(() => {
+    const controller = new AbortController();
     const timer = setTimeout(() => {
-      fetchRoles(query, 1);
-      setCurrentPage(1);
+      fetchRoles(query, currentPage, controller.signal);
     }, 300);
 
-    return () => clearTimeout(timer);
-  }, [query]);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [query, currentPage]);
 
   const openCreate = () => {
     setFormData({ ...EMPTY_FORM });
@@ -98,73 +90,59 @@ export const RoleIndex: FC = () => {
 
     try {
       if (modalMode === 'edit' && editId) {
-        await api.put(`/v1/admin/role/${editId}`, formData);
-      } else {
-        await api.post('/v1/admin/role', formData);
+        await adminService.updateRole(editId, formData);
+      } else if (modalMode === 'create') {
+        await adminService.createRole(formData);
       }
-      setModalMode(null);
-      await fetchRoles(query, currentPage);
-    } catch (err: unknown) {
-      if (axios.isAxiosError(err) && err.response?.data?.errors) {
-        const valErrors: Record<string, string> = {};
-        Object.entries(err.response.data.errors).forEach(([field, msg]) => {
-          valErrors[field] = Array.isArray(msg) ? msg[0] : String(msg);
-        });
-        setErrors(valErrors);
-      } else {
-        setErrors({ general: 'Terjadi kesalahan saat menyimpan peran.' });
+      closeModal();
+      fetchRoles();
+    } catch (err: any) {
+      if (err.response?.data?.errors) {
+        const flat: Record<string, string> = {};
+        for (const [k, v] of Object.entries(err.response.data.errors)) {
+          flat[k] = Array.isArray(v) ? (v[0] as string) : String(v);
+        }
+        setErrors(flat);
       }
     } finally {
       setProcessing(false);
     }
   };
 
+  const askDelete = (row: RoleRowItem) => {
+    setDeleteTarget(row);
+  };
+
+  const cancelDelete = () => {
+    setDeleteTarget(null);
+  };
+
   const confirmDelete = async () => {
     if (!deleteTarget) return;
+
     try {
-      await api.delete(`/v1/admin/role/${deleteTarget.id}`);
+      await adminService.deleteRole(deleteTarget.id);
       setDeleteTarget(null);
-      await fetchRoles(query, currentPage);
+      fetchRoles();
     } catch (err) {
       console.error('Failed to delete role:', err);
     }
   };
 
-  const renderPagination = () => {
-    if (!paginationLinks || paginationLinks.length <= 3) return null;
-    return (
-      <div className="flex items-center justify-end gap-2">
-        {paginationLinks.map((link, i) => (
-          <button
-            key={i}
-            type="button"
-            disabled={!link.url}
-            onClick={() => {
-              if (link.url) {
-                const urlParams = new URL(link.url, window.location.origin).searchParams;
-                const pageParam = parseInt(urlParams.get('page') || '1', 10);
-                setCurrentPage(pageParam);
-                fetchRoles(query, pageParam);
-              }
-            }}
-            dangerouslySetInnerHTML={{ __html: link.label }}
-            className={`min-w-[44px] min-h-[44px] px-3 rounded-xl border text-sm font-semibold transition-colors cursor-pointer disabled:opacity-40 ${
-              link.active
-                ? 'bg-[#0E7C5A] border-[#0E7C5A] text-white'
-                : 'bg-white border-[#E4EBE8] text-[#5F6F6A] hover:bg-[#EEF5F2]'
-            }`}
-          />
-        ))}
-      </div>
-    );
-  };
-
   return (
     <RoleTemplate
       rows={roles}
-      pagination={renderPagination()}
+      pagination={
+        <Pagination
+          meta={paginationMeta}
+          onPageChange={(page) => setCurrentPage(page)}
+        />
+      }
       query={query}
-      onQueryChange={(e: ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
+      onQueryChange={(e: ChangeEvent<HTMLInputElement>) => {
+        setQuery(e.target.value);
+        setCurrentPage(1);
+      }}
       modalMode={modalMode}
       form={{
         data: formData,
@@ -177,8 +155,8 @@ export const RoleIndex: FC = () => {
       onCloseModal={closeModal}
       onSubmitForm={submitForm}
       deleteTarget={deleteTarget}
-      onAskDelete={setDeleteTarget}
-      onCancelDelete={() => setDeleteTarget(null)}
+      onAskDelete={askDelete}
+      onCancelDelete={cancelDelete}
       onConfirmDelete={confirmDelete}
       isLoading={isLoading}
     />

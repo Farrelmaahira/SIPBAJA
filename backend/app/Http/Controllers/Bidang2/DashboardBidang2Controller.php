@@ -19,12 +19,14 @@ class DashboardBidang2Controller extends Controller
         $tahun = (int) $request->input('tahun', Carbon::now()->year);
 
         $ringkasan = $this->dashboardService->ringkasan();
-        $riwayatTerbaru = $this->dashboardService->riwayatTerbaru(5);
+        $riwayatTerbaru = $this->dashboardService->riwayatTerbaru(4);
+        $riwayatPengadaanTerbaru = $this->dashboardService->riwayatPengadaanTerbaru(4);
         $statistik = $this->dashboardService->statistikBulanan($tahun);
 
         return response()->json([
             'ringkasan' => $ringkasan,
             'riwayatTerbaru' => $riwayatTerbaru,
+            'riwayatPengadaanTerbaru' => $riwayatPengadaanTerbaru,
             'statistikBulanan' => $statistik['bulanan'],
             'totalDisetujui' => $statistik['total_disetujui'],
             'totalDitolak' => $statistik['total_ditolak'],
