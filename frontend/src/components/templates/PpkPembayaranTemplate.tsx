@@ -17,7 +17,7 @@ import {
   Upload,
   X,
 } from 'lucide-react';
-import PpLayout, { type PpNavItem } from './PpLayout';
+import AppLayout, { type AppNavItem as PpNavItem } from './AppLayout';
 import DokumentasiGalleryModal from '../organisms/DokumentasiGalleryModal';
 import DocumentPreviewModal from '../organisms/DocumentPreviewModal';
 import type { NotificationItem } from '../../types/notification';
@@ -200,7 +200,7 @@ export const PpkPembayaranTemplate: FC<PpkPembayaranTemplateProps> = ({
   );
 
   return (
-    <PpLayout
+    <AppLayout
       activeRoute="pengajuan"
       navItems={navItems}
       roleInitials="PPK"
@@ -216,8 +216,9 @@ export const PpkPembayaranTemplate: FC<PpkPembayaranTemplateProps> = ({
         { label: 'DETAIL DOKUMEN PEMBAYARAN' },
       ]}
     >
+      <div className="space-y-6">
       {/* Hero Top Banner */}
-      <div className="relative overflow-hidden rounded-[24px] bg-gradient-to-br from-[#0A5C42] to-[#17A373] p-6 sm:px-9 sm:py-8 text-white shadow-[0_10px_24px_rgba(13,51,38,0.14)] mb-6">
+      <div className="relative overflow-hidden rounded-[24px] bg-gradient-to-br from-[#0A5C42] to-[#17A373] p-6 sm:px-9 sm:py-8 text-white shadow-[0_10px_24px_rgba(13,51,38,0.14)]">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
           <div>
             <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-white/75 block mb-2">
@@ -256,7 +257,7 @@ export const PpkPembayaranTemplate: FC<PpkPembayaranTemplateProps> = ({
       </div>
 
       {/* Card 1: Informasi Permohonan */}
-      <div className="bg-white rounded-[20px] p-6 sm:p-8 border border-[#E3EAE6] shadow-[0_8px_12px_rgba(13,26,20,0.06)] mb-6">
+      <div className="bg-white rounded-[20px] p-6 sm:p-8 border border-[#E3EAE6] shadow-[0_8px_12px_rgba(13,26,20,0.06)]">
         <div className="mb-6 pb-4 border-b border-[#E3EAE6]">
           <h3 className="text-lg font-bold text-[#0E1B16]">Informasi Permohonan</h3>
           <p className="text-xs text-[#6B7A73] mt-0.5">Ringkasan data yang diajukan</p>
@@ -378,7 +379,7 @@ export const PpkPembayaranTemplate: FC<PpkPembayaranTemplateProps> = ({
       </div>
 
       {/* Review Body: Dokumen Pembayaran + Keputusan */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-7 space-y-6">
           <div className="bg-white rounded-[20px] p-6 sm:p-8 border border-[#E3EAE6] shadow-[0_8px_12px_rgba(13,26,20,0.06)]">
             <div className="mb-5">
@@ -639,7 +640,8 @@ export const PpkPembayaranTemplate: FC<PpkPembayaranTemplateProps> = ({
         filename={previewDoc?.filename}
         size={previewDoc?.size}
       />
-    </PpLayout>
+      </div>
+    </AppLayout>
   );
 };
 

@@ -25,6 +25,8 @@ class PpbjDummySeeder extends Seeder
 {
     public function run(): void
     {
+        $this->call(MasterReferenceSeeder::class);
+
         DB::transaction(function () {
             $unit = Unit::firstOrCreate(['nama' => 'Teknik Informatika']);
 

@@ -5,10 +5,10 @@ import {
   XCircle,
   Hourglass,
 } from 'lucide-react';
-import DashboardShellTemplate from './DashboardShellTemplate';
+import AppLayout from './AppLayout';
 import HeroBanner from '../organisms/HeroBanner';
 import StatCard, { type StatBadge } from '../molecules/StatCard';
-import PerencanaanChartCard, { type ChartDataItem } from '../organisms/PerencanaanChartCard';
+import StatistikChart from '../organisms/StatistikChart';
 import Bidang2PermohonanTable, { type Bidang2TableItem } from '../organisms/Bidang2PermohonanTable';
 import DetailPermohonanModal, { type PermohonanDetailData } from '../organisms/DetailPermohonanModal';
 import { BIDANG2_NAV_ITEMS } from '../../constants/bidang2Nav';
@@ -38,7 +38,7 @@ export interface Bidang2DashboardTemplateProps {
   ringkasan?: RingkasanBidang2;
   riwayatTerbaru?: Bidang2TableItem[];
   riwayatPengadaanTerbaru?: Bidang2TableItem[];
-  chartData?: ChartDataItem[];
+  chartData?: Array<{ bulan: number | string; label: string; disetujui: number; ditolak: number }>;
   totalDisetujui?: number;
   totalDitolak?: number;
   tahunAktif?: number;
@@ -60,10 +60,10 @@ export const Bidang2DashboardTemplate: FC<Bidang2DashboardTemplateProps> = ({
   chartData,
   totalDisetujui,
   totalDitolak,
-  tahunAktif: _tahunAktif,
-  viewMode,
+  tahunAktif,
+  viewMode = 'bulan',
   onViewModeChange,
-  gantiTahun: _gantiTahun,
+  gantiTahun,
   selectedPermohonan,
   onSelectPermohonan,
   onCloseDetail,
@@ -127,21 +127,19 @@ export const Bidang2DashboardTemplate: FC<Bidang2DashboardTemplateProps> = ({
     },
   ];
 
-  const sidebarProps = {
-    navItems: BIDANG2_NAV_ITEMS,
-    activeRoute: 'dashboard',
-    brandSubtitle: 'Pengadaan Barang & Jasa',
-    sectionTitle: 'MENU',
-  };
-
-  const topbarProps = {
-    user,
-  };
-
   return (
-    <DashboardShellTemplate sidebarProps={sidebarProps} topbarProps={topbarProps}>
+    <AppLayout
+      activeRoute="dashboard"
+      navItems={BIDANG2_NAV_ITEMS}
+      roleInitials="WD2"
+      roleTitle="Bidang 2"
+      roleSubtitle="Wakil Direktur II"
+      profileHref="/bidang-2/profil"
+      notifikasiHref="/bidang-2/dashboard"
+      user={user}
+    >
       <div className="space-y-6">
-        {/* Hero Banner tanpa tombol CTA sesuai gambar desain */}
+        {/* Hero Banner */}
         <HeroBanner
           eyebrow="DASHBOARD"
           title="Selamat datang, Bidang 2"
@@ -169,13 +167,16 @@ export const Bidang2DashboardTemplate: FC<Bidang2DashboardTemplateProps> = ({
               ))}
         </section>
 
-        {/* Grafik Statistik Permohonan Disetujui vs Ditolak (Sama persis dengan modul Perencanaan) */}
-        <PerencanaanChartCard
-          viewMode={viewMode || 'bulan'}
-          onViewModeChange={onViewModeChange || (() => {})}
-          data={chartData as any}
+        {/* Grafik Statistik */}
+        <StatistikChart
+          viewMode={viewMode}
+          onViewModeChange={onViewModeChange}
+          chartData={chartData}
+          tahunAktif={tahunAktif}
+          gantiTahun={gantiTahun}
           totalDisetujui={totalDisetujui}
           totalDitolak={totalDitolak}
+          isLoading={isLoading}
         />
 
         {/* Tabel 1: Riwayat Permohonan Terbaru */}
@@ -207,7 +208,7 @@ export const Bidang2DashboardTemplate: FC<Bidang2DashboardTemplateProps> = ({
         onClose={onCloseDetail}
         permohonan={selectedPermohonan}
       />
-    </DashboardShellTemplate>
+    </AppLayout>
   );
 };
 

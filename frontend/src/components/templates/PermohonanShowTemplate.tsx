@@ -108,7 +108,7 @@ export const PermohonanShowTemplate: FC<PermohonanShowTemplateProps> = ({
         { label: permohonan?.nomorSurat || 'DETAIL PERMOHONAN' },
       ]}
     >
-      <div className="flex flex-col gap-6 max-w-6xl">
+      <div className="space-y-6">
         {/* Flash Messages */}
         {flash.success && (
           <div className="p-4 rounded-2xl bg-[#EBF7F2] border border-[#D0EAE0] flex items-center gap-3 text-sm font-semibold text-[#0E7C5A]">

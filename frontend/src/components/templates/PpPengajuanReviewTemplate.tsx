@@ -16,7 +16,7 @@ import {
   UserCheck,
   Hash,
 } from 'lucide-react';
-import PpLayout, { type PpNavItem } from './PpLayout';
+import AppLayout, { type AppNavItem as PpNavItem } from './AppLayout';
 import KonfirmasiApproveModal from '../organisms/KonfirmasiApproveModal';
 import TolakPengadaanModal from '../organisms/TolakPengadaanModal';
 import DocumentPreviewModal from '../organisms/DocumentPreviewModal';
@@ -107,7 +107,7 @@ export const PpPengajuanReviewTemplate: FC<PpPengajuanReviewTemplateProps> = ({
   const unitNama = unit?.nama || 'Jurusan Teknik Informatika & Komputer';
 
   return (
-    <PpLayout
+    <AppLayout
       activeRoute="pengajuan"
       notifications={recentNotifications}
       unreadCount={unreadNotificationsCount}
@@ -124,8 +124,9 @@ export const PpPengajuanReviewTemplate: FC<PpPengajuanReviewTemplateProps> = ({
         { label: 'DETAIL PENGADAAN' },
       ]}
     >
+      <div className="space-y-6">
       {/* Hero Top Banner */}
-      <div className="relative overflow-hidden rounded-[24px] bg-[#0E7C5A] p-6 sm:px-9 sm:py-7 text-white shadow-[0_10px_24px_rgba(13,51,38,0.14)] mb-6">
+      <div className="relative overflow-hidden rounded-[24px] bg-[#0E7C5A] p-6 sm:px-9 sm:py-7 text-white shadow-[0_10px_24px_rgba(13,51,38,0.14)]">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
           <div>
             <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-white/75 block mb-1">
@@ -164,7 +165,7 @@ export const PpPengajuanReviewTemplate: FC<PpPengajuanReviewTemplateProps> = ({
       </div>
 
       {/* Card 1: Informasi Permohonan */}
-      <div className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)] mb-6">
+      <div className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)]">
         <div className="pb-4 mb-5 border-b border-[#F0F4F2]">
           <h3 className="text-base font-bold text-[#14201C]">Informasi Permohonan</h3>
           <p className="text-xs text-[#8A9A95] mt-0.5">Ringkasan data yang diajukan</p>
@@ -351,7 +352,7 @@ export const PpPengajuanReviewTemplate: FC<PpPengajuanReviewTemplateProps> = ({
       </div>
 
       {/* Grid: Preview Dokumen Pengadaan & Keputusan */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)]">
           <div className="pb-4 mb-4 border-b border-[#F0F4F2] flex items-center justify-between">
             <div>
@@ -556,7 +557,8 @@ export const PpPengajuanReviewTemplate: FC<PpPengajuanReviewTemplateProps> = ({
         filename={previewDoc?.filename}
         size={previewDoc?.size}
       />
-    </PpLayout>
+      </div>
+    </AppLayout>
   );
 };
 

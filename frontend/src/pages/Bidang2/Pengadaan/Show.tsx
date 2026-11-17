@@ -2,66 +2,38 @@ import type { FC } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft,
-  LayoutDashboard,
-  ClipboardList,
-  ShoppingCart,
-  FileText,
   Calendar,
   Building,
   DollarSign,
 } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
-import DashboardShellTemplate from '../../../components/templates/DashboardShellTemplate';
+import AppLayout from '../../../components/templates/AppLayout';
 import HeroBanner from '../../../components/organisms/HeroBanner';
 import StatusPill from '../../../components/atoms/StatusPill';
+import { BIDANG2_NAV_ITEMS } from '../../../constants/bidang2Nav';
 import { formatRupiah } from '../../../utils/formatters';
-
-const NAV_ITEMS = [
-  {
-    key: 'dashboard',
-    label: 'Dashboard',
-    icon: LayoutDashboard,
-    href: '/bidang-2/dashboard',
-  },
-  {
-    key: 'pengajuan',
-    label: 'List Permohonan',
-    icon: ClipboardList,
-    href: '/bidang-2/pengajuan',
-    badge: 4,
-  },
-  {
-    key: 'pengadaan',
-    label: 'List Pengadaan',
-    icon: ShoppingCart,
-    href: '/bidang-2/pengadaan',
-  },
-  {
-    key: 'rkakl',
-    label: 'Dokumen RKAKL',
-    icon: FileText,
-    href: '/bidang-2/rkakl',
-  },
-];
 
 export const Bidang2PengadaanShow: FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const sidebarProps = {
-    navItems: NAV_ITEMS,
-    activeRoute: 'pengadaan',
-    brandSubtitle: 'Pengadaan Barang & Jasa',
-    sectionTitle: 'Menu',
-  };
-
-  const topbarProps = {
-    user,
-  };
-
   return (
-    <DashboardShellTemplate sidebarProps={sidebarProps} topbarProps={topbarProps}>
+    <AppLayout
+      activeRoute="pengadaan"
+      navItems={BIDANG2_NAV_ITEMS}
+      roleInitials="WD2"
+      roleTitle="Bidang 2"
+      roleSubtitle="Wakil Direktur II"
+      profileHref="/bidang-2/profil"
+      notifikasiHref="/bidang-2/dashboard"
+      user={user}
+      breadcrumb={[
+        { label: 'BIDANG 2', href: '/bidang-2/dashboard' },
+        { label: 'LIST PENGADAAN', href: '/bidang-2/pengadaan' },
+        { label: `DETAIL #${id || '1'}` },
+      ]}
+    >
       <div className="space-y-6">
         <div>
           <button
@@ -126,7 +98,7 @@ export const Bidang2PengadaanShow: FC = () => {
           </div>
         </div>
       </div>
-    </DashboardShellTemplate>
+    </AppLayout>
   );
 };
 

@@ -1,46 +1,15 @@
 import type { FC } from 'react';
 import {
-  LayoutDashboard,
-  ClipboardList,
-  FileText,
   AlertCircle,
   RotateCcw,
-  ShoppingCart,
 } from 'lucide-react';
-import DashboardShellTemplate from './DashboardShellTemplate';
+import AppLayout from './AppLayout';
 import HeroBanner from '../organisms/HeroBanner';
 import Bidang2RkaklPreviewCard from '../organisms/Bidang2/Bidang2RkaklPreviewCard';
 import Bidang2RkaklInfoCard from '../organisms/Bidang2/Bidang2RkaklInfoCard';
+import { BIDANG2_NAV_ITEMS } from '../../constants/bidang2Nav';
 import type { ProfilePillUser } from '../molecules/ProfilePill';
 import type { Bidang2RkaklActiveDoc } from '../../types/bidang2';
-
-const NAV_ITEMS = [
-  {
-    key: 'dashboard',
-    label: 'Dashboard',
-    icon: LayoutDashboard,
-    href: '/bidang-2/dashboard',
-  },
-  {
-    key: 'pengajuan',
-    label: 'List Permohonan',
-    icon: ClipboardList,
-    href: '/bidang-2/pengajuan',
-    badge: 4,
-  },
-  {
-    key: 'pengadaan',
-    label: 'List Pengadaan',
-    icon: ShoppingCart,
-    href: '/bidang-2/pengadaan',
-  },
-  {
-    key: 'rkakl',
-    label: 'Dokumen RKAKL',
-    icon: FileText,
-    href: '/bidang-2/rkakl',
-  },
-];
 
 const DEFAULT_DOC: Bidang2RkaklActiveDoc = {
   id: 1,
@@ -81,23 +50,24 @@ export const Bidang2RkaklTemplate: FC<Bidang2RkaklTemplateProps> = ({
   onDownload,
   onRetry,
 }) => {
-  const sidebarProps = {
-    navItems: NAV_ITEMS,
-    activeRoute: 'rkakl',
-    brandSubtitle: 'Pengadaan Barang & Jasa',
-    sectionTitle: 'Menu',
-  };
-
-  const topbarProps = {
-    user,
-  };
-
   const activeDoc = document || DEFAULT_DOC;
 
   return (
-    <DashboardShellTemplate sidebarProps={sidebarProps} topbarProps={topbarProps}>
+    <AppLayout
+      activeRoute="rkakl"
+      navItems={BIDANG2_NAV_ITEMS}
+      roleInitials="WD2"
+      roleTitle="Bidang 2"
+      roleSubtitle="Wakil Direktur II"
+      profileHref="/bidang-2/profil"
+      notifikasiHref="/bidang-2/dashboard"
+      user={user}
+      breadcrumb={[
+        { label: 'BIDANG 2', href: '/bidang-2/dashboard' },
+        { label: 'DOKUMEN RKAKL' },
+      ]}
+    >
       <div className="space-y-6">
-        {/* Hero Banner sesuai mockup bidang2_dokumen_rkakl.png */}
         <HeroBanner
           eyebrow="DOKUMEN ACUAN"
           title="Dokumen RKAKL"
@@ -128,7 +98,6 @@ export const Bidang2RkaklTemplate: FC<Bidang2RkaklTemplateProps> = ({
             </div>
           </div>
         ) : hasError ? (
-          /* State Error */
           <div className="bg-white border border-[#E4EBE8] rounded-[22px] p-10 text-center max-w-lg mx-auto shadow-sm space-y-4">
             <div className="w-14 h-14 rounded-2xl bg-[#FDECEC] text-[#B42318] flex items-center justify-center mx-auto">
               <AlertCircle className="w-7 h-7" />
@@ -151,7 +120,6 @@ export const Bidang2RkaklTemplate: FC<Bidang2RkaklTemplateProps> = ({
             )}
           </div>
         ) : (
-          /* Grid 2 Kolom Konten RKAKL */
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
             <div className="lg:col-span-2">
               <Bidang2RkaklPreviewCard
@@ -168,7 +136,7 @@ export const Bidang2RkaklTemplate: FC<Bidang2RkaklTemplateProps> = ({
           </div>
         )}
       </div>
-    </DashboardShellTemplate>
+    </AppLayout>
   );
 };
 

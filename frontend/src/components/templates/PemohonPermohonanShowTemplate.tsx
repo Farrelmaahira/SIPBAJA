@@ -51,128 +51,128 @@ export const PemohonPermohonanShowTemplate: FC<
   onBack,
   onRevisi,
 }) => {
-  const isDitolak = permohonan?.status === 'ditolak';
+    const isDitolak = permohonan?.status === 'ditolak';
 
-  const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
-  const [previewDocId, setPreviewDocId] = useState<number | string | null>(null);
-  const [isLoadingPreview, setIsLoadingPreview] = useState<boolean>(false);
-  const [isViewingDocId, setIsViewingDocId] = useState<number | string | null>(null);
-  const [isDownloadingDocId, setIsDownloadingDocId] = useState<number | string | null>(null);
+    const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
+    const [previewDocId, setPreviewDocId] = useState<number | string | null>(null);
+    const [isLoadingPreview, setIsLoadingPreview] = useState<boolean>(false);
+    const [isViewingDocId, setIsViewingDocId] = useState<number | string | null>(null);
+    const [isDownloadingDocId, setIsDownloadingDocId] = useState<number | string | null>(null);
 
-  const dokumenList: DokumenItem[] = useMemo(() => {
-    if (!permohonan) return [];
+    const dokumenList: DokumenItem[] = useMemo(() => {
+      if (!permohonan) return [];
 
-    const rawList = Array.isArray(permohonan.dokumen)
-      ? permohonan.dokumen
-      : permohonan.dokumen
-        ? [permohonan.dokumen]
-        : [];
+      const rawList = Array.isArray(permohonan.dokumen)
+        ? permohonan.dokumen
+        : permohonan.dokumen
+          ? [permohonan.dokumen]
+          : [];
 
-    if (rawList.length === 0) {
-      return [
-        {
-          id: permohonan.id ?? '1',
-          nama_asli: `Surat_Permohonan_${(permohonan.judul || 'Pengadaan').replace(/\s+/g, '_')}.pdf`,
-          tipe_dokumen: 'surat_permohonan',
-          download_url: `/api/v1/pemohon/permohonan/${permohonan.id}/dokumen`,
-        },
-      ];
-    }
+      if (rawList.length === 0) {
+        return [
+          {
+            id: permohonan.id ?? '1',
+            nama_asli: `Surat_Permohonan_${(permohonan.judul || 'Pengadaan').replace(/\s+/g, '_')}.pdf`,
+            tipe_dokumen: 'surat_permohonan',
+            download_url: `/api/v1/pemohon/permohonan/${permohonan.id}/dokumen`,
+          },
+        ];
+      }
 
-    return rawList.map((d: any, idx: number) => ({
-      id: d.id || idx + 1,
-      nama_asli:
-        d.nama_asli ||
-        `Surat_Permohonan_${(permohonan.judul || 'Pengadaan').replace(/\s+/g, '_')}.pdf`,
-      tipe_dokumen: d.tipe_dokumen || 'surat_permohonan',
-      ukuran_bytes: d.ukuran_bytes,
-      mime_type: d.mime_type || 'application/pdf',
-      download_url:
-        d.download_url || `/api/v1/pemohon/permohonan/${permohonan.id}/dokumen`,
-    }));
-  }, [permohonan]);
+      return rawList.map((d: any, idx: number) => ({
+        id: d.id || idx + 1,
+        nama_asli:
+          d.nama_asli ||
+          `Surat_Permohonan_${(permohonan.judul || 'Pengadaan').replace(/\s+/g, '_')}.pdf`,
+        tipe_dokumen: d.tipe_dokumen || 'surat_permohonan',
+        ukuran_bytes: d.ukuran_bytes,
+        mime_type: d.mime_type || 'application/pdf',
+        download_url:
+          d.download_url || `/api/v1/pemohon/permohonan/${permohonan.id}/dokumen`,
+      }));
+    }, [permohonan]);
 
-  // Preload preview blob for the surat_permohonan document (matching Perencanaan & Bidang 2)
-  useEffect(() => {
-    const targetDoc =
-      dokumenList.find(
-        (d) => d.tipe_dokumen === 'surat_permohonan' || d.tipe_dokumen === 'permohonan'
-      ) || dokumenList[0];
+    // Preload preview blob for the surat_permohonan document (matching Perencanaan & Bidang 2)
+    useEffect(() => {
+      const targetDoc =
+        dokumenList.find(
+          (d) => d.tipe_dokumen === 'surat_permohonan' || d.tipe_dokumen === 'permohonan'
+        ) || dokumenList[0];
 
-    if (!targetDoc?.download_url) {
-      setPreviewBlobUrl(null);
-      setPreviewDocId(null);
-      setIsLoadingPreview(false);
-      return;
-    }
+      if (!targetDoc?.download_url) {
+        setPreviewBlobUrl(null);
+        setPreviewDocId(null);
+        setIsLoadingPreview(false);
+        return;
+      }
 
-    let isMounted = true;
-    let currentBlobUrl: string | null = null;
-    const controller = new AbortController();
+      let isMounted = true;
+      let currentBlobUrl: string | null = null;
+      const controller = new AbortController();
 
-    setIsLoadingPreview(true);
-    setPreviewDocId(targetDoc.id);
+      setIsLoadingPreview(true);
+      setPreviewDocId(targetDoc.id);
 
-    pemohonService
-      .fetchDokumenBlob(targetDoc.download_url, 'inline', controller.signal)
-      .then(({ blob }) => {
-        if (!isMounted) return;
-        currentBlobUrl = URL.createObjectURL(blob);
-        setPreviewBlobUrl(currentBlobUrl);
-      })
-      .catch((err) => {
-        if (!isMounted || controller.signal.aborted) return;
-        console.error('Gagal memuat pratinjau inline dokumen:', err);
-      })
-      .finally(() => {
-        if (isMounted) {
-          setIsLoadingPreview(false);
+      pemohonService
+        .fetchDokumenBlob(targetDoc.download_url, 'inline', controller.signal)
+        .then(({ blob }) => {
+          if (!isMounted) return;
+          currentBlobUrl = URL.createObjectURL(blob);
+          setPreviewBlobUrl(currentBlobUrl);
+        })
+        .catch((err) => {
+          if (!isMounted || controller.signal.aborted) return;
+          console.error('Gagal memuat pratinjau inline dokumen:', err);
+        })
+        .finally(() => {
+          if (isMounted) {
+            setIsLoadingPreview(false);
+          }
+        });
+
+      return () => {
+        isMounted = false;
+        controller.abort();
+        if (currentBlobUrl) {
+          URL.revokeObjectURL(currentBlobUrl);
         }
-      });
+      };
+    }, [dokumenList]);
 
-    return () => {
-      isMounted = false;
-      controller.abort();
-      if (currentBlobUrl) {
-        URL.revokeObjectURL(currentBlobUrl);
+    const handleViewNewTab = async (doc: DokumenItem) => {
+      if (!doc.download_url) return;
+      setIsViewingDocId(doc.id);
+      try {
+        const { blob } = await pemohonService.fetchDokumenBlob(doc.download_url, 'inline');
+        const blobUrl = URL.createObjectURL(blob);
+        window.open(blobUrl, '_blank');
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+      } catch (err) {
+        console.error('Gagal membuka dokumen:', err);
+      } finally {
+        setIsViewingDocId(null);
       }
     };
-  }, [dokumenList]);
 
-  const handleViewNewTab = async (doc: DokumenItem) => {
-    if (!doc.download_url) return;
-    setIsViewingDocId(doc.id);
-    try {
-      const { blob } = await pemohonService.fetchDokumenBlob(doc.download_url, 'inline');
-      const blobUrl = URL.createObjectURL(blob);
-      window.open(blobUrl, '_blank');
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
-    } catch (err) {
-      console.error('Gagal membuka dokumen:', err);
-    } finally {
-      setIsViewingDocId(null);
-    }
-  };
-
-  const handleDownload = async (doc: DokumenItem) => {
-    if (!doc.download_url) return;
-    setIsDownloadingDocId(doc.id);
-    try {
-      const { blob } = await pemohonService.fetchDokumenBlob(doc.download_url, 'attachment');
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = doc.nama_asli || 'Dokumen.pdf';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
-    } catch (err) {
-      console.error('Gagal mengunduh dokumen:', err);
-    } finally {
-      setIsDownloadingDocId(null);
-    }
-  };
+    const handleDownload = async (doc: DokumenItem) => {
+      if (!doc.download_url) return;
+      setIsDownloadingDocId(doc.id);
+      try {
+        const { blob } = await pemohonService.fetchDokumenBlob(doc.download_url, 'attachment');
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = doc.nama_asli || 'Dokumen.pdf';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+      } catch (err) {
+        console.error('Gagal mengunduh dokumen:', err);
+      } finally {
+        setIsDownloadingDocId(null);
+      }
+    };
 
     return (
       <AppLayout
