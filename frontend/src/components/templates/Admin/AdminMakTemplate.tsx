@@ -10,26 +10,9 @@ import SelectInput from '../../molecules/SelectInput';
 import PrimaryButton from '../../atoms/PrimaryButton';
 import normalizeOptions from '../../../utils/normalizeOptions';
 import { ADMIN_NAV_ITEMS } from '../../../constants/adminNav';
+import { MakRowItem, PpkOptionUser } from '@/types/admin';
+import HeroBanner from '@/components/organisms/HeroBanner';
 
-export interface MakRowItem {
-  id: number;
-  nama: string;
-  kode?: string;
-  ppk?: {
-    id?: number;
-    nama?: string;
-    email?: string;
-  };
-  permohonan_mak_count?: number;
-  [key: string]: unknown;
-}
-
-export interface PpkOptionUser {
-  id: number;
-  nama: string;
-  email: string;
-  [key: string]: unknown;
-}
 
 const columns = [
   {
@@ -124,17 +107,13 @@ export const AdminMakTemplate: FC<AdminMakTemplateProps> = ({
       notifikasiHref="/admin/dashboard"
     >
       <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-bold text-[#14201C]">Master MAK</h1>
-            <p className="text-sm text-[#5F6F6A] mt-1">
-              Kelola Mata Anggaran Kegiatan dan pejabat PPK yang bertanggung jawab.
-            </p>
-          </div>
-          <PrimaryButton icon={Plus} onClick={onOpenCreate}>
-            Tambah MAK
-          </PrimaryButton>
-        </div>
+        <HeroBanner
+          title='Master MAK'
+          description='Kelola Mata Anggaran Kegiatan dan pejabat PPK yang bertanggung jawab.'
+          ctaLabel='Tambah MAK'
+          ctaIcon={Plus}
+          onCta={onOpenCreate}
+        />
 
         <CrudTable
           columns={columns}
