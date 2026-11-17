@@ -100,15 +100,14 @@ class Bidang2Service
             ->sortByDesc('id')
             ->first();
 
-        $defaultMakKode = ! empty($makList) ? $makList[0]['kode'] : '532111';
+        $isMakDetermined = ! empty($makList);
         $catatanPerencanaan = [
-            'pemeriksa_nama' => $approvalPerencanaan?->Actor?->nama ?? $approvalPerencanaan?->Actor?->name ?? 'Tim Perencanaan',
-            'pemeriksa_peran' => 'Tim Perencanaan',
+            'pemeriksa_nama' => $approvalPerencanaan?->Actor?->nama ?? $approvalPerencanaan?->Actor?->name ?? null,
+            'pemeriksa_peran' => $approvalPerencanaan ? 'Tim Perencanaan' : null,
             'tanggal' => $approvalPerencanaan?->created_at
                 ? Carbon::parse($approvalPerencanaan->created_at)->translatedFormat('d F Y, H:i')
-                : ($permohonan->created_at ? Carbon::parse($permohonan->created_at)->translatedFormat('d F Y, H:i') : null),
-            'catatan' => $approvalPerencanaan?->alasan
-                ?: "Jenis MAK {$defaultMakKode} telah diverifikasi. Mohon periksa kesesuaian nominal dengan Dokumen RKAKL terbaru sebelum memberi keputusan.",
+                : null,
+            'catatan' => $approvalPerencanaan?->alasan ?? null,
         ];
 
         // 4. Ambil dokumen RKAKL aktif versi tertinggi
@@ -161,6 +160,7 @@ class Bidang2Service
             'status' => (string) ($permohonan->status ?? 'menunggu_persetujuan'),
             'tanggal_pengajuan' => $tanggalPengajuan,
             'created_at' => $permohonan->created_at,
+            'is_mak_determined' => $isMakDetermined,
             'mak_list' => $makList,
             'dokumen' => $dokumenData,
             'catatan_perencanaan' => $catatanPerencanaan,
@@ -174,6 +174,8 @@ class Bidang2Service
      */
     public function setujuPengajuan(User $actor, Permohonan $permohonan, UploadedFile $fileMemo): Permohonan
     {
+        $hasMak = $permohonan->PermohonanMak()->exists();
+        abort_unless($hasMak, 422, 'Persetujuan permohonan belum dapat diproses karena Jenis MAK belum ditentukan oleh Tim Perencanaan.');
         abort_if($permohonan->status === 'disetujui', 422, 'Permohonan ini sudah disetujui sebelumnya.');
 
         return DB::transaction(function () use ($actor, $permohonan, $fileMemo) {
@@ -236,6 +238,8 @@ class Bidang2Service
      */
     public function tolakPengajuan(User $actor, Permohonan $permohonan, string $alasan): Permohonan
     {
+        $hasMak = $permohonan->PermohonanMak()->exists();
+        abort_unless($hasMak, 422, 'Penolakan permohonan belum dapat diproses karena Jenis MAK belum ditentukan oleh Tim Perencanaan.');
         abort_if($permohonan->status === 'disetujui', 422, 'Permohonan yang telah disetujui tidak dapat ditolak.');
 
         return DB::transaction(function () use ($actor, $permohonan, $alasan) {

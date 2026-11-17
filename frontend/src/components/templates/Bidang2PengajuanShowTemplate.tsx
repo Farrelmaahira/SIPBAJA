@@ -325,6 +325,10 @@ export const Bidang2PengajuanShowTemplate: FC<Bidang2PengajuanShowTemplateProps>
                 onOpenSetujuModal={() => onToggleSetujuModal(true)}
                 status={permohonan.status}
                 keputusan={permohonan.keputusan_bidang2}
+                isMakDetermined={Boolean(
+                  permohonan.is_mak_determined ??
+                    (permohonan.mak_list && permohonan.mak_list.length > 0)
+                )}
               />
             </div>
           </div>

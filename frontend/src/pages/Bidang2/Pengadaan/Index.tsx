@@ -5,48 +5,7 @@ import bidang2Service from '../../../services/bidang2Service';
 import Bidang2PengadaanIndexTemplate from '../../../components/templates/Bidang2PengadaanIndexTemplate';
 import type { Bidang2TableItem } from '../../../components/organisms/Bidang2PermohonanTable';
 
-const FALLBACK_PENGADAAN_ITEMS: Bidang2TableItem[] = [
-  {
-    id: 1,
-    nomor_pengadaan: '01010-FF-11',
-    nomor_permohonan: 'Permohonan 111-FFF-111',
-    judul: 'Pengadaan Komputer Lab Multimedia',
-    unit_nama: 'Jurusan Teknik Informatika',
-    nominal: 185000000,
-    status: 'Review Pengajuan',
-    created_at: '2026-10-12',
-  },
-  {
-    id: 2,
-    nomor_pengadaan: '01011-FF-11',
-    nomor_permohonan: 'Permohonan 112-FFF-111',
-    judul: 'Peremajaan Server Data Center',
-    unit_nama: 'Unit Sistem Informasi',
-    nominal: 420000000,
-    status: 'Review Pengajuan',
-    created_at: '2026-10-14',
-  },
-  {
-    id: 3,
-    nomor_pengadaan: '01012-FF-11',
-    nomor_permohonan: 'Permohonan 113-FFF-111',
-    judul: 'Pengadaan AC Ruang Kelas Gedung Q',
-    unit_nama: 'Bagian Umum',
-    nominal: 92000000,
-    status: 'Review Pengajuan',
-    created_at: '2026-10-18',
-  },
-  {
-    id: 4,
-    nomor_pengadaan: '01013-FF-11',
-    nomor_permohonan: 'Permohonan 114-FFF-111',
-    judul: 'Pembaruan Lisensi Software Kampus',
-    unit_nama: 'Pusat Komputer',
-    nominal: 145000000,
-    status: 'Review Pengajuan',
-    created_at: '2026-10-20',
-  },
-];
+const FALLBACK_PENGADAAN_ITEMS: Bidang2TableItem[] = [];
 
 export const Bidang2PengadaanIndex: FC = () => {
   const { user } = useAuth();
