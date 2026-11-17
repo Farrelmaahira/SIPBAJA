@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import PerencanaanPengajuanShowTemplate from '../../../components/templates/PerencanaanPengajuanShowTemplate';
 import { usePerencanaanPengajuan } from '../../../hooks/usePerencanaanPengajuan';
 import type { PerencanaanPengajuanDetail } from '../../../types/perencanaan';
@@ -18,6 +18,7 @@ export const PerencanaanPengajuanShow: FC<PerencanaanShowProps> = ({
 }) => {
   const { id } = useParams<{ id: string }>();
   const pengajuan = usePerencanaanPengajuan({ id, initialDetail });
+  const navigate = useNavigate();
 
   return (
     <PerencanaanPengajuanShowTemplate
@@ -67,6 +68,7 @@ export const PerencanaanPengajuanShow: FC<PerencanaanShowProps> = ({
         pengajuan.setAlasanPenolakan(val);
         if (pengajuan.alasanError) pengajuan.setAlasanError('');
       }}
+      onBack={() => navigate('/perencanaan/pengajuan')}
       recentNotifications={recentNotifications}
       unreadNotificationsCount={unreadNotificationsCount}
     />
