@@ -1,10 +1,12 @@
 import type { FC } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   LayoutGrid,
   FileText,
   Package,
-  CreditCard,
   ClipboardList,
+  CheckCircle2,
+  XCircle,
 } from 'lucide-react';
 import AppLayout from './AppLayout';
 import HeroBanner from '../organisms/HeroBanner';
@@ -56,11 +58,12 @@ export const PpbjDashboardTemplate: FC<PpbjDashboardTemplateProps> = ({
   counts = { permohonan: 0, pengadaan: 0, termin: 0 },
   isLoading = false,
 }) => {
+  const navigate = useNavigate();
   const displayName = user?.nama || user?.name || 'Petugas PPBJ';
 
-  const statIcons = [FileText, Package, CreditCard, CreditCard];
-  const statBgColors = ['bg-[#E8F0FF]', 'bg-[#FEF6EE]', 'bg-[#E4F6EC]', 'bg-[#E4F6EC]'];
-  const statTextColors = ['text-[#1F55C7]', 'text-[#B54708]', 'text-[#0B7A4E]', 'text-[#0B7A4E]'];
+  const statIcons = [FileText, Package, CheckCircle2, XCircle];
+  const statBgColors = ['bg-[#E8F0FF]', 'bg-[#FEF6EE]', 'bg-[#E4F6EC]', 'bg-[#FEE4E2]'];
+  const statTextColors = ['text-[#1F55C7]', 'text-[#B54708]', 'text-[#0B7A4E]', 'text-[#D92D20]'];
 
   return (
     <AppLayout
@@ -78,14 +81,17 @@ export const PpbjDashboardTemplate: FC<PpbjDashboardTemplateProps> = ({
       <div className="space-y-6">
         {/* Hero Banner Organism */}
         <HeroBanner
-          eyebrow="DASHBOARD PPBJ"
-          userName={displayName}
-          description="Kelola pemaketan permohonan, penugasan PPK, penerbitan kontrak, serta pemantauan termin pembayaran."
+          eyebrow="DASHBOARD"
+          title={`Selamat datang, ${displayName}`}
+          description="Pantau, verifikasi, dan kelola seluruh permohonan pengadaan yang masuk dalam satu tempat."
+          ctaLabel="Lihat Pengajuan"
+          ctaVariant="translucent"
+          onCta={() => navigate('/ppbj/permohonan')}
         />
 
         {/* Stat Cards Grid */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-5" aria-label="Ringkasan Statistik">
-          {stats.slice(0, 3).map((item, index) => (
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5" aria-label="Ringkasan Statistik">
+          {stats.slice(0, 4).map((item, index) => (
             <StatCard
               key={index}
               icon={statIcons[index] || FileText}

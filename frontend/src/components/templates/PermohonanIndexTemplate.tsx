@@ -1,11 +1,11 @@
 import type { FC } from 'react';
-import { Link } from 'react-router-dom';
-import { Layers } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ChevronRight } from 'lucide-react';
 import AppLayout from './AppLayout';
 import HeroBanner from '../organisms/HeroBanner';
-import CrudTable, { type CrudColumn } from '../organisms/CrudTable';
-import SearchBar from '../molecules/SearchBar';
+import { CrudTable, type CrudColumn } from '../organisms/CrudTable';
 import StatusPill from '../atoms/StatusPill';
+import SearchBar from '../molecules/SearchBar';
 import { PPBJ_NAV_ITEMS } from './PpbjDashboardTemplate';
 import { formatRupiah, formatTanggalIndo } from '../../utils/formatters';
 import type { PpbjPermohonanItem } from '../../types/ppbj';
@@ -26,77 +26,79 @@ export const PermohonanIndexTemplate: FC<PermohonanIndexTemplateProps> = ({
   onSearchChange,
   isLoading = false,
 }) => {
+  const navigate = useNavigate();
+
   const columns: CrudColumn<PpbjPermohonanItem>[] = [
     {
       key: 'nomorSurat',
       header: 'No Permohonan',
-      className: 'font-bold text-[#0E7C5A] whitespace-nowrap',
-      render: (item) => {
-        const nomor = item.nomorSurat || '-';
-        const jumlahPaket = item.jumlahPaket ?? 0;
-        return (
-          <div className="flex flex-col">
-            <Link
-              to={`/ppbj/permohonan/${item.id}`}
-              className="hover:underline font-bold"
-            >
-              {nomor}
-            </Link>
-            {jumlahPaket > 0 && (
-              <span className="text-[11px] font-normal text-[#5F6F6A] mt-0.5 inline-flex items-center gap-1">
-                <Layers className="w-3 h-3 text-[#5F6F6A]" />
-                {jumlahPaket} Paket
-              </span>
-            )}
-          </div>
-        );
-      },
+      render: (item) => (
+        <span className="font-semibold text-xs text-[#14201C]">
+          {item.nomorSurat || '-'}
+        </span>
+      ),
     },
     {
       key: 'judul',
-      header: 'Judul & Unit',
+      header: 'Judul Pengadaan',
       render: (item) => (
-        <div>
-          <p className="font-bold text-[#14201C] line-clamp-1">{item.judul || 'Tanpa Judul'}</p>
-          <p className="text-xs text-[#5F6F6A] mt-0.5">{item.unitNama || '-'}</p>
-        </div>
+        <span className="text-xs text-[#14201C] line-clamp-1 max-w-xs font-medium">
+          {item.judul || '-'}
+        </span>
+      ),
+    },
+    {
+      key: 'unitNama',
+      header: 'Diajukan Oleh',
+      render: (item) => (
+        <span className="text-xs text-[#5F6F6A]">
+          {item.unitNama || '-'}
+        </span>
       ),
     },
     {
       key: 'tanggalPengajuan',
-      header: 'Tanggal Pengajuan',
-      className: 'text-[#5F6F6A] whitespace-nowrap',
-      render: (item) => formatTanggalIndo(item.tanggalPengajuan) || '-',
+      header: 'Tanggal',
+      render: (item) => (
+        <span className="text-xs text-[#5F6F6A] whitespace-nowrap">
+          {formatTanggalIndo(item.tanggalPengajuan)}
+        </span>
+      ),
     },
     {
       key: 'estimasiAnggaran',
-      header: 'Estimasi Anggaran',
-      className: 'font-bold text-[#14201C] whitespace-nowrap',
-      render: (item) => formatRupiah(Number(item.estimasiAnggaran || 0)),
+      header: 'Nilai Pengajuan',
+      render: (item) => (
+        <span className="text-xs font-bold text-[#0E7C5A] whitespace-nowrap">
+          {formatRupiah(item.estimasiAnggaran)}
+        </span>
+      ),
     },
     {
       key: 'status',
       header: 'Status',
-      className: 'whitespace-nowrap',
-      render: (item) => <StatusPill status={item.status || 'review_permohonan'} />,
+      render: (item) => (
+        <StatusPill
+          status={item.status}
+          label={item.status === 'disetujui' ? 'Review PPBJ' : undefined}
+        />
+      ),
+    },
+    {
+      key: 'actions',
+      header: <span className="sr-only">Aksi</span>,
+      render: (item) => (
+        <button
+          type="button"
+          onClick={() => navigate(`/ppbj/permohonan/${item.id}`)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#E4EBE8] bg-white text-xs font-semibold text-[#0E7C5A] hover:bg-[#F3F6F5] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C5A] cursor-pointer"
+        >
+          <span>Paketkan</span>
+          <ChevronRight className="w-3.5 h-3.5" />
+        </button>
+      ),
     },
   ];
-
-  const toolbar = (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 w-full">
-      <div className="w-full sm:w-80">
-        <SearchBar
-          value={searchQuery}
-          onChange={(e) => onSearchChange?.(e.target.value)}
-          placeholder="Cari nomor surat atau judul..."
-          className="!min-h-[40px] text-xs"
-        />
-      </div>
-      <span className="text-xs text-[#8A9A95] font-medium shrink-0">
-        {items.length} permohonan
-      </span>
-    </div>
-  );
 
   return (
     <AppLayout
@@ -112,27 +114,47 @@ export const PermohonanIndexTemplate: FC<PermohonanIndexTemplateProps> = ({
       ]}
     >
       <div className="space-y-6">
+        {/* Hero Banner Organism */}
         <HeroBanner
           eyebrow="DAFTAR PERMOHONAN"
-          title="Daftar Permohonan Pengadaan"
-          description="Daftar usulan pengadaan barang dan jasa yang siap dipaketkan dan diproses oleh PPBJ."
+          title="List Permohonan"
+          description="Pantau dan kelola seluruh permohonan pengadaan yang ditangani PPBJ."
         />
 
-        <CrudTable
-          title="Daftar Usulan Pengadaan"
-          subtitle="Daftar permohonan yang siap diverifikasi dan dipaketkan"
-          columns={columns}
-          rows={items}
-          isLoading={isLoading}
-          toolbar={toolbar}
-          actions={[
-            {
-              key: 'view',
-              label: 'Proses / Detail',
-              href: (row) => `/ppbj/permohonan/${row.id}`,
-            },
-          ]}
-        />
+        {/* Card Container for Table & Search */}
+        <section
+          aria-label="Daftar Permohonan Pengadaan"
+          className="bg-white rounded-[22px] border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)] p-6 space-y-5"
+        >
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-base font-bold text-[#14201C]">
+                Daftar Permohonan
+              </h2>
+              <p className="text-xs text-[#5F6F6A] mt-0.5">
+                Permohonan dan pengajuan pengadaan yang ditangani PPBJ ({items.length} permohonan)
+              </p>
+            </div>
+
+            <div className="w-full md:w-72">
+              <SearchBar
+                value={searchQuery}
+                onChange={(e) => onSearchChange?.(e.target.value)}
+                placeholder="Cari nomor atau judul…"
+                className="!min-h-[40px] text-xs"
+              />
+            </div>
+          </div>
+
+          <CrudTable<PpbjPermohonanItem>
+            columns={columns}
+            rows={items}
+            isLoading={isLoading}
+            emptyTitle="Tidak ada permohonan ditemukan"
+            emptyDescription="Belum ada permohonan pengadaan yang sesuai dengan pencarian Anda."
+            className="border-none shadow-none rounded-xl"
+          />
+        </section>
       </div>
     </AppLayout>
   );

@@ -1,7 +1,7 @@
 import type { FC } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
-  ChevronLeft,
+  ArrowLeft,
   Send,
   Lock,
   Info,
@@ -9,6 +9,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import AppLayout from './AppLayout';
+import HeroBanner from '../organisms/HeroBanner';
 import StatusPill from '../atoms/StatusPill';
 import DokumenListCard from '../organisms/DokumenListCard';
 import PermohonanShowMakList from '../molecules/PermohonanShowMakList';
@@ -59,6 +60,7 @@ export const PermohonanShowTemplate: FC<PermohonanShowTemplateProps> = ({
   isViewingId = null,
   isDownloadingId = null,
 }) => {
+  const navigate = useNavigate();
   const isRevised = (permohonan?.revisiKe ?? 0) > 0;
   const canSplit = Boolean(permohonan?.bisaDipecah);
   const isLocked = Boolean(permohonan?.sudahDikunci);
@@ -132,68 +134,74 @@ export const PermohonanShowTemplate: FC<PermohonanShowTemplateProps> = ({
           </div>
         ) : (
           <>
-            {/* Back Link & Header */}
-            <div className="flex flex-col gap-3">
-              <div>
-                <Link
-                  to="/ppbj/permohonan"
-                  className="inline-flex items-center gap-1.5 text-sm font-medium text-[#5F6F6A] hover:text-[#0E7C5A] transition-colors group cursor-pointer"
-                >
-                  <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
-                  <span>Kembali ke Daftar Permohonan</span>
-                </Link>
-              </div>
-
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <h1 className="text-2xl font-bold tracking-tight text-[#14201C]">
-                      {permohonan.nomorSurat || '-'}
-                    </h1>
-                    <StatusPill status={permohonan.status} />
-                    {isRevised && (
-                      <span className="inline-flex items-center text-xs font-semibold text-[#B54708] bg-[#FEF6EE] border border-[#FECDCA] px-2 py-0.5 rounded-full">
-                        Revisi ke-{permohonan.revisiKe}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm text-[#5F6F6A] mt-1">
-                    Diajukan pada {formatTanggalIndo(permohonan.tanggalPengajuan, true)}
-                  </p>
+            {/* Hero Banner with Status Pill & Back CTA */}
+            <HeroBanner
+              eyebrow="PENGADAAN"
+              title={
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="text-xl md:text-2xl font-bold tracking-tight text-white">Detail Permohonan</span>
+                  <StatusPill
+                    status={permohonan.status}
+                    label={permohonan.status === 'disetujui' ? 'Review PPBJ' : undefined}
+                  />
+                  {isRevised && (
+                    <span className="inline-flex items-center text-xs font-semibold text-[#B54708] bg-[#FEF6EE] border border-[#FECDCA] px-2 py-0.5 rounded-full">
+                      Revisi ke-{permohonan.revisiKe}
+                    </span>
+                  )}
                 </div>
-              </div>
-            </div>
+              }
+              description={`Nomor ${permohonan.nomorSurat || '-'} · Diajukan ${formatTanggalIndo(permohonan.tanggalPengajuan, true)}`}
+              ctaLabel="Kembali"
+              ctaIcon={ArrowLeft}
+              ctaVariant="translucent"
+              onCta={() => navigate('/ppbj/dashboard')}
+            />
 
             {/* Card 1: Informasi Permohonan */}
             <section
               className="bg-white rounded-[22px] border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.05)] p-6"
               aria-labelledby="heading-info"
             >
-              <h2 id="heading-info" className="text-base font-bold text-[#14201C] mb-5">
-                Informasi Permohonan
-              </h2>
+              <div className="mb-5 pb-4 border-b border-[#F0F4F2]">
+                <h2 id="heading-info" className="text-base font-bold text-[#14201C]">
+                  Informasi Permohonan
+                </h2>
+                <p className="text-xs text-[#5F6F6A] mt-0.5">
+                  Ringkasan data yang diajukan
+                </p>
+              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-5 gap-x-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-5 gap-x-8 text-xs">
                 <div>
-                  <span className="block text-xs font-semibold text-[#5F6F6A] uppercase tracking-wider mb-1">
-                    Nomor Surat
+                  <span className="block text-[11px] font-bold text-[#5F6F6A] uppercase tracking-wider mb-1">
+                    Nomor Permohonan
                   </span>
-                  <p className="text-sm font-semibold text-[#14201C]">
+                  <p className="text-sm font-bold text-[#14201C]">
                     {permohonan.nomorSurat || '-'}
                   </p>
                 </div>
 
                 <div>
-                  <span className="block text-xs font-semibold text-[#5F6F6A] uppercase tracking-wider mb-1">
-                    Unit Kerja Pengaju
+                  <span className="block text-[11px] font-bold text-[#5F6F6A] uppercase tracking-wider mb-1">
+                    Judul Permohonan
                   </span>
                   <p className="text-sm font-semibold text-[#14201C]">
-                    {permohonan.unitNama || '-'}
+                    {permohonan.judul || '-'}
                   </p>
                 </div>
 
                 <div>
-                  <span className="block text-xs font-semibold text-[#5F6F6A] uppercase tracking-wider mb-1">
+                  <span className="block text-[11px] font-bold text-[#5F6F6A] uppercase tracking-wider mb-1">
+                    Nominal/Estimasi
+                  </span>
+                  <p className="text-base font-extrabold text-[#0E7C5A] tabular-nums">
+                    {formatRupiah(permohonan.estimasiAnggaran)}
+                  </p>
+                </div>
+
+                <div>
+                  <span className="block text-[11px] font-bold text-[#5F6F6A] uppercase tracking-wider mb-1">
                     Tanggal Pengajuan
                   </span>
                   <p className="text-sm text-[#14201C]">
@@ -202,112 +210,116 @@ export const PermohonanShowTemplate: FC<PermohonanShowTemplateProps> = ({
                 </div>
 
                 <div>
-                  <span className="block text-xs font-semibold text-[#5F6F6A] uppercase tracking-wider mb-1">
-                    Pemohon / Pengaju
+                  <span className="block text-[11px] font-bold text-[#5F6F6A] uppercase tracking-wider mb-1">
+                    Diajukan Oleh
                   </span>
-                  <p className="text-sm text-[#14201C]">
-                    {permohonan.pembuatNama || '-'}
+                  <p className="text-sm font-medium text-[#14201C]">
+                    {permohonan.unitNama || '-'} {permohonan.pembuatNama ? `(${permohonan.pembuatNama})` : ''}
                   </p>
                 </div>
 
-                <div className="md:col-span-2">
-                  <span className="block text-xs font-semibold text-[#5F6F6A] uppercase tracking-wider mb-1">
-                    Judul Pengadaan
+                <div>
+                  <span className="block text-[11px] font-bold text-[#5F6F6A] uppercase tracking-wider mb-1">
+                    Status
                   </span>
-                  <p className="text-sm font-semibold text-[#14201C]">
-                    {permohonan.judul || '-'}
-                  </p>
-                </div>
-
-                <div className="md:col-span-2">
-                  <span className="block text-xs font-semibold text-[#5F6F6A] uppercase tracking-wider mb-1">
-                    Estimasi Anggaran Permohonan
-                  </span>
-                  <p className="text-xl font-bold text-[#0E7C5A] tabular-nums">
-                    {formatRupiah(permohonan.estimasiAnggaran)}
-                  </p>
-                </div>
-
-                <div className="md:col-span-2 pt-2 border-t border-[#F0F4F2]">
-                  <span className="block text-xs font-semibold text-[#5F6F6A] uppercase tracking-wider mb-1.5">
-                    Ringkasan Tujuan
-                  </span>
-                  <p className="text-sm text-[#14201C] leading-relaxed whitespace-pre-line">
-                    {permohonan.ringkasanTujuan || '-'}
-                  </p>
-                </div>
-              </div>
-            </section>
-
-            {/* Card 2: Dokumen Lampiran Permohonan Pemohon (DokumenListCard) */}
-            <DokumenListCard
-              title="Dokumen Lampiran Permohonan"
-              dokumenList={dokumenList}
-              nomorSurat={permohonan.nomorSurat}
-              judul={permohonan.judul}
-              unitNama={permohonan.unitNama}
-              tanggal={permohonan.tanggalPengajuan}
-              onViewNewTab={onViewDokumen}
-              onDownload={onDownloadDokumen}
-              isViewingId={isViewingId}
-              isDownloadingId={isDownloadingId}
-              previewBlobUrl={previewBlobUrl}
-              previewDocId={previewDocId}
-              isLoadingPreview={isLoadingPreview}
-            />
-
-            {/* Card 3: Sumber Dana (MAK) */}
-            <section
-              className="bg-white rounded-[22px] border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.05)] p-6"
-              aria-labelledby="heading-mak"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h2 id="heading-mak" className="text-base font-bold text-[#14201C]">
-                  Sumber Dana (MAK) yang Ditetapkan Perencanaan
-                </h2>
-                {permohonan.makList && permohonan.makList.length > 0 && (
-                  <span className="text-xs font-semibold text-[#5F6F6A] bg-[#F1F7F4] px-2.5 py-1 rounded-full">
-                    {permohonan.makList.length} Mata Anggaran
-                  </span>
-                )}
-              </div>
-              <PermohonanShowMakList makList={permohonan.makList} />
-
-              {/* Catatan / Arahan Mapping MAK dari Perencanaan */}
-              {permohonan.catatanPerencanaan && (
-                <div className="mt-4 p-4 rounded-2xl bg-[#EBF7F2] border border-[#D0EAE0] flex items-start gap-3">
-                  <Info className="w-5 h-5 text-[#0E7C5A] shrink-0 mt-0.5" />
-                  <div className="text-left">
-                    <span className="block text-xs font-bold text-[#0E7C5A] uppercase tracking-wider mb-1">
-                      Catatan & Arahan Mapping MAK dari Perencanaan
-                    </span>
-                    <p className="text-sm text-[#14201C] leading-relaxed whitespace-pre-line">
-                      {permohonan.catatanPerencanaan}
-                    </p>
+                  <div className="mt-1">
+                    <StatusPill
+                      status={permohonan.status}
+                      label={permohonan.status === 'disetujui' ? 'Review PPBJ' : undefined}
+                    />
                   </div>
                 </div>
-              )}
+
+                {permohonan.ringkasanTujuan && (
+                  <div className="md:col-span-2 pt-3 border-t border-[#F0F4F2]">
+                    <span className="block text-[11px] font-bold text-[#5F6F6A] uppercase tracking-wider mb-1">
+                      Ringkasan Tujuan
+                    </span>
+                    <p className="text-xs text-[#14201C] leading-relaxed whitespace-pre-line">
+                      {permohonan.ringkasanTujuan}
+                    </p>
+                  </div>
+                )}
+              </div>
             </section>
 
-            {/* Card 4: Form Pemecahan Pengadaan (Kondisional) */}
+            {/* Card 2: Dokumen Proses Sebelumnya */}
+            <div className="space-y-4">
+              <DokumenListCard
+                title="Dokumen Proses Sebelumnya"
+                dokumenList={dokumenList}
+                nomorSurat={permohonan.nomorSurat}
+                judul={permohonan.judul}
+                unitNama={permohonan.unitNama}
+                tanggal={permohonan.tanggalPengajuan}
+                onViewNewTab={onViewDokumen}
+                onDownload={onDownloadDokumen}
+                isViewingId={isViewingId}
+                isDownloadingId={isDownloadingId}
+                previewBlobUrl={previewBlobUrl}
+                previewDocId={previewDocId}
+                isLoadingPreview={isLoadingPreview}
+              />
+
+              {/* MAK & Catatan dari Perencanaan */}
+              <section
+                className="bg-white rounded-[22px] border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.05)] p-6"
+                aria-labelledby="heading-mak"
+              >
+                <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#F0F4F2]">
+                  <div>
+                    <h3 id="heading-mak" className="text-sm font-bold text-[#14201C]">
+                      Jenis MAK & Penanggung Jawab dari Perencanaan
+                    </h3>
+                    <p className="text-xs text-[#5F6F6A] mt-0.5">
+                      Sumber mata anggaran dan catatan verifikasi tim perencanaan
+                    </p>
+                  </div>
+                  {permohonan.makList && permohonan.makList.length > 0 && (
+                    <span className="text-xs font-semibold text-[#5F6F6A] bg-[#F1F7F4] px-2.5 py-1 rounded-full">
+                      {permohonan.makList.length} Mata Anggaran
+                    </span>
+                  )}
+                </div>
+
+                <PermohonanShowMakList makList={permohonan.makList} />
+
+                {/* Catatan dari Perencanaan */}
+                {permohonan.catatanPerencanaan && (
+                  <div className="mt-4 p-4 rounded-2xl bg-[#EBF7F2] border border-[#D0EAE0] flex items-start gap-3">
+                    <Info className="w-5 h-5 text-[#0E7C5A] shrink-0 mt-0.5" />
+                    <div className="text-left text-xs">
+                      <span className="block text-[11px] font-bold text-[#0E7C5A] uppercase tracking-wider mb-1">
+                        Catatan dari Perencanaan
+                      </span>
+                      <p className="text-xs text-[#14201C] leading-relaxed whitespace-pre-line">
+                        {permohonan.catatanPerencanaan}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </section>
+            </div>
+
+            {/* Card 3: Dokumen Pengadaan */}
             <section
               className="bg-white rounded-[22px] border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.05)] p-6"
               aria-labelledby="heading-split"
             >
-              <div className="mb-5">
+              <div className="mb-5 pb-3 border-b border-[#F0F4F2]">
                 <h2 id="heading-split" className="text-base font-bold text-[#14201C]">
-                  Form Pemecahan Paket Pengadaan
+                  Dokumen Pengadaan
                 </h2>
-                <p className="text-xs text-[#5F6F6A] mt-1">
-                  Pecah permohonan menjadi satu atau beberapa paket pengadaan dengan mengalokasikannya ke MAK yang telah ditetapkan.
+                <p className="text-xs text-[#5F6F6A] mt-0.5">
+                  Unggah satu atau lebih dokumen pengadaan, lalu tentukan MAK dan penanggung jawabnya
                 </p>
               </div>
 
               {!canSplit && (
                 <div className="p-4 rounded-2xl bg-[#F8FAF9] border border-[#E4EBE8] flex items-start gap-3">
                   <Info className="w-5 h-5 text-[#5F6F6A] shrink-0 mt-0.5" />
-                  <div className="text-sm text-[#5F6F6A] leading-relaxed">
-                    Permohonan belum dapat dipecah menjadi paket pengadaan karena belum memperoleh persetujuan lengkap dari{' '}
+                  <div className="text-xs text-[#5F6F6A] leading-relaxed">
+                    Permohonan belum dapat diproses dokumen pengadaannya karena belum memperoleh persetujuan lengkap dari{' '}
                     <strong className="text-[#14201C]">Perencanaan</strong> dan{' '}
                     <strong className="text-[#14201C]">Bidang 2</strong>.
                   </div>
@@ -317,11 +329,11 @@ export const PermohonanShowTemplate: FC<PermohonanShowTemplateProps> = ({
               {canSplit && isLocked && (
                 <div className="p-4 rounded-2xl bg-[#F0F4F2] border border-[#CFDAD6] flex items-start gap-3">
                   <Lock className="w-5 h-5 text-[#0E7C5A] shrink-0 mt-0.5" />
-                  <div className="text-sm text-[#14201C] leading-relaxed">
+                  <div className="text-xs text-[#14201C] leading-relaxed">
                     <strong className="block text-[#0E7C5A] mb-0.5">
                       Paket Pengadaan Telah Terkunci
                     </strong>
-                    Seluruh paket pengadaan telah disubmit ke reviewer. Sesuai kebijakan alur pengadaan, permohonan ini tidak dapat lagi ditambah atau diubah paketnya.
+                    Seluruh dokumen paket pengadaan telah disubmit ke reviewer. Permohonan ini telah dikunci untuk penambahan/perubahan paket baru.
                   </div>
                 </div>
               )}
