@@ -8,6 +8,7 @@ import FilterPengajuanModal from '../organisms/FilterPengajuanModal';
 import StatusPill from '../atoms/StatusPill';
 import { PERENCANAAN_NAV_ITEMS } from '../../pages/Perencanaan/Dashboard';
 import type { PermohonanTerbaruItem } from '../../types/perencanaan';
+import { MONTH_OPTONS } from '@/constants/monthOptions';
 
 export interface PerencanaanPengajuanIndexTemplateProps {
   items: PermohonanTerbaruItem[];
@@ -30,22 +31,6 @@ export interface PerencanaanPengajuanIndexTemplateProps {
   onCloseFilterModal: () => void;
   onApplyFilter: (statuses: string[]) => void;
 }
-
-const BULAN_OPTIONS = [
-  { value: '', label: 'Semua Bulan' },
-  { value: '1', label: 'Januari' },
-  { value: '2', label: 'Februari' },
-  { value: '3', label: 'Maret' },
-  { value: '4', label: 'April' },
-  { value: '5', label: 'Mei' },
-  { value: '6', label: 'Juni' },
-  { value: '7', label: 'Juli' },
-  { value: '8', label: 'Agustus' },
-  { value: '9', label: 'September' },
-  { value: '10', label: 'Oktober' },
-  { value: '11', label: 'November' },
-  { value: '12', label: 'Desember' },
-];
 
 export const PerencanaanPengajuanIndexTemplate: FC<PerencanaanPengajuanIndexTemplateProps> = ({
   items,
@@ -136,8 +121,8 @@ export const PerencanaanPengajuanIndexTemplate: FC<PerencanaanPengajuanIndexTemp
           type="button"
           onClick={onOpenFilterModal}
           className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${selectedStatuses.length > 0
-              ? 'bg-[#E8F5EF] text-[#0E7C5A] border-[#0E7C5A]'
-              : 'bg-white text-[#14201C] border-[#E4EBE8] hover:bg-[#F4F7F5]'
+            ? 'bg-[#E8F5EF] text-[#0E7C5A] border-[#0E7C5A]'
+            : 'bg-white text-[#14201C] border-[#E4EBE8] hover:bg-[#F4F7F5]'
             }`}
         >
           <Filter className="w-3.5 h-3.5" />
@@ -156,7 +141,7 @@ export const PerencanaanPengajuanIndexTemplate: FC<PerencanaanPengajuanIndexTemp
             aria-label="Filter Bulan"
             className="px-3.5 py-2.5 rounded-xl border border-[#E4EBE8] text-xs font-semibold text-[#14201C] bg-white focus:ring-2 focus:ring-[#0E7C5A] outline-none cursor-pointer"
           >
-            {BULAN_OPTIONS.map((b) => (
+            {MONTH_OPTONS.map((b) => (
               <option key={b.value} value={b.value}>
                 {b.label}
               </option>

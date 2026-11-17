@@ -1,32 +1,61 @@
-import type { FC } from 'react';
+import type { FC, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
+import { Filter, Search } from 'lucide-react';
 import AppLayout from './AppLayout';
 import HeroBanner from '../organisms/HeroBanner';
 import { CrudTable, type CrudColumn } from '../organisms/CrudTable';
 import StatusPill from '../atoms/StatusPill';
-import SearchBar from '../molecules/SearchBar';
 import { PPBJ_NAV_ITEMS } from '../../constants/ppbjNav';
 import { formatRupiah, formatTanggalIndo } from '../../utils/formatters';
 import type { PpbjPermohonanItem } from '../../types/ppbj';
-import type { AppTopbarUser } from '../organisms/AppTopbar';
+import { MONTH_OPTONS } from '@/constants/monthOptions';
 
 export interface PermohonanIndexTemplateProps {
-  user?: AppTopbarUser | null;
-  items?: PpbjPermohonanItem[];
-  searchQuery?: string;
-  onSearchChange?: (val: string) => void;
+  items: PpbjPermohonanItem[];
+  totalCount: number;
+  searchQuery: string;
+  selectedStatuses: string[];
+  selectedBulan?: string;
+  selectedTahun?: string;
+  currentPage?: number;
+  lastPage?: number;
   isLoading?: boolean;
+  errorMessage?: string;
+  filterModalOpen: boolean;
+  onSearchChange: (val: string) => void;
+  onSearchSubmit: (e: FormEvent) => void;
+  onBulanChange?: (bulan: string) => void;
+  onTahunChange?: (tahun: string) => void;
+  onPageChange?: (page: number) => void;
+  onOpenFilterModal: () => void;
+  onCloseFilterModal: () => void;
+  onApplyFilter: (statuses: string[]) => void;
 }
 
 export const PermohonanIndexTemplate: FC<PermohonanIndexTemplateProps> = ({
-  user = null,
-  items = [],
-  searchQuery = '',
-  onSearchChange,
+  items,
+  totalCount,
+  searchQuery,
+  selectedStatuses,
+  selectedBulan = '',
+  selectedTahun = '',
+  currentPage = 1,
+  lastPage = 1,
   isLoading = false,
+  errorMessage = '',
+  filterModalOpen,
+  onSearchChange,
+  onSearchSubmit,
+  onBulanChange,
+  onTahunChange,
+  onPageChange,
+  onOpenFilterModal,
+  onCloseFilterModal,
+  onApplyFilter,
 }) => {
   const navigate = useNavigate();
+  const currentYear = new Date().getFullYear();
+  const tahunOptions = ['', String(currentYear), String(currentYear - 1), String(currentYear - 2)];
 
   const columns: CrudColumn<PpbjPermohonanItem>[] = [
     {
@@ -84,21 +113,75 @@ export const PermohonanIndexTemplate: FC<PermohonanIndexTemplateProps> = ({
         />
       ),
     },
-    {
-      key: 'actions',
-      header: <span className="sr-only">Aksi</span>,
-      render: (item) => (
+  ];
+
+  const toolbar = (
+    <div className="flex flex-wrap items-center justify-between gap-3 w-full">
+      <div className="flex flex-wrap items-center gap-2.5">
         <button
           type="button"
-          onClick={() => navigate(`/ppbj/permohonan/${item.id}`)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#E4EBE8] bg-white text-xs font-semibold text-[#0E7C5A] hover:bg-[#F3F6F5] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C5A] cursor-pointer"
+          onClick={onOpenFilterModal}
+          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${selectedStatuses.length > 0
+            ? 'bg-[#E8F5EF] text-[#0E7C5A] border-[#0E7C5A]'
+            : 'bg-white text-[#14201C] border-[#E4EBE8] hover:bg-[#F4F7F5]'
+            }`}
         >
-          <span>Paketkan</span>
-          <ChevronRight className="w-3.5 h-3.5" />
+          <Filter className="w-3.5 h-3.5" />
+          <span>Filter Status</span>
+          {selectedStatuses.length > 0 && (
+            <span className="w-4 h-4 rounded-full bg-[#0E7C5A] text-white text-[10px] flex items-center justify-center">
+              {selectedStatuses.length}
+            </span>
+          )}
         </button>
-      ),
-    },
-  ];
+
+        {onBulanChange && (
+          <select
+            value={selectedBulan}
+            onChange={(e) => onBulanChange(e.target.value)}
+            aria-label="Filter Bulan"
+            className="px-3.5 py-2.5 rounded-xl border border-[#E4EBE8] text-xs font-semibold text-[#14201C] bg-white focus:ring-2 focus:ring-[#0E7C5A] outline-none cursor-pointer"
+          >
+            {MONTH_OPTONS.map((b) => (
+              <option key={b.value} value={b.value}>
+                {b.label}
+              </option>
+            ))}
+          </select>
+        )}
+
+        {onTahunChange && (
+          <select
+            value={selectedTahun}
+            onChange={(e) => onTahunChange(e.target.value)}
+            aria-label="Filter Tahun"
+            className="px-3.5 py-2.5 rounded-xl border border-[#E4EBE8] text-xs font-semibold text-[#14201C] bg-white focus:ring-2 focus:ring-[#0E7C5A] outline-none cursor-pointer"
+          >
+            {tahunOptions.map((t) => (
+              <option key={t} value={t}>
+                {t ? `Tahun ${t}` : 'Semua Tahun'}
+              </option>
+            ))}
+          </select>
+        )}
+
+        <form onSubmit={onSearchSubmit} className="relative">
+          <Search className="w-4 h-4 text-[#8A9A95] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder="Cari nomor surat atau judul..."
+            className="w-64 sm:w-72 pl-10 pr-4 py-2.5 rounded-xl border border-[#E4EBE8] text-xs text-[#14201C] focus:ring-2 focus:ring-[#0E7C5A] focus:border-transparent outline-none bg-white placeholder-[#8A9A95]"
+          />
+        </form>
+      </div>
+
+      <span className="text-xs text-[#8A9A95] font-medium">
+        {totalCount} permohonan
+      </span>
+    </div>
+  );
 
   return (
     <AppLayout
@@ -107,7 +190,6 @@ export const PermohonanIndexTemplate: FC<PermohonanIndexTemplateProps> = ({
       roleInitials="PB"
       roleTitle="PPBJ"
       roleSubtitle="Pengadaan Barang & Jasa"
-      user={user}
       breadcrumb={[
         { label: 'DASHBOARD', href: '/ppbj/dashboard' },
         { label: 'DAFTAR PERMOHONAN' },
@@ -121,40 +203,23 @@ export const PermohonanIndexTemplate: FC<PermohonanIndexTemplateProps> = ({
           description="Pantau dan kelola seluruh permohonan pengadaan yang ditangani PPBJ."
         />
 
-        {/* Card Container for Table & Search */}
-        <section
-          aria-label="Daftar Permohonan Pengadaan"
-          className="bg-white rounded-[22px] border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)] p-6 space-y-5"
-        >
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-base font-bold text-[#14201C]">
-                Daftar Permohonan
-              </h2>
-              <p className="text-xs text-[#5F6F6A] mt-0.5">
-                Permohonan dan pengajuan pengadaan yang ditangani PPBJ ({items.length} permohonan)
-              </p>
-            </div>
-
-            <div className="w-full md:w-72">
-              <SearchBar
-                value={searchQuery}
-                onChange={(e) => onSearchChange?.(e.target.value)}
-                placeholder="Cari nomor atau judul…"
-                className="!min-h-[40px] text-xs"
-              />
-            </div>
-          </div>
-
-          <CrudTable<PpbjPermohonanItem>
-            columns={columns}
-            rows={items}
-            isLoading={isLoading}
-            emptyTitle="Tidak ada permohonan ditemukan"
-            emptyDescription="Belum ada permohonan pengadaan yang sesuai dengan pencarian Anda."
-            className="border-none shadow-none rounded-xl"
-          />
-        </section>
+        <CrudTable
+          title="Daftar Permohonan Pengadaan"
+          subtitle="Seluruh permohonan pengadaan yang masuk untuk ditinjau"
+          columns={columns}
+          rows={items}
+          isLoading={isLoading}
+          toolbar={toolbar}
+          emptyTitle="Tidak ada permohonan ditemukan"
+          emptyDescription="Belum ada permohonan pengadaan yang sesuai dengan pencarian Anda."
+          actions={[
+            {
+              key: 'view',
+              label: 'Detail',
+              href: (row) => `/ppbj/permohonan/${row.id}`
+            }
+          ]}
+        />
       </div>
     </AppLayout>
   );
