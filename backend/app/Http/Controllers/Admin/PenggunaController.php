@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SimpanPenggunaRequest;
-use App\Models\Role;
-use App\Models\Unit;
 use App\Models\User;
+use App\Services\RoleService;
+use App\Services\UnitService;
 use App\Services\UserService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
@@ -16,7 +16,11 @@ class PenggunaController extends Controller
 {
     use AuthorizesRequests;
 
-    public function __construct(private UserService $users) {}
+    public function __construct(
+        private UserService $users,
+        private RoleService $roles,
+        private UnitService $units,
+    ) {}
 
     public function index(): JsonResponse
     {
@@ -24,8 +28,8 @@ class PenggunaController extends Controller
 
         return response()->json([
             'users' => $this->users->paginate(request('q')),
-            'roles' => Role::orderBy('nama')->get(['id', 'nama']),
-            'units' => Unit::orderBy('nama')->get(['id', 'nama']),
+            'roles' => $this->roles->getRoleOptions(),
+            'units' => $this->units->getUnitOptions(),
             'filters' => ['q' => request('q', '')],
         ]);
     }

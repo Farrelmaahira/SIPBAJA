@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SimpanRolePermissionRequest;
-use App\Models\Permission;
 use App\Models\Role;
 use App\Services\RolePermissionService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class RolePermissionController extends Controller
 {
@@ -16,27 +16,14 @@ class RolePermissionController extends Controller
 
     public function __construct(private RolePermissionService $assignments) {}
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         $this->authorize('viewAny', Role::class);
 
-        $permissions = Permission::orderBy('kode')->get(['id', 'kode']);
-        $grouped = $permissions->groupBy(function ($p) {
-            $parts = explode('.', $p->kode, 2);
+        $selectedRoleId = (int) $request->query('role_id', 0);
+        $matrix = $this->assignments->getMatrixData($selectedRoleId > 0 ? $selectedRoleId : null);
 
-            return $parts[0];
-        })->map(function ($items) {
-            return $items->values();
-        });
-
-        return response()->json([
-            'roles' => Role::orderBy('nama')->get(['id', 'nama']),
-            'groupedPermissions' => $grouped,
-            'assignments' => Role::with('permissions:id')->get()->mapWithKeys(function ($role) {
-                return [$role->id => $role->Permissions->pluck('id')->all()];
-            }),
-            'selectedRoleId' => (int) request('role_id', 0),
-        ]);
+        return response()->json($matrix);
     }
 
     public function update(SimpanRolePermissionRequest $request, Role $role): JsonResponse

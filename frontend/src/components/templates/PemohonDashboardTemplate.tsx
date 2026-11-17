@@ -1,13 +1,13 @@
 import type { FC } from 'react';
 import { LayoutDashboard, ClipboardList, FileText, CheckCircle, XCircle } from 'lucide-react';
-import DashboardShellTemplate from './DashboardShellTemplate';
+import AppLayout, { type AppNavItem } from './AppLayout';
 import HeroBanner from '../organisms/HeroBanner';
 import StatCard, { type StatBadge } from '../molecules/StatCard';
 import StatistikChart, { type ChartDatum } from '../organisms/StatistikChart';
 import PermohonanTable, { type PermohonanOrganismItem } from '../organisms/PermohonanTable';
 import type { ProfilePillUser } from '../molecules/ProfilePill';
 
-const NAV_ITEMS = [
+const NAV_ITEMS: AppNavItem[] = [
   {
     key: 'dashboard',
     label: 'Dashboard',
@@ -113,68 +113,68 @@ export const PemohonDashboardTemplate: FC<PemohonDashboardTemplateProps> = ({
     },
   ];
 
-  const navItems = NAV_ITEMS.map((item) => {
+  const navItems: AppNavItem[] = NAV_ITEMS.map((item) => {
     if (item.key === 'permohonan' && (ringkasan.menunggu_verifikasi ?? 0) > 0) {
       return { ...item, badge: ringkasan.menunggu_verifikasi };
     }
     return item;
   });
 
-  const sidebarProps = {
-    navItems,
-    activeRoute: 'dashboard',
-    brandSubtitle: 'Pengadaan Barang & Jasa',
-    sectionTitle: 'Menu',
-  };
-
-  const topbarProps = {
-    user,
-  };
-
   return (
-    <DashboardShellTemplate sidebarProps={sidebarProps} topbarProps={topbarProps}>
-      <HeroBanner
-        eyebrow="Dashboard"
-        title={`Selamat datang, ${user?.unit?.nama ?? user?.nama ?? 'Jurusan/Unit'}`}
-        description="Pantau dan kelola seluruh permohonan pengadaan Anda dalam satu tempat."
-        ctaLabel="Buat Permohonan"
-        onCta={onBuatPermohonan}
-      />
+    <AppLayout
+      activeRoute="dashboard"
+      navItems={navItems}
+      roleInitials="PM"
+      roleTitle="Pemohon"
+      roleSubtitle={user?.unit?.nama || 'Jurusan / Bagian'}
+      profileHref="/pemohon/profil"
+      notifikasiHref="/pemohon/dashboard"
+      user={user}
+    >
+      <div className="space-y-6">
+        <HeroBanner
+          eyebrow="Dashboard Pemohon"
+          title={`Selamat datang, ${user?.unit?.nama ?? user?.nama ?? 'Jurusan / Unit'}`}
+          description="Pantau dan kelola seluruh permohonan pengadaan Anda dalam satu tempat."
+          ctaLabel="Buat Permohonan"
+          onCta={onBuatPermohonan}
+        />
 
-      <section
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"
-        aria-label="Ringkasan permohonan"
-        aria-busy={isLoading || undefined}
-      >
-        {isLoading
-          ? statCards.map((c) => <StatSkeleton key={c.key} />)
-          : statCards.map((c) => (
-              <StatCard
-                key={c.key}
-                icon={c.icon}
-                label={c.label}
-                value={c.value}
-                iconBg={c.iconBg}
-                iconColor={c.iconColor}
-                badge={c.badge ?? undefined}
-              />
-            ))}
-      </section>
+        <section
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"
+          aria-label="Ringkasan permohonan"
+          aria-busy={isLoading || undefined}
+        >
+          {isLoading
+            ? statCards.map((c) => <StatSkeleton key={c.key} />)
+            : statCards.map((c) => (
+                <StatCard
+                  key={c.key}
+                  icon={c.icon}
+                  label={c.label}
+                  value={c.value}
+                  iconBg={c.iconBg}
+                  iconColor={c.iconColor}
+                  badge={c.badge ?? undefined}
+                />
+              ))}
+        </section>
 
-      <StatistikChart
-        chartData={chartData}
-        tahunAktif={tahunAktif}
-        gantiTahun={gantiTahun}
-        isLoading={isLoading && !chartData}
-      />
+        <StatistikChart
+          chartData={chartData}
+          tahunAktif={tahunAktif}
+          gantiTahun={gantiTahun}
+          isLoading={isLoading && !chartData}
+        />
 
-      <PermohonanTable
-        rows={permohonanAktif}
-        isLoading={isLoading}
-        isError={isError}
-        onBuatPermohonan={onBuatPermohonan}
-      />
-    </DashboardShellTemplate>
+        <PermohonanTable
+          rows={permohonanAktif}
+          isLoading={isLoading}
+          isError={isError}
+          onBuatPermohonan={onBuatPermohonan}
+        />
+      </div>
+    </AppLayout>
   );
 };
 

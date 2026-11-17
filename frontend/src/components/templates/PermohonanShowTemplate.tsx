@@ -15,7 +15,7 @@ import DokumenListCard from '../organisms/DokumenListCard';
 import PermohonanShowMakList from '../molecules/PermohonanShowMakList';
 import PermohonanShowPaketList from '../molecules/PermohonanShowPaketList';
 import PengadaanSplitForm from '../organisms/PengadaanSplitForm';
-import { PPBJ_NAV_ITEMS } from './PpbjDashboardTemplate';
+import { PPBJ_NAV_ITEMS } from '../../constants/ppbjNav';
 import { formatRupiah, formatTanggalIndo } from '../../utils/formatters';
 import type { PpbjPermohonanDetail } from '../../types/ppbj';
 import type { DokumenItem } from '../../types/dokumen';

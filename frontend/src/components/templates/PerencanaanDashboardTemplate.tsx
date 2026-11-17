@@ -1,23 +1,26 @@
 import type { FC } from 'react';
-import { Link } from 'react-router-dom';
-import { FileText } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { FileText, Hourglass, CheckCircle2, XCircle } from 'lucide-react';
 import AppLayout from './AppLayout';
-import PerencanaanStatCards from '../organisms/PerencanaanStatCards';
-import PerencanaanChartCard from '../organisms/PerencanaanChartCard';
+import HeroBanner from '../organisms/HeroBanner';
+import StatCard from '../molecules/StatCard';
+import StatistikChart from '../organisms/StatistikChart';
 import PerencanaanPermohonanTerbaruTable from '../organisms/PerencanaanPermohonanTerbaruTable';
 import { PERENCANAAN_NAV_ITEMS } from '../../pages/Perencanaan/Dashboard';
 import type {
   PerencanaanDashboardStats,
   PermohonanTerbaruItem,
 } from '../../types/perencanaan';
+import type { NotificationItem } from '../../types/notification';
 
 export interface PerencanaanDashboardTemplateProps {
   stats?: PerencanaanDashboardStats;
   permohonanTerbaru: PermohonanTerbaruItem[];
   isLoading?: boolean;
+  errorMessage?: string;
   viewMode: 'bulan' | 'tahun';
   onViewModeChange: (mode: 'bulan' | 'tahun') => void;
-  recentNotifications?: any[];
+  recentNotifications?: NotificationItem[];
   unreadNotificationsCount?: number;
 }
 
@@ -25,11 +28,14 @@ export const PerencanaanDashboardTemplate: FC<PerencanaanDashboardTemplateProps>
   stats,
   permohonanTerbaru,
   isLoading = false,
+  errorMessage = '',
   viewMode,
   onViewModeChange,
   recentNotifications,
   unreadNotificationsCount,
 }) => {
+  const navigate = useNavigate();
+
   return (
     <AppLayout
       activeRoute="dashboard"
@@ -42,58 +48,72 @@ export const PerencanaanDashboardTemplate: FC<PerencanaanDashboardTemplateProps>
       readAllHref="/perencanaan/notifikasi/read-all"
       notifications={recentNotifications}
       unreadCount={unreadNotificationsCount}
+      flash={errorMessage ? { error: errorMessage } : undefined}
     >
-      {/* Hero Welcome Banner */}
-      <div className="relative overflow-hidden rounded-[24px] bg-[#0E7C5A] p-6 sm:px-9 sm:py-8 text-white shadow-[0_10px_24px_rgba(13,51,38,0.14)] mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
-          <div className="max-w-xl">
-            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-white/75 mb-1.5">
-              DASHBOARD
-            </p>
-            <h1 className="text-2xl sm:text-[28px] font-bold tracking-tight leading-tight">
-              Selamat datang, Tim Perencanaan
-            </h1>
-            <p className="text-xs sm:text-sm text-white/85 mt-1.5 leading-relaxed">
-              Pantau permohonan pengadaan yang masuk, serta kelola Jenis MAK dan Dokumen RKAKL.
-            </p>
-          </div>
+      <div className="space-y-6">
+        {/* Hero Welcome Banner */}
+        <HeroBanner
+          eyebrow="DASHBOARD PERENCANAAN"
+          title="Selamat datang, Tim Perencanaan"
+          description="Pantau permohonan pengadaan yang masuk, serta kelola Jenis MAK dan Dokumen RKAKL."
+          ctaLabel="Lihat Permohonan"
+          ctaIcon={FileText}
+          onCta={() => navigate('/perencanaan/pengajuan')}
+        />
 
-          <Link
-            to="/perencanaan/pengajuan"
-            className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white hover:bg-[#F1F7F4] text-[#0E7C5A] text-xs font-bold shadow-sm transition-colors shrink-0 self-start sm:self-auto cursor-pointer"
-          >
-            <FileText className="w-4 h-4" />
-            <span>Lihat Permohonan</span>
-          </Link>
+        {/* 4 Stat Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            icon={FileText}
+            label="Total Permohonan"
+            value={isLoading ? '-' : (stats?.total ?? 0)}
+            iconBg="bg-[#E4F6EC]"
+            iconColor="text-[#0E7C5A]"
+            badge={{ label: '+3 bulan ini', variant: 'success' }}
+          />
+          <StatCard
+            icon={Hourglass}
+            label="Diajukan"
+            value={isLoading ? '-' : (stats?.diajukan ?? 0)}
+            iconBg="bg-[#E8F0FF]"
+            iconColor="text-[#2F68D6]"
+            badge={{ label: 'Dalam antrean', variant: 'info' }}
+          />
+          <StatCard
+            icon={CheckCircle2}
+            label="Selesai"
+            value={isLoading ? '-' : (stats?.selesai ?? 0)}
+            iconBg="bg-[#E4F6EC]"
+            iconColor="text-[#0E7C5A]"
+            badge={{ label: '+2 bulan ini', variant: 'success' }}
+          />
+          <StatCard
+            icon={XCircle}
+            label="Ditolak"
+            value={isLoading ? '-' : (stats?.ditolak ?? 0)}
+            iconBg="bg-[#FDECEC]"
+            iconColor="text-[#E5484D]"
+            badge={{ label: 'Perlu revisi', variant: 'danger' }}
+          />
         </div>
 
-        <div
-          className="absolute -right-10 -top-20 w-[280px] h-[280px] rounded-full bg-white/8 pointer-events-none"
-          aria-hidden="true"
+        {/* Statistik Chart Card */}
+        <StatistikChart
+          viewMode={viewMode}
+          onViewModeChange={onViewModeChange}
+          totalDisetujui={stats?.selesai ?? 0}
+          totalDitolak={stats?.ditolak ?? 0}
+          isLoading={isLoading}
         />
-        <div
-          className="absolute right-28 -bottom-20 w-[190px] h-[190px] rounded-full bg-white/8 pointer-events-none"
-          aria-hidden="true"
+
+        {/* Table Organism: Permohonan Masuk Terbaru */}
+        <PerencanaanPermohonanTerbaruTable
+          items={permohonanTerbaru}
+          isLoading={isLoading}
         />
       </div>
-
-      {/* 4 Stat Cards Organism */}
-      <PerencanaanStatCards stats={stats} isLoading={isLoading} />
-
-      {/* Statistik Chart Card Organism */}
-      <PerencanaanChartCard
-        viewMode={viewMode}
-        onViewModeChange={onViewModeChange}
-      />
-
-      {/* Table Organism: Permohonan Masuk Terbaru */}
-      <PerencanaanPermohonanTerbaruTable
-        items={permohonanTerbaru}
-        isLoading={isLoading}
-      />
     </AppLayout>
   );
 };
 
 export default PerencanaanDashboardTemplate;
-

@@ -1,43 +1,14 @@
 import { useState, useEffect, useCallback, type FC, type FormEvent } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import {
-  LayoutDashboard,
-  ClipboardList,
-  ArrowLeft,
-  AlertCircle,
-  RotateCcw,
-} from 'lucide-react';
-import api from '../../../services/api';
+import { useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { useAuth } from '../../../hooks/useAuth';
-import DashboardShellTemplate from '../../../components/templates/DashboardShellTemplate';
-import HeroBanner from '../../../components/organisms/HeroBanner';
-import StatusPill from '../../../components/atoms/StatusPill';
-import CatatanPenolakanCard from '../../../components/molecules/CatatanPenolakanCard';
-import PermohonanEditFormCard from '../../../components/organisms/PermohonanEditFormCard';
-import AlurPermohonanCard from '../../../components/organisms/AlurPermohonanCard';
-import PanduanPengajuanCard from '../../../components/organisms/PanduanPengajuanCard';
+import pemohonService from '../../../services/pemohonService';
+import PemohonPermohonanEditTemplate from '../../../components/templates/PemohonPermohonanEditTemplate';
 import type {
   PermohonanDetailInfo,
   PermohonanRevisiFormData,
   PermohonanRevisiFormErrors,
-  PermohonanDokumenDetail,
 } from '../../../types/permohonan';
-
-const NAV_ITEMS = [
-  {
-    key: 'dashboard',
-    label: 'Dashboard',
-    icon: LayoutDashboard,
-    href: '/pemohon/dashboard',
-  },
-  {
-    key: 'permohonan',
-    label: 'List Permohonan',
-    icon: ClipboardList,
-    href: '/pemohon/permohonan',
-    badge: 4,
-  },
-];
 
 export const PermohonPermohonanEdit: FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -59,7 +30,7 @@ export const PermohonPermohonanEdit: FC = () => {
   const [formErrors, setFormErrors] = useState<PermohonanRevisiFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const fetchDetail = useCallback(async () => {
+  const fetchDetail = useCallback(async (signal?: AbortSignal) => {
     if (!id) return;
 
     setIsLoading(true);
@@ -67,10 +38,8 @@ export const PermohonPermohonanEdit: FC = () => {
     setErrorMessage('');
 
     try {
-      const res = await api.get<{ permohonan: PermohonanDetailInfo }>(
-        `/v1/pemohon/permohonan/${id}`
-      );
-      const data = res.data.permohonan;
+      const res = await pemohonService.getPermohonanDetail(id, signal);
+      const data = res.permohonan;
       setPermohonan(data);
 
       setFormData({
@@ -79,31 +48,29 @@ export const PermohonPermohonanEdit: FC = () => {
         ringkasan_tujuan: data.ringkasan_tujuan || '',
         file_dokumen: null,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
+      if (signal?.aborted) return;
       setHasError(true);
       const msg =
-        err?.response?.data?.message ||
-        'Gagal memuat data permohonan. Pastikan data tersedia dan Anda berwenang.';
+        err instanceof Error
+          ? err.message
+          : 'Gagal memuat data permohonan. Pastikan data tersedia dan Anda berwenang.';
       setErrorMessage(msg);
     } finally {
-      setIsLoading(false);
+      if (!signal?.aborted) {
+        setIsLoading(false);
+      }
     }
   }, [id]);
 
   useEffect(() => {
-    fetchDetail();
+    const controller = new AbortController();
+    void fetchDetail(controller.signal);
+
+    return () => {
+      controller.abort();
+    };
   }, [fetchDetail]);
-
-  const sidebarProps = {
-    navItems: NAV_ITEMS,
-    activeRoute: 'permohonan',
-    brandSubtitle: 'Pengadaan Barang & Jasa',
-    sectionTitle: 'MENU',
-  };
-
-  const topbarProps = {
-    user,
-  };
 
   const handleFieldChange = (field: keyof PermohonanRevisiFormData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -118,7 +85,8 @@ export const PermohonPermohonanEdit: FC = () => {
 
   const handleViewCurrentDokumen = () => {
     if (!id) return;
-    window.open(`/api/v1/pemohon/permohonan/${id}/dokumen?disposition=inline`, '_blank');
+    const url = pemohonService.getDokumenDownloadUrl(id);
+    window.open(`${url}?disposition=inline`, '_blank');
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -154,28 +122,25 @@ export const PermohonPermohonanEdit: FC = () => {
         payload.append('file_dokumen', formData.file_dokumen);
       }
 
-      await api.post(`/v1/pemohon/permohonan/${id}/revisi`, payload, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      await pemohonService.revisiPermohonan(id, payload);
 
       navigate(`/pemohon/permohonan/${id}`, {
         state: { flashMessage: 'Permohonan berhasil diperbaiki dan diajukan ulang.' },
       });
-    } catch (err: any) {
-      if (err?.response?.status === 422 && err.response?.data?.errors) {
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err) && err.response?.status === 422 && err.response?.data?.errors) {
         const backendErrors: PermohonanRevisiFormErrors = {};
         Object.entries(err.response.data.errors).forEach(([k, v]) => {
           if (Array.isArray(v) && v.length > 0) {
-            backendErrors[k as keyof PermohonanRevisiFormErrors] = v[0];
+            backendErrors[k as keyof PermohonanRevisiFormErrors] = String(v[0]);
           }
         });
         setFormErrors(backendErrors);
       } else {
         const msg =
-          err?.response?.data?.message ||
-          'Terjadi kendala saat mengajukan ulang permohonan. Coba beberapa saat lagi.';
+          axios.isAxiosError(err) && err.response?.data?.message
+            ? String(err.response.data.message)
+            : 'Terjadi kendala saat mengajukan ulang permohonan. Coba beberapa saat lagi.';
         setFormErrors({ general: msg });
       }
     } finally {
@@ -183,135 +148,23 @@ export const PermohonPermohonanEdit: FC = () => {
     }
   };
 
-  const currentDokumen: PermohonanDokumenDetail | null = permohonan?.dokumen
-    ? (permohonan.dokumen as unknown as PermohonanDokumenDetail)
-    : null;
-
   return (
-    <DashboardShellTemplate sidebarProps={sidebarProps} topbarProps={topbarProps}>
-      {/* Breadcrumb Navigasi */}
-      <nav
-        aria-label="Breadcrumb"
-        className="flex items-center gap-2 text-xs font-bold text-[#8A9A95] tracking-wider uppercase mb-1"
-      >
-        <Link
-          to="/pemohon/permohonan"
-          className="hover:text-[#0E7C5A] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C5A] rounded px-1"
-        >
-          LIST PERMOHONAN
-        </Link>
-        <span aria-hidden="true">&gt;</span>
-        <Link
-          to={id ? `/pemohon/permohonan/${id}` : '/pemohon/permohonan'}
-          className="hover:text-[#0E7C5A] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C5A] rounded px-1"
-        >
-          DETAIL PERMOHONAN
-        </Link>
-      </nav>
-
-      {/* Loading Skeleton State */}
-      {isLoading && (
-        <div className="space-y-6 animate-pulse">
-          <div className="h-40 bg-[#EEF5F2] rounded-[24px]" />
-          <div className="h-28 bg-white rounded-[24px] border border-[#E4EBE8]" />
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 h-96 bg-white rounded-[24px] border border-[#E4EBE8]" />
-            <div className="h-96 bg-white rounded-[24px] border border-[#E4EBE8]" />
-          </div>
-        </div>
-      )}
-
-      {/* Error State */}
-      {!isLoading && (hasError || !permohonan) && (
-        <div className="bg-white rounded-[24px] border border-[#E4EBE8] shadow-sm p-8 text-center space-y-4">
-          <div className="w-14 h-14 rounded-2xl bg-[#FDECEC] text-[#B42318] flex items-center justify-center mx-auto">
-            <AlertCircle className="w-7 h-7" />
-          </div>
-          <h2 className="text-lg font-bold text-[#14201C]">
-            Gagal Memuat Data Permohonan
-          </h2>
-          <p className="text-xs md:text-sm text-[#5F6F6A] max-w-md mx-auto">
-            {errorMessage || 'Permohonan tidak ditemukan atau Anda tidak berwenang mengakses data ini.'}
-          </p>
-          <div className="flex items-center justify-center gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => fetchDetail()}
-              className="inline-flex items-center gap-2 px-4 py-2 min-h-[44px] rounded-xl bg-[#0E7C5A] text-white text-xs font-semibold hover:bg-[#0A5C43] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C5A] cursor-pointer"
-            >
-              <RotateCcw className="w-4 h-4" />
-              <span>Coba Lagi</span>
-            </button>
-            <Link
-              to="/pemohon/permohonan"
-              className="inline-flex items-center gap-2 px-4 py-2 min-h-[44px] rounded-xl border border-[#E4EBE8] bg-white text-xs font-semibold text-[#14201C] hover:bg-[#F3F6F5] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C5A]"
-            >
-              Kembali ke Daftar
-            </Link>
-          </div>
-        </div>
-      )}
-
-      {/* Content State */}
-      {!isLoading && permohonan && (
-        <div className="space-y-6">
-          {/* Hero Banner */}
-          <HeroBanner
-            eyebrow="EDIT PERMOHONAN"
-            title={
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className="text-2xl md:text-3xl font-extrabold tracking-tight">
-                  Edit Permohonan Pengadaan
-                </span>
-                <StatusPill status={permohonan.status || 'ditolak'} />
-              </div>
-            }
-            description={`Nomor ${permohonan.nomor_surat ?? '-'} · Perbaiki data sesuai catatan revisi pemeriksa.`}
-            ctaLabel="Kembali"
-            ctaIcon={ArrowLeft}
-            ctaVariant="translucent"
-            onCta={() => navigate(`/pemohon/permohonan/${id}`)}
-          />
-
-          {/* Alert General Error jika ada */}
-          {formErrors.general && (
-            <div className="p-4 rounded-2xl bg-[#FDECEC] border border-[#FDA29B] text-[#B42318] text-sm flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-              <p>{formErrors.general}</p>
-            </div>
-          )}
-
-          {/* Card Catatan dari Pemeriksa */}
-          {permohonan.catatan_penolakan && (
-            <CatatanPenolakanCard catatan={permohonan.catatan_penolakan} />
-          )}
-
-          {/* Tata Letak 2 Kolom */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-            {/* Kolom Kiri: Formulir Edit */}
-            <div className="lg:col-span-2">
-              <PermohonanEditFormCard
-                currentDokumen={currentDokumen}
-                onViewDokumen={handleViewCurrentDokumen}
-                data={formData}
-                setData={handleFieldChange}
-                errors={formErrors}
-                processing={isSubmitting}
-                onSubmit={handleSubmit}
-              />
-            </div>
-
-            {/* Kolom Kanan: Panduan & Alur */}
-            <div className="space-y-6">
-              <AlurPermohonanCard mode="revisi" />
-              <PanduanPengajuanCard mode="revisi" />
-            </div>
-          </div>
-        </div>
-      )}
-    </DashboardShellTemplate>
+    <PemohonPermohonanEditTemplate
+      user={user}
+      permohonan={permohonan}
+      formData={formData}
+      formErrors={formErrors}
+      isSubmitting={isSubmitting}
+      isLoading={isLoading}
+      hasError={hasError}
+      errorMessage={errorMessage}
+      onFieldChange={handleFieldChange}
+      onSubmit={handleSubmit}
+      onBack={() => navigate(`/pemohon/permohonan/${id}`)}
+      onRetry={() => void fetchDetail()}
+      onViewCurrentDokumen={handleViewCurrentDokumen}
+    />
   );
 };
 
 export default PermohonPermohonanEdit;
-

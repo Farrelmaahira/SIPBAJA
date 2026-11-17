@@ -6,7 +6,7 @@ import HeroBanner from '../organisms/HeroBanner';
 import { CrudTable, type CrudColumn } from '../organisms/CrudTable';
 import StatusPill from '../atoms/StatusPill';
 import SearchBar from '../molecules/SearchBar';
-import { PPBJ_NAV_ITEMS } from './PpbjDashboardTemplate';
+import { PPBJ_NAV_ITEMS } from '../../constants/ppbjNav';
 import { formatRupiah, formatTanggalIndo } from '../../utils/formatters';
 import type { PpbjPermohonanItem } from '../../types/ppbj';
 import type { AppTopbarUser } from '../organisms/AppTopbar';
