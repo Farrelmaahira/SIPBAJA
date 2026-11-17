@@ -3,9 +3,9 @@ import axios from 'axios';
 import { adminService } from '../../../services/adminService';
 import AdminPenggunaTemplate, {
   type UserRowItem,
-  type PenggunaFormData,
 } from '../../../components/templates/Admin/AdminPenggunaTemplate';
-import Pagination, { type PaginationMeta } from '../../../components/molecules/Pagination';
+import { type PaginationMeta } from '../../../components/molecules/Pagination';
+import { PenggunaFormData } from '@/types/admin';
 
 const EMPTY_FORM: PenggunaFormData = {
   nama: '',
@@ -17,7 +17,14 @@ const EMPTY_FORM: PenggunaFormData = {
 
 export const PenggunaIndex: FC = () => {
   const [users, setUsers] = useState<UserRowItem[]>([]);
-  const [paginationMeta, setPaginationMeta] = useState<PaginationMeta | null>(null);
+  const [paginationMeta, setPaginationMeta] = useState<PaginationMeta>({
+    current_page: 1,
+    last_page: 1,
+    total: 0,
+    from: 1,
+    to: 1,
+    per_page: 5
+  });
   const [roles, setRoles] = useState<Array<{ id: number; nama: string }>>([]);
   const [units, setUnits] = useState<Array<{ id: number; nama: string }>>([]);
   const [query, setQuery] = useState('');
@@ -151,12 +158,8 @@ export const PenggunaIndex: FC = () => {
   return (
     <AdminPenggunaTemplate
       rows={users}
-      pagination={
-        <Pagination
-          meta={paginationMeta}
-          onPageChange={(page) => setCurrentPage(page)}
-        />
-      }
+      paginationMeta={paginationMeta}
+      onPageChange={setCurrentPage}
       roles={roles}
       units={units}
       query={query}

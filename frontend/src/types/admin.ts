@@ -130,3 +130,11 @@ export interface AdminRoleResponse {
   filters: { q: string };
 }
 
+export interface PenggunaFormData {
+  nama?: string;
+  email?: string;
+  password?: string;
+  role_id?: string | number;
+  unit_id?: string | number;
+  [key: string]: unknown;
+}
