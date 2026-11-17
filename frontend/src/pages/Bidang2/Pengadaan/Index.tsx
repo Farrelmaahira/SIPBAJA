@@ -2,7 +2,7 @@ import { useState, useEffect, type FC, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import bidang2Service from '../../../services/bidang2Service';
-import Bidang2PengadaanIndexTemplate from '../../../components/templates/Bidang2PengadaanIndexTemplate';
+import Bidang2PengadaanIndexTemplate from '../../../components/templates/Bidang2/Bidang2PengadaanIndexTemplate';
 import type { Bidang2TableItem } from '../../../components/organisms/Bidang2PermohonanTable';
 
 const FALLBACK_PENGADAAN_ITEMS: Bidang2TableItem[] = [];

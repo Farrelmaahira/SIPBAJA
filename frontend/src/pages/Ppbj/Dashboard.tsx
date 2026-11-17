@@ -2,7 +2,7 @@ import { useEffect, useState, type FC } from 'react';
 import ppbjService from '../../services/ppbjService';
 import { useAuth } from '../../hooks/useAuth';
 import usePpbjDashboard from '../../hooks/usePpbjDashboard';
-import PpbjDashboardTemplate from '../../components/templates/PpbjDashboardTemplate';
+import PpbjDashboardTemplate from '../../components/templates/PPBJ/PpbjDashboardTemplate';
 import type {
   PpbjStatItem,
   PpbjPermohonanItem,

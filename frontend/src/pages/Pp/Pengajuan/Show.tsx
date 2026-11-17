@@ -1,8 +1,8 @@
 import { useState, useEffect, type FC } from 'react';
 import { useParams } from 'react-router-dom';
 import ppService from '../../../services/ppService';
-import PpPengajuanShowTemplate from '../../../components/templates/PpPengajuanShowTemplate';
-import type { PpNavItem } from '../../../components/templates/PpLayout';
+import PpPengajuanShowTemplate from '../../../components/templates/PP/PpPengajuanShowTemplate';
+import type { PpNavItem } from '../../../components/templates/PP/PpLayout';
 import type { PpPengadaanDetailPayload } from '../../../types/pp';
 import type { NotificationItem } from '../../../types/notification';
 

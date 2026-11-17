@@ -2,7 +2,7 @@ import { useState, type FC, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../hooks/useAuth';
-import LoginTemplate from '../../components/templates/LoginTemplate';
+import LoginTemplate from '../../components/templates/General/LoginTemplate';
 import { getRoleDashboardPath } from '../../utils/role';
 
 export const Login: FC = () => {

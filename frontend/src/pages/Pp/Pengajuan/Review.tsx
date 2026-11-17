@@ -1,9 +1,9 @@
 import { useState, useEffect, type FC } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ppService from '../../../services/ppService';
-import PpPengajuanReviewTemplate from '../../../components/templates/PpPengajuanReviewTemplate';
+import PpPengajuanReviewTemplate from '../../../components/templates/PP/PpPengajuanReviewTemplate';
 import { extractServerErrors } from '../../../utils/fileValidation';
-import type { PpNavItem } from '../../../components/templates/PpLayout';
+import type { PpNavItem } from '../../../components/templates/PP/PpLayout';
 import type {
   PpPengadaanDetailPayload,
   PpDocumentPreviewInfo,

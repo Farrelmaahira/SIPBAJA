@@ -1,5 +1,5 @@
 import { useState, type FC } from 'react';
-import PpkPengajuanIndexTemplate from '../../../components/templates/PpkPengajuanIndexTemplate';
+import PpkPengajuanIndexTemplate from '../../../components/templates/PPK/PpkPengajuanIndexTemplate';
 import DocumentPreviewModal from '../../../components/organisms/DocumentPreviewModal';
 import { usePpkPengajuan } from '../../../hooks/usePpkPengajuan';
 import { PPK_NAV_ITEMS } from '../Dashboard';

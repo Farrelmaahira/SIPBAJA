@@ -1,11 +1,11 @@
 import { useEffect, useState, type FC, type ChangeEvent } from 'react';
 import axios from 'axios';
 import { adminService } from '../../../services/adminService';
-import MakTemplate, {
+import AdminMakTemplate, {
   type MakRowItem,
   type PpkOptionUser,
   type MakFormData,
-} from '../../../components/templates/MakTemplate';
+} from '../../../components/templates/Admin/AdminMakTemplate';
 import Pagination, { type PaginationMeta } from '../../../components/molecules/Pagination';
 
 const EMPTY_FORM: MakFormData = {
@@ -140,7 +140,7 @@ export const MakIndex: FC = () => {
   };
 
   return (
-    <MakTemplate
+    <AdminMakTemplate
       rows={maks}
       pagination={
         <Pagination

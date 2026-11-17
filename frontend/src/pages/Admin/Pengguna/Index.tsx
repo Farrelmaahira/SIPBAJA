@@ -1,10 +1,10 @@
 import { useEffect, useState, type FC, type ChangeEvent } from 'react';
 import axios from 'axios';
 import { adminService } from '../../../services/adminService';
-import PenggunaTemplate, {
+import AdminPenggunaTemplate, {
   type UserRowItem,
   type PenggunaFormData,
-} from '../../../components/templates/PenggunaTemplate';
+} from '../../../components/templates/Admin/AdminPenggunaTemplate';
 import Pagination, { type PaginationMeta } from '../../../components/molecules/Pagination';
 
 const EMPTY_FORM: PenggunaFormData = {
@@ -149,7 +149,7 @@ export const PenggunaIndex: FC = () => {
   };
 
   return (
-    <PenggunaTemplate
+    <AdminPenggunaTemplate
       rows={users}
       pagination={
         <Pagination

@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import PerencanaanPengajuanShowTemplate from '../../../components/templates/PerencanaanPengajuanShowTemplate';
+import PerencanaanPengajuanShowTemplate from '../../../components/templates/Perencanaan/PerencanaanPengajuanShowTemplate';
 import { usePerencanaanPengajuan } from '../../../hooks/usePerencanaanPengajuan';
 import type { PerencanaanPengajuanDetail } from '../../../types/perencanaan';
 import type { NotificationItem } from '../../../types/notification';

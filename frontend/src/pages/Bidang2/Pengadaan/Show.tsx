@@ -7,7 +7,7 @@ import {
   DollarSign,
 } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
-import AppLayout from '../../../components/templates/AppLayout';
+import AppLayout from '../../../components/templates/General/AppLayout';
 import HeroBanner from '../../../components/organisms/HeroBanner';
 import StatusPill from '../../../components/atoms/StatusPill';
 import { BIDANG2_NAV_ITEMS } from '../../../constants/bidang2Nav';

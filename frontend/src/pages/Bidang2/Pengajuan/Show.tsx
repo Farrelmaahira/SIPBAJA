@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, type FC } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import bidang2Service from '../../../services/bidang2Service';
-import Bidang2PengajuanShowTemplate from '../../../components/templates/Bidang2PengajuanShowTemplate';
+import Bidang2PengajuanShowTemplate from '../../../components/templates/Bidang2/Bidang2PengajuanShowTemplate';
 import type { Bidang2DetailPengajuan } from '../../../types/bidang2';
 import type { DokumenItem } from '../../../types/dokumen';
 
