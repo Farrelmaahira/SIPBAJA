@@ -21,7 +21,6 @@ export const PpkPengajuanIndex: FC = () => {
     setFilterOpen,
     handleApplyFilter,
     setPage,
-    activeRkakl,
     isLoading,
     recentNotifications,
     unreadNotificationsCount,
@@ -48,8 +47,6 @@ export const PpkPengajuanIndex: FC = () => {
         onCloseFilter={() => setFilterOpen(false)}
         onApplyFilter={handleApplyFilter}
         onPageChange={setPage}
-        activeRkakl={activeRkakl}
-        onPreviewRkakl={setPreviewRkakl}
         isLoading={isLoading}
         recentNotifications={recentNotifications}
         unreadNotificationsCount={unreadNotificationsCount}

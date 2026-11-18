@@ -175,6 +175,27 @@ export const rejectPembayaran = async (
   return response.data;
 };
 
+export const fetchDokumenBlob = async (
+  downloadUrl: string,
+  disposition: 'inline' | 'attachment' = 'attachment',
+  signal?: AbortSignal
+): Promise<{ blob: Blob; contentType?: string }> => {
+  const normalizedUrl = downloadUrl.replace(/^\/api(?=\/)/, '');
+  const separator = normalizedUrl.includes('?') ? '&' : '?';
+
+  const response = await api.get<Blob>(`${normalizedUrl}${separator}disposition=${disposition}`, {
+    responseType: 'blob',
+    signal,
+  });
+  const rawContentType = response.headers['content-type'];
+  const contentType = typeof rawContentType === 'string' ? rawContentType : 'application/pdf';
+
+  return {
+    blob: new Blob([response.data], { type: contentType }),
+    contentType,
+  };
+};
+
 export const getRkakl = async (tahun?: string, signal?: AbortSignal): Promise<PpkRkaklResponse> => {
   const response = await api.get<PpkRkaklResponse>('/v1/ppk/rkakl', {
     params: {
@@ -200,6 +221,7 @@ export const ppkService = {
   approvePembayaran,
   rejectPembayaran,
   getRkakl,
+  fetchDokumenBlob,
 };
 
 export default ppkService;

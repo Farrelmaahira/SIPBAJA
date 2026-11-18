@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Ppk;
 
+use App\Models\Dokumen;
 use App\Models\Mak;
 use App\Models\Pengadaan;
 use App\Models\Permohonan;
@@ -102,6 +103,33 @@ class PpkFeatureTest extends TestCase
                     'dokumen_permohonan',
                 ],
             ]);
+    }
+
+    public function test_ppk_can_preview_permohonan_dokumen_inline(): void
+    {
+        $permohonan = Permohonan::firstOrFail();
+        $dokumen = Dokumen::where('ref_type', 'permohonan')
+            ->where('ref_id', $permohonan->id)
+            ->where('tipe_dokumen', 'surat_permohonan')
+            ->firstOrFail();
+
+        Storage::disk('local')->put('dokumen/permohonan/'.$dokumen->nama_hash, '%PDF-1.4 dummy');
+
+        $detail = $this->actingAs($this->ppkUser, 'sanctum')
+            ->getJson("/api/v1/ppk/permohonan/{$permohonan->id}");
+
+        $detail->assertStatus(200);
+
+        $dokumenPayload = collect($detail->json('data.dokumen_permohonan'))->firstWhere('id', $dokumen->id);
+        $this->assertSame(
+            "/api/v1/ppk/permohonan/{$permohonan->id}/dokumen?dokumen_id={$dokumen->id}",
+            $dokumenPayload['download_url'] ?? null
+        );
+
+        $this->actingAs($this->ppkUser, 'sanctum')
+            ->get("/api/v1/ppk/permohonan/{$permohonan->id}/dokumen?dokumen_id={$dokumen->id}&disposition=inline")
+            ->assertStatus(200)
+            ->assertHeader('content-type', 'application/pdf');
     }
 
     public function test_ppk_can_approve_permohonan_with_memo(): void

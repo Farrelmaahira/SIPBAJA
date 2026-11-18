@@ -741,11 +741,9 @@ class PermohonanService
     /**
      * @param  array<string, mixed>  $filters
      */
-    public function paginatePermohonanUntukPpk(User $ppk, array $filters = [], int $perPage = 10): LengthAwarePaginator
+    public function paginatePermohonanUntukPpk(array $filters = []): LengthAwarePaginator
     {
-        $query = Permohonan::with(['Unit', 'Creator', 'PermohonanMak.Mak.Ppk', 'Approvals.Actor'])
-            ->whereHas('PermohonanMak.Mak', fn ($q) => $q->where('ppk_user_id', $ppk->id));
-
+        $query = Permohonan::with(['Unit', 'Creator', 'PermohonanMak.Mak.Ppk', 'Approvals.Actor']);
         $keyword = trim((string) ($filters['search'] ?? $filters['q'] ?? ''));
         if ($keyword !== '') {
             $query->where(function ($q) use ($keyword) {
@@ -768,7 +766,7 @@ class PermohonanService
 
         return $query
             ->orderByDesc('id')
-            ->paginate($perPage)
+            ->paginate(10)
             ->withQueryString();
     }
 
@@ -778,26 +776,22 @@ class PermohonanService
      */
     public function getDetailPermohonanUntukPpk(Permohonan $permohonan, User $ppk): array
     {
-        $berhak = PermohonanMak::where('permohonan_id', $permohonan->id)
-            ->whereHas('Mak', fn ($q) => $q->where('ppk_user_id', $ppk->id))
-            ->exists();
-
-        if (! $berhak) {
-            abort(403, 'Anda tidak memiliki akses pada permohonan yang tidak terikat dengan Jenis MAK Anda.');
-        }
-
         $permohonan->load([
             'Unit',
             'Creator',
             'PermohonanMak.Mak.Ppk',
             'Approvals.Actor',
             'Approvals.Memo',
+            'Dokumen',
         ]);
 
         $dokumenPermohonan = Dokumen::where('ref_type', 'permohonan')
             ->where('ref_id', $permohonan->id)
             ->orderByDesc('versi')
-            ->get();
+            ->get()
+            ->each(function (Dokumen $doc) use ($permohonan) {
+                $doc->setAttribute('download_url', "/api/v1/ppk/permohonan/{$permohonan->id}/dokumen?dokumen_id={$doc->id}");
+            });
 
         return [
             'permohonan' => $permohonan,

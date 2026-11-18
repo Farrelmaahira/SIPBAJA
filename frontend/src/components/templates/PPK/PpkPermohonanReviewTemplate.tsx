@@ -7,35 +7,32 @@ import {
   Tag,
   Building2,
   Banknote,
-  Eye,
   XCircle,
   CheckCircle2,
   Info,
   Hash,
   Upload,
   X,
+  AlertTriangle,
 } from 'lucide-react';
 import AppLayout, { type AppNavItem as PpNavItem } from '../General/AppLayout';
-import DocumentPreviewModal from '../../organisms/DocumentPreviewModal';
+import { DokumenListCard } from '../../organisms/DokumenListCard';
 import { formatRupiah, formatTanggal } from '../../../utils/formatters';
 import type { NotificationItem } from '../../../types/notification';
-import type { PpDokumenItem } from '../../../types/pp';
+import type { DokumenItem } from '../../../types/dokumen';
 import type { PpkPermohonanDetailPayload, PpkPermohonanMakItem } from '../../../types/ppk';
-
-export interface PreviewDocInfo {
-  label?: string;
-  category?: string;
-  filename?: string;
-  size?: string;
-}
 
 export interface PpkPermohonanReviewTemplateProps {
   navItems: PpNavItem[];
   detail: PpkPermohonanDetailPayload | null;
   isLoading: boolean;
-  previewDoc: PreviewDocInfo | null;
-  onOpenPreviewDoc: (doc: PreviewDocInfo) => void;
-  onClosePreviewDoc: () => void;
+  onViewDokumen?: (dokumen: DokumenItem) => void;
+  onDownloadDokumen?: (dokumen: DokumenItem) => void;
+  isViewingDocId?: number | string | null;
+  isDownloadingDocId?: number | string | null;
+  previewBlobUrl?: string | null;
+  previewDocId?: number | string | null;
+  isLoadingPreview?: boolean;
   approveModalOpen: boolean;
   onOpenApproveModal: () => void;
   onCloseApproveModal: () => void;
@@ -61,9 +58,13 @@ export const PpkPermohonanReviewTemplate: FC<PpkPermohonanReviewTemplateProps> =
   navItems,
   detail,
   isLoading,
-  previewDoc,
-  onOpenPreviewDoc,
-  onClosePreviewDoc,
+  onViewDokumen,
+  onDownloadDokumen,
+  isViewingDocId = null,
+  isDownloadingDocId = null,
+  previewBlobUrl = null,
+  previewDocId = null,
+  isLoadingPreview = false,
   approveModalOpen,
   onOpenApproveModal,
   onCloseApproveModal,
@@ -85,22 +86,36 @@ export const PpkPermohonanReviewTemplate: FC<PpkPermohonanReviewTemplateProps> =
   unreadNotificationsCount,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   const permohonan = detail?.permohonan;
-  const dokumenPermohonan: PpDokumenItem[] = detail?.dokumen_permohonan ?? [];
+  const dokumenPermohonan: DokumenItem[] = detail?.dokumen_permohonan ?? [];
   const makPpkList: PpkPermohonanMakItem[] = detail?.permohonan_mak_ppk ?? permohonan?.permohonan_mak ?? permohonan?.PermohonanMak ?? [];
-  const rkaklActive = detail?.rkakl_active ?? null;
 
-  const nomorSurat = permohonan?.nomor_surat || '009/PNJ/2026';
-  const judulPermohonan = permohonan?.judul || 'Pengadaan Sarana Prasarana';
-  const unitNama = permohonan?.unit?.nama || permohonan?.Unit?.nama || 'Jurusan Teknik Sipil';
-  const nominalNilai = permohonan?.estimasi_anggaran ?? permohonan?.nominal ?? 45000000;
-  const statusPermohonan = permohonan?.status || 'diteruskan';
+  const statusPermohonan = permohonan?.status || '';
 
+  // PPK hanya bisa memberi keputusan jika:
+  // 1. Permohonan sudah diteruskan oleh Perencanaan (status 'diteruskan') — bukti MAK sudah ditetapkan
+  // 2. Belum ada keputusan final (bukan 'disetujui', 'ditolak', 'selesai')
+  const makSudahDitetapkan = makPpkList.length > 0;
+  const statusBolehDecision = statusPermohonan === 'diteruskan';
   const canGiveDecision =
+    statusBolehDecision &&
+    makSudahDitetapkan &&
     statusPermohonan !== 'disetujui' &&
     statusPermohonan !== 'ditolak' &&
     statusPermohonan !== 'selesai';
+
+  // Pesan penjelas mengapa tombol keputusan dinonaktifkan
+  const decisionBlockedReason = !statusBolehDecision
+    ? statusPermohonan === 'diajukan'
+      ? 'Permohonan belum diverifikasi dan diteruskan oleh Tim Perencanaan. MAK belum ditetapkan.'
+      : statusPermohonan === 'disetujui'
+        ? 'Permohonan sudah disetujui oleh PPK dan Bidang 2.'
+        : statusPermohonan === 'ditolak'
+          ? 'Permohonan sudah ditolak.'
+          : null
+    : !makSudahDitetapkan
+      ? 'Jenis MAK belum ditetapkan oleh Tim Perencanaan.'
+      : null;
 
   return (
     <AppLayout
@@ -137,7 +152,7 @@ export const PpkPermohonanReviewTemplate: FC<PpkPermohonanReviewTemplateProps> =
                 </span>
               </div>
               <p className="text-sm text-white/85 mt-2">
-                Nomor {nomorSurat} · Diajukan {formatTanggal(permohonan?.created_at || '2026-04-02')}
+                Nomor {permohonan?.nomor_surat} · Diajukan {formatTanggal(permohonan?.created_at || '2026-04-02')}
               </p>
             </div>
 
@@ -174,7 +189,7 @@ export const PpkPermohonanReviewTemplate: FC<PpkPermohonanReviewTemplateProps> =
                   </div>
                   <div>
                     <p className="text-xs text-[#6B7A73]">Nomor Permohonan</p>
-                    <p className="font-semibold text-sm text-[#0F6A49] mt-0.5">{nomorSurat}</p>
+                    <p className="font-semibold text-sm text-[#0F6A49] mt-0.5">{permohonan?.nomor_surat}</p>
                   </div>
                 </div>
 
@@ -196,7 +211,7 @@ export const PpkPermohonanReviewTemplate: FC<PpkPermohonanReviewTemplateProps> =
                   </div>
                   <div>
                     <p className="text-xs text-[#6B7A73]">Judul Permohonan</p>
-                    <p className="font-semibold text-sm text-[#0E1B16] mt-0.5">{judulPermohonan}</p>
+                    <p className="font-semibold text-sm text-[#0E1B16] mt-0.5">{permohonan?.judul}</p>
                   </div>
                 </div>
 
@@ -206,7 +221,7 @@ export const PpkPermohonanReviewTemplate: FC<PpkPermohonanReviewTemplateProps> =
                   </div>
                   <div>
                     <p className="text-xs text-[#6B7A73]">Unit Pemohon</p>
-                    <p className="font-semibold text-sm text-[#0E1B16] mt-0.5">{unitNama}</p>
+                    <p className="font-semibold text-sm text-[#0E1B16] mt-0.5">{permohonan?.Unit?.nama}</p>
                   </div>
                 </div>
 
@@ -217,7 +232,7 @@ export const PpkPermohonanReviewTemplate: FC<PpkPermohonanReviewTemplateProps> =
                   <div>
                     <p className="text-xs text-[#6B7A73]">Estimasi Anggaran</p>
                     <p className="font-semibold text-sm text-[#0E1B16] mt-0.5">
-                      {formatRupiah(nominalNilai)}
+                      {formatRupiah(permohonan?.estimasi_anggaran)}
                     </p>
                   </div>
                 </div>
@@ -247,100 +262,23 @@ export const PpkPermohonanReviewTemplate: FC<PpkPermohonanReviewTemplateProps> =
               </div>
             </div>
 
-            {/* Dokumen Permohonan + RKAKL + Keputusan PPK */}
+            {/* Dokumen Permohonan + Keputusan PPK */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               <div className="lg:col-span-7 space-y-6">
-                <div className="bg-white rounded-[20px] p-6 sm:p-8 border border-[#E3EAE6] shadow-[0_8px_12px_rgba(13,26,20,0.06)]">
-                  <div className="mb-5">
-                    <h3 className="text-lg font-bold text-[#0E1B16]">
-                      Berkas Permohonan & Acuan RKAKL
-                    </h3>
-                    <p className="text-xs text-[#6B7A73] mt-0.5">
-                      Pratinjau surat permohonan dari unit pemohon beserta dokumen RKAKL aktif
-                    </p>
-                  </div>
-
-                  <div className="space-y-4">
-                    {(dokumenPermohonan.length > 0
-                      ? dokumenPermohonan
-                      : [
-                        {
-                          id: 1,
-                          nama_asli: `Surat_Permohonan_${nomorSurat.replace(/\//g, '_')}.pdf`,
-                          tipe_dokumen: 'surat_permohonan',
-                          ukuran_bytes: 2450000,
-                        },
-                      ]
-                    ).map((doc: PpDokumenItem) => (
-                      <div
-                        key={doc.id}
-                        className="p-4 rounded-[14px] bg-[#F5F8F6] border border-[#E3EAE6] flex items-center justify-between gap-4"
-                      >
-                        <div className="flex items-center gap-4 min-w-0">
-                          <div className="w-11 h-11 rounded-xl bg-[#FDE6E4] text-[#D92D20] flex items-center justify-center shrink-0">
-                            <FileText className="w-5 h-5" />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-xs font-semibold text-[#0F6A49]">
-                              {doc.tipe_dokumen === 'memo_persetujuan'
-                                ? 'Memo Persetujuan PPK'
-                                : 'Surat Permohonan'}
-                            </p>
-                            <p className="text-sm font-semibold text-[#0E1B16] truncate">
-                              {doc.nama_asli}
-                            </p>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            onOpenPreviewDoc({
-                              label: 'Surat Permohonan',
-                              filename: doc.nama_asli,
-                              size: 'PDF',
-                            })
-                          }
-                          className="px-4 py-2.5 rounded-xl border border-[#CBD6D0] bg-white hover:bg-[#F4F7F5] text-xs font-semibold text-[#3F4E47] inline-flex items-center gap-1.5 transition cursor-pointer"
-                        >
-                          <Eye className="w-4 h-4" />
-                          <span>Lihat</span>
-                        </button>
-                      </div>
-                    ))}
-
-                    {rkaklActive && (
-                      <div className="p-4 rounded-[14px] bg-[#EBF7F1] border border-[#DDF3E6] flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-4 min-w-0">
-                          <div className="w-11 h-11 rounded-xl bg-white text-[#0F6A49] flex items-center justify-center shrink-0">
-                            <FileText className="w-5 h-5" />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-xs font-semibold text-[#0F6A49]">
-                              Dokumen RKAKL Aktif (Read-Only)
-                            </p>
-                            <p className="text-sm font-semibold text-[#0E1B16] truncate">
-                              {rkaklActive.nama_asli}
-                            </p>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            onOpenPreviewDoc({
-                              label: 'Dokumen RKAKL',
-                              filename: rkaklActive.nama_asli,
-                              size: `Versi ${rkaklActive.versi ?? 1} • PDF`,
-                            })
-                          }
-                          className="px-4 py-2.5 rounded-xl border border-[#16825C] bg-white hover:bg-[#F4F9F6] text-xs font-semibold text-[#0F6A49] inline-flex items-center gap-1.5 transition cursor-pointer"
-                        >
-                          <Eye className="w-4 h-4" />
-                          <span>Pratinjau RKAKL</span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                <DokumenListCard
+                  title="Berkas Permohonan"
+                  dokumenList={dokumenPermohonan}
+                  nomorSurat={permohonan?.nomor_surat}
+                  onViewNewTab={onViewDokumen}
+                  onDownload={onDownloadDokumen}
+                  isViewingId={isViewingDocId}
+                  isDownloadingId={isDownloadingDocId}
+                  previewBlobUrl={previewBlobUrl}
+                  previewDocId={previewDocId}
+                  isLoadingPreview={isLoadingPreview}
+                  emptyTitle="Belum ada berkas terlampir"
+                  emptyDescription="Surat permohonan akan ditampilkan di sini setelah diunggah oleh unit pemohon."
+                />
               </div>
 
               <div className="lg:col-span-5 space-y-6">
@@ -362,12 +300,20 @@ export const PpkPermohonanReviewTemplate: FC<PpkPermohonanReviewTemplateProps> =
                     </p>
                   </div>
 
+                  {/* Banner peringatan jika PPK belum bisa memberi keputusan */}
+                  {decisionBlockedReason && (
+                    <div className="p-4 rounded-[14px] bg-[#FEF3DC] border border-[#FDE4A0] flex items-start gap-2.5 mb-5 text-xs text-[#92400E]">
+                      <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-[#F59E0B]" />
+                      <p className="leading-relaxed">{decisionBlockedReason}</p>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
                       disabled={!canGiveDecision || isSubmitting}
                       onClick={onOpenRejectModal}
-                      className="py-3 px-3 rounded-xl border border-[#FECDCA] bg-[#FEE4E2]/70 hover:bg-[#FEE4E2] text-xs font-bold text-[#D92D20] transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      className="py-3 px-3 rounded-xl border border-[#FECDCA] bg-[#FEE4E2]/70 hover:bg-[#FEE4E2] text-xs font-bold text-[#D92D20] transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <XCircle className="w-4 h-4 shrink-0" />
                       <span>Tolak Permohonan</span>
@@ -376,7 +322,7 @@ export const PpkPermohonanReviewTemplate: FC<PpkPermohonanReviewTemplateProps> =
                       type="button"
                       disabled={!canGiveDecision || isSubmitting}
                       onClick={onOpenApproveModal}
-                      className="py-3 px-3 rounded-xl bg-[#0E7C5A] hover:bg-[#0A5C43] text-xs font-bold text-white transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
+                      className="py-3 px-3 rounded-xl bg-[#0E7C5A] hover:bg-[#0A5C43] text-xs font-bold text-white transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <CheckCircle2 className="w-4 h-4 shrink-0" />
                       <span>Setujui Permohonan</span>
@@ -539,13 +485,6 @@ export const PpkPermohonanReviewTemplate: FC<PpkPermohonanReviewTemplateProps> =
           </div>
         )}
 
-        <DocumentPreviewModal
-          isOpen={Boolean(previewDoc)}
-          onClose={onClosePreviewDoc}
-          category={previewDoc?.label || previewDoc?.category}
-          filename={previewDoc?.filename}
-          size={previewDoc?.size}
-        />
       </div>
     </AppLayout>
   );

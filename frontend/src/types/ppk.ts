@@ -104,7 +104,6 @@ export interface PpkPermohonanDetailPayload {
   permohonan: PpkPermohonanItem;
   dokumen_permohonan?: PpDokumenItem[];
   permohonan_mak_ppk?: PpkPermohonanMakItem[];
-  rkakl_active?: PpkRkaklDoc | null;
 }
 
 export interface PpkDashboardResponse {

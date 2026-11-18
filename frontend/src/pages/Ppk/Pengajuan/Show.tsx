@@ -35,6 +35,7 @@ export const PpkPengajuanShow: FC<PpkShowProps> = ({
     ppkService
       .getPengajuanShow(id, controller.signal)
       .then((res) => {
+        console.log(res)
         const payload = res.detail || res.data || {};
         setDetail(payload);
         if (res.recentNotifications) setRecentNotifications(res.recentNotifications);

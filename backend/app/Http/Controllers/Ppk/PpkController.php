@@ -39,12 +39,9 @@ class PpkController extends Controller
             'statuses' => $request->query('statuses', []),
             'bulan' => $request->query('bulan'),
             'tahun' => $request->query('tahun'),
-            'unit_id' => $request->query('unit_id'),
         ];
 
-        $perPage = (int) $request->query('per_page', 10);
-        $permohonan = $this->permohonanService->paginatePermohonanUntukPpk(auth()->user(), $filters, $perPage);
-        $notifData = $this->notificationService->getRecentAndUnreadCount((int) auth()->id());
+        $permohonan = $this->permohonanService->paginatePermohonanUntukPpk($filters);
 
         return response()->json([
             'message' => 'Daftar permohonan menunggu persetujuan awal PPK berhasil diambil.',
@@ -55,25 +52,30 @@ class PpkController extends Controller
                 'per_page' => $permohonan->perPage(),
                 'total' => $permohonan->total(),
             ],
-            'permohonan' => $permohonan,
             'filters' => $filters,
-            'recentNotifications' => $notifData['recentNotifications'],
-            'unreadNotificationsCount' => $notifData['unreadNotificationsCount'],
         ]);
     }
 
     public function showPermohonan(Permohonan $permohonan): JsonResponse
     {
         $detail = $this->permohonanService->getDetailPermohonanUntukPpk($permohonan, auth()->user());
-        $notifData = $this->notificationService->getRecentAndUnreadCount((int) auth()->id());
 
         return response()->json([
             'message' => 'Detail permohonan untuk PPK berhasil diambil.',
             'data' => $detail,
-            'detail' => $detail,
-            'recentNotifications' => $notifData['recentNotifications'],
-            'unreadNotificationsCount' => $notifData['unreadNotificationsCount'],
         ]);
+    }
+
+    public function downloadDokumen(Request $request, Permohonan $permohonan): StreamedResponse
+    {
+        $dokumenId = $request->filled('dokumen_id') ? $request->integer('dokumen_id') : null;
+        $info = $this->permohonanService->ambilDokumen($request->user(), $permohonan, $dokumenId);
+
+        if ($request->query('disposition', 'attachment') === 'inline') {
+            return Storage::disk('local')->response($info['path'], $info['nama_asli']);
+        }
+
+        return Storage::disk('local')->download($info['path'], $info['nama_asli']);
     }
 
     public function approvePermohonan(SetujuiPermohonanPpkRequest $request, Permohonan $permohonan): JsonResponse

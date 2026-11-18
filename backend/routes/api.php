@@ -161,6 +161,7 @@ Route::prefix('v1')->group(function () {
             Route::get('dashboard', DashboardPpkController::class)->name('api.ppk.dashboard');
             Route::get('permohonan', [PpkController::class, 'indexPermohonan'])->name('api.ppk.permohonan.index');
             Route::get('permohonan/{permohonan}', [PpkController::class, 'showPermohonan'])->name('api.ppk.permohonan.show');
+            Route::get('permohonan/{permohonan}/dokumen', [PpkController::class, 'downloadDokumen'])->name('api.ppk.permohonan.dokumen.download');
             Route::post('permohonan/{permohonan}/approve', [PpkController::class, 'approvePermohonan'])->name('api.ppk.permohonan.approve');
             Route::post('permohonan/{permohonan}/reject', [PpkController::class, 'rejectPermohonan'])->name('api.ppk.permohonan.reject');
             Route::get('pengajuan', [PpkController::class, 'index'])->name('api.ppk.pengajuan.index');

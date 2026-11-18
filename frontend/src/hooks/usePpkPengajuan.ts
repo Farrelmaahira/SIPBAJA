@@ -24,7 +24,6 @@ export interface UsePpkPengajuanResult {
   handleApplyFilter: (statuses: string[]) => void;
   page: number;
   setPage: (page: number) => void;
-  activeRkakl: PpkRkaklDoc | null;
   isLoading: boolean;
   error: string | null;
   recentNotifications: NotificationItem[];
@@ -49,7 +48,6 @@ export function usePpkPengajuan(): UsePpkPengajuanResult {
     total: 0,
   });
 
-  const [activeRkakl, setActiveRkakl] = useState<PpkRkaklDoc | null>(null);
   const [recentNotifications, setRecentNotifications] = useState<NotificationItem[]>([]);
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -75,23 +73,6 @@ export function usePpkPengajuan(): UsePpkPengajuanResult {
     setFilterOpen(false);
   }, []);
 
-  // Fetch RKAKL info
-  useEffect(() => {
-    const controller = new AbortController();
-    ppkService
-      .getRkakl(undefined, controller.signal)
-      .then((res) => {
-        setActiveRkakl(res.activeDoc ?? res.data?.active_doc ?? null);
-      })
-      .catch(() => {
-        // RKAKL failure is non-fatal for pengajuan listing
-      });
-
-    return () => {
-      controller.abort();
-    };
-  }, []);
-
   // Fetch Permohonan list (Dokumen Turunan MAK)
   useEffect(() => {
     const controller = new AbortController();
@@ -109,6 +90,7 @@ export function usePpkPengajuan(): UsePpkPengajuanResult {
     ppkService
       .getPermohonanList(filterPayload, controller.signal)
       .then((res) => {
+        console.log(res)
         const list = res.data ?? res.permohonan?.data ?? [];
         setPermohonanItems(list);
         setMeta({
@@ -179,7 +161,6 @@ export function usePpkPengajuan(): UsePpkPengajuanResult {
     handleApplyFilter,
     page,
     setPage,
-    activeRkakl,
     isLoading,
     error,
     recentNotifications,

@@ -29,8 +29,6 @@ export interface PpkPengajuanIndexTemplateProps {
   onCloseFilter: () => void;
   onApplyFilter: (statuses: string[]) => void;
   onPageChange: (page: number) => void;
-  activeRkakl: PpkRkaklDoc | null;
-  onPreviewRkakl: (doc: PpkRkaklDoc) => void;
   isLoading: boolean;
   recentNotifications: NotificationItem[];
   unreadNotificationsCount: number;
@@ -53,8 +51,6 @@ export const PpkPengajuanIndexTemplate: FC<PpkPengajuanIndexTemplateProps> = ({
   onCloseFilter,
   onApplyFilter,
   onPageChange,
-  activeRkakl,
-  onPreviewRkakl,
   isLoading,
   recentNotifications,
   unreadNotificationsCount,
@@ -146,34 +142,6 @@ export const PpkPengajuanIndexTemplate: FC<PpkPengajuanIndexTemplateProps> = ({
           title="Daftar Permohonan PPK"
           description="Pantau dan verifikasi permohonan pengadaan yang terikat dengan Jenis MAK dalam wewenang Anda."
         />
-
-        {/* Banner RKAKL Aktif */}
-        {activeRkakl && (
-          <div className="bg-white rounded-[22px] border border-[#E4EBE8] p-5 shadow-[0_4px_16px_rgba(13,51,38,0.04)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 rounded-2xl bg-[#E8F5EF] flex items-center justify-center text-[#0E7C5A] shrink-0">
-                <FileText className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#E4F6EC] text-[#0B7A4E]">
-                    RKAKL AKTIF {activeRkakl.tahun_anggaran || '2026'}
-                  </span>
-                  <span className="text-xs text-[#8A9A95]">v{activeRkakl.versi ?? 1}</span>
-                </div>
-                <p className="text-sm font-bold text-[#14201C] mt-1">{activeRkakl.nama_asli}</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => onPreviewRkakl(activeRkakl)}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0E7C5A] hover:bg-[#0B684A] text-white text-xs font-bold transition shadow-[0_4px_12px_rgba(14,124,90,0.2)] cursor-pointer self-start sm:self-auto"
-            >
-              <Eye className="w-4 h-4" />
-              <span>Pratinjau RKAKL</span>
-            </button>
-          </div>
-        )}
 
         <CrudTable
           title="Daftar Permohonan Pengadaan"
