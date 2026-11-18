@@ -1,7 +1,7 @@
 import { useState, useEffect, type FC, type FormEvent } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import ppkService from '../../../services/ppkService';
-import PpPengajuanReviewTemplate from '../../../components/templates/PP/PpPengajuanReviewTemplate';
+import PpkPengadaanReviewTemplate from '../../../components/templates/PPK/PpkPengadaanReviewTemplate';
 import PpkPermohonanReviewTemplate, {
   type PreviewDocInfo,
 } from '../../../components/templates/PPK/PpkPermohonanReviewTemplate';
@@ -237,17 +237,11 @@ export const PpkPengajuanReview: FC<PpkReviewProps> = ({
   }
 
   return (
-    <PpPengajuanReviewTemplate
+    <PpkPengadaanReviewTemplate
       detail={pengadaanDetail}
       recentNotifications={recentNotifications}
       unreadNotificationsCount={unreadNotificationsCount}
-      basePath="/ppk"
-      roleInitials="PPK"
-      roleTitle="PPK"
-      roleSubtitle="Pejabat Pembuat Komitmen"
       navItems={PPK_NAV_ITEMS}
-      keputusanTitle="Keputusan PPK"
-      keputusanNote="Khusus penandatanganan PPK. Pastikan seluruh dokumen pengadaan telah sesuai sebelum disetujui."
       confirmApproveOpen={confirmApproveOpen}
       rejectOpen={rejectOpen}
       submitting={submitting}

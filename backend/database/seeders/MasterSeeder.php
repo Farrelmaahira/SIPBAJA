@@ -6,6 +6,7 @@ use App\Models\JenisPengadaan;
 use App\Models\LevelPengadaan;
 use App\Models\Mak;
 use App\Models\MetodePengadaan;
+use App\Models\Role;
 use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -28,22 +29,44 @@ class MasterSeeder extends Seeder
             Unit::firstOrCreate(['nama' => $namaUnit]);
         }
 
-        // 2. PPK user for MAKs
-        $ppkUser = User::whereHas('role', fn ($q) => $q->where('nama', 'PPK'))->first()
-            ?? User::first();
+        // 2. PPK users for MAKs
+        $ppkRole = Role::firstOrCreate(['nama' => 'PPK']);
 
-        // 3. MAKs
-        $maks = [
-            '532111 - Belanja Modal Peralatan dan Mesin',
-            '521211 - Belanja Bahan',
-            '521811 - Belanja Barang Persediaan Konsumsi',
-            '536111 - Belanja Modal Gedung dan Bangunan',
+        $ppkUsers = [
+            'ppk.blufisik@pnj.ac.id' => 'PPK BLU Fisik',
+            'ppk.blunonfisik@pnj.ac.id' => 'PPK BLU Non-Fisik',
+            'ppk.rmfisik@pnj.ac.id' => 'PPK RM Fisik',
+            'ppk.rmnonfisik@pnj.ac.id' => 'PPK RM Non-Fisik',
         ];
 
-        foreach ($maks as $namaMak) {
-            Mak::firstOrCreate(
-                ['nama' => $namaMak],
-                ['ppk_user_id' => $ppkUser->id]
+        $createdPpkUsers = [];
+        foreach ($ppkUsers as $email => $nama) {
+            $createdPpkUsers[$email] = User::updateOrCreate(
+                ['email' => $email],
+                [
+                    'nama' => $nama,
+                    'password' => 'password123',
+                    'role_id' => $ppkRole->id,
+                    'unit_id' => null,
+                ]
+            );
+        }
+
+        // 3. MAKs, each assigned to its own PPK
+        $maks = [
+            ['kode' => '532111', 'nama' => 'BLU Fisik', 'ppk_email' => 'ppk.blufisik@pnj.ac.id'],
+            ['kode' => '521211', 'nama' => 'BLU Non-Fisik', 'ppk_email' => 'ppk.blunonfisik@pnj.ac.id'],
+            ['kode' => '521811', 'nama' => 'RM Fisik', 'ppk_email' => 'ppk.rmfisik@pnj.ac.id'],
+            ['kode' => '536111', 'nama' => 'RM Non-Fisik', 'ppk_email' => 'ppk.rmnonfisik@pnj.ac.id'],
+        ];
+
+        foreach ($maks as $mak) {
+            Mak::updateOrCreate(
+                ['kode' => $mak['kode']],
+                [
+                    'nama' => $mak['nama'],
+                    'ppk_user_id' => $createdPpkUsers[$mak['ppk_email']]->id,
+                ]
             );
         }
 

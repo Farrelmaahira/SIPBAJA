@@ -6,7 +6,6 @@ import {
   CheckCircle2,
   XCircle,
   ArrowRight,
-  Eye,
 } from 'lucide-react';
 import AppLayout, { type AppNavItem } from '../General/AppLayout';
 import HeroBanner from '../../organisms/HeroBanner';

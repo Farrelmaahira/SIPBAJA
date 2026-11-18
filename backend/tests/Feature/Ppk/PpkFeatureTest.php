@@ -76,6 +76,7 @@ class PpkFeatureTest extends TestCase
         $mak = Mak::where('ppk_user_id', $this->ppkUser->id)->first()
             ?? Mak::create([
                 'nama' => 'MAK Test PPK',
+                'kode' => 'MAK-TEST-'.uniqid(),
                 'ppk_user_id' => $this->ppkUser->id,
             ]);
 
@@ -109,6 +110,7 @@ class PpkFeatureTest extends TestCase
         $mak = Mak::where('ppk_user_id', $this->ppkUser->id)->first()
             ?? Mak::create([
                 'nama' => 'MAK Test PPK',
+                'kode' => 'MAK-TEST-'.uniqid(),
                 'ppk_user_id' => $this->ppkUser->id,
             ]);
 
@@ -145,6 +147,7 @@ class PpkFeatureTest extends TestCase
         $mak = Mak::where('ppk_user_id', $this->ppkUser->id)->first()
             ?? Mak::create([
                 'nama' => 'MAK Test PPK',
+                'kode' => 'MAK-TEST-'.uniqid(),
                 'ppk_user_id' => $this->ppkUser->id,
             ]);
 
@@ -175,7 +178,10 @@ class PpkFeatureTest extends TestCase
     public function test_ppk_can_view_pengadaan_list_and_review(): void
     {
         $pengadaan = Pengadaan::firstOrFail();
-        $pengadaan->update(['ppk_id' => $this->ppkUser->id]);
+        $pengadaan->update([
+            'ppk_id' => $this->ppkUser->id,
+            'status' => 'diteruskan',
+        ]);
 
         $listResponse = $this->actingAs($this->ppkUser, 'sanctum')
             ->getJson('/api/v1/ppk/pengajuan');
