@@ -1,4 +1,4 @@
-import { LayoutGrid } from 'lucide-react';
+import { LayoutGrid, ClipboardList, ShoppingCart } from 'lucide-react';
 import type { AppNavItem } from '../components/organisms/AppSidebar';
 
 export const PPBJ_NAV_ITEMS: AppNavItem[] = [
@@ -11,13 +11,13 @@ export const PPBJ_NAV_ITEMS: AppNavItem[] = [
     {
         key: 'permohonan',
         label: 'List Permohonan',
-        icon: LayoutGrid,
+        icon: ClipboardList,
         href: '/ppbj/permohonan',
     },
     {
         key: 'pengadaan',
         label: 'List Pengadaan',
-        icon: LayoutGrid,
+        icon: ShoppingCart,
         href: '/ppbj/pengadaan',
     },
 ];

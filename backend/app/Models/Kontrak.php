@@ -39,6 +39,11 @@ class Kontrak extends Model
         return $this->hasMany(RencanaPembayaran::class, 'kontrak_id');
     }
 
+    public function RencanaPembayaran(): HasMany
+    {
+        return $this->hasMany(RencanaPembayaran::class, 'kontrak_id');
+    }
+
     public function Dokumen(): HasMany
     {
         return $this->hasMany(Dokumen::class, 'ref_id')->where('ref_type', 'kontrak');

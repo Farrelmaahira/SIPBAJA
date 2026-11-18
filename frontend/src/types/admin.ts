@@ -55,10 +55,6 @@ export interface AdminMakItem {
   id: number;
   kode: string;
   nama: string;
-  tahun: number;
-  pagu: number;
-  realisasi?: number;
-  sisa?: number;
   ppk_id?: number | null;
   ppk?: {
     id: number;

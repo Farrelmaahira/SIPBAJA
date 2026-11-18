@@ -23,6 +23,7 @@ use App\Http\Controllers\Perlengkapan\DashboardPerlengkapanController;
 use App\Http\Controllers\Pp\DashboardPpController;
 use App\Http\Controllers\Pp\PpController;
 use App\Http\Controllers\PPBJ\DashboardPpbjController;
+use App\Http\Controllers\PPBJ\PengadaanController;
 use App\Http\Controllers\PPBJ\PermohonanController as PpbjPermohonanController;
 use App\Http\Controllers\Ppk\DashboardPpkController;
 use App\Http\Controllers\Ppk\PermohonanPpkController;
@@ -139,6 +140,10 @@ Route::prefix('v1')->group(function () {
         Route::prefix('ppbj')->middleware('role:PPBJ')->group(function () {
             Route::get('dashboard', DashboardPpbjController::class)->name('api.ppbj.dashboard');
             Route::apiResource('permohonan', PpbjPermohonanController::class)->names('api.ppbj.permohonan');
+            Route::apiResource('pengadaan', PengadaanController::class)->names('api.ppbj.pengadaan');
+            Route::post('pengadaan/{id}/kontrak', [PengadaanController::class, 'storeKontrak'])->name('api.ppbj.pengadaan.kontrak.store');
+            Route::put('pengadaan/{id}/kontrak', [PengadaanController::class, 'updateKontrak'])->name('api.ppbj.pengadaan.kontrak.update');
+            Route::get('pengadaan/{pengadaanId}/dokumen/{dokumenId}', [PengadaanController::class, 'downloadDokumen'])->name('api.ppbj.pengadaan.dokumen.download');
             Route::get('permohonan/{permohonan}/dokumen', [PpbjPermohonanController::class, 'downloadDokumen'])->name('api.ppbj.permohonan.dokumen.download');
             Route::post('permohonan/{id}/pengadaan/draft', [PpbjPermohonanController::class, 'storeDraft'])->name('api.ppbj.permohonan.pengadaan.draft');
             Route::delete('pengadaan/{id}', [PpbjPermohonanController::class, 'destroyDraft'])->name('api.ppbj.pengadaan.destroy');
