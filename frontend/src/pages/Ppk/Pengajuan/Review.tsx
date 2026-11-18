@@ -1,10 +1,10 @@
 import { useState, useEffect, type FC, type FormEvent } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import ppkService from '../../../services/ppkService';
-import PpPengajuanReviewTemplate from '../../../components/templates/PpPengajuanReviewTemplate';
+import PpPengajuanReviewTemplate from '../../../components/templates/PP/PpPengajuanReviewTemplate';
 import PpkPermohonanReviewTemplate, {
   type PreviewDocInfo,
-} from '../../../components/templates/PpkPermohonanReviewTemplate';
+} from '../../../components/templates/PPK/PpkPermohonanReviewTemplate';
 import { PPK_NAV_ITEMS } from '../Dashboard';
 import { extractServerErrors, validateUploadFile } from '../../../utils/fileValidation';
 import type { NotificationItem } from '../../../types/notification';

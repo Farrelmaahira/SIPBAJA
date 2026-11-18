@@ -1,104 +1,140 @@
 import { useEffect, useState, type FC } from 'react';
-import { LayoutDashboard, ClipboardList, FileText, UploadCloud, Info } from 'lucide-react';
-import api from '../../../services/api';
 import { useAuth } from '../../../hooks/useAuth';
-import DashboardShellTemplate from '../../../components/templates/DashboardShellTemplate';
-
-const NAV_ITEMS = [
-  {
-    key: 'dashboard',
-    label: 'Dashboard',
-    icon: LayoutDashboard,
-    href: '/bidang-2/dashboard',
-  },
-  {
-    key: 'pengajuan',
-    label: 'List Pengajuan',
-    icon: ClipboardList,
-    href: '/bidang-2/pengajuan',
-  },
-  {
-    key: 'rkakl',
-    label: 'Dokumen RKAKL',
-    icon: FileText,
-    href: '/bidang-2/rkakl',
-  },
-];
+import bidang2Service from '../../../services/bidang2Service';
+import Bidang2RkaklTemplate from '../../../components/templates/Bidang2/Bidang2RkaklTemplate';
+import type { Bidang2RkaklActiveDoc } from '../../../types/bidang2';
 
 export const RkaklIndex: FC = () => {
   const { user } = useAuth();
+  const [activeDoc, setActiveDoc] = useState<Bidang2RkaklActiveDoc | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Document live preview states
+  const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
+  const [isLoadingPreview, setIsLoadingPreview] = useState<boolean>(false);
 
   useEffect(() => {
     let isMounted = true;
-    setIsLoading(true);
+    const controller = new AbortController();
 
-    api
-      .get('/v1/bidang-2/rkakl')
-      .catch((err) => {
+    setIsLoading(true);
+    setHasError(false);
+
+    bidang2Service
+      .getRkakl(controller.signal)
+      .then((res) => {
+        if (!isMounted) return;
+        if (res.rkakl?.active_doc) {
+          setActiveDoc(res.rkakl.active_doc);
+        }
+      })
+      .catch((err: unknown) => {
+        if (!isMounted || controller.signal.aborted) return;
+        setHasError(true);
         console.error('Failed to fetch Bidang 2 RKAKL:', err);
       })
       .finally(() => {
-        if (isMounted) setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       });
 
     return () => {
       isMounted = false;
+      controller.abort();
     };
-  }, []);
+  }, [refreshTrigger]);
 
-  const sidebarProps = {
-    navItems: NAV_ITEMS,
-    activeRoute: 'rkakl',
-    brandSubtitle: 'Pengadaan Barang & Jasa',
-    sectionTitle: 'Menu',
+  // Preload preview blob for the active RKAKL document
+  useEffect(() => {
+    if (!activeDoc) {
+      setPreviewBlobUrl(null);
+      setIsLoadingPreview(false);
+      return;
+    }
+
+    const docUrl =
+      activeDoc.view_url ||
+      bidang2Service.downloadRkaklUrl('inline', activeDoc.id);
+
+    let isMounted = true;
+    let currentBlobUrl: string | null = null;
+    const controller = new AbortController();
+
+    setIsLoadingPreview(true);
+
+    bidang2Service
+      .fetchDokumenBlob(docUrl, 'inline', controller.signal)
+      .then(({ blob }) => {
+        if (!isMounted) return;
+        currentBlobUrl = URL.createObjectURL(blob);
+        setPreviewBlobUrl(currentBlobUrl);
+      })
+      .catch((err: unknown) => {
+        if (!isMounted || controller.signal.aborted) return;
+        console.error('Gagal memuat pratinjau inline RKAKL:', err);
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsLoadingPreview(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+      if (currentBlobUrl) {
+        URL.revokeObjectURL(currentBlobUrl);
+      }
+    };
+  }, [activeDoc?.id, activeDoc?.view_url]);
+
+  const handleView = () => {
+    if (previewBlobUrl) {
+      window.open(previewBlobUrl, '_blank');
+      return;
+    }
+    const url =
+      activeDoc?.view_url ||
+      bidang2Service.downloadRkaklUrl('inline', activeDoc?.id);
+    window.open(url, '_blank');
   };
 
-  const topbarProps = {
-    user,
+  const handleDownload = async () => {
+    const downloadUrl =
+      activeDoc?.download_url ||
+      bidang2Service.downloadRkaklUrl('attachment', activeDoc?.id);
+
+    try {
+      const { blob } = await bidang2Service.fetchDokumenBlob(downloadUrl, 'attachment');
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = activeDoc?.nama_asli || 'Dokumen_RKAKL.pdf';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+    } catch (err) {
+      console.error('Gagal mengunduh dokumen RKAKL:', err);
+      window.open(downloadUrl, '_blank');
+    }
   };
 
   return (
-    <DashboardShellTemplate sidebarProps={sidebarProps} topbarProps={topbarProps}>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-xl font-bold text-[#14201C] tracking-tight">
-            Dokumen RKAKL (Pagu Anggaran)
-          </h1>
-          <p className="text-sm text-[#5F6F6A] mt-1">
-            Kelola dan tinjau dokumen Rencana Kerja dan Anggaran Kementerian/Lembaga kampus.
-          </p>
-        </div>
-
-        {isLoading ? (
-          <div className="bg-white border border-[#E4EBE8] rounded-[18px] p-12 text-center max-w-xl mx-auto shadow-sm">
-            <div className="flex flex-col items-center justify-center gap-2">
-              <div className="w-8 h-8 border-3 border-[#0E7C5A] border-t-transparent rounded-full animate-spin" />
-              <p className="text-xs text-[#5F6F6A]">Memuat dokumen RKAKL...</p>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-white border border-[#E4EBE8] rounded-[18px] p-8 text-center max-w-xl mx-auto shadow-sm space-y-4">
-            <div className="w-14 h-14 rounded-2xl bg-[#E8F5F1] text-[#0E7C5A] flex items-center justify-center mx-auto">
-              <UploadCloud className="w-7 h-7" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-[#14201C]">
-                Pengelolaan Dokumen RKAKL
-              </h2>
-              <p className="text-xs text-[#5F6F6A] mt-1.5 leading-relaxed">
-                Penyelarasan alokasi pagu anggaran RKAKL dengan kategori MAK (BLU Fisik, BLU Non-Fisik, RM Fisik, RM Non-Fisik). Dokumen referensi dapat ditinjau oleh Bidang 2 dan Perencanaan.
-              </p>
-            </div>
-
-            <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#F2F6F4] text-[#5F6F6A] text-xs font-medium">
-              <Info className="w-4 h-4 text-[#0E7C5A]" />
-              <span>Modul sinkronisasi dokumen RKAKL aktif</span>
-            </div>
-          </div>
-        )}
-      </div>
-    </DashboardShellTemplate>
+    <Bidang2RkaklTemplate
+      user={user}
+      document={activeDoc}
+      isLoading={isLoading}
+      hasError={hasError}
+      previewBlobUrl={previewBlobUrl}
+      isLoadingPreview={isLoadingPreview}
+      onView={handleView}
+      onDownload={handleDownload}
+      onRetry={() => setRefreshTrigger((prev) => prev + 1)}
+    />
   );
 };
 

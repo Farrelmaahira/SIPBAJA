@@ -386,6 +386,38 @@ class PermohonanService
     }
 
     /**
+     * Menghapus permohonan pengadaan milik unit pemohon jika status masih diajukan/draft/ditolak.
+     */
+    public function hapusPermohonan(User $user, Permohonan $permohonan): void
+    {
+        if ($user->unit_id && $permohonan->unit_id !== $user->unit_id) {
+            abort(403, 'Anda tidak berhak menghapus permohonan milik unit lain.');
+        }
+
+        $allowedStatuses = ['diajukan', 'menunggu_verifikasi', 'menunggu_persetujuan', 'ditolak', 'draft'];
+        if (! in_array($permohonan->status, $allowedStatuses, true)) {
+            abort(422, 'Permohonan yang sedang dalam proses pengadaan atau sudah selesai tidak dapat dihapus.');
+        }
+
+        DB::transaction(function () use ($permohonan) {
+            $dokumens = Dokumen::where('ref_type', 'permohonan')
+                ->where('ref_id', $permohonan->id)
+                ->get();
+
+            foreach ($dokumens as $dokumen) {
+                if ($dokumen->file_path && Storage::disk('local')->exists($dokumen->file_path)) {
+                    Storage::disk('local')->delete($dokumen->file_path);
+                }
+                $dokumen->delete();
+            }
+
+            StatusHistory::where('permohonan_id', $permohonan->id)->delete();
+            $permohonan->PermohonanMak()->delete();
+            $permohonan->delete();
+        });
+    }
+
+    /**
      * Mengambil daftar permohonan pengadaan untuk peran PPBJ.
      *
      * @return array<int, array{
@@ -443,9 +475,24 @@ class PermohonanService
         $permohonan = Permohonan::with([
             'Unit',
             'Creator',
+            'Dokumen',
+            'Approvals',
             'PermohonanMak.Mak',
             'Pengadaan.PermohonanMak.Mak',
         ])->findOrFail($id);
+
+        $dokumenList = $permohonan->Dokumen
+            ->map(fn ($doc) => [
+                'id' => (int) $doc->id,
+                'nama_asli' => (string) $doc->nama_asli,
+                'tipe_dokumen' => (string) ($doc->tipe_dokumen ?? 'surat_permohonan'),
+                'ukuran_bytes' => (int) ($doc->ukuran_bytes ?? 0),
+                'mime_type' => (string) ($doc->mime_type ?? 'application/pdf'),
+                'versi' => (int) ($doc->versi ?? 1),
+                'download_url' => "/api/v1/ppbj/permohonan/{$permohonan->id}/dokumen?dokumen_id={$doc->id}",
+            ])
+            ->values()
+            ->all();
 
         $makList = $permohonan->PermohonanMak
             ->filter(fn ($pm) => $pm->Mak !== null)
@@ -470,6 +517,18 @@ class PermohonanService
             ? Carbon::parse($permohonan->created_at)->format('Y-m-d')
             : '';
 
+        $approvalPerencanaan = $permohonan->Approvals
+            ->first(function ($app) use ($permohonan) {
+                return strtoupper($app->tahap) === 'PERENCANAAN'
+                    && (int) $app->revisi_ke === (int) ($permohonan->revisi_ke ?? 0)
+                    && $app->keputusan === 'disetujui';
+            });
+
+        $catatan = $approvalPerencanaan?->alasan;
+        $catatanPerencanaan = (! empty($catatan) && trim($catatan) !== '')
+            ? trim($catatan)
+            : 'Tidak ada catatan dari pihak perencanaan';
+
         return [
             'id' => (int) $permohonan->id,
             'nomorSurat' => (string) ($permohonan->nomor_surat ?? '-'),
@@ -483,9 +542,12 @@ class PermohonanService
             'pembuatNama' => (string) ($permohonan->Creator?->nama ?? $permohonan->Creator?->name ?? '-'),
             'makList' => $makList,
             'paketList' => $paketList,
+            'dokumenList' => $dokumenList,
+            'catatanPerencanaan' => $catatanPerencanaan,
         ];
     }
 
+    // [BARU - Perencanaan: ringkasan statistik dan permohonan masuk terbaru] ditambahkan untuk kebutuhan fitur Dashboard Perencanaan.
     /**
      * @return array<string, mixed>
      */
@@ -512,6 +574,7 @@ class PermohonanService
         ];
     }
 
+    // [BARU - Perencanaan: paginasi daftar permohonan dengan filter lengkap] ditambahkan untuk kebutuhan fitur List Pengajuan Perencanaan.
     /**
      * @param  array<string, mixed>  $filters
      */
@@ -575,6 +638,7 @@ class PermohonanService
             ->withQueryString();
     }
 
+    // [BARU - Perencanaan: detail permohonan beserta pratinjau RKAKL dan opsi MAK] ditambahkan untuk kebutuhan fitur Detail Permohonan Perencanaan.
     /**
      * @return array<string, mixed>
      */
@@ -639,6 +703,7 @@ class PermohonanService
         ];
     }
 
+    // [BARU - Perencanaan: kompatibilitas endpoint deprecated kirim-pengadaan] ditambahkan untuk menjaga kompatibilitas endpoint lama.
     /**
      * @deprecated Penerusan ke PPBJ kini berjalan otomatis setelah Bidang 2 dan PPK menyetujui secara paralel.
      */
@@ -672,6 +737,7 @@ class PermohonanService
         });
     }
 
+    // [BARU - PPK: daftar Dokumen Turunan / permohonan yang terikat Jenis MAK milik PPK] ditambahkan untuk kebutuhan fitur persetujuan awal permohonan oleh PPK.
     /**
      * @param  array<string, mixed>  $filters
      */
@@ -688,9 +754,7 @@ class PermohonanService
             });
         }
 
-        if (! empty($filters['statuses']) && is_array($filters['statuses'])) {
-            $query->whereIn('status', $filters['statuses']);
-        } elseif (! empty($filters['status']) && $filters['status'] !== 'semua') {
+        if (! empty($filters['status']) && $filters['status'] !== 'semua') {
             $query->where('status', $filters['status']);
         }
 
@@ -702,16 +766,13 @@ class PermohonanService
             $query->whereYear('created_at', (int) $filters['tahun']);
         }
 
-        if (! empty($filters['unit_id']) && is_numeric($filters['unit_id'])) {
-            $query->where('unit_id', (int) $filters['unit_id']);
-        }
-
         return $query
             ->orderByDesc('id')
             ->paginate($perPage)
             ->withQueryString();
     }
 
+    // [BARU - PPK: detail permohonan yang terikat Jenis MAK milik PPK] ditambahkan untuk kebutuhan fitur detail persetujuan awal permohonan oleh PPK.
     /**
      * @return array<string, mixed>
      */
@@ -738,23 +799,12 @@ class PermohonanService
             ->orderByDesc('versi')
             ->get();
 
-        $rkaklDoc = Dokumen::where('ref_type', 'rkakl')->orderByDesc('versi')->orderByDesc('id')->first();
-        $rkaklInfo = $rkaklDoc ? [
-            'id' => $rkaklDoc->id,
-            'nama_asli' => $rkaklDoc->nama_asli,
-            'versi' => $rkaklDoc->versi,
-            'ukuran_bytes' => (int) ($rkaklDoc->ukuran_bytes ?? 0),
-            'mime_type' => $rkaklDoc->mime_type ?? 'application/pdf',
-            'download_url' => "/api/v1/ppk/rkakl/dokumen/{$rkaklDoc->id}",
-        ] : null;
-
         return [
             'permohonan' => $permohonan,
             'dokumen_permohonan' => $dokumenPermohonan,
             'permohonan_mak_ppk' => $permohonan->PermohonanMak
                 ->filter(fn ($pm) => (int) ($pm->Mak?->ppk_user_id ?? 0) === (int) $ppk->id)
                 ->values(),
-            'rkakl_active' => $rkaklInfo,
         ];
     }
 }

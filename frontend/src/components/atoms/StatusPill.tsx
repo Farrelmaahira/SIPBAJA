@@ -139,6 +139,18 @@ const STATUS_CONFIG: Record<string, StatusTheme> = {
     dot: 'bg-[#2F6FED]',
     defaultLabel: 'Berjalan',
   },
+  review_permohonan: {
+    bg: 'bg-[#E8F0FF]',
+    text: 'text-[#1F55C7]',
+    dot: 'bg-[#2F6FED]',
+    defaultLabel: 'Review Permohonan',
+  },
+  review_pengajuan: {
+    bg: 'bg-[#F3E8FF]',
+    text: 'text-[#6D28D9]',
+    dot: 'bg-[#7C3AED]',
+    defaultLabel: 'Review Pengajuan',
+  },
   belum_diajukan: {
     bg: 'bg-[#F3F6F5]',
     text: 'text-[#5F6F6A]',

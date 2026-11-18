@@ -31,4 +31,9 @@ class Pembayaran extends Model
     {
         return $this->hasMany(ApprovalPembayaran::class, 'pembayaran_id');
     }
+
+    public function Dokumen(): HasMany
+    {
+        return $this->hasMany(Dokumen::class, 'ref_id')->where('ref_type', 'pembayaran');
+    }
 }

@@ -15,9 +15,11 @@ export interface BreadcrumbItem {
 export interface AppTopbarUser {
   nama?: string;
   name?: string;
-  role?: string | { nama?: string };
+  role?: string | { nama?: string } | any;
   email?: string;
-  [key: string]: unknown;
+  unit?: { nama?: string };
+  unit_kerja?: { nama?: string };
+  [key: string]: any;
 }
 
 export interface AppTopbarProps {

@@ -1,7 +1,7 @@
 import { useEffect, useState, type FC } from 'react';
 import api from '../../services/api';
 import { useAuth } from '../../hooks/useAuth';
-import RoleDashboardTemplate from '../../components/templates/RoleDashboardTemplate';
+import RoleDashboardTemplate from '../../components/templates/Admin/RoleDashboardTemplate';
 
 export const PerlengkapanDashboard: FC = () => {
   const { user } = useAuth();

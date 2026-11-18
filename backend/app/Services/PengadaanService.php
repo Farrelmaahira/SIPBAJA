@@ -49,18 +49,25 @@ class PengadaanService
         $revisiAktif = (int) ($permohonan->revisi_ke ?? 0);
 
         $approvalPerencanaanSetuju = $permohonan->Approvals->contains(function ($approval) use ($revisiAktif) {
-            return $approval->tahap === 'PERENCANAAN'
+            return in_array(strtoupper((string) $approval->tahap), ['PERENCANAAN'])
                 && (int) $approval->revisi_ke === $revisiAktif
                 && $approval->keputusan === 'disetujui';
         });
 
         $approvalBidang2Setuju = $permohonan->Approvals->contains(function ($approval) use ($revisiAktif) {
-            return $approval->tahap === 'BIDANG2'
+            return in_array(strtoupper((string) $approval->tahap), ['BIDANG2', 'BIDANG 2'])
                 && (int) $approval->revisi_ke === $revisiAktif
                 && $approval->keputusan === 'disetujui';
         });
 
-        $bisaDipecah = $approvalPerencanaanSetuju && $approvalBidang2Setuju;
+        $approvalPpkSetuju = $permohonan->Approvals->contains(function ($approval) use ($revisiAktif) {
+            return in_array(strtoupper((string) $approval->tahap), ['PPK'])
+                && (int) $approval->revisi_ke === $revisiAktif
+                && $approval->keputusan === 'disetujui';
+        });
+
+        // Sesuai BPMN V1.3: Permohonan dapat dipecah jika telah diverifikasi Perencanaan dan disetujui Bidang 2 serta PPK
+        $bisaDipecah = $approvalPerencanaanSetuju && $approvalBidang2Setuju && ($approvalPpkSetuju || in_array($permohonan->status, ['disetujui', 'diproses_ppbj'], true));
 
         // Terkunci jika ada paket pengadaan yang sudah bukan status draft (mis. sudah disubmit ke reviewer)
         $sudahDikunci = $permohonan->Pengadaan->isNotEmpty() && $permohonan->Pengadaan->contains(function ($paket) {
@@ -482,7 +489,6 @@ class PengadaanService
     public function getDashboardPp(): array
     {
         $base = Pengadaan::query()->whereHas('Level', fn ($q) => $q->where('perlu_review_pp', true));
-
         $total = (clone $base)->count();
         $menunggu = (clone $base)->whereIn('status', ['menunggu_persetujuan', 'menunggu_review'])->count();
         $disetujui = (clone $base)->whereIn('status', ['disetujui', 'diteruskan', 'selesai'])->count();
@@ -728,7 +734,6 @@ class PengadaanService
             ->withQueryString();
     }
 
-    // [BARU - PP & PPK: memuat relasi Role dan Unit pada profil pengguna] ditambahkan untuk kebutuhan halaman Profil PP dan PPK.
     public function getProfilPengguna(User $user): User
     {
         return $user->load(['Role', 'Unit']);

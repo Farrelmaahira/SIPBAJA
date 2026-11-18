@@ -46,4 +46,20 @@ class UnitService
 
         return true;
     }
+
+    public function count(): int
+    {
+        return Unit::count();
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function getUnitOptions(): array
+    {
+        return Unit::query()
+            ->orderBy('nama')
+            ->get(['id', 'nama'])
+            ->toArray();
+    }
 }
