@@ -7,7 +7,6 @@ import type {
   PpkPengajuanListResponse,
   PpkPermohonanDetailResponse,
   PpkPermohonanListResponse,
-  PpkRkaklResponse,
 } from '../types/ppk';
 
 export const getDashboard = async (signal?: AbortSignal): Promise<PpkDashboardResponse> => {
@@ -22,12 +21,10 @@ export const getPermohonanList = async (
   const response = await api.get<PpkPermohonanListResponse>('/v1/ppk/permohonan', {
     params: {
       q: filters.q || filters.search || undefined,
-      search: filters.search || filters.q || undefined,
       status: filters.status || undefined,
       statuses: filters.statuses && filters.statuses.length > 0 ? filters.statuses : undefined,
       bulan: filters.bulan || undefined,
       tahun: filters.tahun || undefined,
-      unit_id: filters.unit_id || undefined,
       page: filters.page || undefined,
       per_page: filters.per_page || undefined,
     },
@@ -175,14 +172,25 @@ export const rejectPembayaran = async (
   return response.data;
 };
 
-export const getRkakl = async (tahun?: string, signal?: AbortSignal): Promise<PpkRkaklResponse> => {
-  const response = await api.get<PpkRkaklResponse>('/v1/ppk/rkakl', {
-    params: {
-      tahun: tahun || undefined,
-    },
+export const fetchDokumenBlob = async (
+  downloadUrl: string,
+  disposition: 'inline' | 'attachment' = 'attachment',
+  signal?: AbortSignal
+): Promise<{ blob: Blob; contentType?: string }> => {
+  const normalizedUrl = downloadUrl.replace(/^\/api(?=\/)/, '');
+  const separator = normalizedUrl.includes('?') ? '&' : '?';
+
+  const response = await api.get<Blob>(`${normalizedUrl}${separator}disposition=${disposition}`, {
+    responseType: 'blob',
     signal,
   });
-  return response.data;
+  const rawContentType = response.headers['content-type'];
+  const contentType = typeof rawContentType === 'string' ? rawContentType : 'application/pdf';
+
+  return {
+    blob: new Blob([response.data], { type: contentType }),
+    contentType,
+  };
 };
 
 export const ppkService = {
@@ -199,7 +207,7 @@ export const ppkService = {
   getPembayaranDetail,
   approvePembayaran,
   rejectPembayaran,
-  getRkakl,
+  fetchDokumenBlob,
 };
 
 export default ppkService;

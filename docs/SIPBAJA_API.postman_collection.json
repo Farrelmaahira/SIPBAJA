@@ -4464,7 +4464,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/ppk/permohonan?q=&status=diteruskan&bulan=&tahun=&unit_id=",
+              "raw": "{{baseUrl}}/api/v1/ppk/permohonan?q=&status=diteruskan&bulan=&tahun=&page=1&per_page=10",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -4486,6 +4486,11 @@
                   "description": "Filter status permohonan"
                 },
                 {
+                  "key": "statuses",
+                  "value": "",
+                  "description": "Filter beberapa status sekaligus (statuses[]=diteruskan)"
+                },
+                {
                   "key": "bulan",
                   "value": "",
                   "description": "Filter bulan 1-12"
@@ -4496,9 +4501,14 @@
                   "description": "Filter tahun"
                 },
                 {
-                  "key": "unit_id",
-                  "value": "",
-                  "description": "Filter unit kerja"
+                  "key": "page",
+                  "value": "1",
+                  "description": "Halaman data"
+                },
+                {
+                  "key": "per_page",
+                  "value": "10",
+                  "description": "Jumlah data per halaman (1-100)"
                 }
               ]
             },
@@ -4538,6 +4548,54 @@
               ]
             },
             "description": "Melihat rincian permohonan pengadaan, dokumen permohonan, dan MAK PPK sebelum disetujui."
+          },
+          "response": []
+        },
+        {
+          "name": "Download Dokumen Permohonan (Awal / Turunan MAK)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ppk/permohonan/:permohonan/dokumen?dokumen_id=1&disposition=inline",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ppk",
+                "permohonan",
+                ":permohonan",
+                "dokumen"
+              ],
+              "query": [
+                {
+                  "key": "dokumen_id",
+                  "value": "1",
+                  "description": "ID dokumen (opsional, default dokumen permohonan terbaru)"
+                },
+                {
+                  "key": "disposition",
+                  "value": "inline",
+                  "description": "inline untuk pratinjau, attachment untuk unduhan"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "permohonan",
+                  "value": "1",
+                  "description": "ID permohonan"
+                }
+              ]
+            },
+            "description": "Mengunduh atau melihat stream berkas permohonan. Hanya permohonan yang terikat Jenis MAK PPK yang login."
           },
           "response": []
         },
@@ -4640,104 +4698,6 @@
                 }
               }
             }
-          },
-          "response": []
-        },
-        {
-          "name": "RKAKL - Get Data",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/ppk/rkakl?tahun=2026",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "ppk",
-                "rkakl"
-              ],
-              "query": [
-                {
-                  "key": "tahun",
-                  "value": "2026",
-                  "description": "Filter tahun anggaran"
-                }
-              ]
-            },
-            "description": "Melihat data dokumen acuan RKAKL aktif untuk referensi PPK."
-          },
-          "response": []
-        },
-        {
-          "name": "RKAKL - Download Dokumen Terkini",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/ppk/rkakl/dokumen",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "ppk",
-                "rkakl",
-                "dokumen"
-              ]
-            },
-            "description": "Mengunduh berkas Dokumen RKAKL aktif terkini untuk PPK."
-          },
-          "response": []
-        },
-        {
-          "name": "RKAKL - Download Dokumen by ID",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/ppk/rkakl/dokumen/:dokumen",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "ppk",
-                "rkakl",
-                "dokumen",
-                ":dokumen"
-              ],
-              "variable": [
-                {
-                  "key": "dokumen",
-                  "value": "1",
-                  "description": "ID dokumen RKAKL"
-                }
-              ]
-            },
-            "description": "Mengunduh berkas Dokumen RKAKL berdasarkan ID dokumen."
           },
           "response": []
         }

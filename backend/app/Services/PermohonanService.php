@@ -18,6 +18,8 @@ use Illuminate\Support\Str;
 
 class PermohonanService
 {
+    public function __construct(private ApprovalService $approvalService) {}
+
     /**
      * Menyimpan permohonan baru, dokumen PDF pendukung, dan riwayat status pertama.
      * Menggunakan transaksi database agar seluruh pencatatan atomik.
@@ -743,7 +745,7 @@ class PermohonanService
      */
     public function paginatePermohonanUntukPpk(User $ppk, array $filters = [], int $perPage = 10): LengthAwarePaginator
     {
-        $query = Permohonan::with(['Unit', 'Creator', 'PermohonanMak.Mak.Ppk', 'Approvals.Actor'])
+        $query = Permohonan::with(['Unit', 'Creator', 'PermohonanMak.Mak', 'Approvals.Actor'])
             ->whereHas('PermohonanMak.Mak', fn ($q) => $q->where('ppk_user_id', $ppk->id));
 
         $keyword = trim((string) ($filters['search'] ?? $filters['q'] ?? ''));
@@ -754,7 +756,10 @@ class PermohonanService
             });
         }
 
-        if (! empty($filters['status']) && $filters['status'] !== 'semua') {
+        $statuses = array_values(array_filter((array) ($filters['statuses'] ?? [])));
+        if ($statuses !== []) {
+            $query->whereIn('status', $statuses);
+        } elseif (! empty($filters['status']) && $filters['status'] !== 'semua') {
             $query->where('status', $filters['status']);
         }
 
@@ -765,6 +770,8 @@ class PermohonanService
         if (! empty($filters['tahun']) && is_numeric($filters['tahun'])) {
             $query->whereYear('created_at', (int) $filters['tahun']);
         }
+
+        $perPage = max(1, min($perPage, 100));
 
         return $query
             ->orderByDesc('id')
@@ -778,26 +785,23 @@ class PermohonanService
      */
     public function getDetailPermohonanUntukPpk(Permohonan $permohonan, User $ppk): array
     {
-        $berhak = PermohonanMak::where('permohonan_id', $permohonan->id)
-            ->whereHas('Mak', fn ($q) => $q->where('ppk_user_id', $ppk->id))
-            ->exists();
-
-        if (! $berhak) {
-            abort(403, 'Anda tidak memiliki akses pada permohonan yang tidak terikat dengan Jenis MAK Anda.');
-        }
+        $this->approvalService->pastikanPpkBerhakAtasPermohonan($permohonan, $ppk);
 
         $permohonan->load([
             'Unit',
             'Creator',
-            'PermohonanMak.Mak.Ppk',
+            'PermohonanMak.Mak',
             'Approvals.Actor',
             'Approvals.Memo',
+            'Dokumen',
         ]);
 
-        $dokumenPermohonan = Dokumen::where('ref_type', 'permohonan')
-            ->where('ref_id', $permohonan->id)
-            ->orderByDesc('versi')
-            ->get();
+        $dokumenPermohonan = $permohonan->Dokumen
+            ->sortByDesc('versi')
+            ->values()
+            ->each(function (Dokumen $doc) use ($permohonan) {
+                $doc->setAttribute('download_url', "/api/v1/ppk/permohonan/{$permohonan->id}/dokumen?dokumen_id={$doc->id}");
+            });
 
         return [
             'permohonan' => $permohonan,

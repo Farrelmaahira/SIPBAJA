@@ -15,7 +15,6 @@ import AppLayout from '../General/AppLayout';
 import HeroBanner from '../../organisms/HeroBanner';
 import StatusPill from '../../atoms/StatusPill';
 import DokumenListCard from '../../organisms/DokumenListCard';
-import RiwayatStatusTimeline, { type TimelineStepItem } from '../../organisms/RiwayatStatusTimeline';
 import PerencanaanVerifikasiMakCard from '../../organisms/PerencanaanVerifikasiMakCard';
 import { formatRupiah, formatTanggalIndo } from '../../../utils/formatters';
 import { PERENCANAAN_NAV_ITEMS } from '../../../pages/Perencanaan/Dashboard';
@@ -150,47 +149,6 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
         .map((pm) => pm.mak)
         .filter((m): m is PerencanaanMakItem => Boolean(m))
       : maksList.filter((m) => selectedMakIds.includes(m.id));
-
-  const timelineSteps: TimelineStepItem[] = [
-    {
-      title: 'Pengajuan Dibuat',
-      subtitle: `${permohonan?.pemohon?.nama || 'Pemohon'} • ${formatTanggalIndo(permohonan?.created_at ? String(permohonan.created_at) : undefined)}`,
-      state: 'done',
-    },
-    {
-      title:
-        mode === 'verifikasi'
-          ? 'Verifikasi Perencanaan'
-          : rawStatus === 'ditolak'
-            ? 'Ditolak Perencanaan'
-            : 'Disetujui Perencanaan',
-      subtitle:
-        mode === 'verifikasi'
-          ? 'Menunggu pemilihan Jenis MAK dan verifikasi anggaran'
-          : `Unit Perencanaan • ${formatTanggalIndo((permohonan as any)?.updated_at ? String((permohonan as any).updated_at) : undefined)}`,
-      state:
-        mode === 'verifikasi'
-          ? 'active'
-          : rawStatus === 'ditolak'
-            ? 'rejected'
-            : 'done',
-    },
-    {
-      title: 'Tindak Lanjut Bidang 2 / PPBJ / Pengadaan',
-      subtitle:
-        mode === 'pengadaan'
-          ? 'Sedang dalam proses pengadaan'
-          : mode === 'diteruskan'
-            ? 'Menunggu proses tahap selanjutnya'
-            : 'Menunggu persetujuan Perencanaan',
-      state:
-        mode === 'pengadaan'
-          ? 'done'
-          : mode === 'diteruskan' && rawStatus !== 'ditolak'
-            ? 'active'
-            : 'pending',
-    },
-  ];
 
   const selectedMaksDisplay = maksList.filter((m) => selectedMakIds.includes(m.id));
 
@@ -573,8 +531,6 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
                   )}
                 </div>
               )}
-
-              <RiwayatStatusTimeline steps={timelineSteps} />
             </div>
           </div>
         </>

@@ -182,7 +182,11 @@ export interface PpPengadaanDetailResponse {
 }
 
 export interface PpDocumentPreviewInfo {
+  label?: string;
   category: string;
   filename: string;
   size: string;
+  fileUrl?: string;
+  downloadUrl?: string;
+  download_url?: string;
 }

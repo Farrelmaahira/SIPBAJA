@@ -5,105 +5,21 @@ namespace App\Http\Controllers\Ppk;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ReviewPengadaanRequest;
 use App\Http\Requests\SetujuiPembayaranPpkRequest;
-use App\Http\Requests\SetujuiPermohonanPpkRequest;
 use App\Http\Requests\TolakPermohonanRequest;
-use App\Models\Dokumen;
 use App\Models\Pengadaan;
-use App\Models\Permohonan;
 use App\Services\ApprovalService;
-use App\Services\DokumenService;
 use App\Services\NotificationService;
 use App\Services\PengadaanService;
-use App\Services\PermohonanService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PpkController extends Controller
 {
     public function __construct(
         private PengadaanService $pengadaanService,
-        private PermohonanService $permohonanService,
         private ApprovalService $approvalService,
-        private DokumenService $dokumenService,
         private NotificationService $notificationService
     ) {}
-
-    public function indexPermohonan(Request $request): JsonResponse
-    {
-        $filters = [
-            'q' => $request->query('q', $request->query('search', '')),
-            'search' => $request->query('search', $request->query('q', '')),
-            'status' => $request->query('status', 'semua'),
-            'statuses' => $request->query('statuses', []),
-            'bulan' => $request->query('bulan'),
-            'tahun' => $request->query('tahun'),
-            'unit_id' => $request->query('unit_id'),
-        ];
-
-        $perPage = (int) $request->query('per_page', 10);
-        $permohonan = $this->permohonanService->paginatePermohonanUntukPpk(auth()->user(), $filters, $perPage);
-        $notifData = $this->notificationService->getRecentAndUnreadCount((int) auth()->id());
-
-        return response()->json([
-            'message' => 'Daftar permohonan menunggu persetujuan awal PPK berhasil diambil.',
-            'data' => $permohonan->items(),
-            'meta' => [
-                'current_page' => $permohonan->currentPage(),
-                'last_page' => $permohonan->lastPage(),
-                'per_page' => $permohonan->perPage(),
-                'total' => $permohonan->total(),
-            ],
-            'permohonan' => $permohonan,
-            'filters' => $filters,
-            'recentNotifications' => $notifData['recentNotifications'],
-            'unreadNotificationsCount' => $notifData['unreadNotificationsCount'],
-        ]);
-    }
-
-    public function showPermohonan(Permohonan $permohonan): JsonResponse
-    {
-        $detail = $this->permohonanService->getDetailPermohonanUntukPpk($permohonan, auth()->user());
-        $notifData = $this->notificationService->getRecentAndUnreadCount((int) auth()->id());
-
-        return response()->json([
-            'message' => 'Detail permohonan untuk PPK berhasil diambil.',
-            'data' => $detail,
-            'detail' => $detail,
-            'recentNotifications' => $notifData['recentNotifications'],
-            'unreadNotificationsCount' => $notifData['unreadNotificationsCount'],
-        ]);
-    }
-
-    public function approvePermohonan(SetujuiPermohonanPpkRequest $request, Permohonan $permohonan): JsonResponse
-    {
-        $updated = $this->approvalService->approvePermohonanPpk(
-            $permohonan,
-            auth()->user(),
-            $request->file('memo'),
-            $request->validated('catatan')
-        );
-
-        return response()->json([
-            'message' => 'Permohonan beserta Memo Persetujuan Surat Permohonan berhasil disetujui oleh PPK.',
-            'data' => $updated,
-        ]);
-    }
-
-    public function rejectPermohonan(TolakPermohonanRequest $request, Permohonan $permohonan): JsonResponse
-    {
-        $updated = $this->approvalService->rejectPermohonanPpk(
-            $permohonan,
-            auth()->user(),
-            (string) $request->validated('alasan')
-        );
-
-        return response()->json([
-            'message' => 'Permohonan telah ditolak oleh PPK beserta catatan alasan.',
-            'data' => $updated,
-        ]);
-    }
 
     public function index(Request $request): JsonResponse
     {
@@ -215,34 +131,6 @@ class PpkController extends Controller
             'detail' => $detail,
             'recentNotifications' => $notifData['recentNotifications'],
             'unreadNotificationsCount' => $notifData['unreadNotificationsCount'],
-        ]);
-    }
-
-    public function rkakl(Request $request): JsonResponse
-    {
-        $tahun = $request->query('tahun');
-        $rkaklData = $this->dokumenService->getRkaklData($tahun, '/api/v1/ppk/rkakl/dokumen');
-        $notifData = $this->notificationService->getRecentAndUnreadCount((int) auth()->id());
-
-        return response()->json([
-            'message' => 'Data Dokumen RKAKL berhasil diambil.',
-            'data' => $rkaklData,
-            'activeDoc' => $rkaklData['active_doc'],
-            'history' => $rkaklData['history'],
-            'items' => $rkaklData['items'],
-            'tahun' => $rkaklData['tahun'],
-            'recentNotifications' => $notifData['recentNotifications'],
-            'unreadNotificationsCount' => $notifData['unreadNotificationsCount'],
-        ]);
-    }
-
-    public function downloadRkakl(Request $request, ?Dokumen $dokumen = null): StreamedResponse
-    {
-        $fileData = $this->dokumenService->ambilDokumenRkakl($dokumen, $request->query('tahun'));
-
-        return Storage::disk('local')->response($fileData['path'], $fileData['nama_asli'], [
-            'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="'.$fileData['nama_asli'].'"',
         ]);
     }
 
