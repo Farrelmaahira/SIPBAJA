@@ -4,7 +4,6 @@ import AppLayout, { AppTopbarUser } from "../General/AppLayout";
 import CrudTable, { CrudColumn } from "@/components/organisms/CrudTable";
 import StatusPill from "@/components/atoms/StatusPill";
 import { formatRupiah } from "@/utils/formatPermohonan";
-import { formatTanggalIndo } from "@/utils/formatters";
 import { PPBJ_NAV_ITEMS } from "@/constants/ppbjNav";
 import HeroBanner from "@/components/organisms/HeroBanner";
 import TableToolbar from "@/components/molecules/TableToolbar";
@@ -45,7 +44,7 @@ export const PpbjPengadaanIndexTemplate: FC<PpbjPengadaanIndexTemplateProps> = (
     currentPage = 1,
     lastPage = 1,
     isLoading = false,
-    errorMessage = '',
+    errorMessage: _errorMessage = '',
     onSearchChange,
     onSearchSubmit,
     onBulanChange,
@@ -57,11 +56,11 @@ export const PpbjPengadaanIndexTemplate: FC<PpbjPengadaanIndexTemplateProps> = (
 
     const columns: CrudColumn<PpbjPengadaanItem>[] = [
         {
-            key: 'nomorSurat',
+            key: 'id',
             header: 'No Pengadaan',
             render: (item) => (
                 <span className="font-semibold text-xs text-[#14201C]">
-                    {item.id}
+                    #{item.id}
                 </span>
             )
         },
@@ -70,16 +69,25 @@ export const PpbjPengadaanIndexTemplate: FC<PpbjPengadaanIndexTemplateProps> = (
             header: 'No Permohonan',
             render: (item) => (
                 <span className="font-semibold text-xs text-[#14201C]">
-                    {item.permohonan.nomorSurat}
+                    {item.permohonan?.nomorSurat || item.permohonan?.nomor_surat || '-'}
                 </span>
             )
         },
         {
             key: 'asalPermohonan',
-            header: 'Asal Permohonan',
+            header: 'Judul Permohonan',
             render: (item) => (
-                <span className="font-semibold text-xs text-[#14201C]">
-                    {item.permohonan.judul}
+                <span className="font-medium text-xs text-[#14201C] line-clamp-1">
+                    {item.permohonan?.judul || '-'}
+                </span>
+            )
+        },
+        {
+            key: 'makNama',
+            header: 'MAK',
+            render: (item) => (
+                <span className="text-xs text-[#5F6F6A]">
+                    {item.makNama || item.permohonanMak?.mak?.nama || '-'}
                 </span>
             )
         },
@@ -87,8 +95,8 @@ export const PpbjPengadaanIndexTemplate: FC<PpbjPengadaanIndexTemplateProps> = (
             key: 'nilaiPengadaan',
             header: 'Nilai Pengadaan',
             render: (item) => (
-                <span className="font-semibold text-xs text-[#14201C]">
-                    {item.nominal || ' - '}
+                <span className="font-bold text-xs text-[#0E7C5A] tabular-nums">
+                    {formatRupiah(item.nominal)}
                 </span>
             )
         },

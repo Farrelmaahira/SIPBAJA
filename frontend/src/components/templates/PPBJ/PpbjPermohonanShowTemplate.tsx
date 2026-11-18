@@ -285,8 +285,8 @@ export const PpbjPermohonanShowTemplate: FC<PpbjPermohonanShowTemplateProps> = (
                   <Info className="w-5 h-5 text-[#5F6F6A] shrink-0 mt-0.5" />
                   <div className="text-xs text-[#5F6F6A] leading-relaxed">
                     Permohonan belum dapat diproses dokumen pengadaannya karena belum memperoleh persetujuan lengkap dari{' '}
-                    <strong className="text-[#14201C]">Perencanaan</strong> dan{' '}
-                    <strong className="text-[#14201C]">Bidang 2</strong>.
+                    <strong className="text-[#14201C]">Bidang 2</strong> dan{' '}
+                    <strong className="text-[#14201C]">PPK</strong>.
                   </div>
                 </div>
               )}
