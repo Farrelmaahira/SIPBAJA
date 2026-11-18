@@ -4,41 +4,16 @@ import { FileText, Eye } from 'lucide-react';
 import AppLayout, { type AppNavItem } from '../General/AppLayout';
 import HeroBanner from '../../organisms/HeroBanner';
 import CrudTable, { type CrudColumn } from '../../organisms/CrudTable';
+import FilterPengajuanModal from '../../organisms/FilterPengajuanModal';
 import TableToolbar from '../../molecules/TableToolbar';
 import TableFooter from '../../molecules/TableFooter';
 import StatusPill from '../../atoms/StatusPill';
-import FilterPengajuanModal, { type FilterOption } from '../../organisms/FilterPengajuanModal';
 import { formatRupiah, formatTanggal } from '../../../utils/formatters';
 import type { NotificationItem } from '../../../types/notification';
 import type { PpPaginationMeta, PpkRkaklDoc, PpkTableRow } from '../../../types/ppk';
 
-export const PPK_FILTER_OPTIONS: FilterOption[] = [
-  {
-    value: 'menunggu_persetujuan',
-    label: 'Menunggu Persetujuan',
-    dotClass: 'bg-[#F59E0B]',
-  },
-  {
-    value: 'review_pembayaran',
-    label: 'Review Pembayaran',
-    dotClass: 'bg-[#3B82F6]',
-  },
-  {
-    value: 'disetujui',
-    label: 'Disetujui',
-    dotClass: 'bg-[#10B981]',
-  },
-  {
-    value: 'ditolak',
-    label: 'Ditolak',
-    dotClass: 'bg-[#EF4444]',
-  },
-];
-
 export interface PpkPengajuanIndexTemplateProps {
   navItems: AppNavItem[];
-  activeTab: 'pengadaan' | 'permohonan';
-  onTabChange: (tab: 'pengadaan' | 'permohonan') => void;
   rows: PpkTableRow[];
   meta: PpPaginationMeta;
   search: string;
@@ -63,8 +38,6 @@ export interface PpkPengajuanIndexTemplateProps {
 
 export const PpkPengajuanIndexTemplate: FC<PpkPengajuanIndexTemplateProps> = ({
   navItems,
-  activeTab,
-  onTabChange,
   rows,
   meta,
   search,
@@ -89,26 +62,13 @@ export const PpkPengajuanIndexTemplate: FC<PpkPengajuanIndexTemplateProps> = ({
   const currentPage = meta.current_page || 1;
   const lastPage = meta.last_page || 1;
 
-  const getDetailHref = (row: PpkTableRow): string => {
-    if (row.sourceType === 'permohonan') {
-      return `/ppk/pengajuan/${row.id}/review?type=permohonan`;
-    }
-    if (row.status === 'menunggu_persetujuan' || row.status === 'menunggu_review') {
-      return `/ppk/pengajuan/${row.id}/review`;
-    }
-    if (row.status === 'review_pembayaran' || row.status === 'diteruskan') {
-      return `/ppk/pengajuan/${row.id}/pembayaran`;
-    }
-    return `/ppk/pengajuan/${row.id}`;
-  };
-
   const columns: CrudColumn<PpkTableRow>[] = [
     {
       key: 'nomor_surat',
-      header: 'Nomor Surat',
+      header: 'No Permohonan',
       className: 'font-bold text-[#0E7C5A] whitespace-nowrap',
       render: (row) => (
-        <Link to={getDetailHref(row)} className="hover:underline">
+        <Link to={`/ppk/pengajuan/${row.id}/review?type=permohonan`} className="hover:underline">
           {row.nomor_surat || '-'}
         </Link>
       ),
@@ -116,15 +76,8 @@ export const PpkPengajuanIndexTemplate: FC<PpkPengajuanIndexTemplateProps> = ({
     {
       key: 'judul',
       header: 'Judul Pengadaan',
-      render: (row) => (
-        <span className="font-bold text-[#14201C] line-clamp-1">{row.judul || '-'}</span>
-      ),
-    },
-    {
-      key: 'unit',
-      header: 'Unit Pemohon',
-      className: 'text-[#5F6F6A] whitespace-nowrap',
-      render: (row) => row.unit || '-',
+      className: 'font-bold text-[#14201C]',
+      render: (row) => row.judul || '-',
     },
     {
       key: 'tanggal',
@@ -134,7 +87,7 @@ export const PpkPengajuanIndexTemplate: FC<PpkPengajuanIndexTemplateProps> = ({
     },
     {
       key: 'nominal',
-      header: 'Nominal',
+      header: 'Nilai Pengajuan',
       className: 'font-bold text-[#14201C] whitespace-nowrap',
       render: (row) => formatRupiah(row.nominal),
     },
@@ -147,53 +100,18 @@ export const PpkPengajuanIndexTemplate: FC<PpkPengajuanIndexTemplateProps> = ({
   ];
 
   const toolbar = (
-    <div className="flex flex-col gap-4 w-full">
-      {/* Tabs */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-3 border-b border-[#F0F4F2]">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => onTabChange('pengadaan')}
-            className={`px-4 py-2 text-xs font-bold rounded-xl transition cursor-pointer ${
-              activeTab === 'pengadaan'
-                ? 'bg-[#E8F5EF] text-[#0E7C5A]'
-                : 'text-[#6B7280] hover:bg-[#F4F7F5]'
-            }`}
-          >
-            Dokumen Pengadaan
-          </button>
-          <button
-            type="button"
-            onClick={() => onTabChange('permohonan')}
-            className={`px-4 py-2 text-xs font-bold rounded-xl transition cursor-pointer ${
-              activeTab === 'permohonan'
-                ? 'bg-[#E8F5EF] text-[#0E7C5A]'
-                : 'text-[#6B7280] hover:bg-[#F4F7F5]'
-            }`}
-          >
-            Dokumen Turunan (MAK)
-          </button>
-        </div>
-
-        <div className="text-xs text-[#8A9A95]">
-          Menampilkan <strong className="text-[#14201C]">{rows.length}</strong> data
-        </div>
-      </div>
-
-      {/* Search & Filter */}
-      <TableToolbar
-        searchValue={search}
-        onSearchChange={onSearchChange}
-        onSearchSubmit={onSearchSubmit}
-        filterStatusLabel="Status"
-        filterStatusCount={selectedStatuses.length}
-        onFilterStatusClick={onOpenFilter}
-        selectedBulan={bulan}
-        onBulanChange={onBulanChange}
-        selectedTahun={tahun}
-        onTahunChange={onTahunChange}
-      />
-    </div>
+    <TableToolbar
+      searchValue={search}
+      onSearchChange={onSearchChange}
+      onSearchSubmit={onSearchSubmit}
+      filterStatusCount={selectedStatuses.length}
+      onFilterStatusClick={onOpenFilter}
+      selectedBulan={bulan}
+      onBulanChange={onBulanChange}
+      selectedTahun={tahun}
+      onTahunChange={onTahunChange}
+      total={`${meta.total ?? rows.length} permohonan`}
+    />
   );
 
   const footer = (
@@ -224,9 +142,9 @@ export const PpkPengajuanIndexTemplate: FC<PpkPengajuanIndexTemplateProps> = ({
     >
       <div className="space-y-6">
         <HeroBanner
-          eyebrow="DAFTAR PENGAJUAN"
-          title="Daftar Pengajuan PPK"
-          description="Kelola dan verifikasi komitmen pengadaan serta persetujuan dokumen termin pembayaran."
+          eyebrow="DAFTAR PERMOHONAN"
+          title="Daftar Permohonan PPK"
+          description="Pantau dan verifikasi permohonan pengadaan yang terikat dengan Jenis MAK dalam wewenang Anda."
         />
 
         {/* Banner RKAKL Aktif */}
@@ -258,8 +176,8 @@ export const PpkPengajuanIndexTemplate: FC<PpkPengajuanIndexTemplateProps> = ({
         )}
 
         <CrudTable
-          title="Daftar Komitmen Pengadaan"
-          subtitle="Paket pengadaan dan pengajuan MAK dalam wewenang PPK"
+          title="Daftar Permohonan Pengadaan"
+          subtitle="Permohonan pengadaan yang terikat Jenis MAK dalam wewenang PPK"
           columns={columns}
           rows={rows}
           isLoading={isLoading}
@@ -269,7 +187,7 @@ export const PpkPengajuanIndexTemplate: FC<PpkPengajuanIndexTemplateProps> = ({
             {
               key: 'view',
               label: 'Detail / Review',
-              href: (row) => getDetailHref(row),
+              href: (row) => `/ppk/pengajuan/${row.id}/review?type=permohonan`,
             },
           ]}
         />
@@ -280,7 +198,6 @@ export const PpkPengajuanIndexTemplate: FC<PpkPengajuanIndexTemplateProps> = ({
         onClose={onCloseFilter}
         selectedStatuses={selectedStatuses}
         onApplyFilter={onApplyFilter}
-        options={PPK_FILTER_OPTIONS}
       />
     </AppLayout>
   );

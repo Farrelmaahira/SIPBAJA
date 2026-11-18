@@ -3,15 +3,12 @@ import ppkService from '../services/ppkService';
 import type { NotificationItem } from '../types/notification';
 import type {
   PpPaginationMeta,
-  PpPengadaanItem,
   PpkPermohonanItem,
   PpkRkaklDoc,
   PpkTableRow,
 } from '../types/ppk';
 
 export interface UsePpkPengajuanResult {
-  activeTab: 'pengadaan' | 'permohonan';
-  setActiveTab: (tab: 'pengadaan' | 'permohonan') => void;
   rows: PpkTableRow[];
   meta: PpPaginationMeta;
   search: string;
@@ -36,7 +33,6 @@ export interface UsePpkPengajuanResult {
 }
 
 export function usePpkPengajuan(): UsePpkPengajuanResult {
-  const [activeTab, setActiveTabState] = useState<'pengadaan' | 'permohonan'>('pengadaan');
   const [search, setSearch] = useState<string>('');
   const [submittedSearch, setSubmittedSearch] = useState<string>('');
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
@@ -45,7 +41,6 @@ export function usePpkPengajuan(): UsePpkPengajuanResult {
   const [page, setPage] = useState<number>(1);
   const [filterOpen, setFilterOpen] = useState<boolean>(false);
 
-  const [pengadaanItems, setPengadaanItems] = useState<PpPengadaanItem[]>([]);
   const [permohonanItems, setPermohonanItems] = useState<PpkPermohonanItem[]>([]);
   const [meta, setMeta] = useState<PpPaginationMeta>({
     current_page: 1,
@@ -63,11 +58,6 @@ export function usePpkPengajuan(): UsePpkPengajuanResult {
 
   const refetch = useCallback(() => {
     setReloadToken((prev) => prev + 1);
-  }, []);
-
-  const setActiveTab = useCallback((tab: 'pengadaan' | 'permohonan') => {
-    setActiveTabState(tab);
-    setPage(1);
   }, []);
 
   const handleSearchSubmit = useCallback(
@@ -102,7 +92,7 @@ export function usePpkPengajuan(): UsePpkPengajuanResult {
     };
   }, []);
 
-  // Fetch Pengadaan or Permohonan list
+  // Fetch Permohonan list (Dokumen Turunan MAK)
   useEffect(() => {
     const controller = new AbortController();
     setIsLoading(true);
@@ -116,136 +106,64 @@ export function usePpkPengajuan(): UsePpkPengajuanResult {
       page,
     };
 
-    if (activeTab === 'permohonan') {
-      ppkService
-        .getPermohonanList(filterPayload, controller.signal)
-        .then((res) => {
-          const list = res.data ?? res.permohonan?.data ?? [];
-          setPermohonanItems(list);
-          setMeta({
-            current_page: res.meta?.current_page ?? res.permohonan?.current_page ?? 1,
-            last_page: res.meta?.last_page ?? res.permohonan?.last_page ?? 1,
-            per_page: res.meta?.per_page ?? res.permohonan?.per_page ?? 10,
-            total: res.meta?.total ?? res.permohonan?.total ?? list.length,
-          });
-          if (res.recentNotifications) setRecentNotifications(res.recentNotifications);
-          if (res.unreadNotificationsCount !== undefined) {
-            setUnreadNotificationsCount(res.unreadNotificationsCount);
-          }
-        })
-        .catch((err: unknown) => {
-          if (!controller.signal.aborted) {
-            console.error('Failed to fetch PPK permohonan list:', err);
-            setError('Gagal memuat daftar permohonan PPK.');
-          }
-        })
-        .finally(() => {
-          if (!controller.signal.aborted) {
-            setIsLoading(false);
-          }
+    ppkService
+      .getPermohonanList(filterPayload, controller.signal)
+      .then((res) => {
+        const list = res.data ?? res.permohonan?.data ?? [];
+        setPermohonanItems(list);
+        setMeta({
+          current_page: res.meta?.current_page ?? res.permohonan?.current_page ?? 1,
+          last_page: res.meta?.last_page ?? res.permohonan?.last_page ?? 1,
+          per_page: res.meta?.per_page ?? res.permohonan?.per_page ?? 10,
+          total: res.meta?.total ?? res.permohonan?.total ?? list.length,
         });
-    } else {
-      ppkService
-        .getPengajuanList(filterPayload, controller.signal)
-        .then((res) => {
-          const list = res.pengajuan?.data ?? res.data ?? [];
-          setPengadaanItems(list);
-          setMeta({
-            current_page: res.pengajuan?.current_page ?? 1,
-            last_page: res.pengajuan?.last_page ?? 1,
-            per_page: res.pengajuan?.per_page ?? 10,
-            total: res.pengajuan?.total ?? list.length,
-          });
-          if (res.recentNotifications) setRecentNotifications(res.recentNotifications);
-          if (res.unreadNotificationsCount !== undefined) {
-            setUnreadNotificationsCount(res.unreadNotificationsCount);
-          }
-        })
-        .catch((err: unknown) => {
-          if (!controller.signal.aborted) {
-            console.error('Failed to fetch PPK pengajuan list:', err);
-            setError('Gagal memuat daftar pengadaan PPK.');
-          }
-        })
-        .finally(() => {
-          if (!controller.signal.aborted) {
-            setIsLoading(false);
-          }
-        });
-    }
+        if (res.recentNotifications) setRecentNotifications(res.recentNotifications);
+        if (res.unreadNotificationsCount !== undefined) {
+          setUnreadNotificationsCount(res.unreadNotificationsCount);
+        }
+      })
+      .catch((err: unknown) => {
+        if (!controller.signal.aborted) {
+          console.error('Failed to fetch PPK permohonan list:', err);
+          setError('Gagal memuat daftar permohonan PPK.');
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setIsLoading(false);
+        }
+      });
 
     return () => {
       controller.abort();
     };
-  }, [activeTab, submittedSearch, selectedStatuses, bulan, tahun, page, reloadToken]);
+  }, [submittedSearch, selectedStatuses, bulan, tahun, page, reloadToken]);
 
   // Clean data mapping without fake/dummy fallback
-  const rows: PpkTableRow[] =
-    activeTab === 'permohonan'
-      ? permohonanItems.map((item) => {
-          const unitObj = item.unit || item.Unit;
-          const nominalVal =
-            typeof item.estimasi_anggaran === 'number'
-              ? item.estimasi_anggaran
-              : typeof item.nominal === 'number'
-                ? item.nominal
-                : typeof item.estimasi_anggaran === 'string'
-                  ? Number(item.estimasi_anggaran) || 0
-                  : 0;
+  const rows: PpkTableRow[] = permohonanItems.map((item) => {
+    const unitObj = item.unit || item.Unit;
+    const nominalVal =
+      typeof item.estimasi_anggaran === 'number'
+        ? item.estimasi_anggaran
+        : typeof item.nominal === 'number'
+          ? item.nominal
+          : typeof item.estimasi_anggaran === 'string'
+            ? Number(item.estimasi_anggaran) || 0
+            : 0;
 
-          return {
-            id: item.id,
-            nomor_surat: item.nomor_surat || '-',
-            judul: item.judul || '-',
-            unit: unitObj?.nama || '-',
-            tanggal: item.created_at || '-',
-            nominal: nominalVal,
-            status: item.status || 'menunggu_persetujuan',
-            sourceType: 'permohonan',
-          };
-        })
-      : pengadaanItems.map((item) => {
-          const permohonan = item.permohonan || item.Permohonan;
-          const unitObj = permohonan?.unit || permohonan?.Unit;
-          const rawItem = item as Record<string, unknown>;
-          const nomorSurat =
-            typeof permohonan?.nomor_surat === 'string'
-              ? permohonan.nomor_surat
-              : typeof rawItem.nomor_pengadaan === 'string'
-                ? rawItem.nomor_pengadaan
-                : '-';
-          const judul =
-            typeof permohonan?.judul === 'string'
-              ? permohonan.judul
-              : typeof rawItem.nama_pengadaan === 'string'
-                ? rawItem.nama_pengadaan
-                : '-';
-          const nominalVal =
-            typeof rawItem.nilai_kontrak === 'number'
-              ? (rawItem.nilai_kontrak as number)
-              : typeof item.nominal === 'number'
-                ? item.nominal
-                : typeof item.nominal === 'string'
-                  ? Number(item.nominal) || 0
-                  : typeof permohonan?.estimasi_anggaran === 'number'
-                    ? permohonan.estimasi_anggaran
-                    : 0;
-
-          return {
-            id: item.id,
-            nomor_surat: nomorSurat,
-            judul,
-            unit: unitObj?.nama || '-',
-            tanggal: item.created_at || '-',
-            nominal: nominalVal,
-            status: item.status || 'menunggu_persetujuan',
-            sourceType: 'pengadaan',
-          };
-        });
+    return {
+      id: item.id,
+      nomor_surat: item.nomor_surat || '-',
+      judul: item.judul || '-',
+      unit: unitObj?.nama || '-',
+      tanggal: item.created_at || '-',
+      nominal: nominalVal,
+      status: item.status || 'menunggu_persetujuan',
+      sourceType: 'permohonan',
+    };
+  });
 
   return {
-    activeTab,
-    setActiveTab,
     rows,
     meta,
     search,

@@ -1,7 +1,6 @@
 import type { FC } from 'react';
 import SharedNotifikasiPage, { type SharedNotifikasiPageProps } from '../../Shared/SharedNotifikasiPage';
-import { PPK_NAV_ITEMS } from '../Dashboard';
-
+import { PPK_NAV_ITEMS } from '@/constants/ppkNav';
 export type PpkNotifikasiProps = SharedNotifikasiPageProps;
 
 export const PpkNotifikasiIndex: FC<PpkNotifikasiProps> = (props) => {

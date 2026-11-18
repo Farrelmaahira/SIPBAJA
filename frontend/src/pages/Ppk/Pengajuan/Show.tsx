@@ -1,10 +1,10 @@
 import { useState, useEffect, type FC } from 'react';
 import { useParams } from 'react-router-dom';
 import ppkService from '../../../services/ppkService';
-import { PPK_NAV_ITEMS } from '../Dashboard';
 import type { NotificationItem } from '../../../types/notification';
 import type { PpPengadaanDetailPayload } from '../../../types/pp';
 import PpPengajuanShowTemplate from '../../../components/templates/PP/PpPengajuanShowTemplate';
+import { PPK_NAV_ITEMS } from '@/constants/ppkNav';
 
 export interface PpkShowProps {
   detail?: PpPengadaanDetailPayload;

@@ -2,13 +2,11 @@ import { useState, type FC } from 'react';
 import PpkPengajuanIndexTemplate from '../../../components/templates/PPK/PpkPengajuanIndexTemplate';
 import DocumentPreviewModal from '../../../components/organisms/DocumentPreviewModal';
 import { usePpkPengajuan } from '../../../hooks/usePpkPengajuan';
-import { PPK_NAV_ITEMS } from '../Dashboard';
 import type { PpkRkaklDoc } from '../../../types/ppk';
+import { PPK_NAV_ITEMS } from '@/constants/ppkNav';
 
 export const PpkPengajuanIndex: FC = () => {
   const {
-    activeTab,
-    setActiveTab,
     rows,
     meta,
     search,
@@ -35,8 +33,6 @@ export const PpkPengajuanIndex: FC = () => {
     <>
       <PpkPengajuanIndexTemplate
         navItems={PPK_NAV_ITEMS}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
         rows={rows}
         meta={meta}
         search={search}

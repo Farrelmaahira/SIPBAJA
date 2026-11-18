@@ -3,10 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import ppkService from '../../../services/ppkService';
 import PpkPembayaranTemplate from '../../../components/templates/PPK/PpkPembayaranTemplate';
 import type { PreviewDocInfo } from '../../../components/templates/PPK/PpkPermohonanReviewTemplate';
-import { PPK_NAV_ITEMS } from '../Dashboard';
 import { extractServerErrors, validateUploadFile } from '../../../utils/fileValidation';
 import type { NotificationItem } from '../../../types/notification';
 import type { PpPengadaanDetailPayload } from '../../../types/ppk';
+import { PPK_NAV_ITEMS } from '@/constants/ppkNav';
 
 export interface PpkPembayaranProps {
   detail?: PpPengadaanDetailPayload;
