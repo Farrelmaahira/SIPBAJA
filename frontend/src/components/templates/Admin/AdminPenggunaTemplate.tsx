@@ -4,12 +4,13 @@ import AppLayout from '../General/AppLayout';
 import CrudTable from '../../organisms/CrudTable';
 import Modal from '../../organisms/Modal';
 import SearchBar from '../../molecules/SearchBar';
-import FormField from '../../molecules/FormField';
-import TextInput from '../../molecules/TextInput';
-import SelectInput from '../../molecules/SelectInput';
 import PrimaryButton from '../../atoms/PrimaryButton';
-import normalizeOptions from '../../../utils/normalizeOptions';
 import { ADMIN_NAV_ITEMS } from '../../../constants/adminNav';
+import HeroBanner from '@/components/organisms/HeroBanner';
+import TableFooter from '@/components/molecules/TableFooter';
+import { PaginationMeta } from '@/components/molecules/Pagination';
+import { PenggunaFormData } from '@/types/admin';
+import { PenggunaForm } from '@/components/organisms/AddPenggunaForm';
 
 export interface UserRowItem {
   id: number;
@@ -20,14 +21,6 @@ export interface UserRowItem {
   [key: string]: unknown;
 }
 
-export interface PenggunaFormData {
-  nama?: string;
-  email?: string;
-  password?: string;
-  role_id?: string | number;
-  unit_id?: string | number;
-  [key: string]: unknown;
-}
 
 export interface AdminPenggunaTemplateForm {
   data: PenggunaFormData;
@@ -36,79 +29,6 @@ export interface AdminPenggunaTemplateForm {
   processing?: boolean;
 }
 
-function PenggunaForm({
-  data,
-  setData,
-  errors,
-  roles,
-  units,
-  isEdit,
-}: {
-  data: PenggunaFormData;
-  setData: (field: string, value: any) => void;
-  errors: Record<string, string>;
-  roles: any[];
-  units: any[];
-  isEdit: boolean;
-}) {
-  return (
-    <div className="space-y-4">
-      <FormField label="Nama lengkap" error={errors.nama} htmlFor="pengguna-nama">
-        <TextInput
-          id="pengguna-nama"
-          value={data.nama || ''}
-          onChange={(e) => setData('nama', e.target.value)}
-          placeholder="Nama lengkap pengguna"
-          error={errors.nama}
-        />
-      </FormField>
-      <FormField label="Email" error={errors.email} htmlFor="pengguna-email">
-        <TextInput
-          id="pengguna-email"
-          type="email"
-          value={data.email || ''}
-          onChange={(e) => setData('email', e.target.value)}
-          placeholder="nama@pnj.ac.id"
-          error={errors.email}
-        />
-      </FormField>
-      <FormField
-        label={isEdit ? 'Password baru (kosongkan jika tidak diubah)' : 'Password'}
-        error={errors.password}
-        htmlFor="pengguna-password"
-      >
-        <TextInput
-          id="pengguna-password"
-          type="password"
-          value={data.password || ''}
-          onChange={(e) => setData('password', e.target.value)}
-          placeholder="Minimal 8 karakter"
-          error={errors.password}
-        />
-      </FormField>
-      <FormField label="Peran" error={errors.role_id} htmlFor="pengguna-role">
-        <SelectInput
-          id="pengguna-role"
-          value={data.role_id || ''}
-          onChange={(e) => setData('role_id', e.target.value)}
-          options={normalizeOptions(roles)}
-          placeholder="Pilih peran"
-          error={errors.role_id}
-        />
-      </FormField>
-      <FormField label="Unit kerja" error={errors.unit_id} htmlFor="pengguna-unit">
-        <SelectInput
-          id="pengguna-unit"
-          value={data.unit_id || ''}
-          onChange={(e) => setData('unit_id', e.target.value)}
-          options={normalizeOptions(units)}
-          placeholder="Pilih unit kerja (opsional)"
-          error={errors.unit_id}
-        />
-      </FormField>
-    </div>
-  );
-}
 
 const columns = [
   {
@@ -139,6 +59,8 @@ export interface AdminPenggunaTemplateProps {
   roles?: any[];
   units?: any[];
   query?: string;
+  paginationMeta: PaginationMeta;
+  onPageChange?: (page: number) => void;
   onQueryChange?: (e: ChangeEvent<HTMLInputElement>) => void;
   searchPlaceholder?: string;
   modalMode?: 'create' | 'edit' | null;
@@ -156,10 +78,11 @@ export interface AdminPenggunaTemplateProps {
 
 export const AdminPenggunaTemplate: FC<AdminPenggunaTemplateProps> = ({
   rows = [],
-  pagination = null,
   roles = [],
   units = [],
   query = '',
+  paginationMeta,
+  onPageChange,
   onQueryChange,
   searchPlaceholder = 'Cari nama atau email...',
   modalMode = null,
@@ -177,6 +100,14 @@ export const AdminPenggunaTemplate: FC<AdminPenggunaTemplateProps> = ({
   const { data, setData, errors, processing = false } = form;
   const isEdit = modalMode === 'edit';
 
+  const footer = paginationMeta ? (
+    <TableFooter
+      currentPage={paginationMeta.current_page}
+      lastPage={paginationMeta.last_page}
+      isLoading={isLoading}
+      onPageChange={onPageChange}
+    />
+  ) : null;
   return (
     <AppLayout
       activeRoute="pengguna"
@@ -188,17 +119,13 @@ export const AdminPenggunaTemplate: FC<AdminPenggunaTemplateProps> = ({
       notifikasiHref="/admin/dashboard"
     >
       <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-bold text-[#14201C]">Pengguna</h1>
-            <p className="text-sm text-[#5F6F6A] mt-1">
-              Kelola akun pengguna dan peran mereka di SIPBAJA.
-            </p>
-          </div>
-          <PrimaryButton icon={Plus} onClick={onOpenCreate}>
-            Tambah Pengguna
-          </PrimaryButton>
-        </div>
+        <HeroBanner
+          title="Pengguna"
+          description="Kelola akun pengguna dan peran mereka di SIPBAJA."
+          ctaLabel="Buat Permohonan"
+          ctaIcon={Plus}
+          onCta={onOpenCreate}
+        />
 
         <CrudTable
           columns={columns}
@@ -218,7 +145,7 @@ export const AdminPenggunaTemplate: FC<AdminPenggunaTemplateProps> = ({
           emptyTitle="Belum ada pengguna"
           emptyDescription="Pengguna yang ditambahkan akan ditampilkan di sini."
           isLoading={isLoading}
-          footer={pagination}
+          footer={footer}
         />
 
         <Modal

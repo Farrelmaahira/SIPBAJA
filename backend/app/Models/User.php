@@ -14,7 +14,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['role_id', 'unit_id', 'nama', 'email', 'password'])]
+#[Fillable(['role_id', 'unit_id', 'nama', 'email', 'password', 'isActive'])]
 #[Hidden(['password'])]
 class User extends Authenticatable
 {
@@ -71,7 +71,7 @@ class User extends Authenticatable
     public function hasRole(string|array $roles): bool
     {
         $roleName = $this->Role?->nama;
-        if (! $roleName) {
+        if (!$roleName) {
             return false;
         }
 
@@ -85,7 +85,7 @@ class User extends Authenticatable
      */
     public function getPermissionCodes(): array
     {
-        if (! $this->Role) {
+        if (!$this->Role) {
             return [];
         }
 

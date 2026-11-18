@@ -9,6 +9,8 @@ import TableFooter from '../../molecules/TableFooter';
 import StatusPill from '../../atoms/StatusPill';
 import { PERENCANAAN_NAV_ITEMS } from '../../../pages/Perencanaan/Dashboard';
 import type { PermohonanTerbaruItem } from '../../../types/perencanaan';
+import { formatCurrency } from '@/utils/formatCurrency';
+import { formatDate } from '@/utils/formatDate';
 
 export interface PerencanaanPengajuanIndexTemplateProps {
   items: PermohonanTerbaruItem[];
@@ -53,23 +55,6 @@ export const PerencanaanPengajuanIndexTemplate: FC<PerencanaanPengajuanIndexTemp
   onCloseFilterModal,
   onApplyFilter,
 }) => {
-  const formatCurrency = (val?: number | string) => {
-    const numVal = typeof val === 'string' ? Number(val) : val || 0;
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      maximumFractionDigits: 0,
-    }).format(Number.isNaN(numVal) ? 0 : numVal);
-  };
-
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString('id-ID', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
-  };
 
   const columns: CrudColumn<PermohonanTerbaruItem>[] = [
     {

@@ -130,3 +130,58 @@ export interface AdminRoleResponse {
   filters: { q: string };
 }
 
+export interface PenggunaFormData {
+  nama?: string;
+  email?: string;
+  password?: string;
+  role_id?: string | number;
+  unit_id?: string | number;
+  [key: string]: unknown;
+}
+
+export interface MakRowItem {
+  id: number;
+  nama: string;
+  kode?: string;
+  ppk?: {
+    id?: number;
+    nama?: string;
+    email?: string;
+  };
+  permohonan_mak_count?: number;
+  [key: string]: unknown;
+}
+
+export interface PpkOptionUser {
+  id: number;
+  nama: string;
+  email: string;
+  [key: string]: unknown;
+}
+
+export interface UnitKerjaItem {
+  id?: number | string;
+  nama: string;
+  users_count?: number;
+  [key: string]: unknown;
+}
+
+export interface UnitKerjaFormData {
+  nama: string;
+  [key: string]: unknown;
+}
+
+export interface UnitKerjaFormState {
+  data: UnitKerjaFormData;
+  setData: (key: any, value?: any) => void;
+  errors: Record<string, string | undefined>;
+  processing: boolean;
+}
+
+export interface RoleRowItem {
+  id: number;
+  nama: string;
+  permissions_count?: number;
+  users_count?: number;
+  [key: string]: unknown;
+}

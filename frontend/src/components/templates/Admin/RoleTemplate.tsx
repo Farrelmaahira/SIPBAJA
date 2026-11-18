@@ -9,14 +9,9 @@ import FormField from '../../molecules/FormField';
 import TextInput from '../../molecules/TextInput';
 import PrimaryButton from '../../atoms/PrimaryButton';
 import { ADMIN_NAV_ITEMS } from '../../../constants/adminNav';
+import { RoleRowItem } from '@/types/admin';
+import HeroBanner from '@/components/organisms/HeroBanner';
 
-export interface RoleRowItem {
-  id: number;
-  nama: string;
-  permissions_count?: number;
-  users_count?: number;
-  [key: string]: unknown;
-}
 
 const columns = [
   {
@@ -109,17 +104,13 @@ export const RoleTemplate: FC<RoleTemplateProps> = ({
       notifikasiHref="/admin/dashboard"
     >
       <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-bold text-[#14201C]">Peran</h1>
-            <p className="text-sm text-[#5F6F6A] mt-1">
-              Kelola peran pengguna dan pembagian wewenang dalam sistem.
-            </p>
-          </div>
-          <PrimaryButton icon={Plus} onClick={onOpenCreate}>
-            Tambah Peran
-          </PrimaryButton>
-        </div>
+        <HeroBanner
+          title="Peran"
+          description="Kelola peran pengguna dan pembagian wewenang dalam sistem."
+          ctaLabel="Tambah Peran"
+          ctaIcon={Plus}
+          onCta={onOpenCreate}
+        />
 
         <CrudTable
           columns={columns}
