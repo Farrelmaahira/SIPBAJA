@@ -2,10 +2,9 @@ import { useState, useEffect, type FC, type FormEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ppkService from '../../../services/ppkService';
 import PpkPembayaranTemplate from '../../../components/templates/PPK/PpkPembayaranTemplate';
-import type { PreviewDocInfo } from '../../../components/templates/PPK/PpkPermohonanReviewTemplate';
 import { extractServerErrors, validateUploadFile } from '../../../utils/fileValidation';
 import type { NotificationItem } from '../../../types/notification';
-import type { PpPengadaanDetailPayload } from '../../../types/ppk';
+import type { PpDocumentPreviewInfo, PpPengadaanDetailPayload } from '../../../types/pp';
 import { PPK_NAV_ITEMS } from '@/constants/ppkNav';
 
 export interface PpkPembayaranProps {
@@ -28,7 +27,7 @@ export const PpkPengajuanPembayaran: FC<PpkPembayaranProps> = ({
     useState<number>(initialUnreadCount);
 
   const [galleryOpen, setGalleryOpen] = useState<boolean>(false);
-  const [previewDoc, setPreviewDoc] = useState<PreviewDocInfo | null>(null);
+  const [previewDoc, setPreviewDoc] = useState<PpDocumentPreviewInfo | null>(null);
   const [approveModalOpen, setApproveModalOpen] = useState<boolean>(false);
   const [rejectModalOpen, setRejectModalOpen] = useState<boolean>(false);
 

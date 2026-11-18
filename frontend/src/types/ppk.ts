@@ -79,27 +79,6 @@ export interface PpkPermohonanItem {
   Approvals?: PpApprovalItem[];
 }
 
-export interface PpkRkaklDoc {
-  id: number;
-  nama_asli: string;
-  versi?: number;
-  ukuran_bytes?: number;
-  mime_type?: string;
-  tahun_anggaran?: string;
-  download_url?: string;
-  created_at?: string;
-  pengunggah?: {
-    id: number;
-    nama: string;
-    email?: string;
-  } | null;
-  Pengunggah?: {
-    id: number;
-    nama: string;
-    email?: string;
-  } | null;
-}
-
 export interface PpkPermohonanDetailPayload {
   permohonan: PpkPermohonanItem;
   dokumen_permohonan?: PpDokumenItem[];
@@ -144,45 +123,17 @@ export interface PpkPermohonanListResponse {
   message?: string;
   data?: PpkPermohonanItem[];
   meta?: PpPaginationMeta;
-  permohonan?: {
-    data?: PpkPermohonanItem[];
-    current_page?: number;
-    last_page?: number;
-    per_page?: number;
-    total?: number;
-  };
   filters?: PpkPengajuanFilters;
-  recentNotifications?: NotificationItem[];
-  unreadNotificationsCount?: number;
 }
 
 export interface PpkPermohonanDetailResponse {
   message?: string;
   data?: PpkPermohonanDetailPayload;
-  detail?: PpkPermohonanDetailPayload;
-  recentNotifications?: NotificationItem[];
-  unreadNotificationsCount?: number;
 }
 
 export interface PpkPengajuanDetailResponse {
   detail?: PpPengadaanDetailPayload;
   data?: PpPengadaanDetailPayload;
-  recentNotifications?: NotificationItem[];
-  unreadNotificationsCount?: number;
-}
-
-export interface PpkRkaklResponse {
-  message?: string;
-  data?: {
-    active_doc?: PpkRkaklDoc | null;
-    history?: PpkRkaklDoc[];
-    items?: PpkRkaklDoc[];
-    tahun?: string | null;
-  };
-  activeDoc?: PpkRkaklDoc | null;
-  history?: PpkRkaklDoc[];
-  items?: PpkRkaklDoc[];
-  tahun?: string | null;
   recentNotifications?: NotificationItem[];
   unreadNotificationsCount?: number;
 }

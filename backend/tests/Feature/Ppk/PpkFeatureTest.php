@@ -7,6 +7,7 @@ use App\Models\Mak;
 use App\Models\Pengadaan;
 use App\Models\Permohonan;
 use App\Models\PermohonanMak;
+use App\Models\Unit;
 use App\Models\User;
 use Database\Seeders\MasterReferenceSeeder;
 use Database\Seeders\PengadaanPpSeeder;
@@ -91,7 +92,7 @@ class PpkFeatureTest extends TestCase
             ->getJson('/api/v1/ppk/permohonan');
 
         $listResponse->assertStatus(200)
-            ->assertJsonStructure(['data', 'meta', 'permohonan']);
+            ->assertJsonStructure(['data', 'meta']);
 
         $detailResponse = $this->actingAs($this->ppkUser, 'sanctum')
             ->getJson("/api/v1/ppk/permohonan/{$permohonan->id}");
@@ -108,6 +109,8 @@ class PpkFeatureTest extends TestCase
     public function test_ppk_can_preview_permohonan_dokumen_inline(): void
     {
         $permohonan = Permohonan::firstOrFail();
+        $this->attachMakToPermohonan($permohonan, $this->ppkUser);
+
         $dokumen = Dokumen::where('ref_type', 'permohonan')
             ->where('ref_id', $permohonan->id)
             ->where('tipe_dokumen', 'surat_permohonan')
@@ -203,6 +206,83 @@ class PpkFeatureTest extends TestCase
         ]);
     }
 
+    public function test_ppk_only_sees_permohonan_linked_to_own_mak(): void
+    {
+        $ownPermohonan = $this->createPermohonan('PPK-OWN-'.uniqid());
+        $this->attachMakToPermohonan($ownPermohonan, $this->ppkUser);
+
+        $otherPpk = $this->createPpkUser('PPK Lain');
+        $otherPermohonan = $this->createPermohonan('PPK-OTHER-'.uniqid());
+        $this->attachMakToPermohonan($otherPermohonan, $otherPpk);
+
+        $response = $this->actingAs($this->ppkUser, 'sanctum')
+            ->getJson('/api/v1/ppk/permohonan');
+
+        $response->assertOk();
+        $ids = collect($response->json('data'))->pluck('id');
+
+        $this->assertTrue($ids->contains($ownPermohonan->id));
+        $this->assertFalse($ids->contains($otherPermohonan->id));
+    }
+
+    public function test_ppk_cannot_view_or_decide_permohonan_of_other_ppk(): void
+    {
+        $otherPpk = $this->createPpkUser('PPK Lain');
+        $otherPermohonan = $this->createPermohonan('PPK-FORBIDDEN-'.uniqid());
+        $this->attachMakToPermohonan($otherPermohonan, $otherPpk);
+
+        $this->actingAs($this->ppkUser, 'sanctum')
+            ->getJson("/api/v1/ppk/permohonan/{$otherPermohonan->id}")
+            ->assertStatus(403);
+
+        $this->actingAs($this->ppkUser, 'sanctum')
+            ->postJson("/api/v1/ppk/permohonan/{$otherPermohonan->id}/approve", [
+                'memo' => UploadedFile::fake()->create('memo.pdf', 100, 'application/pdf'),
+            ])
+            ->assertStatus(403);
+
+        $this->actingAs($this->ppkUser, 'sanctum')
+            ->postJson("/api/v1/ppk/permohonan/{$otherPermohonan->id}/reject", [
+                'alasan' => 'Permohonan bukan kewenangan PPK ini.',
+            ])
+            ->assertStatus(403);
+
+        $this->actingAs($this->ppkUser, 'sanctum')
+            ->get("/api/v1/ppk/permohonan/{$otherPermohonan->id}/dokumen?disposition=inline")
+            ->assertStatus(403);
+    }
+
+    public function test_ppk_permohonan_detail_excludes_pengadaan_and_rkakl(): void
+    {
+        $permohonan = Permohonan::firstOrFail();
+        $this->attachMakToPermohonan($permohonan, $this->ppkUser);
+
+        $response = $this->actingAs($this->ppkUser, 'sanctum')
+            ->getJson("/api/v1/ppk/permohonan/{$permohonan->id}");
+
+        $response->assertOk();
+        $data = $response->json('data');
+
+        $this->assertArrayNotHasKey('rkakl_active', $data);
+        $this->assertArrayNotHasKey('pengadaan', $data['permohonan']);
+    }
+
+    public function test_ppk_permohonan_list_supports_statuses_filter(): void
+    {
+        $permohonan = $this->createPermohonan('PPK-STATUS-'.uniqid(), 'diteruskan');
+        $this->attachMakToPermohonan($permohonan, $this->ppkUser);
+
+        $matching = $this->actingAs($this->ppkUser, 'sanctum')
+            ->getJson('/api/v1/ppk/permohonan?statuses[]=diteruskan');
+        $matching->assertOk();
+        $this->assertTrue(collect($matching->json('data'))->pluck('id')->contains($permohonan->id));
+
+        $nonMatching = $this->actingAs($this->ppkUser, 'sanctum')
+            ->getJson('/api/v1/ppk/permohonan?statuses[]=ditolak');
+        $nonMatching->assertOk();
+        $this->assertFalse(collect($nonMatching->json('data'))->pluck('id')->contains($permohonan->id));
+    }
+
     public function test_ppk_can_view_pengadaan_list_and_review(): void
     {
         $pengadaan = Pengadaan::firstOrFail();
@@ -286,5 +366,45 @@ class PpkFeatureTest extends TestCase
             'alasan' => 'RAB pengadaan perlu disesuaikan dengan standar biaya masukan terbaru.',
             'actor_id' => $this->ppkUser->id,
         ]);
+    }
+
+    private function createPpkUser(string $nama): User
+    {
+        return User::factory()->create([
+            'role_id' => $this->ppkUser->role_id,
+            'nama' => $nama,
+        ]);
+    }
+
+    private function createPermohonan(string $nomorSurat, string $status = 'diteruskan'): Permohonan
+    {
+        return Permohonan::create([
+            'unit_id' => Unit::firstOrFail()->id,
+            'created_by' => $this->ppkUser->id,
+            'nomor_surat' => $nomorSurat,
+            'judul' => 'Permohonan '.$nomorSurat,
+            'ringkasan_tujuan' => 'Pengujian filter permohonan PPK.',
+            'estimasi_anggaran' => 1000000,
+            'revisi_ke' => 0,
+            'status' => $status,
+            'created_at' => now(),
+        ]);
+    }
+
+    private function attachMakToPermohonan(Permohonan $permohonan, User $ppk): Mak
+    {
+        $mak = Mak::create([
+            'kode' => 'MAK-'.uniqid(),
+            'nama' => 'MAK '.$ppk->nama,
+            'ppk_user_id' => $ppk->id,
+        ]);
+
+        PermohonanMak::firstOrCreate([
+            'permohonan_id' => $permohonan->id,
+            'mak_id' => $mak->id,
+            'ditentukan_oleh' => $ppk->id,
+        ]);
+
+        return $mak;
     }
 }

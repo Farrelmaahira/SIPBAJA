@@ -20,12 +20,13 @@ import { DokumenListCard } from '../../organisms/DokumenListCard';
 import { formatRupiah, formatTanggal } from '../../../utils/formatters';
 import type { NotificationItem } from '../../../types/notification';
 import type { DokumenItem } from '../../../types/dokumen';
-import type { PpkPermohonanDetailPayload, PpkPermohonanMakItem } from '../../../types/ppk';
+import type { PpkPermohonanViewModel } from '../../../utils/ppkPermohonan';
 
 export interface PpkPermohonanReviewTemplateProps {
   navItems: PpNavItem[];
-  detail: PpkPermohonanDetailPayload | null;
+  viewModel: PpkPermohonanViewModel | null;
   isLoading: boolean;
+  error?: string | null;
   onViewDokumen?: (dokumen: DokumenItem) => void;
   onDownloadDokumen?: (dokumen: DokumenItem) => void;
   isViewingDocId?: number | string | null;
@@ -56,8 +57,9 @@ export interface PpkPermohonanReviewTemplateProps {
 
 export const PpkPermohonanReviewTemplate: FC<PpkPermohonanReviewTemplateProps> = ({
   navItems,
-  detail,
+  viewModel,
   isLoading,
+  error = null,
   onViewDokumen,
   onDownloadDokumen,
   isViewingDocId = null,
@@ -86,40 +88,10 @@ export const PpkPermohonanReviewTemplate: FC<PpkPermohonanReviewTemplateProps> =
   unreadNotificationsCount,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const permohonan = detail?.permohonan;
-  const dokumenPermohonan: DokumenItem[] = detail?.dokumen_permohonan ?? [];
-  const makPpkList: PpkPermohonanMakItem[] = detail?.permohonan_mak_ppk ?? permohonan?.permohonan_mak ?? permohonan?.PermohonanMak ?? [];
-
-  const statusPermohonan = permohonan?.status || '';
-
-  // PPK hanya bisa memberi keputusan jika:
-  // 1. Permohonan sudah diteruskan oleh Perencanaan (status 'diteruskan') — bukti MAK sudah ditetapkan
-  // 2. Belum ada keputusan final (bukan 'disetujui', 'ditolak', 'selesai')
-  const makSudahDitetapkan = makPpkList.length > 0;
-  const statusBolehDecision = statusPermohonan === 'diteruskan';
-  const canGiveDecision =
-    statusBolehDecision &&
-    makSudahDitetapkan &&
-    statusPermohonan !== 'disetujui' &&
-    statusPermohonan !== 'ditolak' &&
-    statusPermohonan !== 'selesai';
-
-  // Pesan penjelas mengapa tombol keputusan dinonaktifkan
-  const decisionBlockedReason = !statusBolehDecision
-    ? statusPermohonan === 'diajukan'
-      ? 'Permohonan belum diverifikasi dan diteruskan oleh Tim Perencanaan. MAK belum ditetapkan.'
-      : statusPermohonan === 'disetujui'
-        ? 'Permohonan sudah disetujui oleh PPK dan Bidang 2.'
-        : statusPermohonan === 'ditolak'
-          ? 'Permohonan sudah ditolak.'
-          : null
-    : !makSudahDitetapkan
-      ? 'Jenis MAK belum ditetapkan oleh Tim Perencanaan.'
-      : null;
 
   return (
     <AppLayout
-      activeRoute="pengajuan"
+      activeRoute="permohonan"
       navItems={navItems}
       roleInitials="PPK"
       roleTitle="PPK"
@@ -130,7 +102,7 @@ export const PpkPermohonanReviewTemplate: FC<PpkPermohonanReviewTemplateProps> =
       notifications={recentNotifications}
       unreadCount={unreadNotificationsCount}
       breadcrumb={[
-        { label: 'LIST PENGAJUAN', href: '/ppk/pengajuan' },
+        { label: 'DAFTAR PERMOHONAN', href: '/ppk/permohonan' },
         { label: 'REVIEW PERMOHONAN AWAL PPK' },
       ]}
     >
@@ -144,20 +116,22 @@ export const PpkPermohonanReviewTemplate: FC<PpkPermohonanReviewTemplateProps> =
               </span>
               <div className="flex flex-wrap items-center gap-3">
                 <h1 className="text-2xl sm:text-[28px] font-extrabold tracking-tight leading-9">
-                  Review Dokumen Turunan Permohonan
+                  Review Permohonan
                 </h1>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#FEF3DC] text-[#9A5B00]">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#F59E0B]" />
-                  Menunggu Persetujuan PPK
-                </span>
+                {viewModel?.canDecide && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/16 text-white">
+                    Menunggu Persetujuan PPK
+                  </span>
+                )}
               </div>
               <p className="text-sm text-white/85 mt-2">
-                Nomor {permohonan?.nomor_surat} · Diajukan {formatTanggal(permohonan?.created_at || '2026-04-02')}
+                Nomor {viewModel?.nomorSurat ?? '-'} · Diajukan{' '}
+                {formatTanggal(viewModel?.tanggal)}
               </p>
             </div>
 
             <Link
-              to="/ppk/pengajuan"
+              to="/ppk/permohonan"
               className="inline-flex items-center gap-2 px-5 py-3.5 rounded-[14px] bg-white/16 hover:bg-white/25 border border-white/35 text-white text-sm font-semibold transition-colors shrink-0 self-start sm:self-auto"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -170,6 +144,14 @@ export const PpkPermohonanReviewTemplate: FC<PpkPermohonanReviewTemplateProps> =
           <div className="bg-white rounded-[20px] p-12 border border-[#E3EAE6] text-center">
             <div className="w-7 h-7 border-2 border-[#0E7C5A] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
             <p className="text-xs text-[#6B7A73]">Memuat detail permohonan PPK...</p>
+          </div>
+        ) : error ? (
+          <div className="bg-white rounded-[20px] p-8 border border-[#FECDCA] text-center">
+            <p className="text-sm font-semibold text-[#D92D20]">{error}</p>
+          </div>
+        ) : !viewModel ? (
+          <div className="bg-white rounded-[20px] p-8 border border-[#E3EAE6] text-center">
+            <p className="text-sm text-[#6B7A73]">Detail permohonan tidak tersedia.</p>
           </div>
         ) : (
           <>
@@ -189,7 +171,9 @@ export const PpkPermohonanReviewTemplate: FC<PpkPermohonanReviewTemplateProps> =
                   </div>
                   <div>
                     <p className="text-xs text-[#6B7A73]">Nomor Permohonan</p>
-                    <p className="font-semibold text-sm text-[#0F6A49] mt-0.5">{permohonan?.nomor_surat}</p>
+                    <p className="font-semibold text-sm text-[#0F6A49] mt-0.5">
+                      {viewModel.nomorSurat}
+                    </p>
                   </div>
                 </div>
 
@@ -200,7 +184,7 @@ export const PpkPermohonanReviewTemplate: FC<PpkPermohonanReviewTemplateProps> =
                   <div>
                     <p className="text-xs text-[#6B7A73]">Tanggal Pengajuan</p>
                     <p className="font-semibold text-sm text-[#0E1B16] mt-0.5">
-                      {formatTanggal(permohonan?.created_at || '2026-04-02')}
+                      {formatTanggal(viewModel.tanggal)}
                     </p>
                   </div>
                 </div>
@@ -211,7 +195,9 @@ export const PpkPermohonanReviewTemplate: FC<PpkPermohonanReviewTemplateProps> =
                   </div>
                   <div>
                     <p className="text-xs text-[#6B7A73]">Judul Permohonan</p>
-                    <p className="font-semibold text-sm text-[#0E1B16] mt-0.5">{permohonan?.judul}</p>
+                    <p className="font-semibold text-sm text-[#0E1B16] mt-0.5">
+                      {viewModel.judul}
+                    </p>
                   </div>
                 </div>
 
@@ -221,7 +207,9 @@ export const PpkPermohonanReviewTemplate: FC<PpkPermohonanReviewTemplateProps> =
                   </div>
                   <div>
                     <p className="text-xs text-[#6B7A73]">Unit Pemohon</p>
-                    <p className="font-semibold text-sm text-[#0E1B16] mt-0.5">{permohonan?.Unit?.nama}</p>
+                    <p className="font-semibold text-sm text-[#0E1B16] mt-0.5">
+                      {viewModel.unitNama}
+                    </p>
                   </div>
                 </div>
 
@@ -232,7 +220,7 @@ export const PpkPermohonanReviewTemplate: FC<PpkPermohonanReviewTemplateProps> =
                   <div>
                     <p className="text-xs text-[#6B7A73]">Estimasi Anggaran</p>
                     <p className="font-semibold text-sm text-[#0E1B16] mt-0.5">
-                      {formatRupiah(permohonan?.estimasi_anggaran)}
+                      {formatRupiah(viewModel.estimasiAnggaran)}
                     </p>
                   </div>
                 </div>
@@ -244,17 +232,14 @@ export const PpkPermohonanReviewTemplate: FC<PpkPermohonanReviewTemplateProps> =
                   <div>
                     <p className="text-xs text-[#6B7A73]">Jenis MAK Terikat PPK</p>
                     <div className="font-semibold text-xs text-[#0E1B16] mt-0.5 space-y-0.5">
-                      {makPpkList.length > 0 ? (
-                        makPpkList.map((pm: PpkPermohonanMakItem) => {
-                          const makObj = pm.mak || pm.Mak;
-                          return (
-                            <p key={pm.id}>
-                              {makObj?.kode || makObj?.id || pm.mak_id} · {makObj?.nama || 'Jenis MAK'}
-                            </p>
-                          );
-                        })
+                      {viewModel.makList.length > 0 ? (
+                        viewModel.makList.map((mak) => (
+                          <p key={mak.id}>
+                            {mak.kode} · {mak.nama}
+                          </p>
+                        ))
                       ) : (
-                        <p>532111 · Belanja Modal Peralatan dan Mesin</p>
+                        <p className="text-[#8A9A95]">Belum ada MAK terikat</p>
                       )}
                     </div>
                   </div>
@@ -267,8 +252,8 @@ export const PpkPermohonanReviewTemplate: FC<PpkPermohonanReviewTemplateProps> =
               <div className="lg:col-span-7 space-y-6">
                 <DokumenListCard
                   title="Berkas Permohonan"
-                  dokumenList={dokumenPermohonan}
-                  nomorSurat={permohonan?.nomor_surat}
+                  dokumenList={viewModel.dokumenList}
+                  nomorSurat={viewModel.nomorSurat}
                   onViewNewTab={onViewDokumen}
                   onDownload={onDownloadDokumen}
                   isViewingId={isViewingDocId}
@@ -288,30 +273,30 @@ export const PpkPermohonanReviewTemplate: FC<PpkPermohonanReviewTemplateProps> =
                       Keputusan Persetujuan Awal PPK
                     </h3>
                     <p className="text-xs text-[#6B7A73] mt-0.5">
-                      Persetujuan awal permohonan wajib disertai unggahan Memo Persetujuan Surat Permohonan
+                      Persetujuan awal permohonan wajib disertai unggahan Memo Persetujuan Surat
+                      Permohonan
                     </p>
                   </div>
 
                   <div className="p-4 rounded-[14px] bg-[#F5F8F6] border border-[#E3EAE6] flex items-start gap-2.5 mb-6 text-xs text-[#3F4E47]">
                     <Info className="w-4 h-4 text-[#3F4E47] shrink-0 mt-0.5" />
                     <p className="leading-relaxed">
-                      Keputusan Bidang 2 dan PPK berjalan paralel. Permohonan akan diteruskan otomatis
-                      ke PPBJ setelah keduanya menyetujui.
+                      Keputusan Bidang 2 dan PPK berjalan paralel. Permohonan akan diteruskan
+                      otomatis ke PPBJ setelah keduanya menyetujui.
                     </p>
                   </div>
 
-                  {/* Banner peringatan jika PPK belum bisa memberi keputusan */}
-                  {decisionBlockedReason && (
+                  {viewModel.decisionBlockedReason && (
                     <div className="p-4 rounded-[14px] bg-[#FEF3DC] border border-[#FDE4A0] flex items-start gap-2.5 mb-5 text-xs text-[#92400E]">
                       <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-[#F59E0B]" />
-                      <p className="leading-relaxed">{decisionBlockedReason}</p>
+                      <p className="leading-relaxed">{viewModel.decisionBlockedReason}</p>
                     </div>
                   )}
 
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
-                      disabled={!canGiveDecision || isSubmitting}
+                      disabled={!viewModel.canDecide || isSubmitting}
                       onClick={onOpenRejectModal}
                       className="py-3 px-3 rounded-xl border border-[#FECDCA] bg-[#FEE4E2]/70 hover:bg-[#FEE4E2] text-xs font-bold text-[#D92D20] transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
@@ -320,7 +305,7 @@ export const PpkPermohonanReviewTemplate: FC<PpkPermohonanReviewTemplateProps> =
                     </button>
                     <button
                       type="button"
-                      disabled={!canGiveDecision || isSubmitting}
+                      disabled={!viewModel.canDecide || isSubmitting}
                       onClick={onOpenApproveModal}
                       className="py-3 px-3 rounded-xl bg-[#0E7C5A] hover:bg-[#0A5C43] text-xs font-bold text-white transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
                     >
@@ -484,7 +469,6 @@ export const PpkPermohonanReviewTemplate: FC<PpkPermohonanReviewTemplateProps> =
             </form>
           </div>
         )}
-
       </div>
     </AppLayout>
   );

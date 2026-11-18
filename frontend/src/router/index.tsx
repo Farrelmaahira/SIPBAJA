@@ -55,9 +55,10 @@ import PpProfilIndex from '../pages/Pp/Profil/Index';
 
 // PPK Pages
 import PpkDashboard from '../pages/Ppk/Dashboard';
-import PpkPengajuanIndex from '../pages/Ppk/Pengajuan/Index';
+import PpkPermohonanIndex from '../pages/Ppk/Pengajuan/Index';
+import PpkPermohonanReview from '../pages/Ppk/Pengajuan/Review';
+import PpkPengadaanReview from '../pages/Ppk/Pengadaan/Review';
 import PpkPengajuanShow from '../pages/Ppk/Pengajuan/Show';
-import PpkPengajuanReview from '../pages/Ppk/Pengajuan/Review';
 import PpkPengajuanPembayaran from '../pages/Ppk/Pengajuan/Pembayaran';
 import PpkNotifikasiIndex from '../pages/Ppk/Notifikasi/Index';
 import PpkProfilIndex from '../pages/Ppk/Profil/Index';
@@ -249,9 +250,11 @@ export const AppRoutes: FC = () => {
         {/* PPK Routes */}
         <Route element={<RoleRoute allowedRoles={['PPK']} />}>
           <Route path="/ppk/dashboard" element={<PpkDashboard />} />
-          <Route path="/ppk/pengajuan" element={<PpkPengajuanIndex />} />
+          <Route path="/ppk/permohonan" element={<PpkPermohonanIndex />} />
+          <Route path="/ppk/permohonan/:id/review" element={<PpkPermohonanReview />} />
+          <Route path="/ppk/pengajuan" element={<Navigate to="/ppk/permohonan" replace />} />
           <Route path="/ppk/pengajuan/:id" element={<PpkPengajuanShow />} />
-          <Route path="/ppk/pengajuan/:id/review" element={<PpkPengajuanReview />} />
+          <Route path="/ppk/pengajuan/:id/review" element={<PpkPengadaanReview />} />
           <Route path="/ppk/pengajuan/:id/pembayaran" element={<PpkPengajuanPembayaran />} />
           <Route path="/ppk/notifikasi" element={<PpkNotifikasiIndex />} />
           <Route path="/ppk/profil" element={<PpkProfilIndex />} />

@@ -18,7 +18,7 @@ export const PpkPengajuanTable: FC<PpkPengajuanTableProps> = ({
 }) => {
   const getDetailHref = (row: PpkTableRow): string => {
     if (row.sourceType === 'permohonan') {
-      return `/ppk/pengajuan/${row.id}/review?type=permohonan`;
+      return `/ppk/permohonan/${row.id}/review`;
     }
     if (row.status === 'menunggu_persetujuan' || row.status === 'menunggu_review') {
       return `/ppk/pengajuan/${row.id}/review`;

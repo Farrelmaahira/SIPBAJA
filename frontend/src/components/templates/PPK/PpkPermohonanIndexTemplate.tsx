@@ -1,6 +1,6 @@
 import { type FC, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Eye } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import AppLayout, { type AppNavItem } from '../General/AppLayout';
 import HeroBanner from '../../organisms/HeroBanner';
 import CrudTable, { type CrudColumn } from '../../organisms/CrudTable';
@@ -10,9 +10,9 @@ import TableFooter from '../../molecules/TableFooter';
 import StatusPill from '../../atoms/StatusPill';
 import { formatRupiah, formatTanggal } from '../../../utils/formatters';
 import type { NotificationItem } from '../../../types/notification';
-import type { PpPaginationMeta, PpkRkaklDoc, PpkTableRow } from '../../../types/ppk';
+import type { PpPaginationMeta, PpkTableRow } from '../../../types/ppk';
 
-export interface PpkPengajuanIndexTemplateProps {
+export interface PpkPermohonanIndexTemplateProps {
   navItems: AppNavItem[];
   rows: PpkTableRow[];
   meta: PpPaginationMeta;
@@ -30,11 +30,12 @@ export interface PpkPengajuanIndexTemplateProps {
   onApplyFilter: (statuses: string[]) => void;
   onPageChange: (page: number) => void;
   isLoading: boolean;
+  error?: string | null;
   recentNotifications: NotificationItem[];
   unreadNotificationsCount: number;
 }
 
-export const PpkPengajuanIndexTemplate: FC<PpkPengajuanIndexTemplateProps> = ({
+export const PpkPermohonanIndexTemplate: FC<PpkPermohonanIndexTemplateProps> = ({
   navItems,
   rows,
   meta,
@@ -52,6 +53,7 @@ export const PpkPengajuanIndexTemplate: FC<PpkPengajuanIndexTemplateProps> = ({
   onApplyFilter,
   onPageChange,
   isLoading,
+  error = null,
   recentNotifications,
   unreadNotificationsCount,
 }) => {
@@ -64,16 +66,22 @@ export const PpkPengajuanIndexTemplate: FC<PpkPengajuanIndexTemplateProps> = ({
       header: 'No Permohonan',
       className: 'font-bold text-[#0E7C5A] whitespace-nowrap',
       render: (row) => (
-        <Link to={`/ppk/pengajuan/${row.id}/review?type=permohonan`} className="hover:underline">
+        <Link to={`/ppk/permohonan/${row.id}/review`} className="hover:underline">
           {row.nomor_surat || '-'}
         </Link>
       ),
     },
     {
       key: 'judul',
-      header: 'Judul Pengadaan',
+      header: 'Judul Permohonan',
       className: 'font-bold text-[#14201C]',
       render: (row) => row.judul || '-',
+    },
+    {
+      key: 'unit',
+      header: 'Unit Pemohon',
+      className: 'text-[#5F6F6A]',
+      render: (row) => row.unit || '-',
     },
     {
       key: 'tanggal',
@@ -83,7 +91,7 @@ export const PpkPengajuanIndexTemplate: FC<PpkPengajuanIndexTemplateProps> = ({
     },
     {
       key: 'nominal',
-      header: 'Nilai Pengajuan',
+      header: 'Estimasi Anggaran',
       className: 'font-bold text-[#14201C] whitespace-nowrap',
       render: (row) => formatRupiah(row.nominal),
     },
@@ -121,7 +129,7 @@ export const PpkPengajuanIndexTemplate: FC<PpkPengajuanIndexTemplateProps> = ({
 
   return (
     <AppLayout
-      activeRoute="pengajuan"
+      activeRoute="permohonan"
       navItems={navItems}
       roleInitials="PPK"
       roleTitle="PPK"
@@ -133,29 +141,37 @@ export const PpkPengajuanIndexTemplate: FC<PpkPengajuanIndexTemplateProps> = ({
       unreadCount={unreadNotificationsCount}
       breadcrumb={[
         { label: 'PPK', href: '/ppk/dashboard' },
-        { label: 'DAFTAR PENGAJUAN' },
+        { label: 'DAFTAR PERMOHONAN' },
       ]}
     >
       <div className="space-y-6">
         <HeroBanner
           eyebrow="DAFTAR PERMOHONAN"
           title="Daftar Permohonan PPK"
-          description="Pantau dan verifikasi permohonan pengadaan yang terikat dengan Jenis MAK dalam wewenang Anda."
+          description="Pantau dan review permohonan yang terikat dengan Jenis MAK dalam wewenang Anda."
         />
 
+        {error && (
+          <div className="flex items-start gap-2.5 rounded-[14px] border border-[#FECDCA] bg-[#FEF3F2] px-4 py-3 text-xs text-[#B42318]">
+            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+            <p className="leading-relaxed">{error}</p>
+          </div>
+        )}
+
         <CrudTable
-          title="Daftar Permohonan Pengadaan"
-          subtitle="Permohonan pengadaan yang terikat Jenis MAK dalam wewenang PPK"
+          title="Daftar Permohonan"
+          subtitle="Permohonan yang terikat Jenis MAK dalam wewenang PPK"
           columns={columns}
           rows={rows}
           isLoading={isLoading}
           toolbar={toolbar}
           footer={footer}
+          emptyTitle={error ? 'Daftar permohonan gagal dimuat' : undefined}
           actions={[
             {
               key: 'view',
               label: 'Detail / Review',
-              href: (row) => `/ppk/pengajuan/${row.id}/review?type=permohonan`,
+              href: (row) => `/ppk/permohonan/${row.id}/review`,
             },
           ]}
         />
@@ -171,4 +187,4 @@ export const PpkPengajuanIndexTemplate: FC<PpkPengajuanIndexTemplateProps> = ({
   );
 };
 
-export default PpkPengajuanIndexTemplate;
+export default PpkPermohonanIndexTemplate;

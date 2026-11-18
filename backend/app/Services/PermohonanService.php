@@ -18,6 +18,8 @@ use Illuminate\Support\Str;
 
 class PermohonanService
 {
+    public function __construct(private ApprovalService $approvalService) {}
+
     /**
      * Menyimpan permohonan baru, dokumen PDF pendukung, dan riwayat status pertama.
      * Menggunakan transaksi database agar seluruh pencatatan atomik.
@@ -741,9 +743,11 @@ class PermohonanService
     /**
      * @param  array<string, mixed>  $filters
      */
-    public function paginatePermohonanUntukPpk(array $filters = []): LengthAwarePaginator
+    public function paginatePermohonanUntukPpk(User $ppk, array $filters = [], int $perPage = 10): LengthAwarePaginator
     {
-        $query = Permohonan::with(['Unit', 'Creator', 'PermohonanMak.Mak.Ppk', 'Approvals.Actor']);
+        $query = Permohonan::with(['Unit', 'Creator', 'PermohonanMak.Mak', 'Approvals.Actor'])
+            ->whereHas('PermohonanMak.Mak', fn ($q) => $q->where('ppk_user_id', $ppk->id));
+
         $keyword = trim((string) ($filters['search'] ?? $filters['q'] ?? ''));
         if ($keyword !== '') {
             $query->where(function ($q) use ($keyword) {
@@ -752,7 +756,10 @@ class PermohonanService
             });
         }
 
-        if (! empty($filters['status']) && $filters['status'] !== 'semua') {
+        $statuses = array_values(array_filter((array) ($filters['statuses'] ?? [])));
+        if ($statuses !== []) {
+            $query->whereIn('status', $statuses);
+        } elseif (! empty($filters['status']) && $filters['status'] !== 'semua') {
             $query->where('status', $filters['status']);
         }
 
@@ -764,9 +771,11 @@ class PermohonanService
             $query->whereYear('created_at', (int) $filters['tahun']);
         }
 
+        $perPage = max(1, min($perPage, 100));
+
         return $query
             ->orderByDesc('id')
-            ->paginate(10)
+            ->paginate($perPage)
             ->withQueryString();
     }
 
@@ -776,19 +785,20 @@ class PermohonanService
      */
     public function getDetailPermohonanUntukPpk(Permohonan $permohonan, User $ppk): array
     {
+        $this->approvalService->pastikanPpkBerhakAtasPermohonan($permohonan, $ppk);
+
         $permohonan->load([
             'Unit',
             'Creator',
-            'PermohonanMak.Mak.Ppk',
+            'PermohonanMak.Mak',
             'Approvals.Actor',
             'Approvals.Memo',
             'Dokumen',
         ]);
 
-        $dokumenPermohonan = Dokumen::where('ref_type', 'permohonan')
-            ->where('ref_id', $permohonan->id)
-            ->orderByDesc('versi')
-            ->get()
+        $dokumenPermohonan = $permohonan->Dokumen
+            ->sortByDesc('versi')
+            ->values()
             ->each(function (Dokumen $doc) use ($permohonan) {
                 $doc->setAttribute('download_url', "/api/v1/ppk/permohonan/{$permohonan->id}/dokumen?dokumen_id={$doc->id}");
             });

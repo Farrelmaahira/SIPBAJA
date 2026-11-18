@@ -21,8 +21,7 @@ import AppLayout, { type AppNavItem as PpNavItem } from '../General/AppLayout';
 import DokumentasiGalleryModal from '../../organisms/DokumentasiGalleryModal';
 import DocumentPreviewModal from '../../organisms/DocumentPreviewModal';
 import type { NotificationItem } from '../../../types/notification';
-import type { PpPengadaanDetailPayload } from '../../../types/ppk';
-import type { PreviewDocInfo } from './PpkPermohonanReviewTemplate';
+import type { PpDocumentPreviewInfo, PpPengadaanDetailPayload } from '../../../types/pp';
 
 export interface PpkPembayaranTemplateProps {
   navItems: PpNavItem[];
@@ -30,8 +29,8 @@ export interface PpkPembayaranTemplateProps {
   galleryOpen: boolean;
   onOpenGallery: () => void;
   onCloseGallery: () => void;
-  previewDoc: PreviewDocInfo | null;
-  onOpenPreviewDoc: (doc: PreviewDocInfo) => void;
+  previewDoc: PpDocumentPreviewInfo | null;
+  onOpenPreviewDoc: (doc: PpDocumentPreviewInfo) => void;
   onClosePreviewDoc: () => void;
   approveModalOpen: boolean;
   onOpenApproveModal: () => void;
@@ -159,7 +158,7 @@ export const PpkPembayaranTemplate: FC<PpkPembayaranTemplateProps> = ({
         </div>
         <button
           type="button"
-          onClick={() => onOpenPreviewDoc(doc)}
+          onClick={() => onOpenPreviewDoc({ ...doc, category: doc.label })}
           className="w-10 h-10 rounded-xl border border-[#CBD6D0] bg-white hover:bg-[#F4F7F5] text-[#3F4E47] flex items-center justify-center shrink-0 cursor-pointer transition-colors"
           title={`Unduh ${doc.label}`}
         >
@@ -171,7 +170,7 @@ export const PpkPembayaranTemplate: FC<PpkPembayaranTemplateProps> = ({
         <div className="grid grid-cols-2 gap-2 mt-4">
           <button
             type="button"
-            onClick={() => onOpenPreviewDoc(doc)}
+            onClick={() => onOpenPreviewDoc({ ...doc, category: doc.label })}
             className="py-3 px-4 rounded-xl border border-[#CBD6D0] bg-white hover:bg-[#F4F9F6] text-xs font-semibold text-[#0F6A49] flex items-center justify-center gap-2 transition-colors cursor-pointer"
           >
             <Eye className="w-4 h-4" />
@@ -189,7 +188,7 @@ export const PpkPembayaranTemplate: FC<PpkPembayaranTemplateProps> = ({
       ) : (
         <button
           type="button"
-          onClick={() => onOpenPreviewDoc(doc)}
+          onClick={() => onOpenPreviewDoc({ ...doc, category: doc.label })}
           className="w-full mt-4 py-3 px-4 rounded-xl border border-[#CBD6D0] bg-white hover:bg-[#F4F9F6] text-xs font-semibold text-[#0F6A49] flex items-center justify-center gap-2 transition-colors cursor-pointer"
         >
           <Eye className="w-4 h-4" />
@@ -412,6 +411,7 @@ export const PpkPembayaranTemplate: FC<PpkPembayaranTemplateProps> = ({
                       type="button"
                       onClick={() =>
                         onOpenPreviewDoc({
+                          category: file.label,
                           label: file.label,
                           filename: file.filename,
                           size: file.meta,

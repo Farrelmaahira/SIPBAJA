@@ -11,7 +11,7 @@ export const PPK_NAV_ITEMS: AppNavItem[] = [
     {
         key: 'permohonan',
         label: 'List Permohonan',
-        href: '/ppk/pengajuan',
+        href: '/ppk/permohonan',
         icon: FileText,
     },
     {
