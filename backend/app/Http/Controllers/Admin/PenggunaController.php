@@ -10,7 +10,6 @@ use App\Services\UnitService;
 use App\Services\UserService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 class PenggunaController extends Controller
@@ -21,8 +20,7 @@ class PenggunaController extends Controller
         private UserService $users,
         private RoleService $roles,
         private UnitService $units,
-    ) {
-    }
+    ) {}
 
     public function index(): JsonResponse
     {
@@ -67,7 +65,7 @@ class PenggunaController extends Controller
         $this->users->deactivate($userId);
 
         return response()->json([
-            'message' => 'success'
+            'message' => 'success',
         ]);
     }
 
@@ -75,8 +73,9 @@ class PenggunaController extends Controller
     {
         $this->authorize('update', $user);
         $this->users->activate($userId);
+
         return response()->json([
-            'message' => 'Pengguna berhasil diaktifkan.'
+            'message' => 'Pengguna berhasil diaktifkan.',
         ]);
     }
 

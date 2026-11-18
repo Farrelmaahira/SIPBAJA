@@ -29,6 +29,7 @@ class MakService
     {
         return DB::transaction(function () use ($data) {
             return Mak::create([
+                'kode' => $data['kode'],
                 'nama' => $data['nama'],
                 'ppk_user_id' => $data['ppk_user_id'],
             ]);

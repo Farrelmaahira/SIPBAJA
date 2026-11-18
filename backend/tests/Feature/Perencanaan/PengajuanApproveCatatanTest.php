@@ -20,7 +20,7 @@ class PengajuanApproveCatatanTest extends TestCase
         $role = Role::create(['nama' => 'Perencanaan']);
         $user = User::factory()->create(['role_id' => $role->id]);
         $unit = Unit::create(['nama' => 'Teknik Informatika']);
-        $mak = Mak::create(['nama' => 'MAK 01', 'ppk_user_id' => $user->id]);
+        $mak = Mak::create(['nama' => 'MAK 01', 'kode' => 'MAK-TEST-01', 'ppk_user_id' => $user->id]);
 
         $permohonan = Permohonan::create([
             'unit_id' => $unit->id,
@@ -53,7 +53,7 @@ class PengajuanApproveCatatanTest extends TestCase
         $role = Role::create(['nama' => 'Perencanaan']);
         $user = User::factory()->create(['role_id' => $role->id]);
         $unit = Unit::create(['nama' => 'Teknik Informatika']);
-        $mak = Mak::create(['nama' => 'MAK 01', 'ppk_user_id' => $user->id]);
+        $mak = Mak::create(['nama' => 'MAK 01', 'kode' => 'MAK-TEST-01', 'ppk_user_id' => $user->id]);
 
         $permohonan = Permohonan::create([
             'unit_id' => $unit->id,

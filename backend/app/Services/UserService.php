@@ -46,7 +46,7 @@ class UserService
                 'unit_id' => $data['unit_id'] ?? null,
             ]);
 
-            if (!empty($data['password'])) {
+            if (! empty($data['password'])) {
                 $user->password = $data['password'];
             }
 
@@ -76,7 +76,7 @@ class UserService
             ->latest('id')
             ->limit($limit)
             ->get()
-            ->map(fn(User $u) => [
+            ->map(fn (User $u) => [
                 'id' => $u->id,
                 'nama' => $u->nama,
                 'email' => $u->email,
@@ -94,7 +94,7 @@ class UserService
     public function getPpkOptions(): array
     {
         return User::query()
-            ->whereHas('role', fn($q) => $q->where('nama', 'PPK'))
+            ->whereHas('role', fn ($q) => $q->where('nama', 'PPK'))
             ->orWhereDoesntHave('role') // fallback if no PPK role assigned yet
             ->orderBy('nama')
             ->get(['id', 'nama', 'email'])
@@ -107,8 +107,9 @@ class UserService
 
         if ($user->isActive) {
             $user->update([
-                'isActive' => false
+                'isActive' => false,
             ]);
+
             return true;
         }
 
@@ -119,10 +120,11 @@ class UserService
     {
         $user = User::find($userId);
 
-        if (!$user->isActive) {
+        if (! $user->isActive) {
             $user->update([
-                'isActive' => !$user->isActive
+                'isActive' => ! $user->isActive,
             ]);
+
             return true;
         }
 

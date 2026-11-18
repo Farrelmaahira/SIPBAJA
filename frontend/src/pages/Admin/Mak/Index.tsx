@@ -1,11 +1,8 @@
 import { useEffect, useState, type FC, type ChangeEvent } from 'react';
 import axios from 'axios';
 import { adminService } from '../../../services/adminService';
-import AdminMakTemplate, {
-  type MakRowItem,
-  type PpkOptionUser,
-  type MakFormData,
-} from '../../../components/templates/Admin/AdminMakTemplate';
+import AdminMakTemplate, { type MakFormData } from '../../../components/templates/Admin/AdminMakTemplate';
+import type { MakRowItem, PpkOptionUser } from '../../../types/admin';
 import Pagination, { type PaginationMeta } from '../../../components/molecules/Pagination';
 
 const EMPTY_FORM: MakFormData = {
