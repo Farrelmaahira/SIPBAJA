@@ -202,6 +202,9 @@ Route::prefix('v1')->group(function () {
         Route::prefix('keuangan')->middleware('role:Keuangan')->group(function () {
             Route::get('dashboard', DashboardKeuanganController::class)->name('api.keuangan.dashboard');
             Route::get('pengadaan', [PengadaanKeuanganController::class, 'index'])->name('api.keuangan.pengadaan.index');
+            Route::get('pengadaan/{pengadaan}', [PengadaanKeuanganController::class, 'show'])->name('api.keuangan.pengadaan.show');
+            Route::post('pengadaan/{pengadaan}/bukti-bayar', [PengadaanKeuanganController::class, 'storeBuktiBayar'])->name('api.keuangan.pengadaan.storeBuktiBayar');
+            Route::get('pengadaan/{pengadaan}/dokumen/{dokumenId}', [PengadaanKeuanganController::class, 'downloadDokumen'])->name('api.keuangan.pengadaan.downloadDokumen');
             Route::get('profil', [PerencanaanProfilController::class, 'index'])->name('api.keuangan.profil.index');
         });
     });

@@ -1044,6 +1044,30 @@ Catatan: endpoint RKAKL untuk PPK (`/api/v1/ppk/rkakl`, `/api/v1/ppk/rkakl/dokum
       "to": 10
     }
     ```
+- **Detail Pengadaan:** `GET /api/v1/keuangan/pengadaan/{id}` (`role:Keuangan`)
+  - Success Response: `200 OK` (Memuat informasi 12 grid data, 5-tahap tracking stepper, riwayat timeline, 12 berkas dokumen pendukung, kartu MAK, dan data bukti pembayaran)
+- **Simpan Bukti Pembayaran:** `POST /api/v1/keuangan/pengadaan/{id}/bukti-bayar` (`role:Keuangan`)
+  - Content-Type: `multipart/form-data`
+  - Payload:
+    - `tanggal_pembayaran` (string, required, YYYY-MM-DD)
+    - `bukti_bayar[]` (file, required, format PDF/JPG/PNG max 10MB)
+  - Success Response: `201 Created`
+    ```json
+    {
+      "message": "Bukti pembayaran berhasil diunggah dan status pengadaan telah selesai.",
+      "pengadaan_id": 1,
+      "status": "selesai",
+      "uploaded_files": [
+        {
+          "id": 15,
+          "nama": "Bukti_Transfer_001.jpg",
+          "ukuran": "2.4 MB"
+        }
+      ]
+    }
+    ```
+- **Unduh/Pratinjau Dokumen:** `GET /api/v1/keuangan/pengadaan/{id}/dokumen/{dokumenId}?disposition={inline|attachment}&nama={namaFile}` (`role:Keuangan`)
+  - Success Response: `200 OK` (Stream file blob)
 - **Profil Keuangan:** `GET /api/v1/keuangan/profil` (`role:Keuangan`)
   - Success Response: `200 OK` (Profil akun Keuangan yang sedang login)
 

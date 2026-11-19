@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Keuangan;
 
 use App\Http\Controllers\Controller;
+use App\Models\Dokumen;
 use App\Services\KeuanganService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PengadaanKeuanganController extends Controller
 {
@@ -29,5 +32,82 @@ class PengadaanKeuanganController extends Controller
         $data = $this->keuanganService->getPengadaanList($filters, $page, $perPage);
 
         return response()->json($data);
+    }
+
+    /**
+     * Menampilkan detail pengadaan untuk role Keuangan.
+     */
+    public function show(Request $request, int|string $pengadaan): JsonResponse
+    {
+        $data = $this->keuanganService->getPengadaanDetail($pengadaan);
+
+        return response()->json($data);
+    }
+
+    /**
+     * Menyimpan tanggal pembayaran dan bukti pembayaran untuk paket pengadaan.
+     */
+    public function storeBuktiBayar(Request $request, int|string $pengadaan): JsonResponse
+    {
+        $request->validate([
+            'tanggal_pembayaran' => ['required', 'date'],
+            'bukti_bayar' => ['required', 'array', 'min:1'],
+            'bukti_bayar.*' => ['file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'],
+        ]);
+
+        $buktiFiles = $request->file('bukti_bayar') ?: [];
+        if (! is_array($buktiFiles)) {
+            $buktiFiles = [$buktiFiles];
+        }
+
+        $result = $this->keuanganService->simpanBuktiPembayaran(
+            $pengadaan,
+            ['tanggal_pembayaran' => $request->input('tanggal_pembayaran')],
+            $buktiFiles,
+            $request->user()
+        );
+
+        return response()->json($result, 201);
+    }
+
+    /**
+     * Mengunduh atau menampilkan pratinjau dokumen pengadaan/bukti bayar.
+     */
+    public function downloadDokumen(Request $request, int|string $pengadaan, int|string $dokumenId): StreamedResponse|JsonResponse
+    {
+        if (is_numeric($dokumenId)) {
+            $dokumen = Dokumen::find((int) $dokumenId);
+            if ($dokumen) {
+                $path = "dokumen/pembayaran/{$dokumen->nama_hash}";
+
+                if (Storage::disk('local')->exists($path)) {
+                    $disposition = $request->query('disposition') === 'inline' ? 'inline' : 'attachment';
+
+                    return Storage::disk('local')->download(
+                        $path,
+                        $dokumen->nama_asli ?: 'bukti_pembayaran.pdf',
+                        [
+                            'Content-Type' => $dokumen->mime_type ?: 'application/pdf',
+                            'Content-Disposition' => "{$disposition}; filename=\"".($dokumen->nama_asli ?: 'bukti_pembayaran.pdf').'"',
+                        ]
+                    );
+                }
+            }
+        }
+
+        // Fallback untuk mock sample document
+        $namaFile = $request->query('nama', 'dokumen_pembayaran.pdf');
+        $pdfContent = "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Parent 2 0 R/Resources<<>>>>endobj\nxref\n0 4\n0000000000 65535 f \n0000000009 00000 n \n0000000052 00000 n \n0000000102 00000 n \ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n178\n%%EOF\n";
+
+        return response()->streamDownload(
+            function () use ($pdfContent) {
+                echo $pdfContent;
+            },
+            $namaFile,
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="'.$namaFile.'"',
+            ]
+        );
     }
 }

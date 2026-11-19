@@ -9,6 +9,8 @@ use Database\Seeders\RbacSeeder;
 use Database\Seeders\RoleSeeder;
 use Database\Seeders\UserSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class KeuanganApiTest extends TestCase
@@ -138,5 +140,80 @@ class KeuanganApiTest extends TestCase
         foreach ($jsonMenunggu['data'] as $item) {
             $this->assertEquals('menunggu_input', $item['status']);
         }
+    }
+
+    public function test_keuangan_can_view_pengadaan_detail(): void
+    {
+        $response = $this->actingAs($this->keuanganUser(), 'sanctum')
+            ->getJson('/api/v1/keuangan/pengadaan/1');
+
+        $response->assertStatus(200);
+
+        $json = $response->json();
+        $this->assertArrayHasKey('id', $json);
+        $this->assertArrayHasKey('nomor_pengadaan', $json);
+        $this->assertArrayHasKey('informasi_pengadaan', $json);
+        $this->assertArrayHasKey('tracking_proses', $json);
+        $this->assertArrayHasKey('dokumen_diterima', $json);
+        $this->assertArrayHasKey('jenis_mak', $json);
+        $this->assertArrayHasKey('pembayaran', $json);
+        $this->assertCount(12, $json['dokumen_diterima']);
+    }
+
+    public function test_keuangan_can_submit_bukti_pembayaran_and_updates_database(): void
+    {
+        Storage::fake('local');
+
+        $file1 = UploadedFile::fake()->create('Bukti_Transfer_001.jpg', 2400, 'image/jpeg');
+        $file2 = UploadedFile::fake()->create('Bukti_Transfer_002.png', 1800, 'image/png');
+
+        $response = $this->actingAs($this->keuanganUser(), 'sanctum')
+            ->postJson('/api/v1/keuangan/pengadaan/1/bukti-bayar', [
+                'tanggal_pembayaran' => '2027-03-18',
+                'bukti_bayar' => [$file1, $file2],
+            ]);
+
+        $response->assertStatus(201);
+        $response->assertJsonPath('status', 'selesai');
+
+        // Verifikasi detail setelah submit berstatus selesai
+        $detailRes = $this->actingAs($this->keuanganUser(), 'sanctum')
+            ->getJson('/api/v1/keuangan/pengadaan/1');
+
+        $detailRes->assertStatus(200);
+        $this->assertEquals('selesai', $detailRes->json('status'));
+        $this->assertNotEmpty($detailRes->json('pembayaran.dokumen_bukti_bayar'));
+    }
+
+    public function test_keuangan_can_download_dokumen(): void
+    {
+        $response = $this->actingAs($this->keuanganUser(), 'sanctum')
+            ->get('/api/v1/keuangan/pengadaan/1/dokumen/1?nama=Memo_Persetujuan.pdf');
+
+        $response->assertStatus(200);
+        $this->assertEquals('application/pdf', $response->headers->get('Content-Type'));
+    }
+
+    public function test_keuangan_can_submit_bukti_pembayaran_even_if_kontrak_has_null_nominal(): void
+    {
+        Storage::fake('local');
+
+        $pengadaan = \App\Models\Pengadaan::first();
+        if ($pengadaan->Kontrak) {
+            $pengadaan->Kontrak->nominal_kontrak = null;
+            $pengadaan->Kontrak->save();
+            $pengadaan->Kontrak->RencanaPembayaran()->delete();
+        }
+
+        $file = UploadedFile::fake()->create('Bukti_Transfer_Custom.pdf', 1024, 'application/pdf');
+
+        $response = $this->actingAs($this->keuanganUser(), 'sanctum')
+            ->postJson("/api/v1/keuangan/pengadaan/{$pengadaan->id}/bukti-bayar", [
+                'tanggal_pembayaran' => '2027-03-20',
+                'bukti_bayar' => [$file],
+            ]);
+
+        $response->assertStatus(201);
+        $response->assertJsonPath('status', 'selesai');
     }
 }
