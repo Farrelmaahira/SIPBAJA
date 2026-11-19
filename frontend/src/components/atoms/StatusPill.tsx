@@ -79,6 +79,12 @@ const STATUS_CONFIG: Record<string, StatusTheme> = {
     dot: 'bg-[#D97706]',
     defaultLabel: 'Sedang Diproses',
   },
+  menunggu_input: {
+    bg: 'bg-[#FEF3C7]',
+    text: 'text-[#B45309]',
+    dot: 'bg-[#D97706]',
+    defaultLabel: 'Menunggu Input',
+  },
   proses_pengadaan: {
     bg: 'bg-[#FEF3C7]',
     text: 'text-[#B45309]',

@@ -61,6 +61,7 @@ import PpkProfilIndex from '../pages/Ppk/Profil/Index';
 
 // Perlengkapan & Keuangan Pages
 import PerlengkapanDashboard from '../pages/Perlengkapan/Dashboard';
+import PerlengkapanPengadaanIndex from '../pages/Perlengkapan/Pengadaan/Index';
 import KeuanganDashboard from '../pages/Keuangan/Dashboard';
 
 // Shared Pages
@@ -248,6 +249,7 @@ export const AppRoutes: FC = () => {
         {/* Perlengkapan Routes */}
         <Route element={<RoleRoute allowedRoles={['Perlengkapan']} />}>
           <Route path="/perlengkapan/dashboard" element={<PerlengkapanDashboard />} />
+          <Route path="/perlengkapan/pengadaan" element={<PerlengkapanPengadaanIndex />} />
         </Route>
 
         {/* Keuangan Routes */}

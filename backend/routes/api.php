@@ -20,6 +20,7 @@ use App\Http\Controllers\Perencanaan\PerencanaanMakController;
 use App\Http\Controllers\Perencanaan\PerencanaanProfilController;
 use App\Http\Controllers\Perencanaan\PerencanaanRkaklController;
 use App\Http\Controllers\Perlengkapan\DashboardPerlengkapanController;
+use App\Http\Controllers\Perlengkapan\PengadaanPerlengkapanController;
 use App\Http\Controllers\Pp\PpController;
 use App\Http\Controllers\PPBJ\DashboardPpbjController;
 use App\Http\Controllers\PPBJ\PermohonanController as PpbjPermohonanController;
@@ -156,6 +157,7 @@ Route::prefix('v1')->group(function () {
         // Perlengkapan Routes
         Route::prefix('perlengkapan')->middleware('role:Perlengkapan')->group(function () {
             Route::get('dashboard', DashboardPerlengkapanController::class)->name('api.perlengkapan.dashboard');
+            Route::get('pengadaan', [PengadaanPerlengkapanController::class, 'index'])->name('api.perlengkapan.pengadaan.index');
         });
 
         // Keuangan Routes
