@@ -2,7 +2,7 @@ import { useState, type FC, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../hooks/useAuth';
-import LoginTemplate from '../../components/templates/LoginTemplate';
+import LoginTemplate from '../../components/templates/General/LoginTemplate';
 import { getRoleDashboardPath } from '../../utils/role';
 
 export const Login: FC = () => {
@@ -28,6 +28,23 @@ export const Login: FC = () => {
       setDataState((prev) => ({ ...prev, [fieldOrObj]: value }));
     } else if (typeof fieldOrObj === 'object' && fieldOrObj !== null) {
       setDataState((prev) => ({ ...prev, ...fieldOrObj }));
+    }
+  };
+
+  const handleShortcutLogin = async (email: string) => {
+    setProcessing(true);
+    setErrors({});
+    try {
+      // In development, we use 'password123' as defined in Seeders
+      const res = await login(email, 'password123', true);
+      const targetPath = getRoleDashboardPath(
+        res.role || res.user.role?.nama || res.user.Role?.nama
+      );
+      navigate(targetPath, { replace: true });
+    } catch (err: unknown) {
+      setErrors({ login: 'Gagal masuk menggunakan shortcut.' });
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -76,6 +93,7 @@ export const Login: FC = () => {
         setData,
         processing,
         errors,
+        onShortcutLogin: handleShortcutLogin,
       }}
       onSubmit={handleSubmit}
     />

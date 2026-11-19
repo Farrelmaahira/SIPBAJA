@@ -70,15 +70,15 @@ export const PerlengkapanDashboard: FC = () => {
     () => ({
       user: user
         ? {
-            ...user,
-            initials: 'PL',
-            unitSubtitle: 'Unit Perlengkapan',
-          }
+          ...user,
+          initials: 'PL',
+          unitSubtitle: 'Unit Perlengkapan',
+        }
         : {
-            nama: 'Perlengkapan',
-            initials: 'PL',
-            unitSubtitle: 'Unit Perlengkapan',
-          },
+          nama: 'Perlengkapan',
+          initials: 'PL',
+          unitSubtitle: 'Unit Perlengkapan',
+        },
     }),
     [user]
   );

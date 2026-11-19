@@ -5,6 +5,11 @@ namespace Tests\Feature;
 use App\Models\Mak;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\MakService;
+use App\Services\RolePermissionService;
+use App\Services\RoleService;
+use App\Services\UnitService;
+use App\Services\UserService;
 use Database\Seeders\MasterReferenceSeeder;
 use Database\Seeders\RbacSeeder;
 use Database\Seeders\RoleSeeder;
@@ -121,9 +126,10 @@ class AdminCrudApiTest extends TestCase
 
     public function test_admin_can_create_mak(): void
     {
-        $ppk = User::where('email', 'ppk@pnj.ac.id')->firstOrFail();
+        $ppk = User::where('email', 'ppk.blufisik@pnj.ac.id')->firstOrFail();
 
         $response = $this->actingAs($this->admin(), 'sanctum')->postJson('/api/v1/admin/mak', [
+            'kode' => 'MAK-BARU-2026',
             'nama' => 'MAK Baru 2026',
             'ppk_user_id' => $ppk->id,
         ]);
@@ -136,8 +142,9 @@ class AdminCrudApiTest extends TestCase
 
     public function test_admin_can_delete_mak(): void
     {
-        $ppk = User::where('email', 'ppk@pnj.ac.id')->firstOrFail();
+        $ppk = User::where('email', 'ppk.blufisik@pnj.ac.id')->firstOrFail();
         $mak = Mak::create([
+            'kode' => 'MAK-DEL-TEST',
             'nama' => 'MAK Unused Test',
             'ppk_user_id' => $ppk->id,
         ]);
@@ -145,7 +152,7 @@ class AdminCrudApiTest extends TestCase
         $response = $this->actingAs($this->admin(), 'sanctum')->deleteJson("/api/v1/admin/mak/{$mak->id}");
 
         $response->assertStatus(204);
-        $this->assertDatabaseMissing('maks', ['id' => $mak->id]);
+        $this->assertSoftDeleted('maks', ['id' => $mak->id]);
     }
 
     public function test_admin_can_get_role_permissions(): void
@@ -191,5 +198,40 @@ class AdminCrudApiTest extends TestCase
 
         $deleteRes = $this->actingAs($this->admin(), 'sanctum')->deleteJson("/api/v1/admin/unit-kerja/{$unitId}");
         $deleteRes->assertStatus(204);
+    }
+
+    public function test_domain_services_provide_accurate_admin_metrics_and_options(): void
+    {
+        $userService = app(UserService::class);
+        $unitService = app(UnitService::class);
+        $makService = app(MakService::class);
+        $roleService = app(RoleService::class);
+        $rolePermissionService = app(RolePermissionService::class);
+
+        $this->assertGreaterThan(0, $userService->count());
+        $this->assertGreaterThan(0, $unitService->count());
+        $this->assertGreaterThanOrEqual(0, $makService->count());
+
+        $recentUsers = $userService->getRecentUsers(3);
+        $this->assertIsArray($recentUsers);
+        $this->assertNotEmpty($recentUsers);
+        $this->assertArrayHasKey('nama', $recentUsers[0]);
+        $this->assertArrayHasKey('role', $recentUsers[0]);
+
+        $ppkOptions = $userService->getPpkOptions();
+        $this->assertIsArray($ppkOptions);
+
+        $unitOptions = $unitService->getUnitOptions();
+        $this->assertIsArray($unitOptions);
+        $this->assertNotEmpty($unitOptions);
+
+        $roleOptions = $roleService->getRoleOptions();
+        $this->assertIsArray($roleOptions);
+        $this->assertNotEmpty($roleOptions);
+
+        $matrix = $rolePermissionService->getMatrixData();
+        $this->assertArrayHasKey('roles', $matrix);
+        $this->assertArrayHasKey('groupedPermissions', $matrix);
+        $this->assertArrayHasKey('assignments', $matrix);
     }
 }

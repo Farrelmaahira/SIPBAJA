@@ -4,42 +4,38 @@ namespace App\Http\Controllers\Ppk;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ReviewPengadaanRequest;
+use App\Http\Requests\SetujuiPembayaranPpkRequest;
 use App\Http\Requests\TolakPermohonanRequest;
 use App\Models\Pengadaan;
+use App\Services\ApprovalService;
 use App\Services\NotificationService;
-use App\Services\PpkService;
+use App\Services\PengadaanService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class PpkController extends Controller
 {
     public function __construct(
-        private PpkService $ppkService,
+        private PengadaanService $pengadaanService,
+        private ApprovalService $approvalService,
         private NotificationService $notificationService
     ) {}
-
-    public function dashboard(): JsonResponse
-    {
-        $data = $this->ppkService->getDashboardData();
-        $notifData = $this->notificationService->getRecentAndUnreadCount(auth()->id());
-
-        return response()->json([
-            'stats' => $data['stats'],
-            'pengajuanTerbaru' => $data['pengajuan_terbaru'],
-            'recentNotifications' => $notifData['recentNotifications'],
-            'unreadNotificationsCount' => $notifData['unreadNotificationsCount'],
-        ]);
-    }
 
     public function index(Request $request): JsonResponse
     {
         $filters = [
-            'q' => $request->query('q', ''),
+            'q' => $request->query('q', $request->query('search', '')),
+            'search' => $request->query('search', $request->query('q', '')),
             'statuses' => $request->query('statuses', []),
+            'status' => $request->query('status'),
+            'bulan' => $request->query('bulan'),
+            'tahun' => $request->query('tahun'),
+            'unit_id' => $request->query('unit_id'),
         ];
 
-        $pengajuan = $this->ppkService->paginatePengadaan($filters, 10);
-        $notifData = $this->notificationService->getRecentAndUnreadCount(auth()->id());
+        $perPage = (int) $request->query('per_page', 10);
+        $pengajuan = $this->pengadaanService->paginatePengadaanPpk(auth()->user(), $filters, $perPage);
+        $notifData = $this->notificationService->getRecentAndUnreadCount((int) auth()->id());
 
         return response()->json([
             'pengajuan' => $pengajuan,
@@ -51,8 +47,8 @@ class PpkController extends Controller
 
     public function review(Pengadaan $pengadaan): JsonResponse
     {
-        $detail = $this->ppkService->getDetailPengadaan($pengadaan);
-        $notifData = $this->notificationService->getRecentAndUnreadCount(auth()->id());
+        $detail = $this->pengadaanService->getDetailPengadaanLengkap($pengadaan, auth()->user());
+        $notifData = $this->notificationService->getRecentAndUnreadCount((int) auth()->id());
 
         return response()->json([
             'detail' => $detail,
@@ -63,26 +59,32 @@ class PpkController extends Controller
 
     public function approve(Pengadaan $pengadaan): JsonResponse
     {
-        $this->ppkService->approvePengadaan($pengadaan, auth()->user());
+        $updated = $this->approvalService->approvePengadaanPpk($pengadaan, auth()->user());
 
         return response()->json([
-            'message' => 'Dokumen pengadaan berhasil disetujui oleh PPK.',
+            'message' => 'Dokumen pengadaan berhasil disetujui oleh PPK dan diteruskan ke PPBJ.',
+            'data' => $updated,
         ]);
     }
 
     public function reject(ReviewPengadaanRequest $request, Pengadaan $pengadaan): JsonResponse
     {
-        $this->ppkService->rejectPengadaan($pengadaan, auth()->user(), $request->validated('alasan'));
+        $updated = $this->approvalService->rejectPengadaanPpk(
+            $pengadaan,
+            auth()->user(),
+            $request->alasanPenolakan()
+        );
 
         return response()->json([
             'message' => 'Dokumen pengadaan ditolak dan dikembalikan ke PPBJ.',
+            'data' => $updated,
         ]);
     }
 
     public function pembayaran(Pengadaan $pengadaan): JsonResponse
     {
-        $detail = $this->ppkService->getDetailPengadaan($pengadaan);
-        $notifData = $this->notificationService->getRecentAndUnreadCount(auth()->id());
+        $detail = $this->pengadaanService->getDetailPengadaanLengkap($pengadaan, auth()->user());
+        $notifData = $this->notificationService->getRecentAndUnreadCount((int) auth()->id());
 
         return response()->json([
             'detail' => $detail,
@@ -91,31 +93,39 @@ class PpkController extends Controller
         ]);
     }
 
-    public function approvePembayaran(Request $request, Pengadaan $pengadaan): JsonResponse
+    public function approvePembayaran(SetujuiPembayaranPpkRequest $request, Pengadaan $pengadaan): JsonResponse
     {
-        $filename = $request->input('filename', "Memo_Persetujuan_{$pengadaan->Permohonan?->nomor_surat}.pdf");
-        $catatan = $request->input('catatan');
-
-        $this->ppkService->approvePembayaran($pengadaan, auth()->user(), $filename, $catatan);
+        $updated = $this->approvalService->approvePembayaranPpk(
+            $pengadaan,
+            auth()->user(),
+            $request->file('memo'),
+            $request->validated('catatan')
+        );
 
         return response()->json([
             'message' => 'Dokumen pembayaran beserta Memo Persetujuan berhasil disetujui.',
+            'data' => $updated,
         ]);
     }
 
     public function rejectPembayaran(TolakPermohonanRequest $request, Pengadaan $pengadaan): JsonResponse
     {
-        $this->ppkService->rejectPembayaran($pengadaan, auth()->user(), $request->validated('alasan'));
+        $updated = $this->approvalService->rejectPembayaranPpk(
+            $pengadaan,
+            auth()->user(),
+            (string) $request->validated('alasan')
+        );
 
         return response()->json([
             'message' => 'Dokumen pembayaran telah ditolak beserta catatan revisi.',
+            'data' => $updated,
         ]);
     }
 
     public function show(Pengadaan $pengadaan): JsonResponse
     {
-        $detail = $this->ppkService->getDetailPengadaan($pengadaan);
-        $notifData = $this->notificationService->getRecentAndUnreadCount(auth()->id());
+        $detail = $this->pengadaanService->getDetailPengadaanLengkap($pengadaan, auth()->user());
+        $notifData = $this->notificationService->getRecentAndUnreadCount((int) auth()->id());
 
         return response()->json([
             'detail' => $detail,
@@ -126,8 +136,8 @@ class PpkController extends Controller
 
     public function profil(): JsonResponse
     {
-        $user = auth()->user()->load(['Role', 'Unit']);
-        $notifData = $this->notificationService->getRecentAndUnreadCount(auth()->id());
+        $user = $this->pengadaanService->getProfilPengguna(auth()->user());
+        $notifData = $this->notificationService->getRecentAndUnreadCount((int) auth()->id());
 
         return response()->json([
             'user' => $user,
