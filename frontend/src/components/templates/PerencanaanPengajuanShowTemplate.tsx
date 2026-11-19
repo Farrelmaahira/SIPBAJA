@@ -149,7 +149,7 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
       ? permohonan.permohonan_mak
         .map((pm) => pm.mak)
         .filter((m): m is PerencanaanMakItem => Boolean(m))
-      : maksList.filter((m) => selectedMakIds.includes(m.id));
+      : (detail?.maks ?? maksList).filter((m) => (detail?.selected_mak_ids ?? selectedMakIds).includes(m.id));
 
   const timelineSteps: TimelineStepItem[] = [
     {
@@ -192,7 +192,9 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
     },
   ];
 
-  const selectedMaksDisplay = maksList.filter((m) => selectedMakIds.includes(m.id));
+  const selectedMaksDisplay = (detail?.maks ?? maksList).filter((m) =>
+    (detail?.selected_mak_ids ?? selectedMakIds).includes(m.id)
+  );
 
   const unitNama =
     permohonan?.unit_kerja?.nama ||
@@ -574,7 +576,14 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
                 </div>
               )}
 
-              <RiwayatStatusTimeline steps={timelineSteps} />
+              <div className="mt-5 pt-4 border-t border-[#F0F4F2]">
+                 <p className="text-xs font-bold text-[#14201C]">Alasan Approval Perencanaan</p>
+                 <p className="mt-1.5 text-xs leading-relaxed text-[#5F6F6A]">
+                   {detail?.approval_perencanaan?.alasan || 'Tidak ada alasan approval.'}
+                 </p>
+               </div>
+
+               <RiwayatStatusTimeline steps={timelineSteps} />
             </div>
           </div>
         </>
