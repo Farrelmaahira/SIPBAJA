@@ -178,7 +178,6 @@ class PengadaanPpSeeder extends Seeder
                         'metode_id' => $metodeLangsung->id,
                         'level_id' => $levelPp->id,
                         'ppk_id' => $ppkUser->id,
-                        'nominal' => $item['nominal'],
                         'revisi_ke' => 0,
                         'status' => $item['status'],
                         'created_at' => $item['created_at'],

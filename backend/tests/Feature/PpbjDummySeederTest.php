@@ -104,7 +104,7 @@ class PpbjDummySeederTest extends TestCase
         $this->assertCount(3, $termins);
 
         $totalRencana = $termins->sum('nominal_rencana');
-        $this->assertEquals((float) $pengadaan->nominal, (float) $totalRencana);
+        $this->assertEquals((float) $permohonan->estimasi_anggaran, (float) $totalRencana);
 
         foreach ($termins as $termin) {
             $this->assertGreaterThan(0, $termin->Reminders()->count());

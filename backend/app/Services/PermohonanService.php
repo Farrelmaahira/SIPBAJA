@@ -18,6 +18,8 @@ use Illuminate\Support\Str;
 
 class PermohonanService
 {
+    public function __construct(private ApprovalService $approvalService) {}
+
     /**
      * Menyimpan permohonan baru, dokumen PDF pendukung, dan riwayat status pertama.
      * Menggunakan transaksi database agar seluruh pencatatan atomik.
@@ -386,6 +388,38 @@ class PermohonanService
     }
 
     /**
+     * Menghapus permohonan pengadaan milik unit pemohon jika status masih diajukan/draft/ditolak.
+     */
+    public function hapusPermohonan(User $user, Permohonan $permohonan): void
+    {
+        if ($user->unit_id && $permohonan->unit_id !== $user->unit_id) {
+            abort(403, 'Anda tidak berhak menghapus permohonan milik unit lain.');
+        }
+
+        $allowedStatuses = ['diajukan', 'menunggu_verifikasi', 'menunggu_persetujuan', 'ditolak', 'draft'];
+        if (! in_array($permohonan->status, $allowedStatuses, true)) {
+            abort(422, 'Permohonan yang sedang dalam proses pengadaan atau sudah selesai tidak dapat dihapus.');
+        }
+
+        DB::transaction(function () use ($permohonan) {
+            $dokumens = Dokumen::where('ref_type', 'permohonan')
+                ->where('ref_id', $permohonan->id)
+                ->get();
+
+            foreach ($dokumens as $dokumen) {
+                if ($dokumen->file_path && Storage::disk('local')->exists($dokumen->file_path)) {
+                    Storage::disk('local')->delete($dokumen->file_path);
+                }
+                $dokumen->delete();
+            }
+
+            StatusHistory::where('permohonan_id', $permohonan->id)->delete();
+            $permohonan->PermohonanMak()->delete();
+            $permohonan->delete();
+        });
+    }
+
+    /**
      * Mengambil daftar permohonan pengadaan untuk peran PPBJ.
      *
      * @return array<int, array{
@@ -443,9 +477,24 @@ class PermohonanService
         $permohonan = Permohonan::with([
             'Unit',
             'Creator',
+            'Dokumen',
+            'Approvals',
             'PermohonanMak.Mak',
             'Pengadaan.PermohonanMak.Mak',
         ])->findOrFail($id);
+
+        $dokumenList = $permohonan->Dokumen
+            ->map(fn ($doc) => [
+                'id' => (int) $doc->id,
+                'nama_asli' => (string) $doc->nama_asli,
+                'tipe_dokumen' => (string) ($doc->tipe_dokumen ?? 'surat_permohonan'),
+                'ukuran_bytes' => (int) ($doc->ukuran_bytes ?? 0),
+                'mime_type' => (string) ($doc->mime_type ?? 'application/pdf'),
+                'versi' => (int) ($doc->versi ?? 1),
+                'download_url' => "/api/v1/ppbj/permohonan/{$permohonan->id}/dokumen?dokumen_id={$doc->id}",
+            ])
+            ->values()
+            ->all();
 
         $makList = $permohonan->PermohonanMak
             ->filter(fn ($pm) => $pm->Mak !== null)
@@ -460,7 +509,7 @@ class PermohonanService
             ->map(fn ($p) => [
                 'id' => (int) $p->id,
                 'makKode' => (string) ($p->PermohonanMak?->Mak?->nama ?? $p->PermohonanMak?->Mak?->kode ?? '-'),
-                'nominal' => (float) ($p->nominal ?? 0),
+                'nominal' => $p->Kontrak?->nominal_kontrak ? (float) $p->Kontrak->nominal_kontrak : null,
                 'status' => (string) ($p->status ?? '-'),
             ])
             ->values()
@@ -469,6 +518,18 @@ class PermohonanService
         $tanggalPengajuan = $permohonan->created_at
             ? Carbon::parse($permohonan->created_at)->format('Y-m-d')
             : '';
+
+        $approvalPerencanaan = $permohonan->Approvals
+            ->first(function ($app) use ($permohonan) {
+                return strtoupper($app->tahap) === 'PERENCANAAN'
+                    && (int) $app->revisi_ke === (int) ($permohonan->revisi_ke ?? 0)
+                    && $app->keputusan === 'disetujui';
+            });
+
+        $catatan = $approvalPerencanaan?->alasan;
+        $catatanPerencanaan = (! empty($catatan) && trim($catatan) !== '')
+            ? trim($catatan)
+            : 'Tidak ada catatan dari pihak perencanaan';
 
         return [
             'id' => (int) $permohonan->id,
@@ -483,6 +544,8 @@ class PermohonanService
             'pembuatNama' => (string) ($permohonan->Creator?->nama ?? $permohonan->Creator?->name ?? '-'),
             'makList' => $makList,
             'paketList' => $paketList,
+            'dokumenList' => $dokumenList,
+            'catatanPerencanaan' => $catatanPerencanaan,
         ];
     }
 
@@ -594,6 +657,10 @@ class PermohonanService
 
         $maks = Mak::with('Ppk')->orderBy('id')->get();
         $selectedMakIds = $permohonan->PermohonanMak->pluck('mak_id')->toArray();
+        $approvalPerencanaan = $permohonan->Approvals()
+            ->where('tahap', 'PERENCANAAN')
+            ->latest('id')
+            ->first();
 
         $dokumenPermohonan = Dokumen::where('ref_type', 'permohonan')->where('ref_id', $permohonan->id)
             ->orderBy('id')
@@ -636,6 +703,9 @@ class PermohonanService
             'permohonan' => $permohonan,
             'maks' => $maks,
             'selected_mak_ids' => $selectedMakIds,
+            'approval_perencanaan' => $approvalPerencanaan ? [
+                'alasan' => $approvalPerencanaan->alasan,
+            ] : null,
             'dokumen_permohonan' => $dokumenPermohonan,
             'dokumen' => $dokumenInfo,
             'rkakl_active' => $rkaklInfo,
@@ -682,7 +752,7 @@ class PermohonanService
      */
     public function paginatePermohonanUntukPpk(User $ppk, array $filters = [], int $perPage = 10): LengthAwarePaginator
     {
-        $query = Permohonan::with(['Unit', 'Creator', 'PermohonanMak.Mak.Ppk', 'Approvals.Actor'])
+        $query = Permohonan::with(['Unit', 'Creator', 'PermohonanMak.Mak', 'Approvals.Actor'])
             ->whereHas('PermohonanMak.Mak', fn ($q) => $q->where('ppk_user_id', $ppk->id));
 
         $keyword = trim((string) ($filters['search'] ?? $filters['q'] ?? ''));
@@ -693,7 +763,10 @@ class PermohonanService
             });
         }
 
-        if (! empty($filters['status']) && $filters['status'] !== 'semua') {
+        $statuses = array_values(array_filter((array) ($filters['statuses'] ?? [])));
+        if ($statuses !== []) {
+            $query->whereIn('status', $statuses);
+        } elseif (! empty($filters['status']) && $filters['status'] !== 'semua') {
             $query->where('status', $filters['status']);
         }
 
@@ -704,6 +777,8 @@ class PermohonanService
         if (! empty($filters['tahun']) && is_numeric($filters['tahun'])) {
             $query->whereYear('created_at', (int) $filters['tahun']);
         }
+
+        $perPage = max(1, min($perPage, 100));
 
         return $query
             ->orderByDesc('id')
@@ -717,26 +792,23 @@ class PermohonanService
      */
     public function getDetailPermohonanUntukPpk(Permohonan $permohonan, User $ppk): array
     {
-        $berhak = PermohonanMak::where('permohonan_id', $permohonan->id)
-            ->whereHas('Mak', fn ($q) => $q->where('ppk_user_id', $ppk->id))
-            ->exists();
-
-        if (! $berhak) {
-            abort(403, 'Anda tidak memiliki akses pada permohonan yang tidak terikat dengan Jenis MAK Anda.');
-        }
+        $this->approvalService->pastikanPpkBerhakAtasPermohonan($permohonan, $ppk);
 
         $permohonan->load([
             'Unit',
             'Creator',
-            'PermohonanMak.Mak.Ppk',
+            'PermohonanMak.Mak',
             'Approvals.Actor',
             'Approvals.Memo',
+            'Dokumen',
         ]);
 
-        $dokumenPermohonan = Dokumen::where('ref_type', 'permohonan')
-            ->where('ref_id', $permohonan->id)
-            ->orderByDesc('versi')
-            ->get();
+        $dokumenPermohonan = $permohonan->Dokumen
+            ->sortByDesc('versi')
+            ->values()
+            ->each(function (Dokumen $doc) use ($permohonan) {
+                $doc->setAttribute('download_url', "/api/v1/ppk/permohonan/{$permohonan->id}/dokumen?dokumen_id={$doc->id}");
+            });
 
         return [
             'permohonan' => $permohonan,

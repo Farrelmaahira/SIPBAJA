@@ -52,8 +52,8 @@ export const PpPengajuanTable: FC<PpPengajuanTableProps> = ({
               const isWaiting =
                 item.status === 'menunggu_persetujuan' || item.status === 'menunggu_review';
               const targetHref = isWaiting
-                ? `/pp/pengajuan/${item.id}/review`
-                : `/pp/pengajuan/${item.id}`;
+                ? `/pp/pengadaan/${item.id}/review`
+                : `/pp/pengadaan/${item.id}`;
 
               return (
                 <tr key={item.id} className="hover:bg-[#F9FBFA] transition-colors">

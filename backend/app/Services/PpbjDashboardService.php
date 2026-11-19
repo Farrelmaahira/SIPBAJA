@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\Pembayaran;
 use App\Models\Pengadaan;
 use App\Models\Permohonan;
 use App\Models\RencanaPembayaran;
@@ -33,34 +32,37 @@ class PpbjDashboardService
      */
     public function hitungStats(): array
     {
-        $permohonanMasukCount = Permohonan::whereIn('status', ['disetujui', 'diproses_ppbj'])
+        $totalPermohonan = Permohonan::count();
+        $menungguReview = Permohonan::whereIn('status', ['disetujui', 'diproses_ppbj'])
             ->whereDoesntHave('Pengadaan')
             ->count();
-
-        $pengadaanBerjalanCount = Pengadaan::whereNotIn('status', ['selesai', 'batal'])
-            ->count();
-
-        $terminSiapBayarCount = Pembayaran::whereIn('status', ['menunggu_ppk', 'menunggu_bidang2'])
-            ->count();
+        $disetujuiCount = Permohonan::where('status', 'disetujui')->count();
+        $ditolakCount = Permohonan::where('status', 'ditolak')->count();
 
         return [
             [
-                'label' => 'Permohonan Masuk',
-                'value' => $permohonanMasukCount,
+                'label' => 'Total Permohonan',
+                'value' => $totalPermohonan,
                 'unit' => 'Permohonan',
                 'variant' => 'info',
             ],
             [
-                'label' => 'Pengadaan Berjalan',
-                'value' => $pengadaanBerjalanCount,
-                'unit' => 'Paket',
+                'label' => 'Menunggu Review',
+                'value' => $menungguReview,
+                'unit' => 'Dalam antrean',
                 'variant' => 'warning',
             ],
             [
-                'label' => 'Termin Siap Bayar',
-                'value' => $terminSiapBayarCount,
-                'unit' => 'Termin',
+                'label' => 'Disetujui',
+                'value' => $disetujuiCount,
+                'unit' => 'Disetujui',
                 'variant' => 'success',
+            ],
+            [
+                'label' => 'Ditolak',
+                'value' => $ditolakCount,
+                'unit' => 'Perlu revisi',
+                'variant' => 'danger',
             ],
         ];
     }
@@ -116,7 +118,7 @@ class PpbjDashboardService
                 'metodeNama' => $p->Metode?->nama ?? '-',
                 'levelNama' => $p->Level?->nama ?? '-',
                 'ppkNama' => $p->Ppk?->nama ?? '-',
-                'nominal' => (float) $p->nominal,
+                'nominal' => $p->Kontrak?->nominal_kontrak ? (float) $p->Kontrak->nominal_kontrak : null,
                 'revisiKe' => $p->revisi_ke,
                 'status' => $p->status,
                 'tanggalDibuat' => $p->created_at ? (string) $p->created_at : '-',

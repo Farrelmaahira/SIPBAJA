@@ -12,11 +12,21 @@ class Kontrak extends Model
 
     public $timestamps = false;
 
-    protected $fillable = ['pengadaan_id', 'tipe', 'nomor', 'tanggal'];
+    protected $fillable = [
+        'pengadaan_id',
+        'tipe',
+        'nomor',
+        'tanggal',
+        'vendor_nama',
+        'nominal_kontrak',
+    ];
 
     protected function casts(): array
     {
-        return ['tanggal' => 'date'];
+        return [
+            'tanggal' => 'date',
+            'nominal_kontrak' => 'decimal:2',
+        ];
     }
 
     public function Pengadaan(): BelongsTo
@@ -27,5 +37,15 @@ class Kontrak extends Model
     public function Rencana(): HasMany
     {
         return $this->hasMany(RencanaPembayaran::class, 'kontrak_id');
+    }
+
+    public function RencanaPembayaran(): HasMany
+    {
+        return $this->hasMany(RencanaPembayaran::class, 'kontrak_id');
+    }
+
+    public function Dokumen(): HasMany
+    {
+        return $this->hasMany(Dokumen::class, 'ref_id')->where('ref_type', 'kontrak');
     }
 }

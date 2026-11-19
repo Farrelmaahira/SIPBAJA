@@ -22,6 +22,11 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      '/v1': {
+        target: 'http://localhost:8000/api',
+        changeOrigin: true,
+        secure: false,
+      },
       '/sanctum': {
         target: 'http://localhost:8000',
         changeOrigin: true,

@@ -25,6 +25,8 @@ class PpbjDummySeeder extends Seeder
 {
     public function run(): void
     {
+        $this->call(MasterReferenceSeeder::class);
+
         DB::transaction(function () {
             $unit = Unit::firstOrCreate(['nama' => 'Teknik Informatika']);
 
@@ -155,12 +157,11 @@ class PpbjDummySeeder extends Seeder
 
             // 2.a Paket Rendah (<50jt)
             Pengadaan::updateOrCreate(
-                ['permohonan_id' => $prm2->id, 'nominal' => 35000000],
+                ['permohonan_id' => $prm2->id, 'level_id' => $levelLow->id],
                 [
                     'permohonan_mak_id' => $prm2MakBlu->id,
                     'jenis_id' => $jenisBarang->id,
                     'metode_id' => $metodeNonTender->id,
-                    'level_id' => $levelLow->id,
                     'ppk_id' => $makBluFisik->ppk_user_id,
                     'revisi_ke' => 0,
                     'status' => 'siap_spk',
@@ -169,12 +170,11 @@ class PpbjDummySeeder extends Seeder
 
             // 2.b Paket Menengah (50-200jt) dengan status review_pp
             Pengadaan::updateOrCreate(
-                ['permohonan_id' => $prm2->id, 'nominal' => 120000000],
+                ['permohonan_id' => $prm2->id, 'level_id' => $levelMid->id],
                 [
                     'permohonan_mak_id' => $prm2MakBlu->id,
                     'jenis_id' => $jenisBarang->id,
                     'metode_id' => $metodeSpse->id,
-                    'level_id' => $levelMid->id,
                     'ppk_id' => $makBluFisik->ppk_user_id,
                     'revisi_ke' => 0,
                     'status' => 'review_pp',
@@ -183,12 +183,11 @@ class PpbjDummySeeder extends Seeder
 
             // 2.c Paket Tinggi (>200jt) dengan riwayat revisi_ke = 1
             $pgdHigh = Pengadaan::updateOrCreate(
-                ['permohonan_id' => $prm2->id, 'nominal' => 250000000],
+                ['permohonan_id' => $prm2->id, 'level_id' => $levelHigh->id],
                 [
                     'permohonan_mak_id' => $prm2MakRm->id,
                     'jenis_id' => $jenisKonstruksi->id,
                     'metode_id' => $metodeTender->id,
-                    'level_id' => $levelHigh->id,
                     'ppk_id' => $makRmFisik->ppk_user_id,
                     'revisi_ke' => 1,
                     'status' => 'review_ppk',
@@ -249,7 +248,7 @@ class PpbjDummySeeder extends Seeder
             );
 
             $pgd3 = Pengadaan::updateOrCreate(
-                ['permohonan_id' => $prm3->id, 'nominal' => 150000000],
+                ['permohonan_id' => $prm3->id],
                 [
                     'permohonan_mak_id' => $prm3Mak->id,
                     'jenis_id' => $jenisBarang->id,
@@ -339,7 +338,7 @@ class PpbjDummySeeder extends Seeder
             );
 
             $pgd4 = Pengadaan::updateOrCreate(
-                ['permohonan_id' => $prm4->id, 'nominal' => 90000000],
+                ['permohonan_id' => $prm4->id],
                 [
                     'permohonan_mak_id' => $prm4Mak->id,
                     'jenis_id' => $jenisJasa->id,
@@ -429,7 +428,7 @@ class PpbjDummySeeder extends Seeder
             );
 
             $pgd5 = Pengadaan::updateOrCreate(
-                ['permohonan_id' => $prm5->id, 'nominal' => 60000000],
+                ['permohonan_id' => $prm5->id],
                 [
                     'permohonan_mak_id' => $prm5Mak->id,
                     'jenis_id' => $jenisBarang->id,

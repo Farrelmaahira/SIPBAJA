@@ -8,7 +8,12 @@ class ReviewPengadaanRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->hasRole('PP') ?? false;
+        return $this->user() !== null && ($this->user()->hasRole('PP') || $this->user()->hasRole('PPK'));
+    }
+
+    public function alasanPenolakan(): string
+    {
+        return (string) ($this->validated('alasan') ?? $this->validated('catatan') ?? $this->input('alasan') ?? $this->input('catatan') ?? '');
     }
 
     protected function prepareForValidation(): void

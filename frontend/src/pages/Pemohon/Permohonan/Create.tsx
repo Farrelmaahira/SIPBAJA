@@ -1,9 +1,9 @@
 import { useState, type FC, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import api from '../../../services/api';
 import { useAuth } from '../../../hooks/useAuth';
-import PermohonanCreateTemplate from '../../../components/templates/PermohonanCreateTemplate';
+import pemohonService from '../../../services/pemohonService';
+import PemohonPermohonanCreateTemplate from '../../../components/templates/Pemohon/PemohonPermohonanCreateTemplate';
 import type {
   PermohonanFormData,
   PermohonanFormErrors,
@@ -42,7 +42,7 @@ export const PermohonanCreate: FC = () => {
     }
 
     try {
-      await api.post('/v1/pemohon/permohonan', formData);
+      await pemohonService.storePermohonan(formData);
       navigate('/pemohon/permohonan');
     } catch (err: unknown) {
       if (axios.isAxiosError(err) && err.response?.data?.errors) {
@@ -60,11 +60,11 @@ export const PermohonanCreate: FC = () => {
   };
 
   const handleKembali = () => {
-    navigate('/pemohon/dashboard');
+    navigate('/pemohon/permohonan');
   };
 
   return (
-    <PermohonanCreateTemplate
+    <PemohonPermohonanCreateTemplate
       user={user}
       data={data}
       setData={setData}

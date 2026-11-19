@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\JenisPengadaan;
+use App\Models\LevelPengadaan;
 use App\Models\Mak;
 use App\Models\MetodePengadaan;
 use App\Models\Pengadaan;
@@ -175,6 +176,7 @@ class PermohonanApiTest extends TestCase
         $pmak = PermohonanMak::where('permohonan_id', $permohonan->id)->firstOrFail();
         $jenis = JenisPengadaan::firstOrFail();
         $metode = MetodePengadaan::firstOrFail();
+        $level = LevelPengadaan::firstOrFail();
 
         $draftRes = $this->actingAs($ppbj, 'sanctum')->postJson("/api/v1/ppbj/permohonan/{$permohonan->id}/pengadaan/draft", [
             'items' => [
@@ -182,7 +184,7 @@ class PermohonanApiTest extends TestCase
                     'permohonan_mak_id' => $pmak->id,
                     'jenis_id' => $jenis->id,
                     'metode_id' => $metode->id,
-                    'nominal' => 5000000,
+                    'level_id' => $level->id,
                 ],
             ],
         ]);
@@ -210,7 +212,7 @@ class PermohonanApiTest extends TestCase
 
     public function test_ppk_can_list_pengajuan_and_notifikasi(): void
     {
-        $ppk = $this->user('ppk@pnj.ac.id');
+        $ppk = $this->user('ppk.blufisik@pnj.ac.id');
 
         $res1 = $this->actingAs($ppk, 'sanctum')->getJson('/api/v1/ppk/pengajuan');
         $res1->assertStatus(200)->assertJsonStructure(['pengajuan', 'filters']);
