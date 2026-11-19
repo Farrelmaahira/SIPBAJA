@@ -1,10 +1,8 @@
 import { useEffect, useState, type FC, type ChangeEvent } from 'react';
 import axios from 'axios';
 import { adminService } from '../../../services/adminService';
-import RoleTemplate, {
-  type RoleRowItem,
-  type RoleFormData,
-} from '../../../components/templates/RoleTemplate';
+import RoleTemplate, { type RoleFormData } from '../../../components/templates/Admin/RoleTemplate';
+import type { RoleRowItem } from '../../../types/admin';
 import Pagination, { type PaginationMeta } from '../../../components/molecules/Pagination';
 
 const EMPTY_FORM: RoleFormData = {

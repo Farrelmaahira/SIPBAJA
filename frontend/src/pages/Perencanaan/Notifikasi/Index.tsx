@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import SharedNotifikasiPage, { type SharedNotifikasiPageProps } from '../../Shared/SharedNotifikasiPage';
-import { PERENCANAAN_NAV_ITEMS } from '../Dashboard';
+import { PERENCANAAN_NAV_ITEMS } from '@/constants/perencanaanNav';
 
 export type PerencanaanNotifikasiProps = SharedNotifikasiPageProps;
 

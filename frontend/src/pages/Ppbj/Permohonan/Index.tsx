@@ -1,21 +1,28 @@
-import { useEffect, useState, useMemo, type FC } from 'react';
+import { useEffect, useState, useMemo, type FC, type FormEvent } from 'react';
 import ppbjService from '../../../services/ppbjService';
 import { useAuth } from '../../../hooks/useAuth';
-import PermohonanIndexTemplate from '../../../components/templates/PermohonanIndexTemplate';
+import PpbjPermohonanIndexTemplate from '../../../components/templates/PPBJ/PpbjPermohonanIndexTemplate';
 import type { PpbjPermohonanItem } from '../../../types/ppbj';
 import type { AppTopbarUser } from '../../../components/organisms/AppTopbar';
 
 export const PpbjPermohonanIndex: FC = () => {
   const { user } = useAuth();
+  const [filterModalOpen, setFilterModalOpen] = useState<boolean>(false);
   const [items, setItems] = useState<PpbjPermohonanItem[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [selectedBulan, setSelectedBulan] = useState<string>('');
+  const [selectedTahun, setSelectedTahun] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [lastPage] = useState<number>(1);
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
   useEffect(() => {
     let isMounted = true;
     const controller = new AbortController();
-
     setIsLoading(true);
+    setErrorMessage('');
 
     ppbjService
       .getPermohonanList(controller.signal)
@@ -26,6 +33,7 @@ export const PpbjPermohonanIndex: FC = () => {
       .catch((err) => {
         if (!controller.signal.aborted) {
           console.error('Failed to fetch PPBJ permohonan:', err);
+          setErrorMessage('Gagal memuat daftar permohonan pengadaan.');
         }
       })
       .finally(() => {
@@ -37,6 +45,25 @@ export const PpbjPermohonanIndex: FC = () => {
       controller.abort();
     };
   }, []);
+
+  const handleApplyFilter = (statuses: string[]) => {
+    setCurrentPage(1);
+    setSelectedStatuses(statuses);
+  };
+
+  const handleBulanChange = (bulan: string) => {
+    setCurrentPage(1);
+    setSelectedBulan(bulan);
+  };
+
+  const handleTahunChange = (tahun: string) => {
+    setCurrentPage(1);
+    setSelectedTahun(tahun);
+  };
+
+  const handleSearchSubmit = (e: FormEvent) => {
+    e.preventDefault();
+  };
 
   const filteredItems = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -50,12 +77,27 @@ export const PpbjPermohonanIndex: FC = () => {
   }, [items, searchQuery]);
 
   return (
-    <PermohonanIndexTemplate
+    <PpbjPermohonanIndexTemplate
       user={user as AppTopbarUser | null}
       items={filteredItems}
+      totalCount={filteredItems.length}
       searchQuery={searchQuery}
-      onSearchChange={setSearchQuery}
+      selectedStatuses={selectedStatuses}
+      selectedBulan={selectedBulan}
+      selectedTahun={selectedTahun}
+      currentPage={currentPage}
+      lastPage={lastPage}
       isLoading={isLoading}
+      errorMessage={errorMessage}
+      filterModalOpen={filterModalOpen}
+      onSearchChange={setSearchQuery}
+      onSearchSubmit={handleSearchSubmit}
+      onBulanChange={handleBulanChange}
+      onTahunChange={handleTahunChange}
+      onPageChange={setCurrentPage}
+      onOpenFilterModal={() => setFilterModalOpen(true)}
+      onCloseFilterModal={() => setFilterModalOpen(false)}
+      onApplyFilter={handleApplyFilter}
     />
   );
 };

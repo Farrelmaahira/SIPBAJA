@@ -22,6 +22,10 @@ class SimpanMakRequest extends FormRequest
         $mak = $this->route('mak');
 
         return [
+            'kode' => [
+                'required', 'string', 'max:50',
+                $mak ? Rule::unique('maks', 'kode')->ignore($mak->id) : 'unique:maks,kode',
+            ],
             'nama' => [
                 'required', 'string', 'max:255',
                 $mak ? Rule::unique('maks', 'nama')->ignore($mak->id) : 'unique:maks,nama',

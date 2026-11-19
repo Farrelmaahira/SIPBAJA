@@ -126,9 +126,10 @@ class AdminCrudApiTest extends TestCase
 
     public function test_admin_can_create_mak(): void
     {
-        $ppk = User::where('email', 'ppk@pnj.ac.id')->firstOrFail();
+        $ppk = User::where('email', 'ppk.blufisik@pnj.ac.id')->firstOrFail();
 
         $response = $this->actingAs($this->admin(), 'sanctum')->postJson('/api/v1/admin/mak', [
+            'kode' => 'MAK-BARU-2026',
             'nama' => 'MAK Baru 2026',
             'ppk_user_id' => $ppk->id,
         ]);
@@ -141,8 +142,9 @@ class AdminCrudApiTest extends TestCase
 
     public function test_admin_can_delete_mak(): void
     {
-        $ppk = User::where('email', 'ppk@pnj.ac.id')->firstOrFail();
+        $ppk = User::where('email', 'ppk.blufisik@pnj.ac.id')->firstOrFail();
         $mak = Mak::create([
+            'kode' => 'MAK-DEL-TEST',
             'nama' => 'MAK Unused Test',
             'ppk_user_id' => $ppk->id,
         ]);

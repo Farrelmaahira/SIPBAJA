@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../../hooks/useAuth';
 import pemohonService from '../../../services/pemohonService';
-import PemohonPermohonanEditTemplate from '../../../components/templates/PemohonPermohonanEditTemplate';
+import PemohonPermohonanEditTemplate from '../../../components/templates/Pemohon/PemohonPermohonanEditTemplate';
 import type {
   PermohonanDetailInfo,
   PermohonanRevisiFormData,

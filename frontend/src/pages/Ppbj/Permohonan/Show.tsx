@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import ppbjService from '../../../services/ppbjService';
 import { useAuth } from '../../../hooks/useAuth';
-import PermohonanShowTemplate from '../../../components/templates/PermohonanShowTemplate';
+import PpbjPermohonanShowTemplate from '../../../components/templates/PPBJ/PpbjPermohonanShowTemplate';
 import type { PpbjPermohonanDetail } from '../../../types/ppbj';
 import type { DokumenItem } from '../../../types/dokumen';
 import type { AppTopbarUser } from '../../../components/organisms/AppTopbar';
@@ -204,7 +204,7 @@ export const PpbjPermohonanShow: FC = () => {
   };
 
   return (
-    <PermohonanShowTemplate
+    <PpbjPermohonanShowTemplate
       user={user as AppTopbarUser | null}
       permohonan={permohonan}
       dokumenList={dokumenList}

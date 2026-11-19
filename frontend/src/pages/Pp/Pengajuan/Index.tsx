@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import usePpPengajuan from '../../../hooks/usePpPengajuan';
-import PpPengajuanIndexTemplate from '../../../components/templates/PpPengajuanIndexTemplate';
+import PpPengajuanIndexTemplate from '../../../components/templates/PP/PpPengajuanIndexTemplate';
 
 export const PpPengajuanIndex: FC = () => {
   const {

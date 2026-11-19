@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import ErrorTemplate from '../../components/templates/ErrorTemplate';
+import ErrorTemplate from '../../components/templates/General/ErrorTemplate';
 
 export interface Error403Props {
   status?: number;

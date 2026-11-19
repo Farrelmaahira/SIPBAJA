@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Notification;
 use App\Models\User;
+use Database\Seeders\MasterReferenceSeeder;
 use Database\Seeders\RoleSeeder;
 use Database\Seeders\UserSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -16,7 +17,7 @@ class NotificationApiTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed([RoleSeeder::class, UserSeeder::class]);
+        $this->seed([RoleSeeder::class, UserSeeder::class, MasterReferenceSeeder::class]);
     }
 
     public function test_centralized_notifications_endpoints(): void
@@ -162,7 +163,7 @@ class NotificationApiTest extends TestCase
 
     public function test_ppk_can_read_and_manage_notifications(): void
     {
-        $user = User::where('email', 'ppk@pnj.ac.id')->firstOrFail();
+        $user = User::where('email', 'ppk.blufisik@pnj.ac.id')->firstOrFail();
 
         $notif = Notification::create([
             'user_id' => $user->id,

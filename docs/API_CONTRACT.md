@@ -890,17 +890,22 @@ Prefix Rute: `/api/v1/pp`
 
 Prefix Rute: `/api/v1/ppk`
 
-#### 1. Dashboard, List & Review Pengadaan
+#### 1. Dashboard & List Pengadaan
 - **Dashboard:** `GET /api/v1/ppk/dashboard`
-- **List Pengajuan:** `GET /api/v1/ppk/pengajuan?q={keyword}&statuses[]={status}&bulan={bulan}&tahun={tahun}&unit_id={unitId}`
+- **List Pengajuan (Pengadaan):** `GET /api/v1/ppk/pengajuan?q={keyword}&statuses[]={status}&bulan={bulan}&tahun={tahun}&unit_id={unitId}`
 - **Detail Pengajuan:** `GET /api/v1/ppk/pengajuan/{pengadaanId}`
-- **Review Form:** `GET /api/v1/ppk/pengajuan/{pengadaanId}/review`
 
 #### 2. Persetujuan Awal Permohonan (Dokumen Turunan milik PPK)
-- **List Permohonan untuk PPK:** `GET /api/v1/ppk/permohonan?q={keyword}&status={status}&bulan={bulan}&tahun={tahun}&unit_id={unitId}`
+- **List Permohonan untuk PPK:** `GET /api/v1/ppk/permohonan?q={keyword}&status={status}&statuses[]={status}&bulan={bulan}&tahun={tahun}&page={page}&per_page={per_page}`
   - Mengembalikan daftar permohonan yang terikat dengan Jenis MAK milik akun PPK yang login (`mak.ppk_user_id`).
+  - Response (200 OK): `{ "message": "...", "data": [ ... ], "meta": { "current_page": 1, "last_page": 1, "per_page": 10, "total": 0 }, "filters": { ... } }`
+  - `per_page` dibatasi 1–100 (default 10).
 - **Detail Permohonan untuk PPK:** `GET /api/v1/ppk/permohonan/{permohonanId}`
-  - Response (200 OK): `{ "message": "Detail permohonan untuk PPK berhasil diambil.", "data": { "permohonan": { ... }, "dokumen_permohonan": [...], "permohonan_mak_ppk": [...], "rkakl_active": { ... } } }`
+  - Response (200 OK): `{ "message": "Detail permohonan untuk PPK berhasil diambil.", "data": { "permohonan": { ... }, "dokumen_permohonan": [...], "permohonan_mak_ppk": [...] } }`
+  - Tidak memuat relasi pengadaan maupun RKAKL.
+  - Error Response (403 Forbidden): jika permohonan tidak terikat Jenis MAK milik PPK yang login.
+- **Unduh / Preview Dokumen Permohonan:** `GET /api/v1/ppk/permohonan/{permohonanId}/dokumen?dokumen_id={dokumenId}&disposition={inline|attachment}`
+  - Response (200 OK): Stream berkas (`inline` untuk pratinjau, `attachment` untuk unduhan).
   - Error Response (403 Forbidden): jika permohonan tidak terikat Jenis MAK milik PPK yang login.
 - **Approve Permohonan oleh PPK:** `POST /api/v1/ppk/permohonan/{permohonanId}/approve`
   - **Request Body (`multipart/form-data`):**
@@ -919,6 +924,7 @@ Prefix Rute: `/api/v1/ppk`
   - **Success Response (200 OK):** `{ "message": "Permohonan telah ditolak oleh PPK beserta catatan alasan." }`
 
 #### 3. Approve & Reject Dokumen Pengadaan
+- **Review Form Pengadaan:** `GET /api/v1/ppk/pengajuan/{pengadaanId}/review`
 - **Approve:** `POST /api/v1/ppk/pengajuan/{pengadaanId}/approve`
   - Response (200 OK): `{ "message": "Dokumen pengadaan berhasil disetujui oleh PPK dan diteruskan ke PPBJ." }`
 - **Reject:** `POST /api/v1/ppk/pengajuan/{pengadaanId}/reject`
@@ -937,11 +943,13 @@ Prefix Rute: `/api/v1/ppk`
   - Body: `{ "alasan": "Faktur pajak belum valid." }`
   - Response (200 OK): `{ "message": "Dokumen pembayaran telah ditolak beserta catatan revisi." }`
 
-#### 5. Lihat Dokumen RKAKL (Read-Only untuk PPK)
-- **Daftar & Dokumen RKAKL Aktif:** `GET /api/v1/ppk/rkakl?tahun={tahun}`
-  - Response (200 OK): `{ "message": "Data Dokumen RKAKL berhasil diambil.", "data": { "active_doc": { ... }, "history": [...], "items": [...], "tahun": "2026" } }`
-- **Unduh / Preview Inline RKAKL:** `GET /api/v1/ppk/rkakl/dokumen/{dokumenId?}`
-  - Response (200 OK): Stream berkas PDF (`application/pdf`).
+#### 5. Notifikasi PPK
+
+- **Daftar Notifikasi:** `GET /api/v1/ppk/notifikasi`
+- **Tandai Dibaca:** `POST /api/v1/ppk/notifikasi/{notificationId}/read`
+- **Tandai Semua Dibaca:** `POST /api/v1/ppk/notifikasi/read-all`
+
+Catatan: endpoint RKAKL untuk PPK (`/api/v1/ppk/rkakl`, `/api/v1/ppk/rkakl/dokumen`) sudah dihapus dari modul PPK.
 
 ---
 

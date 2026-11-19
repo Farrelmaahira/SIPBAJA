@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, type FC, type FormEvent } from 'react';
 import { perencanaanService } from '../../../services/perencanaanService';
-import PerencanaanRkaklTemplate from '../../../components/templates/PerencanaanRkaklTemplate';
+import PerencanaanRkaklTemplate from '../../../components/templates/Perencanaan/PerencanaanRkaklTemplate';
 import { validateUploadFile, extractServerErrors } from '../../../utils/fileValidation';
 import type { DokumenItem } from '../../../types/dokumen';
 import type { RkaklActiveDoc, RkaklHistoryItem } from '../../../types/perencanaan';

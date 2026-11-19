@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { adminService } from '../../services/adminService';
 import { useAuth } from '../../hooks/useAuth';
-import AdminDashboardTemplate from '../../components/templates/AdminDashboardTemplate';
+import AdminDashboardTemplate from '../../components/templates/Admin/AdminDashboardTemplate';
 import type { RecentUserItem } from '../../components/organisms/RecentUsersTable';
 import type { AdminStatItem } from '../../types/admin';
 

@@ -2,7 +2,7 @@ import type { FC } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import usePemohonDashboard from '../../hooks/usePemohonDashboard';
-import PemohonDashboardTemplate from '../../components/templates/PemohonDashboardTemplate';
+import PemohonDashboardTemplate from '../../components/templates/Pemohon/PemohonDashboardTemplate';
 
 export const PemohonDashboard: FC = () => {
   const navigate = useNavigate();

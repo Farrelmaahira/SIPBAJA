@@ -58,6 +58,27 @@ class PenggunaController extends Controller
         ]);
     }
 
+    public function deactivate($userId, User $user): JsonResponse
+    {
+        $this->authorize('update', $user);
+
+        $this->users->deactivate($userId);
+
+        return response()->json([
+            'message' => 'success',
+        ]);
+    }
+
+    public function activate($userId, User $user): JsonResponse
+    {
+        $this->authorize('update', $user);
+        $this->users->activate($userId);
+
+        return response()->json([
+            'message' => 'Pengguna berhasil diaktifkan.',
+        ]);
+    }
+
     public function destroy(User $pengguna): Response
     {
         $this->authorize('delete', $pengguna);

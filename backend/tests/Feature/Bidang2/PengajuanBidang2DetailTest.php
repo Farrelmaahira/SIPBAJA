@@ -81,12 +81,13 @@ class PengajuanBidang2DetailTest extends TestCase
 
         $mak = Mak::first();
         if ($mak) {
-            $mak->update(['nama' => '532111']);
+            $mak->update(['kode' => '532111']);
         } else {
-            $ppk = User::where('email', 'ppk@pnj.ac.id')->first();
+            $ppk = User::where('email', 'ppk.blufisik@pnj.ac.id')->firstOrFail();
             $mak = Mak::create([
-                'nama' => '532111',
-                'ppk_user_id' => $ppk?->id,
+                'kode' => '532111',
+                'nama' => 'BLU Fisik',
+                'ppk_user_id' => $ppk->id,
             ]);
         }
 
@@ -104,6 +105,17 @@ class PengajuanBidang2DetailTest extends TestCase
             'alasan' => 'Jenis MAK 532111 telah diverifikasi. Mohon periksa kesesuaian nominal dengan Dokumen RKAKL terbaru sebelum memberi keputusan.',
             'actor_id' => $perencanaan->id,
         ]);
+
+        $ppkUser = User::where('email', 'ppk.blufisik@pnj.ac.id')->first();
+        if ($ppkUser) {
+            ApprovalPermohonan::create([
+                'permohonan_id' => $permohonan->id,
+                'tahap' => 'PPK',
+                'revisi_ke' => 0,
+                'keputusan' => 'disetujui',
+                'actor_id' => $ppkUser->id,
+            ]);
+        }
 
         Dokumen::create([
             'ref_type' => 'rkakl',
@@ -224,6 +236,35 @@ class PengajuanBidang2DetailTest extends TestCase
             'ref_id' => $permohonan->id,
             'status_lama' => 'menunggu_bidang2',
             'status_baru' => 'disetujui',
+            'actor_id' => $bidang2->id,
+        ]);
+    }
+
+    public function test_bidang2_approval_sets_status_to_diteruskan_if_ppk_has_not_approved(): void
+    {
+        $bidang2 = $this->getBidang2User();
+        $permohonan = $this->createSamplePermohonan();
+
+        // Hapus approval PPK untuk mensimulasikan PPK belum menyetujui
+        ApprovalPermohonan::where('permohonan_id', $permohonan->id)
+            ->where('tahap', 'PPK')
+            ->delete();
+
+        $fileMemo = UploadedFile::fake()->create('Memo_WD2_Waiting_PPK.pdf', 1024, 'application/pdf');
+
+        $response = $this->actingAs($bidang2, 'sanctum')->post("/api/v1/bidang-2/pengajuan/{$permohonan->id}/approve", [
+            'file_memo' => $fileMemo,
+        ], ['Accept' => 'application/json']);
+
+        $response->assertStatus(200);
+
+        $permohonan->refresh();
+        $this->assertEquals('diteruskan', $permohonan->status);
+
+        $this->assertDatabaseHas('status_history', [
+            'ref_type' => 'permohonan',
+            'ref_id' => $permohonan->id,
+            'status_baru' => 'diteruskan',
             'actor_id' => $bidang2->id,
         ]);
     }

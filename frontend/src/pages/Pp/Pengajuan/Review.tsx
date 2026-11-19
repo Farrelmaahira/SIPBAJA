@@ -1,9 +1,8 @@
 import { useState, useEffect, type FC } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ppService from '../../../services/ppService';
-import PpPengajuanReviewTemplate from '../../../components/templates/PpPengajuanReviewTemplate';
+import PpPengajuanReviewTemplate from '../../../components/templates/PP/PpPengajuanReviewTemplate';
 import { extractServerErrors } from '../../../utils/fileValidation';
-import type { PpNavItem } from '../../../components/templates/PpLayout';
 import type {
   PpPengadaanDetailPayload,
   PpDocumentPreviewInfo,
@@ -18,7 +17,6 @@ export interface PpReviewProps {
   roleInitials?: string;
   roleTitle?: string | null;
   roleSubtitle?: string | null;
-  navItems?: PpNavItem[] | null;
   keputusanTitle?: string;
   keputusanNote?: string;
 }
@@ -31,7 +29,6 @@ export const PpPengajuanReview: FC<PpReviewProps> = ({
   roleInitials = 'PP',
   roleTitle = null,
   roleSubtitle = null,
-  navItems = null,
   keputusanTitle = 'Keputusan PP',
   keputusanNote = 'Khusus pengadaan Rp50 - 200 juta. Pastikan dokumen telah sesuai sebelum direview.',
 }) => {
@@ -107,9 +104,9 @@ export const PpPengajuanReview: FC<PpReviewProps> = ({
       const serverErr = extractServerErrors(err);
       setRejectError(
         serverErr.fieldErrors.alasan ||
-          serverErr.fieldErrors.catatan ||
-          serverErr.message ||
-          'Terjadi kesalahan saat memproses penolakan.'
+        serverErr.fieldErrors.catatan ||
+        serverErr.message ||
+        'Terjadi kesalahan saat memproses penolakan.'
       );
     } finally {
       setSubmitting(false);
@@ -125,7 +122,6 @@ export const PpPengajuanReview: FC<PpReviewProps> = ({
       roleInitials={roleInitials}
       roleTitle={roleTitle}
       roleSubtitle={roleSubtitle}
-      navItems={navItems}
       keputusanTitle={keputusanTitle}
       keputusanNote={keputusanNote}
       confirmApproveOpen={confirmApproveOpen}

@@ -1,10 +1,8 @@
 import { useEffect, useState, type FC, type ChangeEvent } from 'react';
 import axios from 'axios';
 import { adminService } from '../../../services/adminService';
-import UnitKerjaTemplate, {
-  type UnitKerjaItem,
-  type UnitKerjaFormData,
-} from '../../../components/templates/UnitKerjaTemplate';
+import UnitKerjaTemplate from '../../../components/templates/Admin/UnitKerjaTemplate';
+import type { UnitKerjaFormData, UnitKerjaItem } from '../../../types/admin';
 import Pagination, { type PaginationMeta } from '../../../components/molecules/Pagination';
 
 const EMPTY_FORM: UnitKerjaFormData = {

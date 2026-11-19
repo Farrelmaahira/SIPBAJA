@@ -1,7 +1,7 @@
 import { useEffect, useState, type FC } from 'react';
 import { useAuth } from '../../../hooks/useAuth';
 import bidang2Service from '../../../services/bidang2Service';
-import Bidang2RkaklTemplate from '../../../components/templates/Bidang2RkaklTemplate';
+import Bidang2RkaklTemplate from '../../../components/templates/Bidang2/Bidang2RkaklTemplate';
 import type { Bidang2RkaklActiveDoc } from '../../../types/bidang2';
 
 export const RkaklIndex: FC = () => {
