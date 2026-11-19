@@ -58,24 +58,46 @@ class PenggunaController extends Controller
         ]);
     }
 
-    public function deactivate($userId, User $user): JsonResponse
+    public function deactivate(User $pengguna): JsonResponse
     {
-        $this->authorize('update', $user);
+        $this->authorize('update', $pengguna);
 
-        $this->users->deactivate($userId);
+        $this->users->deactivate($pengguna->id);
 
         return response()->json([
-            'message' => 'success',
+            'message' => 'Pengguna berhasil dinonaktifkan.',
+            'user' => $pengguna->fresh(),
         ]);
     }
 
-    public function activate($userId, User $user): JsonResponse
+    public function activate(User $pengguna): JsonResponse
     {
-        $this->authorize('update', $user);
-        $this->users->activate($userId);
+        $this->authorize('update', $pengguna);
+
+        $this->users->activate($pengguna->id);
 
         return response()->json([
             'message' => 'Pengguna berhasil diaktifkan.',
+            'user' => $pengguna->fresh(),
+        ]);
+    }
+
+    public function toggleStatus(User $pengguna): JsonResponse
+    {
+        $this->authorize('update', $pengguna);
+
+        if ($pengguna->isActive) {
+            $this->users->deactivate($pengguna->id);
+        } else {
+            $this->users->activate($pengguna->id);
+        }
+
+        $fresh = $pengguna->fresh();
+        $statusText = ! $fresh->isActive ? 'dinonaktifkan' : 'diaktifkan';
+
+        return response()->json([
+            'message' => "Pengguna berhasil {$statusText}.",
+            'user' => $fresh,
         ]);
     }
 

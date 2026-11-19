@@ -11,7 +11,19 @@ class MetodePengadaan extends Model
 
     public $timestamps = false;
 
-    protected $fillable = ['nama'];
+    protected $fillable = ['nama', 'isActive'];
+
+    protected function casts(): array
+    {
+        return [
+            'isActive' => 'boolean',
+        ];
+    }
+
+    public function getIsAktifAttribute(): bool
+    {
+        return (bool) ($this->isActive ?? true);
+    }
 
     public function Pengadaan(): HasMany
     {

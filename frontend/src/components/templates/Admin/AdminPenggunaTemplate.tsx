@@ -1,10 +1,11 @@
 import type { ChangeEvent, FC, ReactNode } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Pencil, ToggleRight, ToggleLeft } from 'lucide-react';
 import AppLayout from '../General/AppLayout';
-import CrudTable from '../../organisms/CrudTable';
+import { CrudTable, type CrudActionItem, type CrudColumn } from '../../organisms/CrudTable';
 import Modal from '../../organisms/Modal';
 import SearchBar from '../../molecules/SearchBar';
 import PrimaryButton from '../../atoms/PrimaryButton';
+import StatusPill from '../../atoms/StatusPill';
 import { ADMIN_NAV_ITEMS } from '../../../constants/adminNav';
 import HeroBanner from '@/components/organisms/HeroBanner';
 import TableFooter from '@/components/molecules/TableFooter';
@@ -18,9 +19,10 @@ export interface UserRowItem {
   email: string;
   role?: { nama?: string };
   unit?: { nama?: string };
+  isActive?: boolean;
+  status?: 'aktif' | 'nonaktif' | string;
   [key: string]: unknown;
 }
-
 
 export interface AdminPenggunaTemplateForm {
   data: PenggunaFormData;
@@ -29,8 +31,7 @@ export interface AdminPenggunaTemplateForm {
   processing?: boolean;
 }
 
-
-const columns = [
+const columns: CrudColumn<UserRowItem>[] = [
   {
     key: 'nama',
     header: 'Nama & Email',
@@ -44,12 +45,29 @@ const columns = [
   {
     key: 'role',
     header: 'Peran',
-    render: (row: UserRowItem) => row.role?.nama ?? '-',
+    render: (row: UserRowItem) => (
+      <span className="text-xs text-[#5F6F6A] font-medium">{row.role?.nama ?? '-'}</span>
+    ),
   },
   {
     key: 'unit',
     header: 'Unit Kerja',
-    render: (row: UserRowItem) => row.unit?.nama ?? '-',
+    render: (row: UserRowItem) => (
+      <span className="text-xs text-[#5F6F6A] font-medium">{row.unit?.nama ?? '-'}</span>
+    ),
+  },
+  {
+    key: 'status',
+    header: 'Status',
+    render: (row: UserRowItem) => {
+      const active = row.isActive ?? (row.status === 'aktif');
+      return (
+        <StatusPill
+          status={active ? 'aktif' : 'nonaktif'}
+          label={active ? 'Aktif' : 'Nonaktif'}
+        />
+      );
+    },
   },
 ];
 
@@ -69,10 +87,11 @@ export interface AdminPenggunaTemplateProps {
   onOpenEdit?: (row: UserRowItem) => void;
   onCloseModal: () => void;
   onSubmitForm?: () => void;
-  deleteTarget?: UserRowItem | null;
-  onAskDelete?: (row: UserRowItem) => void;
-  onCancelDelete: () => void;
-  onConfirmDelete?: () => void;
+  toggleTarget?: UserRowItem | null;
+  onAskToggle?: (row: UserRowItem) => void;
+  onCancelToggle?: () => void;
+  onConfirmToggle?: () => void;
+  isToggling?: boolean;
   isLoading?: boolean;
 }
 
@@ -91,14 +110,34 @@ export const AdminPenggunaTemplate: FC<AdminPenggunaTemplateProps> = ({
   onOpenEdit,
   onCloseModal,
   onSubmitForm,
-  deleteTarget = null,
-  onAskDelete,
-  onCancelDelete,
-  onConfirmDelete,
+  toggleTarget = null,
+  onAskToggle,
+  onCancelToggle,
+  onConfirmToggle,
+  isToggling = false,
   isLoading = false,
 }) => {
   const { data, setData, errors, processing = false } = form;
   const isEdit = modalMode === 'edit';
+
+  const tableActions = (row: UserRowItem): CrudActionItem<UserRowItem>[] => {
+    const active = row.isActive ?? (row.status === 'aktif');
+    return [
+      {
+        key: 'edit',
+        label: 'Edit',
+        icon: Pencil,
+        onClick: () => onOpenEdit?.(row),
+      },
+      {
+        key: 'toggle-status',
+        label: active ? 'Nonaktifkan' : 'Aktifkan',
+        icon: active ? ToggleRight : ToggleLeft,
+        variant: active ? 'danger' : 'default',
+        onClick: () => onAskToggle?.(row),
+      },
+    ];
+  };
 
   const footer = paginationMeta ? (
     <TableFooter
@@ -108,6 +147,7 @@ export const AdminPenggunaTemplate: FC<AdminPenggunaTemplateProps> = ({
       onPageChange={onPageChange}
     />
   ) : null;
+
   return (
     <AppLayout
       activeRoute="pengguna"
@@ -122,7 +162,7 @@ export const AdminPenggunaTemplate: FC<AdminPenggunaTemplateProps> = ({
         <HeroBanner
           title="Pengguna"
           description="Kelola akun pengguna dan peran mereka di SIPBAJA."
-          ctaLabel="Buat Permohonan"
+          ctaLabel="Tambah Pengguna"
           ctaIcon={Plus}
           onCta={onOpenCreate}
         />
@@ -140,8 +180,7 @@ export const AdminPenggunaTemplate: FC<AdminPenggunaTemplateProps> = ({
               />
             </div>
           }
-          onEdit={onOpenEdit}
-          onDelete={onAskDelete}
+          actions={tableActions}
           emptyTitle="Belum ada pengguna"
           emptyDescription="Pengguna yang ditambahkan akan ditampilkan di sini."
           isLoading={isLoading}
@@ -151,13 +190,14 @@ export const AdminPenggunaTemplate: FC<AdminPenggunaTemplateProps> = ({
         <Modal
           open={modalMode !== null}
           onClose={onCloseModal}
-          title={isEdit ? 'Ubah Pengguna' : 'Tambah Pengguna'}
+          title={isEdit ? 'Edit Pengguna' : 'Tambah Pengguna'}
           footer={
             <>
               <button
                 type="button"
                 onClick={onCloseModal}
-                className="inline-flex items-center justify-center min-h-[44px] px-4 rounded-xl border border-[#E4EBE8] text-sm font-semibold text-[#5F6F6A] hover:bg-[#EEF5F2] transition-colors cursor-pointer"
+                disabled={processing}
+                className="inline-flex items-center justify-center min-h-[44px] px-4 rounded-xl border border-[#E4EBE8] text-sm font-semibold text-[#5F6F6A] hover:bg-[#EEF5F2] transition-colors cursor-pointer disabled:opacity-50"
               >
                 Batal
               </button>
@@ -177,32 +217,61 @@ export const AdminPenggunaTemplate: FC<AdminPenggunaTemplateProps> = ({
           />
         </Modal>
 
+        {/* Modal Konfirmasi Nonaktifkan / Aktifkan */}
         <Modal
-          open={deleteTarget !== null}
-          onClose={onCancelDelete}
-          title="Hapus Pengguna"
+          open={toggleTarget !== null}
+          onClose={onCancelToggle || (() => {})}
+          title={
+            (toggleTarget?.isActive ?? toggleTarget?.status === 'aktif')
+              ? 'Nonaktifkan Pengguna'
+              : 'Aktifkan Pengguna'
+          }
           footer={
             <>
               <button
                 type="button"
-                onClick={onCancelDelete}
-                className="inline-flex items-center justify-center min-h-[44px] px-4 rounded-xl border border-[#E4EBE8] text-sm font-semibold text-[#5F6F6A] hover:bg-[#EEF5F2] transition-colors cursor-pointer"
+                onClick={onCancelToggle}
+                disabled={isToggling}
+                className="inline-flex items-center justify-center min-h-[44px] px-4 rounded-xl border border-[#E4EBE8] text-sm font-semibold text-[#5F6F6A] hover:bg-[#EEF5F2] transition-colors cursor-pointer disabled:opacity-50"
               >
                 Batal
               </button>
-              <button
-                type="button"
-                onClick={onConfirmDelete}
-                className="inline-flex items-center justify-center min-h-[44px] px-4 rounded-xl bg-[#E5484D] hover:bg-[#B42318] text-white text-sm font-semibold transition-colors cursor-pointer"
-              >
-                Ya, Hapus
-              </button>
+              {(toggleTarget?.isActive ?? toggleTarget?.status === 'aktif') ? (
+                <button
+                  type="button"
+                  onClick={onConfirmToggle}
+                  disabled={isToggling}
+                  className="inline-flex items-center justify-center min-h-[44px] px-4 rounded-xl bg-[#E5484D] hover:bg-[#B42318] text-white text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  {isToggling ? 'Menonaktifkan...' : 'Ya, Nonaktifkan'}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={onConfirmToggle}
+                  disabled={isToggling}
+                  className="inline-flex items-center justify-center min-h-[44px] px-4 rounded-xl bg-[#0E7C5A] hover:bg-[#09573E] text-white text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  {isToggling ? 'Mengaktifkan...' : 'Ya, Aktifkan'}
+                </button>
+              )}
             </>
           }
         >
-          <p className="text-sm text-[#5F6F6A]">
-            Hapus <span className="font-semibold text-[#14201C]">{deleteTarget?.nama}</span>?
-            Riwayat persetujuan dan unggahan yang dibuat akun ini tetap tersimpan.
+          <p className="text-sm text-[#5F6F6A] leading-relaxed">
+            {(toggleTarget?.isActive ?? toggleTarget?.status === 'aktif') ? (
+              <>
+                Apakah Anda yakin ingin menonaktifkan pengguna{' '}
+                <span className="font-semibold text-[#14201C]">{toggleTarget?.nama}</span>?
+                Pengguna yang dinonaktifkan tidak akan dapat login ke dalam sistem SIPBAJA.
+              </>
+            ) : (
+              <>
+                Apakah Anda yakin ingin mengaktifkan kembali pengguna{' '}
+                <span className="font-semibold text-[#14201C]">{toggleTarget?.nama}</span>?
+                Pengguna akan dapat kembali login dan mengakses sistem sesuai perannya.
+              </>
+            )}
           </p>
         </Modal>
       </div>

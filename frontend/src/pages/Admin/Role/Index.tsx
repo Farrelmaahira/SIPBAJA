@@ -17,7 +17,8 @@ export const RoleIndex: FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   const [modalMode, setModalMode] = useState<'create' | 'edit' | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<RoleRowItem | null>(null);
+  const [toggleTarget, setToggleTarget] = useState<RoleRowItem | null>(null);
+  const [isToggling, setIsToggling] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
 
   const [formData, setFormData] = useState<RoleFormData>({ ...EMPTY_FORM });
@@ -107,23 +108,26 @@ export const RoleIndex: FC = () => {
     }
   };
 
-  const askDelete = (row: RoleRowItem) => {
-    setDeleteTarget(row);
+  const askToggle = (row: RoleRowItem) => {
+    setToggleTarget(row);
   };
 
-  const cancelDelete = () => {
-    setDeleteTarget(null);
+  const cancelToggle = () => {
+    setToggleTarget(null);
   };
 
-  const confirmDelete = async () => {
-    if (!deleteTarget) return;
+  const confirmToggle = async () => {
+    if (!toggleTarget) return;
 
+    setIsToggling(true);
     try {
-      await adminService.deleteRole(deleteTarget.id);
-      setDeleteTarget(null);
+      await adminService.toggleStatusRole(toggleTarget.id);
+      setToggleTarget(null);
       fetchRoles();
     } catch (err) {
-      console.error('Failed to delete role:', err);
+      console.error('Failed to toggle status role:', err);
+    } finally {
+      setIsToggling(false);
     }
   };
 
@@ -152,10 +156,11 @@ export const RoleIndex: FC = () => {
       onOpenEdit={openEdit}
       onCloseModal={closeModal}
       onSubmitForm={submitForm}
-      deleteTarget={deleteTarget}
-      onAskDelete={askDelete}
-      onCancelDelete={cancelDelete}
-      onConfirmDelete={confirmDelete}
+      toggleTarget={toggleTarget}
+      onAskToggle={askToggle}
+      onCancelToggle={cancelToggle}
+      onConfirmToggle={confirmToggle}
+      isToggling={isToggling}
       isLoading={isLoading}
     />
   );

@@ -50,6 +50,43 @@ class RoleController extends Controller
         ]);
     }
 
+    public function toggleStatus(Role $role): JsonResponse
+    {
+        $this->authorize('update', $role);
+
+        $role = $this->roles->toggleStatus($role);
+        $statusText = $role->isActive ? 'diaktifkan' : 'dinonaktifkan';
+
+        return response()->json([
+            'message' => "Peran berhasil {$statusText}.",
+            'role' => $role,
+        ]);
+    }
+
+    public function deactivate(Role $role): JsonResponse
+    {
+        $this->authorize('update', $role);
+
+        $role = $this->roles->deactivate($role);
+
+        return response()->json([
+            'message' => 'Peran berhasil dinonaktifkan.',
+            'role' => $role,
+        ]);
+    }
+
+    public function activate(Role $role): JsonResponse
+    {
+        $this->authorize('update', $role);
+
+        $role = $this->roles->activate($role);
+
+        return response()->json([
+            'message' => 'Peran berhasil diaktifkan.',
+            'role' => $role,
+        ]);
+    }
+
     public function destroy(Role $role): Response|JsonResponse
     {
         $this->authorize('delete', $role);

@@ -32,7 +32,8 @@ export const PenggunaIndex: FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   const [modalMode, setModalMode] = useState<'create' | 'edit' | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<UserRowItem | null>(null);
+  const [toggleTarget, setToggleTarget] = useState<UserRowItem | null>(null);
+  const [isToggling, setIsToggling] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
 
   const [formData, setFormData] = useState<PenggunaFormData>({ ...EMPTY_FORM });
@@ -135,23 +136,26 @@ export const PenggunaIndex: FC = () => {
     }
   };
 
-  const askDelete = (row: UserRowItem) => {
-    setDeleteTarget(row);
+  const askToggle = (row: UserRowItem) => {
+    setToggleTarget(row);
   };
 
-  const cancelDelete = () => {
-    setDeleteTarget(null);
+  const cancelToggle = () => {
+    setToggleTarget(null);
   };
 
-  const confirmDelete = async () => {
-    if (!deleteTarget) return;
+  const confirmToggle = async () => {
+    if (!toggleTarget) return;
 
+    setIsToggling(true);
     try {
-      await adminService.deleteUser(deleteTarget.id);
-      setDeleteTarget(null);
-      fetchUsers();
+      await adminService.toggleStatusUser(toggleTarget.id);
+      setToggleTarget(null);
+      void fetchUsers();
     } catch (err) {
-      console.error('Failed to delete pengguna:', err);
+      console.error('Failed to toggle status pengguna:', err);
+    } finally {
+      setIsToggling(false);
     }
   };
 
@@ -178,10 +182,11 @@ export const PenggunaIndex: FC = () => {
       onOpenEdit={openEdit}
       onCloseModal={closeModal}
       onSubmitForm={submitForm}
-      deleteTarget={deleteTarget}
-      onAskDelete={askDelete}
-      onCancelDelete={cancelDelete}
-      onConfirmDelete={confirmDelete}
+      toggleTarget={toggleTarget}
+      onAskToggle={askToggle}
+      onCancelToggle={cancelToggle}
+      onConfirmToggle={confirmToggle}
+      isToggling={isToggling}
       isLoading={isLoading}
     />
   );

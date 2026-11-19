@@ -1,19 +1,19 @@
 import type { ChangeEvent, FC, ReactNode } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Pencil, ToggleRight, ToggleLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AppLayout from '../General/AppLayout';
-import CrudTable from '../../organisms/CrudTable';
-import Modal from '../../organisms/Modal';
-import SearchBar from '../../molecules/SearchBar';
-import FormField from '../../molecules/FormField';
-import TextInput from '../../molecules/TextInput';
-import PrimaryButton from '../../atoms/PrimaryButton';
+import { CrudTable, type CrudActionItem, type CrudColumn } from '../../organisms/CrudTable';
+import { Modal } from '../../organisms/Modal';
+import { SearchBar } from '../../molecules/SearchBar';
+import { FormField } from '../../molecules/FormField';
+import { TextInput } from '../../molecules/TextInput';
+import { PrimaryButton } from '../../atoms/PrimaryButton';
+import { StatusPill } from '../../atoms/StatusPill';
 import { ADMIN_NAV_ITEMS } from '../../../constants/adminNav';
 import { RoleRowItem } from '@/types/admin';
 import HeroBanner from '@/components/organisms/HeroBanner';
 
-
-const columns = [
+const columns: CrudColumn<RoleRowItem>[] = [
   {
     key: 'nama',
     header: 'Nama Peran',
@@ -28,6 +28,19 @@ const columns = [
     key: 'users_count',
     header: 'Jumlah Pengguna',
     render: (row: RoleRowItem) => `${row.users_count ?? 0} akun`,
+  },
+  {
+    key: 'status',
+    header: 'Status',
+    render: (row: RoleRowItem) => {
+      const active = row.isActive ?? (row.status === 'aktif');
+      return (
+        <StatusPill
+          status={active ? 'aktif' : 'nonaktif'}
+          label={active ? 'Aktif' : 'Nonaktif'}
+        />
+      );
+    },
   },
   {
     key: 'hak_akses',
@@ -65,10 +78,11 @@ export interface RoleTemplateProps {
   onOpenEdit?: (row: RoleRowItem) => void;
   onCloseModal: () => void;
   onSubmitForm?: () => void;
-  deleteTarget?: RoleRowItem | null;
-  onAskDelete?: (row: RoleRowItem) => void;
-  onCancelDelete: () => void;
-  onConfirmDelete?: () => void;
+  toggleTarget?: RoleRowItem | null;
+  onAskToggle?: (row: RoleRowItem) => void;
+  onCancelToggle: () => void;
+  onConfirmToggle?: () => void;
+  isToggling?: boolean;
   isLoading?: boolean;
 }
 
@@ -84,10 +98,11 @@ export const RoleTemplate: FC<RoleTemplateProps> = ({
   onOpenEdit,
   onCloseModal,
   onSubmitForm,
-  deleteTarget = null,
-  onAskDelete,
-  onCancelDelete,
-  onConfirmDelete,
+  toggleTarget = null,
+  onAskToggle,
+  onCancelToggle,
+  onConfirmToggle,
+  isToggling = false,
   isLoading = false,
 }) => {
   const { data, setData, errors, processing = false } = form;
@@ -125,8 +140,25 @@ export const RoleTemplate: FC<RoleTemplateProps> = ({
               />
             </div>
           }
-          onEdit={onOpenEdit}
-          onDelete={onAskDelete}
+          actions={(row: RoleRowItem) => {
+            const active = row.isActive ?? (row.status === 'aktif');
+            const items: CrudActionItem<RoleRowItem>[] = [
+              {
+                key: 'edit',
+                label: 'Edit',
+                icon: Pencil,
+                onClick: () => onOpenEdit?.(row),
+              },
+              {
+                key: 'toggle-status',
+                label: active ? 'Nonaktifkan' : 'Aktifkan',
+                icon: active ? ToggleRight : ToggleLeft,
+                onClick: () => onAskToggle?.(row),
+                variant: active ? 'danger' : 'default',
+              },
+            ];
+            return items;
+          }}
           emptyTitle="Belum ada peran"
           emptyDescription="Peran yang ditambahkan akan muncul di sini."
           isLoading={isLoading}
@@ -136,7 +168,7 @@ export const RoleTemplate: FC<RoleTemplateProps> = ({
         <Modal
           open={modalMode !== null}
           onClose={onCloseModal}
-          title={isEdit ? 'Ubah Peran' : 'Tambah Peran'}
+          title={isEdit ? 'Edit Peran' : 'Tambah Peran'}
           footer={
             <>
               <button
@@ -166,31 +198,55 @@ export const RoleTemplate: FC<RoleTemplateProps> = ({
         </Modal>
 
         <Modal
-          open={deleteTarget !== null}
-          onClose={onCancelDelete}
-          title="Hapus Peran"
+          open={toggleTarget !== null}
+          onClose={onCancelToggle}
+          title={
+            (toggleTarget?.isActive ?? toggleTarget?.status === 'aktif')
+              ? 'Nonaktifkan Peran'
+              : 'Aktifkan Peran'
+          }
           footer={
             <>
               <button
                 type="button"
-                onClick={onCancelDelete}
+                onClick={onCancelToggle}
+                disabled={isToggling}
                 className="inline-flex items-center justify-center min-h-[44px] px-4 rounded-xl border border-[#E4EBE8] text-sm font-semibold text-[#5F6F6A] hover:bg-[#EEF5F2] transition-colors cursor-pointer"
               >
                 Batal
               </button>
               <button
                 type="button"
-                onClick={onConfirmDelete}
-                className="inline-flex items-center justify-center min-h-[44px] px-4 rounded-xl bg-[#E5484D] hover:bg-[#B42318] text-white text-sm font-semibold transition-colors cursor-pointer"
+                onClick={onConfirmToggle}
+                disabled={isToggling}
+                className={`inline-flex items-center justify-center min-h-[44px] px-4 rounded-xl text-white text-sm font-semibold transition-colors cursor-pointer ${
+                  (toggleTarget?.isActive ?? toggleTarget?.status === 'aktif')
+                    ? 'bg-[#E5484D] hover:bg-[#B42318]'
+                    : 'bg-[#0B7A4E] hover:bg-[#09633F]'
+                }`}
               >
-                Ya, Hapus
+                {isToggling
+                  ? 'Memproses...'
+                  : (toggleTarget?.isActive ?? toggleTarget?.status === 'aktif')
+                  ? 'Ya, Nonaktifkan'
+                  : 'Ya, Aktifkan'}
               </button>
             </>
           }
         >
           <p className="text-sm text-[#5F6F6A]">
-            Hapus peran <span className="font-semibold text-[#14201C]">{deleteTarget?.nama}</span>?
-            Peran tidak dapat dihapus jika masih ada pengguna yang terdaftar dengan peran ini.
+            {(toggleTarget?.isActive ?? toggleTarget?.status === 'aktif') ? (
+              <>
+                Apakah Anda yakin ingin menonaktifkan peran{' '}
+                <span className="font-semibold text-[#14201C]">{toggleTarget?.nama}</span>?
+                Pengguna dengan peran ini mungkin dibatasi aksesnya.
+              </>
+            ) : (
+              <>
+                Apakah Anda yakin ingin mengaktifkan kembali peran{' '}
+                <span className="font-semibold text-[#14201C]">{toggleTarget?.nama}</span>?
+              </>
+            )}
           </p>
         </Modal>
       </div>

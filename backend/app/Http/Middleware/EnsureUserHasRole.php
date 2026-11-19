@@ -27,7 +27,15 @@ class EnsureUserHasRole
             }
         }
 
-        if (! $user || ! $user->hasRole($parsedRoles)) {
+        if (! $user) {
+            abort(401, 'Unauthenticated.');
+        }
+
+        if (! ($user->isActive ?? true)) {
+            abort(403, 'Akun Anda telah dinonaktifkan. Silakan hubungi administrator.');
+        }
+
+        if (! $user->hasRole($parsedRoles)) {
             abort(403, 'Akses ditolak untuk peran Anda.');
         }
 

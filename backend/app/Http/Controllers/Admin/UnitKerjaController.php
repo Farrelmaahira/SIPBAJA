@@ -50,6 +50,43 @@ class UnitKerjaController extends Controller
         ]);
     }
 
+    public function toggleStatus(Unit $unit): JsonResponse
+    {
+        $this->authorize('update', $unit);
+
+        $unit = $this->units->toggleStatus($unit);
+        $statusText = $unit->isActive ? 'diaktifkan' : 'dinonaktifkan';
+
+        return response()->json([
+            'message' => "Unit kerja berhasil {$statusText}.",
+            'unit' => $unit,
+        ]);
+    }
+
+    public function deactivate(Unit $unit): JsonResponse
+    {
+        $this->authorize('update', $unit);
+
+        $unit = $this->units->deactivate($unit);
+
+        return response()->json([
+            'message' => 'Unit kerja berhasil dinonaktifkan.',
+            'unit' => $unit,
+        ]);
+    }
+
+    public function activate(Unit $unit): JsonResponse
+    {
+        $this->authorize('update', $unit);
+
+        $unit = $this->units->activate($unit);
+
+        return response()->json([
+            'message' => 'Unit kerja berhasil diaktifkan.',
+            'unit' => $unit,
+        ]);
+    }
+
     public function destroy(Unit $unit): Response|JsonResponse
     {
         $this->authorize('delete', $unit);

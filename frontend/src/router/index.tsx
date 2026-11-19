@@ -15,6 +15,7 @@ import UnitKerjaIndex from '../pages/Admin/UnitKerja/Index';
 import MakIndex from '../pages/Admin/Mak/Index';
 import RoleIndex from '../pages/Admin/Role/Index';
 import RolePermissionIndex from '../pages/Admin/RolePermission/Index';
+import AdminMetodePengadaanIndex from '../pages/Admin/MetodePengadaan/Index';
 
 // Pemohon Pages
 import PemohonDashboard from '../pages/Pemohon/Dashboard';
@@ -192,6 +193,7 @@ export const AppRoutes: FC = () => {
           <Route path="/admin/pengguna" element={<PenggunaIndex />} />
           <Route path="/admin/unit-kerja" element={<UnitKerjaIndex />} />
           <Route path="/admin/mak" element={<MakIndex />} />
+          <Route path="/admin/metode-pengadaan" element={<AdminMetodePengadaanIndex />} />
           <Route path="/admin/role" element={<RoleIndex />} />
           <Route path="/admin/role-permission" element={<RolePermissionIndex />} />
         </Route>

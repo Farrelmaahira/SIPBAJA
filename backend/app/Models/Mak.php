@@ -15,7 +15,14 @@ class Mak extends Model
 
     public $timestamps = false;
 
-    protected $fillable = ['kode', 'nama', 'ppk_user_id'];
+    protected $fillable = ['kode', 'nama', 'ppk_user_id', 'isActive'];
+
+    protected function casts(): array
+    {
+        return [
+            'isActive' => 'boolean',
+        ];
+    }
 
     public function Ppk(): BelongsTo
     {
