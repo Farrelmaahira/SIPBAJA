@@ -94,7 +94,7 @@ export const PemohonPermohonanIndexTemplate: FC<
       },
       {
         key: 'judul',
-        header: 'Judul Pengadaan',
+        header: 'Judul Permohonan',
         className: 'font-bold text-[#14201C]',
         render: (item) => item.judul || 'Tanpa Judul',
       },

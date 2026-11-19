@@ -11,10 +11,11 @@ import AppLayout from '../General/AppLayout';
 import HeroBanner from '../../organisms/HeroBanner';
 import StatusPill from '../../atoms/StatusPill';
 import DokumenListCard from '../../organisms/DokumenListCard';
+import { PermohonanInfoSection } from '../../organisms/PermohonanInfoSection';
 import PermohonanShowMakList from '../../molecules/PermohonanShowMakList';
 import PengadaanSplitForm from '../../organisms/PengadaanSplitForm';
 import { PPBJ_NAV_ITEMS } from '../../../constants/ppbjNav';
-import { formatRupiah, formatTanggalIndo } from '../../../utils/formatters';
+import { formatTanggalIndo } from '../../../utils/formatters';
 import type { PpbjPermohonanDetail } from '../../../types/ppbj';
 import type { DokumenItem } from '../../../types/dokumen';
 import type { AppTopbarUser } from '../../organisms/AppTopbar';
@@ -70,7 +71,7 @@ export const PpbjPermohonanShowTemplate: FC<PpbjPermohonanShowTemplateProps> = (
       roleSubtitle="Pengadaan Barang & Jasa"
       user={user}
       breadcrumb={[
-        { label: 'DASHBOARD', href: '/ppbj/dashboard' },
+        { label: 'PPBJ', href: '/ppbj/dashboard' },
         { label: 'DAFTAR PERMOHONAN', href: '/ppbj/permohonan' },
         { label: permohonan?.nomorSurat || 'DETAIL PERMOHONAN' },
       ]}
@@ -124,89 +125,17 @@ export const PpbjPermohonanShowTemplate: FC<PpbjPermohonanShowTemplateProps> = (
             />
 
             {/* Card 1: Informasi Permohonan */}
-            <section
-              className="bg-white rounded-[22px] border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.05)] p-6"
-              aria-labelledby="heading-info"
-            >
-              <div className="mb-5 pb-4 border-b border-[#F0F4F2]">
-                <h2 id="heading-info" className="text-base font-bold text-[#14201C]">
-                  Informasi Permohonan
-                </h2>
-                <p className="text-xs text-[#5F6F6A] mt-0.5">
-                  Ringkasan data yang diajukan
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-5 gap-x-8 text-xs">
-                <div>
-                  <span className="block text-[11px] font-bold text-[#5F6F6A] uppercase tracking-wider mb-1">
-                    Nomor Permohonan
-                  </span>
-                  <p className="text-sm font-bold text-[#14201C]">
-                    {permohonan.nomorSurat || '-'}
-                  </p>
-                </div>
-
-                <div>
-                  <span className="block text-[11px] font-bold text-[#5F6F6A] uppercase tracking-wider mb-1">
-                    Judul Permohonan
-                  </span>
-                  <p className="text-sm font-semibold text-[#14201C]">
-                    {permohonan.judul || '-'}
-                  </p>
-                </div>
-
-                <div>
-                  <span className="block text-[11px] font-bold text-[#5F6F6A] uppercase tracking-wider mb-1">
-                    Nominal/Estimasi
-                  </span>
-                  <p className="text-base font-extrabold text-[#0E7C5A] tabular-nums">
-                    {formatRupiah(permohonan.estimasiAnggaran)}
-                  </p>
-                </div>
-
-                <div>
-                  <span className="block text-[11px] font-bold text-[#5F6F6A] uppercase tracking-wider mb-1">
-                    Tanggal Pengajuan
-                  </span>
-                  <p className="text-sm text-[#14201C]">
-                    {formatTanggalIndo(permohonan.tanggalPengajuan, true)}
-                  </p>
-                </div>
-
-                <div>
-                  <span className="block text-[11px] font-bold text-[#5F6F6A] uppercase tracking-wider mb-1">
-                    Diajukan Oleh
-                  </span>
-                  <p className="text-sm font-medium text-[#14201C]">
-                    {permohonan.unitNama || '-'} {permohonan.pembuatNama ? `(${permohonan.pembuatNama})` : ''}
-                  </p>
-                </div>
-
-                <div>
-                  <span className="block text-[11px] font-bold text-[#5F6F6A] uppercase tracking-wider mb-1">
-                    Status
-                  </span>
-                  <div className="mt-1">
-                    <StatusPill
-                      status={permohonan.status}
-                      label={permohonan.status === 'disetujui' ? 'Review PPBJ' : undefined}
-                    />
-                  </div>
-                </div>
-
-                {permohonan.ringkasanTujuan && (
-                  <div className="md:col-span-2 pt-3 border-t border-[#F0F4F2]">
-                    <span className="block text-[11px] font-bold text-[#5F6F6A] uppercase tracking-wider mb-1">
-                      Ringkasan Tujuan
-                    </span>
-                    <p className="text-xs text-[#14201C] leading-relaxed whitespace-pre-line">
-                      {permohonan.ringkasanTujuan}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </section>
+            <PermohonanInfoSection
+              permohonan={{
+                nomor_surat: permohonan.nomorSurat,
+                created_at: permohonan.tanggalPengajuan,
+                judul: permohonan.judul,
+                unit_nama: permohonan.unitNama,
+                pembuat_nama: permohonan.pembuatNama,
+                estimasi_anggaran: permohonan.estimasiAnggaran,
+                status: permohonan.status,
+              }}
+            />
 
             {/* Card 2: Dokumen Proses Sebelumnya */}
             <div className="space-y-4">

@@ -17,7 +17,7 @@ import StatusPill from '../../atoms/StatusPill';
 import DokumenListCard from '../../organisms/DokumenListCard';
 import PerencanaanVerifikasiMakCard from '../../organisms/PerencanaanVerifikasiMakCard';
 import { formatRupiah, formatTanggalIndo } from '../../../utils/formatters';
-import { PERENCANAAN_NAV_ITEMS } from '../../../pages/Perencanaan/Dashboard';
+import { PERENCANAAN_NAV_ITEMS } from '@/constants/perencanaanNav';
 import type {
   PerencanaanPengajuanDetail,
   PerencanaanMakItem,
@@ -25,6 +25,7 @@ import type {
 } from '../../../types/perencanaan';
 import type { DokumenItem } from '../../../types/dokumen';
 import type { NotificationItem } from '../../../types/notification';
+import { PermohonanInfoSection } from '@/components/organisms/PermohonanInfoSection';
 
 export interface PerencanaanPengajuanShowTemplateProps {
   detail?: PerencanaanPengajuanDetail | null;
@@ -160,10 +161,6 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
     (permohonan as any)?.pemohon?.nama ||
     '-';
 
-  const deskripsiText = String(
-    permohonan?.ringkasan_tujuan || (permohonan as any)?.deskripsi || ''
-  );
-
   if (isLoading || !permohonan) {
     return (
       <AppLayout
@@ -243,62 +240,8 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
             {/* Left Column (8 cols) */}
             <div className="lg:col-span-8 space-y-6">
               {/* Informasi Permohonan Card */}
-              <div className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)]">
-                <div className="pb-4 mb-5 border-b border-[#F0F4F2]">
-                  <h3 className="text-base font-bold text-[#14201C]">Informasi Permohonan</h3>
-                  <p className="text-xs text-[#8A9A95] mt-0.5">
-                    Rincian surat dan pengajuan anggaran dari unit pemohon
-                  </p>
-                </div>
+              <PermohonanInfoSection permohonan={permohonan} />
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 text-xs">
-                  <div>
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-[#8A9A95]">
-                      Nomor Surat
-                    </p>
-                    <p className="text-sm font-bold text-[#14201C] mt-1">
-                      {permohonan?.nomor_surat || '-'}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-[#8A9A95]">
-                      Nilai Estimasi Anggaran
-                    </p>
-                    <p className="text-sm font-extrabold text-[#0E7C5A] mt-1">
-                      {formatRupiah(permohonan?.estimasi_anggaran)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-[#8A9A95]">
-                      Unit Pemohon
-                    </p>
-                    <p className="text-xs font-semibold text-[#14201C] mt-1">
-                      {unitNama}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-[#8A9A95]">
-                      Tanggal Pengajuan
-                    </p>
-                    <p className="text-xs font-semibold text-[#14201C] mt-1">
-                      {formatTanggalIndo(permohonan?.created_at ? String(permohonan.created_at) : undefined)}
-                    </p>
-                  </div>
-                </div>
-
-                {deskripsiText && (
-                  <div className="mt-5 pt-4 border-t border-[#F0F4F2]">
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-[#8A9A95] mb-1.5">
-                      Deskripsi / Latar Belakang
-                    </p>
-                    <p className="text-xs text-[#4B5854] leading-relaxed whitespace-pre-line">
-                      {deskripsiText}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Tab Switcher: Dokumen Permohonan vs Preview RKAKL */}
               <div className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)]">
                 <div className="flex flex-wrap items-center justify-between gap-3 pb-4 mb-5 border-b border-[#F0F4F2]">
                   <div>

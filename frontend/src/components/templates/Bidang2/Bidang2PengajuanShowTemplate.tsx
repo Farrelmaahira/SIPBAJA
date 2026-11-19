@@ -1,17 +1,17 @@
 import { useState, type FC } from 'react';
 import {
   FileText,
-  ArrowLeft,
   AlertCircle,
   RotateCcw,
   CheckCircle2,
   X,
 } from 'lucide-react';
 import AppLayout from '../General/AppLayout';
+import HeroBanner from '../../organisms/HeroBanner';
 import StatusPill from '../../atoms/StatusPill';
 import DocumentPreviewModal from '../../organisms/DocumentPreviewModal';
 import DokumenListCard from '../../organisms/DokumenListCard';
-import InformasiPermohonanCard from '../../organisms/Bidang2/InformasiPermohonanCard';
+import { PermohonanInfoSection } from '../../organisms/PermohonanInfoSection';
 import CatatanPerencanaanCard from '../../organisms/Bidang2/CatatanPerencanaanCard';
 import KeputusanBidang2Card from '../../organisms/Bidang2/KeputusanBidang2Card';
 import SetujuPermohonanModal from '../../organisms/Bidang2/SetujuPermohonanModal';
@@ -102,7 +102,7 @@ export const Bidang2PengajuanShowTemplate: FC<Bidang2PengajuanShowTemplateProps>
       user={user}
       breadcrumb={[
         { label: 'BIDANG 2', href: '/bidang-2/dashboard' },
-        { label: 'LIST PERMOHONAN', href: '/bidang-2/pengajuan' },
+        { label: 'LIST PERMOHONAN', href: '/bidang-2/permohonan' },
         { label: 'DETAIL PERMOHONAN' },
       ]}
     >
@@ -181,58 +181,36 @@ export const Bidang2PengajuanShowTemplate: FC<Bidang2PengajuanShowTemplateProps>
             )}
 
             {/* Hero Banner with Custom Header Actions */}
-            <div className="relative overflow-hidden bg-[#0E7C5A] text-white rounded-[24px] p-6 md:p-8 min-h-[148px] flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-[0_4px_20px_rgba(14,124,90,0.15)]">
-              <div
-                className="absolute -right-16 -top-16 w-[260px] h-[260px] rounded-full border border-white/10 pointer-events-none hidden sm:block"
-                aria-hidden="true"
-              />
-              <div
-                className="absolute -right-6 -bottom-12 w-[170px] h-[170px] rounded-full border border-white/15 pointer-events-none hidden sm:block"
-                aria-hidden="true"
-              />
-
-              <div className="relative z-10 max-w-xl">
-                <p className="text-[11px] font-bold tracking-[1.4px] text-white/75 uppercase mb-1">
-                  PERMOHONAN PENGADAAN
-                </p>
+            <HeroBanner
+              eyebrow="PERMOHONAN PENGADAAN"
+              title={
                 <div className="flex flex-wrap items-center gap-3">
-                  <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
-                    Detail Permohonan
-                  </h1>
+                  <span>Detail Permohonan</span>
                   <StatusPill
                     status={permohonan.status}
                     label={permohonan.status === 'menunggu_bidang2' ? 'Review Permohonan' : undefined}
                   />
                 </div>
-                <p className="text-xs md:text-sm text-white/85 mt-2 leading-relaxed">
-                  Nomor {permohonan.nomor_surat || '-'} · Diajukan {permohonan.tanggal_pengajuan || '-'}
-                </p>
-              </div>
-
-              {/* Aksi Kanan: Tombol Dokumen RKAKL dan Kembali */}
-              <div className="relative z-10 flex items-center gap-3 flex-wrap">
-                <button
-                  type="button"
-                  onClick={onOpenRkakl}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-[#0E7C5A] text-xs md:text-sm font-semibold hover:bg-[#F3F6F5] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white shadow-2xs cursor-pointer min-h-[44px]"
-                >
-                  <FileText className="w-4 h-4 stroke-[2.2]" />
-                  <span>Dokumen RKAKL</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={onBack}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#09573E] text-white text-xs md:text-sm font-semibold hover:bg-[#074632] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white cursor-pointer min-h-[44px]"
-                >
-                  <ArrowLeft className="w-4 h-4 stroke-[2.2]" />
-                  <span>Kembali</span>
-                </button>
-              </div>
-            </div>
+              }
+              description={`Nomor ${permohonan.nomor_surat || '-'} · Diajukan ${permohonan.tanggal_pengajuan || '-'}`}
+              ctaLabel="Dokumen RKAKL"
+              ctaIcon={FileText}
+              ctaVariant="translucent"
+              onCta={onOpenRkakl}
+              className="md:min-h-[148px]"
+            />
 
             {/* Card 1: Informasi Permohonan (Full Width) */}
-            <InformasiPermohonanCard data={permohonan} />
+            <PermohonanInfoSection
+              permohonan={{
+                nomor_surat: permohonan.nomor_surat,
+                created_at: permohonan.tanggal_pengajuan,
+                judul: permohonan.judul,
+                unit_nama: permohonan.unit_nama,
+                estimasi_anggaran: permohonan.estimasi_anggaran,
+                status: permohonan.status,
+              }}
+            />
 
             {/* Tata Letak 2 Kolom: Kiri (Dokumen Permohonan Live Preview) & Kanan (Jenis MAK, Catatan & Keputusan) */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">

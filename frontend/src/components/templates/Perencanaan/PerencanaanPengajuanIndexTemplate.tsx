@@ -7,10 +7,10 @@ import FilterPengajuanModal from '../../organisms/FilterPengajuanModal';
 import TableToolbar from '../../molecules/TableToolbar';
 import TableFooter from '../../molecules/TableFooter';
 import StatusPill from '../../atoms/StatusPill';
-import { PERENCANAAN_NAV_ITEMS } from '../../../pages/Perencanaan/Dashboard';
 import type { PermohonanTerbaruItem } from '../../../types/perencanaan';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { formatDate } from '@/utils/formatDate';
+import { PERENCANAAN_NAV_ITEMS } from '@/constants/perencanaanNav';
 
 export interface PerencanaanPengajuanIndexTemplateProps {
   items: PermohonanTerbaruItem[];
@@ -72,7 +72,7 @@ export const PerencanaanPengajuanIndexTemplate: FC<PerencanaanPengajuanIndexTemp
     },
     {
       key: 'judul',
-      header: 'Judul Pengadaan',
+      header: 'Judul Permohonan',
       className: 'font-bold text-[#14201C]',
       render: (item) => item.judul || '-',
     },
@@ -122,7 +122,7 @@ export const PerencanaanPengajuanIndexTemplate: FC<PerencanaanPengajuanIndexTemp
 
   return (
     <AppLayout
-      activeRoute="pengajuan"
+      activeRoute="permohonan"
       navItems={PERENCANAAN_NAV_ITEMS}
       roleInitials="PR"
       roleTitle="Perencanaan"
@@ -132,14 +132,14 @@ export const PerencanaanPengajuanIndexTemplate: FC<PerencanaanPengajuanIndexTemp
       readAllHref="/perencanaan/notifikasi/read-all"
       breadcrumb={[
         { label: 'PERENCANAAN', href: '/perencanaan/dashboard' },
-        { label: 'LIST PENGAJUAN' },
+        { label: 'LIST PERMOHONAN' },
       ]}
       flash={errorMessage ? { error: errorMessage } : undefined}
     >
       <div className="space-y-6">
         <HeroBanner
           eyebrow="DAFTAR PERMOHONAN"
-          title="List Pengajuan"
+          title="List Permohonan"
           description="Pantau, cari, dan verifikasi permohonan pengadaan yang masuk dari berbagai unit kerja."
         />
 
@@ -155,7 +155,7 @@ export const PerencanaanPengajuanIndexTemplate: FC<PerencanaanPengajuanIndexTemp
             {
               key: 'view',
               label: 'Detail',
-              href: (row) => `/perencanaan/pengajuan/${row.id}`,
+              href: (row) => `/perencanaan/permohonan/${row.id}`,
             },
           ]}
         />
