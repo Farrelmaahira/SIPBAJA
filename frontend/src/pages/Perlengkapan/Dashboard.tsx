@@ -1,14 +1,12 @@
-import { useEffect, useState, useMemo, type FC } from 'react';
-import { LayoutDashboard, ClipboardList } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth';
+import { useEffect, useState, type FC } from 'react';
 import perlengkapanService from '../../services/perlengkapanService';
-import DashboardShellTemplate from '../../components/templates/DashboardShellTemplate';
+import AppLayout from '../../components/templates/General/AppLayout';
 import HeroBanner from '../../components/organisms/HeroBanner';
 import PerlengkapanPengadaanMasukTable from '../../components/organisms/Perlengkapan/PerlengkapanPengadaanMasukTable';
+import { PERLENGKAPAN_NAV_ITEMS } from '../../constants/perlengkapanNav';
 import type { PerlengkapanDashboardData } from '../../types/perlengkapan';
 
 export const PerlengkapanDashboard: FC = () => {
-  const { user } = useAuth();
   const [data, setData] = useState<PerlengkapanDashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -40,66 +38,29 @@ export const PerlengkapanDashboard: FC = () => {
     };
   }, []);
 
-  const totalPengadaan = data?.summary?.total_pengadaan_masuk ?? data?.pengadaan_masuk?.length ?? 4;
-
-  const sidebarProps = useMemo(
-    () => ({
-      navItems: [
-        {
-          key: 'dashboard',
-          label: 'Dashboard',
-          icon: LayoutDashboard,
-          href: '/perlengkapan/dashboard',
-        },
-        {
-          key: 'pengadaan',
-          label: 'List Pengadaan',
-          icon: ClipboardList,
-          href: '/perlengkapan/pengadaan',
-          badge: totalPengadaan,
-        },
-      ],
-      activeRoute: 'dashboard',
-      brandSubtitle: 'Pengadaan Barang & Jasa',
-      sectionTitle: 'Menu',
-    }),
-    [totalPengadaan]
-  );
-
-  const topbarProps = useMemo(
-    () => ({
-      user: user
-        ? {
-          ...user,
-          initials: 'PL',
-          unitSubtitle: 'Unit Perlengkapan',
-        }
-        : {
-          nama: 'Perlengkapan',
-          initials: 'PL',
-          unitSubtitle: 'Unit Perlengkapan',
-        },
-    }),
-    [user]
-  );
-
   return (
-    <DashboardShellTemplate sidebarProps={sidebarProps} topbarProps={topbarProps}>
+    <AppLayout
+      activeRoute="dashboard"
+      navItems={PERLENGKAPAN_NAV_ITEMS}
+      roleInitials="PL"
+      roleTitle="Perlengkapan"
+      roleSubtitle="Unit Perlengkapan"
+      profileHref="/perlengkapan/profil"
+      notifikasiHref="/perlengkapan/dashboard"
+    >
       <div className="space-y-7">
-        {/* Hero Banner sesuai mockup perlengkapan_dashboard.png */}
         <HeroBanner
           eyebrow="DASHBOARD"
           title="Selamat datang, Perlengkapan"
           description="Pantau pengadaan yang masuk dan tindak lanjuti dari satu tempat."
         />
 
-        {/* Tabel Pengadaan Masuk Terbaru */}
         <PerlengkapanPengadaanMasukTable
           items={data?.pengadaan_masuk || []}
           isLoading={isLoading}
         />
       </div>
-    </DashboardShellTemplate>
+    </AppLayout>
   );
 };
 

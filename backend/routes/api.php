@@ -20,6 +20,7 @@ use App\Http\Controllers\Perencanaan\PerencanaanMakController;
 use App\Http\Controllers\Perencanaan\PerencanaanProfilController;
 use App\Http\Controllers\Perencanaan\PerencanaanRkaklController;
 use App\Http\Controllers\Perlengkapan\DashboardPerlengkapanController;
+use App\Http\Controllers\Perlengkapan\PengadaanPerlengkapanController;
 use App\Http\Controllers\Pp\DashboardPpController;
 use App\Http\Controllers\Pp\PpController;
 use App\Http\Controllers\PPBJ\DashboardPpbjController;
