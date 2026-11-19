@@ -2,7 +2,6 @@ import { useState, type FC, type FormEvent, type ChangeEvent } from 'react';
 import { Upload, X, FileText, AlertCircle } from 'lucide-react';
 import Modal from './Modal';
 import FormField from '../molecules/FormField';
-import MoneyInput from '../molecules/MoneyInput';
 import type { PpbjUpdateKlasifikasiPayload, PpbjReferenceOption } from '../../types/ppbj';
 
 export interface EditPengadaanModalProps {
@@ -43,10 +42,9 @@ export const EditPengadaanModal: FC<EditPengadaanModalProps> = ({
   const [metodeId, setMetodeId] = useState<string>(
     String(initialData?.metode_id || referenceData.metode?.[0]?.id || '')
   );
-  const [levelId] = useState<string>(
+  const [levelId, setLevelId] = useState<string>(
     String(initialData?.level_id || referenceData.level?.[0]?.id || '')
   );
-  const [nominal, setNominal] = useState<number>(Number(initialData?.nominal) || 0);
   const [fileDokumen, setFileDokumen] = useState<File | null>(null);
   const [errorLocal, setErrorLocal] = useState<string | null>(null);
 
@@ -80,8 +78,8 @@ export const EditPengadaanModal: FC<EditPengadaanModalProps> = ({
       setErrorLocal('Metode pengadaan wajib dipilih.');
       return;
     }
-    if (nominal <= 0) {
-      setErrorLocal('Nominal pengadaan harus lebih dari 0.');
+    if (!levelId) {
+      setErrorLocal('Tingkat level pengadaan wajib dipilih.');
       return;
     }
 
@@ -90,8 +88,7 @@ export const EditPengadaanModal: FC<EditPengadaanModalProps> = ({
       permohonan_mak_id: permohonanMakId,
       jenis_id: jenisId,
       metode_id: metodeId,
-      level_id: levelId || undefined,
-      nominal,
+      level_id: levelId,
       dokumen: fileDokumen,
     });
   };
@@ -124,7 +121,7 @@ export const EditPengadaanModal: FC<EditPengadaanModalProps> = ({
           </select>
         </FormField>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <FormField label="Jenis Pengadaan">
             <select
               value={jenisId}
@@ -152,15 +149,21 @@ export const EditPengadaanModal: FC<EditPengadaanModalProps> = ({
               ))}
             </select>
           </FormField>
-        </div>
 
-        <FormField label="Nominal Pengadaan (Rp)">
-          <MoneyInput
-            value={nominal}
-            onChange={(val) => setNominal(typeof val === 'number' ? val : 0)}
-            placeholder="Masukkan nominal pengadaan"
-          />
-        </FormField>
+          <FormField label="Level Pengadaan">
+            <select
+              value={levelId}
+              onChange={(e: ChangeEvent<HTMLSelectElement>) => setLevelId(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-[#D0D5DD] bg-white text-xs font-medium text-[#14201C] focus:outline-none focus:ring-2 focus:ring-[#0E7C5A]"
+            >
+              {(referenceData.level || []).map((l) => (
+                <option key={l.id} value={String(l.id)}>
+                  {l.nama}
+                </option>
+              ))}
+            </select>
+          </FormField>
+        </div>
 
         <div>
           <label className="block text-xs font-bold text-[#14201C] mb-1.5">

@@ -50,7 +50,7 @@ export interface PpbjPengadaanItem {
   metode?: string;
   level?: string;
   permohonan?: PpbjPermohonanItem;
-  nominal: number;
+  nominal?: number | null;
   revisiKe?: number;
   permohonanMak?: permohonanMak;
   reviewPp?: boolean;
@@ -112,7 +112,7 @@ export interface PpbjReferenceData {
 export interface PpbjPaketDraftItem {
   id: number;
   makKode: string;
-  nominal: number;
+  nominal?: number | null;
   status: string;
   dokumenList?: Array<{
     id: number | string;
@@ -156,8 +156,7 @@ export interface PpbjStoreDraftItemPayload {
   permohonan_mak_id: number | string;
   jenis_id: number | string;
   metode_id: number | string;
-  nominal: number | string;
-  level_id?: number | string;
+  level_id: number | string;
   dokumen?: File | null;
 }
 
@@ -246,7 +245,6 @@ export interface PpbjUpdateKlasifikasiPayload {
   permohonan_mak_id: number | string;
   jenis_id: number | string;
   metode_id: number | string;
-  level_id?: number | string;
-  nominal: number | string;
+  level_id: number | string;
   dokumen?: File | null;
 }

@@ -118,7 +118,7 @@ class PpbjDashboardService
                 'metodeNama' => $p->Metode?->nama ?? '-',
                 'levelNama' => $p->Level?->nama ?? '-',
                 'ppkNama' => $p->Ppk?->nama ?? '-',
-                'nominal' => (float) $p->nominal,
+                'nominal' => $p->Kontrak?->nominal_kontrak ? (float) $p->Kontrak->nominal_kontrak : null,
                 'revisiKe' => $p->revisi_ke,
                 'status' => $p->status,
                 'tanggalDibuat' => $p->created_at ? (string) $p->created_at : '-',

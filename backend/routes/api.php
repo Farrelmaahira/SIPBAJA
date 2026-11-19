@@ -140,7 +140,7 @@ Route::prefix('v1')->group(function () {
         Route::prefix('ppbj')->middleware('role:PPBJ')->group(function () {
             Route::get('dashboard', DashboardPpbjController::class)->name('api.ppbj.dashboard');
             Route::apiResource('permohonan', PpbjPermohonanController::class)->names('api.ppbj.permohonan');
-            Route::apiResource('pengadaan', PengadaanController::class)->names('api.ppbj.pengadaan');
+            Route::apiResource('pengadaan', PengadaanController::class)->except(['destroy'])->names('api.ppbj.pengadaan');
             Route::post('pengadaan/{id}/kontrak', [PengadaanController::class, 'storeKontrak'])->name('api.ppbj.pengadaan.kontrak.store');
             Route::put('pengadaan/{id}/kontrak', [PengadaanController::class, 'updateKontrak'])->name('api.ppbj.pengadaan.kontrak.update');
             Route::get('pengadaan/{pengadaanId}/dokumen/{dokumenId}', [PengadaanController::class, 'downloadDokumen'])->name('api.ppbj.pengadaan.dokumen.download');

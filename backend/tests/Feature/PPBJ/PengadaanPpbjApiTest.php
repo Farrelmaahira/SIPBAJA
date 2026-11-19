@@ -3,6 +3,7 @@
 namespace Tests\Feature\PPBJ;
 
 use App\Models\JenisPengadaan;
+use App\Models\LevelPengadaan;
 use App\Models\MetodePengadaan;
 use App\Models\PenerimaanBarang;
 use App\Models\Pengadaan;
@@ -78,19 +79,20 @@ class PengadaanPpbjApiTest extends TestCase
         $mak = PermohonanMak::where('permohonan_id', $pengadaan->permohonan_id)->firstOrFail();
         $jenis = JenisPengadaan::firstOrFail();
         $metode = MetodePengadaan::firstOrFail();
+        $level = LevelPengadaan::firstOrFail();
 
         $response = $this->actingAs($this->ppbjUser)->putJson("/api/v1/ppbj/pengadaan/{$pengadaan->id}", [
             'permohonan_mak_id' => $mak->id,
             'jenis_id' => $jenis->id,
             'metode_id' => $metode->id,
-            'nominal' => 45000000,
+            'level_id' => $level->id,
         ]);
 
         $response->assertOk()
             ->assertJsonPath('message', 'Klasifikasi pengadaan berhasil diperbarui.');
 
         $pengadaan->refresh();
-        $this->assertEquals(45000000, (float) $pengadaan->nominal);
+        $this->assertEquals($level->id, $pengadaan->level_id);
     }
 
     public function test_update_klasifikasi_gagal_jika_status_bukan_draft_atau_ditolak(): void
@@ -102,12 +104,13 @@ class PengadaanPpbjApiTest extends TestCase
         $mak = PermohonanMak::where('permohonan_id', $pengadaan->permohonan_id)->firstOrFail();
         $jenis = JenisPengadaan::firstOrFail();
         $metode = MetodePengadaan::firstOrFail();
+        $level = LevelPengadaan::firstOrFail();
 
         $response = $this->actingAs($this->ppbjUser)->putJson("/api/v1/ppbj/pengadaan/{$pengadaan->id}", [
             'permohonan_mak_id' => $mak->id,
             'jenis_id' => $jenis->id,
             'metode_id' => $metode->id,
-            'nominal' => 45000000,
+            'level_id' => $level->id,
         ]);
 
         $response->assertStatus(422);

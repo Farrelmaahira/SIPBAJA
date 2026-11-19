@@ -75,9 +75,8 @@ class PengadaanService
             return $paket->status !== 'draft';
         });
 
-        $totalNominalPaket = (float) $permohonan->Pengadaan->sum(fn ($p) => (float) ($p->nominal ?? 0));
         $estimasi = (float) ($permohonan->estimasi_anggaran ?? 0);
-        $sisaAnggaran = max(0.0, $estimasi - $totalNominalPaket);
+        $sisaAnggaran = $estimasi;
 
         $availableMak = $permohonan->PermohonanMak
             ->filter(fn ($pm) => $pm->Mak !== null)
@@ -105,7 +104,7 @@ class PengadaanService
             'bisaDipecah' => $bisaDipecah,
             'sudahDikunci' => $sudahDikunci,
             'sisaAnggaran' => $sisaAnggaran,
-            'totalNominalPaket' => $totalNominalPaket,
+            'totalNominalPaket' => 0.0,
             'availableMak' => $availableMak,
             'referenceData' => $referenceData,
         ];
@@ -144,20 +143,9 @@ class PengadaanService
 
         $permohonan = Permohonan::with(['PermohonanMak.Mak.Ppk', 'Pengadaan'])->findOrFail($permohonanId);
 
-        $existingTotal = (float) $permohonan->Pengadaan->sum(fn ($p) => (float) ($p->nominal ?? 0));
-        $newTotal = (float) array_sum(array_map(fn ($item) => (float) ($item['nominal'] ?? 0), $items));
-        $estimasi = (float) ($permohonan->estimasi_anggaran ?? 0);
-
-        if (($existingTotal + $newTotal) > $estimasi) {
-            throw ValidationException::withMessages([
-                'nominal' => 'Total nominal paket melebihi estimasi anggaran permohonan.',
-            ]);
-        }
-
         $makMap = $permohonan->PermohonanMak->keyBy('id');
-        $levels = LevelPengadaan::orderBy('min_nominal')->get();
 
-        return DB::transaction(function () use ($permohonan, $items, $actor, $makMap, $levels) {
+        return DB::transaction(function () use ($permohonan, $items, $actor, $makMap) {
             $createdPengadaan = [];
 
             foreach ($items as $item) {
@@ -170,10 +158,7 @@ class PengadaanService
                     ]);
                 }
 
-                $nominal = (float) $item['nominal'];
-                $levelId = isset($item['level_id']) && $item['level_id'] !== null && $item['level_id'] !== ''
-                    ? (int) $item['level_id']
-                    : $this->resolveLevelId($nominal, $levels);
+                $levelId = (int) $item['level_id'];
 
                 $pengadaan = Pengadaan::create([
                     'permohonan_id' => $permohonan->id,
@@ -182,7 +167,6 @@ class PengadaanService
                     'metode_id' => (int) $item['metode_id'],
                     'level_id' => $levelId,
                     'ppk_id' => $pm->Mak?->ppk_user_id,
-                    'nominal' => $nominal,
                     'revisi_ke' => 0,
                     'status' => 'draft',
                 ]);
@@ -274,9 +258,9 @@ class PengadaanService
                 ]);
             }
 
-            if (! $paket->permohonan_mak_id || ! $paket->jenis_id || ! $paket->metode_id || ! $paket->level_id || (float) $paket->nominal <= 0) {
+            if (! $paket->permohonan_mak_id || ! $paket->jenis_id || ! $paket->metode_id || ! $paket->level_id) {
                 throw ValidationException::withMessages([
-                    'paket' => 'Seluruh informasi paket (MAK, Jenis, Metode, Level, dan Nominal) wajib diisi lengkap.',
+                    'paket' => 'Seluruh informasi paket (MAK, Jenis, Metode, dan Level) wajib diisi lengkap.',
                 ]);
             }
         }
@@ -823,7 +807,7 @@ class PengadaanService
 
         return [
             'id' => $pengadaan->id,
-            'nominal' => (float) $pengadaan->nominal,
+            'nominal' => $kontrak?->nominal_kontrak ? (float) $kontrak->nominal_kontrak : null,
             'status' => $pengadaan->status,
             'revisi_ke' => $pengadaan->revisi_ke,
             'bisa_edit_draft' => $bisaEditDraft,
@@ -860,7 +844,7 @@ class PengadaanService
                 'nomor' => $kontrak->nomor,
                 'tanggal' => $kontrak->tanggal ? Carbon::parse($kontrak->tanggal)->format('Y-m-d') : null,
                 'vendor_nama' => $kontrak->vendor_nama,
-                'nominal_kontrak' => (float) ($kontrak->nominal_kontrak ?? $pengadaan->nominal),
+                'nominal_kontrak' => $kontrak->nominal_kontrak !== null ? (float) $kontrak->nominal_kontrak : null,
                 'tanggal_jatuh_tempo' => $rencanaPembayaran?->tanggal_jatuh_tempo ? Carbon::parse($rencanaPembayaran->tanggal_jatuh_tempo)->format('Y-m-d') : null,
                 'tanggal_reminder' => $reminder?->tanggal_reminder ? Carbon::parse($reminder->tanggal_reminder)->format('Y-m-d') : null,
                 'dokumen' => $dokumenKontrak ? [
@@ -902,21 +886,7 @@ class PengadaanService
             $pengadaan->permohonan_mak_id = $data['permohonan_mak_id'];
             $pengadaan->jenis_id = $data['jenis_id'];
             $pengadaan->metode_id = $data['metode_id'];
-            $pengadaan->nominal = $data['nominal'];
-
-            if (! empty($data['level_id'])) {
-                $pengadaan->level_id = $data['level_id'];
-            } else {
-                $nominal = (float) $data['nominal'];
-                $level = LevelPengadaan::where('min_nominal', '<=', $nominal)
-                    ->where(function ($q) use ($nominal) {
-                        $q->whereNull('max_nominal')->orWhere('max_nominal', '>=', $nominal);
-                    })
-                    ->first();
-                if ($level) {
-                    $pengadaan->level_id = $level->id;
-                }
-            }
+            $pengadaan->level_id = $data['level_id'];
 
             if ($statusSebelumnya === 'ditolak') {
                 $pengadaan->revisi_ke = ((int) $pengadaan->revisi_ke) + 1;

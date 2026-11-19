@@ -17,8 +17,7 @@ class UpdateKlasifikasiPengadaanRequest extends FormRequest
             'permohonan_mak_id' => ['required', 'integer', 'exists:permohonan_mak,id'],
             'jenis_id' => ['required', 'integer', 'exists:jenis_pengadaan,id'],
             'metode_id' => ['required', 'integer', 'exists:metode_pengadaan,id'],
-            'level_id' => ['nullable', 'integer', 'exists:level_pengadaan,id'],
-            'nominal' => ['required', 'numeric', 'min:1'],
+            'level_id' => ['required', 'integer', 'exists:level_pengadaan,id'],
             'dokumen' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
         ];
     }
@@ -32,9 +31,7 @@ class UpdateKlasifikasiPengadaanRequest extends FormRequest
             'jenis_id.exists' => 'Jenis pengadaan tidak valid.',
             'metode_id.required' => 'Metode pengadaan wajib dipilih.',
             'metode_id.exists' => 'Metode pengadaan tidak valid.',
-            'nominal.required' => 'Nominal pengadaan wajib diisi.',
-            'nominal.numeric' => 'Nominal pengadaan harus berupa angka.',
-            'nominal.min' => 'Nominal pengadaan minimal Rp 1.',
+            'level_id.required' => 'Tingkat level pengadaan wajib dipilih.',
             'dokumen.mimes' => 'Dokumen pengadaan harus berupa berkas PDF.',
             'dokumen.max' => 'Ukuran dokumen pengadaan maksimal 10 MB.',
         ];

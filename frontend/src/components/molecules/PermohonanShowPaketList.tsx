@@ -1,7 +1,6 @@
 import type { FC } from 'react';
 import { Trash2, FileText, AlertCircle } from 'lucide-react';
 import StatusPill from '../atoms/StatusPill';
-import { formatRupiah } from '../../utils/formatters';
 import type { PpbjPaketDraftItem } from '../../types/ppbj';
 
 export interface PaketPengadaanDokumen {
@@ -61,7 +60,6 @@ export const PermohonanShowPaketList: FC<PermohonanShowPaketListProps> = ({
             <th scope="col" className="py-3 px-4">MAK & Penanggung Jawab</th>
             <th scope="col" className="py-3 px-4">Jenis & Metode</th>
             <th scope="col" className="py-3 px-4">Level</th>
-            <th scope="col" className="py-3 px-4">Nominal</th>
             <th scope="col" className="py-3 px-4">Dokumen</th>
             <th scope="col" className="py-3 px-4 text-center">Status</th>
             {!sudahDikunci && (
@@ -111,9 +109,6 @@ export const PermohonanShowPaketList: FC<PermohonanShowPaketListProps> = ({
                   <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-[#F0F4F2] text-[#14201C] text-xs font-medium border border-[#E4EBE8]">
                     {levelText}
                   </span>
-                </td>
-                <td className="py-3.5 px-4 font-semibold text-[#14201C] tabular-nums">
-                  {formatRupiah(paket.nominal)}
                 </td>
                 <td className="py-3.5 px-4">
                   {hasDokumen ? (

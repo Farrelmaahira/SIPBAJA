@@ -22,10 +22,6 @@ export const PengadaanSplitForm: FC<PengadaanSplitFormProps> = ({
 }) => {
   const defaultItem = (): PengadaanItem => {
     const firstLevel = referenceData.level?.[0];
-    const defaultNominal =
-      firstLevel?.min_nominal && Number(firstLevel.min_nominal) > 0
-        ? Number(firstLevel.min_nominal)
-        : Number(firstLevel?.max_nominal || 50000000);
 
     return {
       permohonan_mak_id: availableMak[0]?.permohonan_mak_id
@@ -33,9 +29,7 @@ export const PengadaanSplitForm: FC<PengadaanSplitFormProps> = ({
         : '',
       jenis_id: referenceData.jenis?.[0]?.id ? String(referenceData.jenis[0].id) : '',
       metode_id: referenceData.metode?.[0]?.id ? String(referenceData.metode[0].id) : '',
-      nominal: defaultNominal,
       level_id: firstLevel?.id ? String(firstLevel.id) : '',
-      isLevelOverridden: false,
       dokumen: null,
     };
   };
@@ -90,24 +84,7 @@ export const PengadaanSplitForm: FC<PengadaanSplitFormProps> = ({
     if (onSubmit) {
       setProcessing(true);
       try {
-        const preparedItems = items.map((it) => {
-          let nom = it.nominal;
-          if (!nom || Number(nom) === 0) {
-            const matched = (referenceData.level || []).find(
-              (l) => String(l.id) === String(it.level_id)
-            );
-            nom =
-              matched?.min_nominal && Number(matched.min_nominal) > 0
-                ? Number(matched.min_nominal)
-                : Number(matched?.max_nominal || 50000000);
-          }
-          return {
-            ...it,
-            nominal: nom,
-          };
-        });
-
-        await onSubmit({ items: preparedItems });
+        await onSubmit({ items });
         setItems([defaultItem()]);
       } catch (err: unknown) {
         if (err && typeof err === 'object' && 'errors' in err) {
