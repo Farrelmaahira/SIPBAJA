@@ -1,6 +1,7 @@
 import api from './api';
 import type {
   PerlengkapanDashboardData,
+  PerlengkapanPengadaanDetail,
   PerlengkapanPengadaanListResponse,
 } from '../types/perlengkapan';
 
@@ -30,6 +31,34 @@ export const perlengkapanService = {
     const response = await api.get<PerlengkapanPengadaanListResponse>('/v1/perlengkapan/pengadaan', {
       params,
       signal,
+    });
+    return response.data;
+  },
+
+  /**
+   * Mengambil detail pengadaan untuk Unit Perlengkapan.
+   */
+  async getPengadaanDetail(
+    id: number | string,
+    signal?: AbortSignal
+  ): Promise<PerlengkapanPengadaanDetail> {
+    const response = await api.get<PerlengkapanPengadaanDetail>(`/v1/perlengkapan/pengadaan/${id}`, {
+      signal,
+    });
+    return response.data;
+  },
+
+  /**
+   * Mengunggah dokumen barang/jasa dan foto dokumentasi fisik untuk serah terima barang.
+   */
+  async simpanPenerimaan(
+    id: number | string,
+    formData: FormData
+  ): Promise<{ message: string; [key: string]: unknown }> {
+    const response = await api.post(`/v1/perlengkapan/pengadaan/${id}/penerimaan`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
     return response.data;
   },

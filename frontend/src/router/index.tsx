@@ -66,6 +66,9 @@ import PpkProfilIndex from '../pages/Ppk/Profil/Index';
 // Perlengkapan & Keuangan Pages
 import PerlengkapanDashboard from '../pages/Perlengkapan/Dashboard';
 import PerlengkapanPengadaanIndex from '../pages/Perlengkapan/Pengadaan/Index';
+import PerlengkapanPengadaanShow from '../pages/Perlengkapan/Pengadaan/Show';
+import PerlengkapanNotifikasiIndex from '../pages/Perlengkapan/Notifikasi/Index';
+import PerlengkapanProfilIndex from '../pages/Perlengkapan/Profil/Index';
 import KeuanganDashboard from '../pages/Keuangan/Dashboard';
 
 // Shared Pages
@@ -269,6 +272,9 @@ export const AppRoutes: FC = () => {
         <Route element={<RoleRoute allowedRoles={['Perlengkapan']} />}>
           <Route path="/perlengkapan/dashboard" element={<PerlengkapanDashboard />} />
           <Route path="/perlengkapan/pengadaan" element={<PerlengkapanPengadaanIndex />} />
+          <Route path="/perlengkapan/pengadaan/:id" element={<PerlengkapanPengadaanShow />} />
+          <Route path="/perlengkapan/notifikasi" element={<PerlengkapanNotifikasiIndex />} />
+          <Route path="/perlengkapan/profil" element={<PerlengkapanProfilIndex />} />
         </Route>
 
         {/* Keuangan Routes */}

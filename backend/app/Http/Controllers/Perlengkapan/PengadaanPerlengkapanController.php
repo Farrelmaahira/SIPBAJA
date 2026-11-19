@@ -3,9 +3,13 @@
 namespace App\Http\Controllers\Perlengkapan;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SimpanPenerimaanBarangRequest;
+use App\Models\Dokumen;
 use App\Services\PerlengkapanService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PengadaanPerlengkapanController extends Controller
 {
@@ -29,5 +33,78 @@ class PengadaanPerlengkapanController extends Controller
         $result = $this->perlengkapanService->getPengadaanList($filters, $page, $perPage);
 
         return response()->json($result);
+    }
+
+    /**
+     * Menampilkan detail pengadaan untuk Unit Perlengkapan.
+     */
+    public function show(int|string $pengadaan): JsonResponse
+    {
+        $data = $this->perlengkapanService->getPengadaanDetail($pengadaan);
+
+        return response()->json($data);
+    }
+
+    /**
+     * Menyimpan data penerimaan barang, dokumen BAST/pendukung, dan foto fisik dokumentasi.
+     */
+    public function storePenerimaan(SimpanPenerimaanBarangRequest $request, int|string $pengadaan): JsonResponse
+    {
+        $validated = $request->validated();
+        $dokumenBarang = $request->file('dokumen_barang', []);
+        $dokumentasiFoto = $request->file('dokumentasi_foto', []);
+
+        $result = $this->perlengkapanService->simpanPenerimaanBarang(
+            $pengadaan,
+            $validated,
+            is_array($dokumenBarang) ? $dokumenBarang : [$dokumenBarang],
+            is_array($dokumentasiFoto) ? $dokumentasiFoto : ($dokumentasiFoto ? [$dokumentasiFoto] : []),
+            $request->user()
+        );
+
+        return response()->json($result, 201);
+    }
+
+    /**
+     * Mengunduh atau melihat dokumen terkait pengadaan atau serah terima barang.
+     */
+    public function downloadDokumen(Request $request, int|string $pengadaan, int|string $dokumenId): StreamedResponse|JsonResponse
+    {
+        if (is_numeric($dokumenId)) {
+            $dokumen = Dokumen::find((int) $dokumenId);
+            if ($dokumen) {
+                $path = $dokumen->ref_type === 'penerimaan_barang'
+                    ? "dokumen/penerimaan/{$dokumen->nama_hash}"
+                    : ($dokumen->ref_type === 'kontrak' ? "dokumen/kontrak/{$dokumen->nama_hash}" : "dokumen/pengadaan/{$dokumen->nama_hash}");
+
+                if (Storage::disk('local')->exists($path)) {
+                    $disposition = $request->query('disposition') === 'inline' ? 'inline' : 'attachment';
+
+                    return Storage::disk('local')->download(
+                        $path,
+                        $dokumen->nama_asli ?: 'dokumen.pdf',
+                        [
+                            'Content-Type' => $dokumen->mime_type ?: 'application/pdf',
+                            'Content-Disposition' => "{$disposition}; filename=\"".($dokumen->nama_asli ?: 'dokumen.pdf').'"',
+                        ]
+                    );
+                }
+            }
+        }
+
+        // Fallback untuk mock sample document
+        $namaFile = $request->query('nama', 'dokumen_pengadaan.pdf');
+        $pdfContent = "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Parent 2 0 R/Resources<<>>>>endobj\nxref\n0 4\n0000000000 65535 f \n0000000009 00000 n \n0000000052 00000 n \n0000000102 00000 n \ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n178\n%%EOF\n";
+
+        return response()->streamDownload(
+            function () use ($pdfContent) {
+                echo $pdfContent;
+            },
+            $namaFile,
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="'.$namaFile.'"',
+            ]
+        );
     }
 }

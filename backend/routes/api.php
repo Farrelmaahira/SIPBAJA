@@ -191,6 +191,10 @@ Route::prefix('v1')->group(function () {
         Route::prefix('perlengkapan')->middleware('role:Perlengkapan')->group(function () {
             Route::get('dashboard', DashboardPerlengkapanController::class)->name('api.perlengkapan.dashboard');
             Route::get('pengadaan', [PengadaanPerlengkapanController::class, 'index'])->name('api.perlengkapan.pengadaan.index');
+            Route::get('pengadaan/{pengadaan}', [PengadaanPerlengkapanController::class, 'show'])->name('api.perlengkapan.pengadaan.show');
+            Route::post('pengadaan/{pengadaan}/penerimaan', [PengadaanPerlengkapanController::class, 'storePenerimaan'])->name('api.perlengkapan.pengadaan.storePenerimaan');
+            Route::get('pengadaan/{pengadaan}/dokumen/{dokumenId}', [PengadaanPerlengkapanController::class, 'downloadDokumen'])->name('api.perlengkapan.pengadaan.downloadDokumen');
+            Route::get('profil', [PerencanaanProfilController::class, 'index'])->name('api.perlengkapan.profil.index');
         });
 
         // Keuangan Routes

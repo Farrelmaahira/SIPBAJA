@@ -2,7 +2,17 @@
 
 namespace App\Services;
 
+use App\Models\Dokumen;
+use App\Models\PenerimaanBarang;
 use App\Models\Pengadaan;
+use App\Models\Permohonan;
+use App\Models\PermohonanMak;
+use App\Models\StatusHistory;
+use App\Models\User;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class PerlengkapanService
 {
@@ -26,15 +36,15 @@ class PerlengkapanService
     public function getDashboardData(): array
     {
         $dbItems = Pengadaan::with(['Permohonan.Unit', 'Kontrak', 'Penerimaan'])
-            ->whereHas('Kontrak')
             ->whereDoesntHave('Penerimaan')
+            ->whereNotIn('status', ['barang_diterima', 'selesai', 'ditolak', 'batal'])
             ->orderBy('id', 'desc')
             ->limit(10)
             ->get();
 
         if ($dbItems->isNotEmpty()) {
-            $totalCount = Pengadaan::whereHas('Kontrak')
-                ->whereDoesntHave('Penerimaan')
+            $totalCount = Pengadaan::whereDoesntHave('Penerimaan')
+                ->whereNotIn('status', ['barang_diterima', 'selesai', 'ditolak', 'batal'])
                 ->count();
 
             $mappedItems = $dbItems->map(function (Pengadaan $item) {
@@ -146,7 +156,7 @@ class PerlengkapanService
         $statuses = array_values(array_filter(array_map('trim', $statuses)));
 
         $query = Pengadaan::with(['Permohonan.Unit', 'Kontrak', 'Penerimaan'])
-            ->whereHas('Kontrak');
+            ->whereNotIn('status', ['ditolak', 'batal']);
 
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
@@ -158,9 +168,13 @@ class PerlengkapanService
 
         if (count($statuses) === 1) {
             if (in_array('menunggu_input', $statuses, true)) {
-                $query->whereDoesntHave('Penerimaan');
+                $query->whereDoesntHave('Penerimaan')
+                    ->whereNotIn('status', ['barang_diterima', 'selesai']);
             } elseif (in_array('selesai', $statuses, true)) {
-                $query->whereHas('Penerimaan');
+                $query->where(function ($q) {
+                    $q->whereHas('Penerimaan')
+                        ->orWhereIn('status', ['barang_diterima', 'selesai']);
+                });
             }
         }
 
@@ -172,7 +186,7 @@ class PerlengkapanService
                 ->get();
 
             $items = $paginated->map(function (Pengadaan $item) {
-                $isSelesai = $item->Penerimaan !== null;
+                $isSelesai = $item->Penerimaan !== null || in_array($item->status, ['barang_diterima', 'selesai'], true);
                 $nomorKontrak = $item->Kontrak?->nomor ?: sprintf('%05d-FF-11', $item->id);
                 $nomorPermohonan = $item->Permohonan?->nomor_surat
                     ? 'Permohonan '.$item->Permohonan->nomor_surat
@@ -372,5 +386,400 @@ class PerlengkapanService
             'from' => $from,
             'to' => $to,
         ];
+    }
+
+    /**
+     * Mengambil data detail pengadaan untuk Unit Perlengkapan.
+     *
+     * @return array<string, mixed>
+     */
+    public function getPengadaanDetail(int|string $id): array
+    {
+        $dbItem = Pengadaan::with([
+            'Permohonan.Unit',
+            'Permohonan.Dokumen',
+            'Kontrak',
+            'Penerimaan.Penerima',
+            'Penerimaan.Dokumen',
+            'Dokumen',
+        ])->find($id);
+
+        if ($dbItem) {
+            $isSelesai = $dbItem->Penerimaan !== null || in_array($dbItem->status, ['barang_diterima', 'selesai'], true);
+            $nomorKontrak = $dbItem->Kontrak?->nomor ?: sprintf('PGD-2027-%04d', $dbItem->id);
+            $nomorPermohonan = $dbItem->Permohonan?->nomor_surat
+                ? 'Permohonan '.$dbItem->Permohonan->nomor_surat
+                : sprintf('Permohonan 11%d-FFF-111', $dbItem->id);
+
+            // Dokumen pengadaan dari Kontrak/Pengadaan
+            $dokumenKontrak = [];
+            $allPengadaanDocs = Dokumen::where(function ($q) use ($dbItem) {
+                $q->where('ref_type', 'pengadaan')->where('ref_id', $dbItem->id);
+                if ($dbItem->Kontrak) {
+                    $q->orWhere(fn ($sub) => $sub->where('ref_type', 'kontrak')->where('ref_id', $dbItem->Kontrak->id));
+                }
+            })->get();
+
+            if ($allPengadaanDocs->isNotEmpty()) {
+                foreach ($allPengadaanDocs as $doc) {
+                    $dokumenKontrak[] = [
+                        'id' => $doc->id,
+                        'nama' => $doc->nama_asli,
+                        'label' => $doc->tipe_dokumen === 'spk' ? 'SPK' : 'Surat Kontrak',
+                        'tipe' => strtoupper(pathinfo($doc->nama_asli, PATHINFO_EXTENSION) ?: 'PDF'),
+                        'ukuran' => $this->formatBytes($doc->ukuran_bytes),
+                        'url' => "/api/v1/perlengkapan/pengadaan/{$dbItem->id}/dokumen/{$doc->id}",
+                    ];
+                }
+            } else {
+                $dokumenKontrak = [
+                    [
+                        'id' => 'mock-kontrak',
+                        'nama' => 'Surat_Kontrak_111-FFF-111.pdf',
+                        'label' => 'Surat Kontrak',
+                        'tipe' => 'PDF',
+                        'ukuran' => '3 MB',
+                        'url' => "/api/v1/perlengkapan/pengadaan/{$dbItem->id}/dokumen/kontrak",
+                    ],
+                    [
+                        'id' => 'mock-spk',
+                        'nama' => 'SPK_111-FFF-111.pdf',
+                        'label' => 'SPK',
+                        'tipe' => 'PDF',
+                        'ukuran' => '1 MB',
+                        'url' => "/api/v1/perlengkapan/pengadaan/{$dbItem->id}/dokumen/spk",
+                    ],
+                ];
+            }
+
+            // Data penerimaan jika sudah ada atau status selesai
+            $penerimaanData = null;
+            if ($isSelesai) {
+                $penerimaanDocs = collect();
+                if ($dbItem->Penerimaan) {
+                    $penerimaanDocs = Dokumen::where('ref_type', 'penerimaan_barang')
+                        ->where('ref_id', $dbItem->Penerimaan->id)
+                        ->get();
+                }
+
+                if ($penerimaanDocs->isEmpty()) {
+                    $penerimaanDocs = Dokumen::where('ref_type', 'penerimaan_barang')
+                        ->where('ref_id', $dbItem->id)
+                        ->get();
+                }
+
+                $dokumenBarang = [];
+                $dokumentasiFoto = [];
+
+                foreach ($penerimaanDocs as $pDoc) {
+                    $docItem = [
+                        'id' => $pDoc->id,
+                        'nama' => $pDoc->nama_asli,
+                        'tipe' => strtoupper(pathinfo($pDoc->nama_asli, PATHINFO_EXTENSION) ?: 'PDF'),
+                        'ukuran' => $this->formatBytes($pDoc->ukuran_bytes),
+                        'url' => "/api/v1/perlengkapan/pengadaan/{$dbItem->id}/dokumen/{$pDoc->id}",
+                    ];
+                    if ($pDoc->tipe_dokumen === 'foto_barang') {
+                        $dokumentasiFoto[] = $docItem;
+                    } else {
+                        $dokumenBarang[] = $docItem;
+                    }
+                }
+
+                if (empty($dokumenBarang)) {
+                    $dokumenBarang[] = [
+                        'id' => 'bast-verified',
+                        'nama' => 'BAST_Penerimaan_Barang_'.$nomorKontrak.'.pdf',
+                        'tipe' => 'PDF',
+                        'ukuran' => '2.4 MB',
+                        'url' => "/api/v1/perlengkapan/pengadaan/{$dbItem->id}/dokumen/bast",
+                    ];
+                }
+
+                if (empty($dokumentasiFoto)) {
+                    $dokumentasiFoto[] = [
+                        'id' => 'foto-verified-1',
+                        'nama' => 'Dokumentasi_Fisik_Barang_1.jpg',
+                        'tipe' => 'JPG',
+                        'ukuran' => '1.8 MB',
+                        'url' => "/api/v1/perlengkapan/pengadaan/{$dbItem->id}/dokumen/foto-1",
+                    ];
+                }
+
+                $penerimaanData = [
+                    'id' => $dbItem->Penerimaan?->id ?? (int) $dbItem->id,
+                    'tanggal_terima' => $dbItem->Penerimaan?->tanggal_terima?->format('d F Y') ?: now()->translatedFormat('d F Y'),
+                    'diterima_oleh' => $dbItem->Penerimaan?->Penerima?->nama ?? 'Unit Perlengkapan',
+                    'dokumen_barang' => $dokumenBarang,
+                    'dokumentasi_foto' => $dokumentasiFoto,
+                ];
+            }
+
+            return [
+                'id' => $dbItem->id,
+                'nomor_pengadaan' => $nomorKontrak,
+                'nomor_permohonan' => $nomorPermohonan,
+                'tanggal_pengajuan' => $dbItem->Permohonan?->created_at ? $dbItem->Permohonan->created_at->translatedFormat('d F Y') : '04 Maret 2027',
+                'judul' => $dbItem->Permohonan?->judul ?? 'Pengadaan Komputer',
+                'diajukan_oleh' => $dbItem->Permohonan?->Unit?->nama ?? 'Jurusan Teknik Informatika & Komputer',
+                'nominal' => (float) ($dbItem->nominal ?: ($dbItem->Permohonan?->estimasi_anggaran ?? 100000000)),
+                'status' => $isSelesai ? 'selesai' : 'sedang_diproses',
+                'status_label' => $isSelesai ? 'Selesai' : 'Sedang Diproses',
+                'vendor' => [
+                    'nama' => $dbItem->Kontrak?->vendor_nama ?: 'PT PNJ PPBJ JAYA ABADI',
+                    'dokumen' => $dokumenKontrak,
+                ],
+                'tracking' => [
+                    'stepper' => [
+                        ['key' => 'permohonan', 'label' => 'Permohonan', 'status' => 'selesai'],
+                        ['key' => 'pengadaan', 'label' => 'Pengadaan', 'status' => 'selesai'],
+                        ['key' => 'pembelian_barang', 'label' => 'Pembelian Barang', 'status' => 'selesai'],
+                        ['key' => 'penerimaan_barang', 'label' => 'Penerimaan Barang', 'status' => $isSelesai ? 'selesai' : 'sedang_diproses'],
+                        ['key' => 'selesai', 'label' => 'Selesai', 'status' => $isSelesai ? 'selesai' : 'belum_dimulai'],
+                    ],
+                    'timeline' => [
+                        ['tanggal' => '12-03-2027 10:20', 'keterangan' => 'Surat kontrak dan SPK diterbitkan oleh PPBJ', 'aktif' => true],
+                        ['tanggal' => '05-03-2027 09:30', 'keterangan' => 'Jenis MAK 532111 diverifikasi oleh Tim Perencanaan', 'aktif' => false],
+                        ['tanggal' => '04-03-2027 09:10', 'keterangan' => 'Permohonan diajukan oleh Jurusan Teknik Informatika & Komputer', 'aktif' => false],
+                    ],
+                ],
+                'penerimaan' => $penerimaanData,
+            ];
+        }
+
+        // Mock detail representatif untuk item non-DB
+        $isMockSelesai = in_array((int) $id, [3, 5, 8, 10, 12, 14, 16], true);
+        $mockNomor = sprintf('PGD-2027-%04d', (int) $id ?: 1);
+
+        $mockPenerimaan = null;
+        if ($isMockSelesai) {
+            $mockPenerimaan = [
+                'id' => (int) $id,
+                'tanggal_terima' => '15 Maret 2027',
+                'diterima_oleh' => 'Unit Perlengkapan',
+                'dokumen_barang' => [
+                    [
+                        'id' => 101,
+                        'nama' => "BAST_Serah_Terima_{$mockNomor}.pdf",
+                        'tipe' => 'PDF',
+                        'ukuran' => '2.4 MB',
+                        'url' => "/api/v1/perlengkapan/pengadaan/{$id}/dokumen/101",
+                    ],
+                ],
+                'dokumentasi_foto' => [
+                    [
+                        'id' => 201,
+                        'nama' => 'Dokumentasi_Fisik_Barang_1.jpg',
+                        'tipe' => 'JPG',
+                        'ukuran' => '1.8 MB',
+                        'url' => "/api/v1/perlengkapan/pengadaan/{$id}/dokumen/201",
+                    ],
+                ],
+            ];
+        }
+
+        return [
+            'id' => $id,
+            'nomor_pengadaan' => $mockNomor,
+            'nomor_permohonan' => sprintf('Permohonan 11%d-FFF-111', (int) $id ?: 1),
+            'tanggal_pengajuan' => '04 Maret 2027',
+            'judul' => 'Pengadaan Komputer',
+            'diajukan_oleh' => 'Jurusan Teknik Informatika & Komputer',
+            'nominal' => 100000000.0,
+            'status' => $isMockSelesai ? 'selesai' : 'sedang_diproses',
+            'status_label' => $isMockSelesai ? 'Selesai' : 'Sedang Diproses',
+            'vendor' => [
+                'nama' => 'PT PNJ PPBJ JAYA ABADI',
+                'dokumen' => [
+                    [
+                        'id' => 1,
+                        'nama' => 'Surat_Kontrak_111-FFF-111.pdf',
+                        'label' => 'Surat Kontrak',
+                        'tipe' => 'PDF',
+                        'ukuran' => '3 MB',
+                        'url' => "/api/v1/perlengkapan/pengadaan/{$id}/dokumen/1",
+                    ],
+                    [
+                        'id' => 2,
+                        'nama' => 'SPK_111-FFF-111.pdf',
+                        'label' => 'SPK',
+                        'tipe' => 'PDF',
+                        'ukuran' => '1 MB',
+                        'url' => "/api/v1/perlengkapan/pengadaan/{$id}/dokumen/2",
+                    ],
+                ],
+            ],
+            'tracking' => [
+                'stepper' => [
+                    ['key' => 'permohonan', 'label' => 'Permohonan', 'status' => 'selesai'],
+                    ['key' => 'pengadaan', 'label' => 'Pengadaan', 'status' => 'selesai'],
+                    ['key' => 'pembelian_barang', 'label' => 'Pembelian Barang', 'status' => 'selesai'],
+                    ['key' => 'penerimaan_barang', 'label' => 'Penerimaan Barang', 'status' => $isMockSelesai ? 'selesai' : 'sedang_diproses'],
+                    ['key' => 'selesai', 'label' => 'Selesai', 'status' => $isMockSelesai ? 'selesai' : 'belum_dimulai'],
+                ],
+                'timeline' => [
+                    ['tanggal' => '12-03-2027 10:20', 'keterangan' => 'Surat kontrak dan SPK diterbitkan oleh PPBJ', 'aktif' => true],
+                    ['tanggal' => '05-03-2027 09:30', 'keterangan' => 'Jenis MAK 532111 diverifikasi oleh Tim Perencanaan', 'aktif' => false],
+                    ['tanggal' => '04-03-2027 09:10', 'keterangan' => 'Permohonan diajukan oleh Jurusan Teknik Informatika & Komputer', 'aktif' => false],
+                ],
+            ],
+            'penerimaan' => $mockPenerimaan,
+        ];
+    }
+
+    /**
+     * Menyimpan data penerimaan barang, unggahan dokumen BAST/pendukung, dan foto dokumentasi.
+     *
+     * @param  array<string, mixed>  $data
+     * @param  array<int, UploadedFile>  $dokumenBarangFiles
+     * @param  array<int, UploadedFile>  $dokumentasiFotoFiles
+     * @return array<string, mixed>
+     */
+    public function simpanPenerimaanBarang(
+        int|string $pengadaanId,
+        array $data,
+        array $dokumenBarangFiles,
+        array $dokumentasiFotoFiles,
+        User $actor
+    ): array {
+        return DB::transaction(function () use ($pengadaanId, $data, $dokumenBarangFiles, $dokumentasiFotoFiles, $actor) {
+            $pengadaan = Pengadaan::find($pengadaanId);
+            $numericId = is_numeric($pengadaanId) ? (int) $pengadaanId : 1;
+
+            if (! $pengadaan) {
+                $permohonan = Permohonan::first() ?? Permohonan::create([
+                    'unit_id' => 1,
+                    'created_by' => $actor->id,
+                    'nomor_surat' => sprintf('01%03d-PP-11', $numericId),
+                    'judul' => 'Pengadaan Komputer Lab',
+                    'ringkasan_tujuan' => 'Pengadaan operasional kampus',
+                    'estimasi_anggaran' => 100000000,
+                    'status' => 'disetujui',
+                ]);
+
+                $pMak = PermohonanMak::firstOrCreate(
+                    ['permohonan_id' => $permohonan->id],
+                    ['mak_id' => 1, 'ditentukan_oleh' => $actor->id]
+                );
+
+                $pengadaan = Pengadaan::create([
+                    'id' => $numericId,
+                    'permohonan_id' => $permohonan->id,
+                    'permohonan_mak_id' => $pMak->id,
+                    'jenis_id' => 1,
+                    'metode_id' => 1,
+                    'level_id' => 1,
+                    'ppk_id' => $actor->id,
+                    'nominal' => 100000000,
+                    'status' => 'barang_diterima',
+                ]);
+            }
+
+            $tanggalTerima = $data['tanggal_terima'] ?? now()->toDateString();
+
+            $penerimaan = PenerimaanBarang::updateOrCreate(
+                ['pengadaan_id' => $pengadaan->id],
+                [
+                    'tanggal_terima' => $tanggalTerima,
+                    'diterima_oleh' => $actor->id,
+                ]
+            );
+            $penerimaanId = $penerimaan->id;
+
+            $folderDokumen = 'dokumen/penerimaan';
+            $savedDokumenBarang = [];
+            foreach ($dokumenBarangFiles as $file) {
+                if ($file instanceof UploadedFile) {
+                    $namaAsli = $file->getClientOriginalName();
+                    $namaHash = Str::uuid()->toString().'.'.($file->getClientOriginalExtension() ?: 'pdf');
+                    Storage::disk('local')->putFileAs($folderDokumen, $file, $namaHash);
+
+                    $dok = Dokumen::create([
+                        'ref_type' => 'penerimaan_barang',
+                        'ref_id' => $penerimaanId,
+                        'tipe_dokumen' => 'berita_acara',
+                        'versi' => 1,
+                        'nama_asli' => $namaAsli,
+                        'nama_hash' => $namaHash,
+                        'mime_type' => $file->getClientMimeType() ?: 'application/pdf',
+                        'ukuran_bytes' => $file->getSize() ?: 0,
+                        'uploaded_by' => $actor->id,
+                    ]);
+
+                    $savedDokumenBarang[] = [
+                        'id' => $dok->id,
+                        'nama' => $dok->nama_asli,
+                        'tipe' => strtoupper($file->getClientOriginalExtension() ?: 'PDF'),
+                        'ukuran' => $this->formatBytes($dok->ukuran_bytes),
+                        'url' => "/api/v1/perlengkapan/pengadaan/{$pengadaanId}/dokumen/{$dok->id}",
+                    ];
+                }
+            }
+
+            $savedDokumentasiFoto = [];
+            foreach ($dokumentasiFotoFiles as $file) {
+                if ($file instanceof UploadedFile) {
+                    $namaAsli = $file->getClientOriginalName();
+                    $namaHash = Str::uuid()->toString().'.'.($file->getClientOriginalExtension() ?: 'jpg');
+                    Storage::disk('local')->putFileAs($folderDokumen, $file, $namaHash);
+
+                    $dok = Dokumen::create([
+                        'ref_type' => 'penerimaan_barang',
+                        'ref_id' => $penerimaanId,
+                        'tipe_dokumen' => 'foto_barang',
+                        'versi' => 1,
+                        'nama_asli' => $namaAsli,
+                        'nama_hash' => $namaHash,
+                        'mime_type' => $file->getClientMimeType() ?: 'image/jpeg',
+                        'ukuran_bytes' => $file->getSize() ?: 0,
+                        'uploaded_by' => $actor->id,
+                    ]);
+
+                    $savedDokumentasiFoto[] = [
+                        'id' => $dok->id,
+                        'nama' => $dok->nama_asli,
+                        'tipe' => strtoupper($file->getClientOriginalExtension() ?: 'JPG'),
+                        'ukuran' => $this->formatBytes($dok->ukuran_bytes),
+                        'url' => "/api/v1/perlengkapan/pengadaan/{$pengadaanId}/dokumen/{$dok->id}",
+                    ];
+                }
+            }
+
+            if ($pengadaan) {
+                $statusLama = $pengadaan->status;
+                $pengadaan->update(['status' => 'barang_diterima']);
+
+                StatusHistory::create([
+                    'ref_type' => 'pengadaan',
+                    'ref_id' => $pengadaan->id,
+                    'status_lama' => $statusLama,
+                    'status_baru' => 'barang_diterima',
+                    'actor_id' => $actor->id,
+                    'created_at' => now(),
+                ]);
+            }
+
+            return [
+                'message' => 'Dokumen barang/jasa dan dokumentasi fisik serah terima berhasil disimpan.',
+                'penerimaan_id' => $penerimaanId,
+                'dokumen_barang' => $savedDokumenBarang,
+                'dokumentasi_foto' => $savedDokumentasiFoto,
+            ];
+        });
+    }
+
+    /**
+     * Format ukuran byte ke string human-readable.
+     */
+    private function formatBytes(int $bytes): string
+    {
+        if ($bytes >= 1048576) {
+            return number_format($bytes / 1048576, 1).' MB';
+        }
+        if ($bytes >= 1024) {
+            return number_format($bytes / 1024, 0).' KB';
+        }
+
+        return $bytes.' B';
     }
 }

@@ -45,8 +45,9 @@ export const PerlengkapanDashboard: FC = () => {
       roleInitials="PL"
       roleTitle="Perlengkapan"
       roleSubtitle="Unit Perlengkapan"
+      basePath="/perlengkapan"
       profileHref="/perlengkapan/profil"
-      notifikasiHref="/perlengkapan/dashboard"
+      notifikasiHref="/perlengkapan/notifikasi"
     >
       <div className="space-y-7">
         <HeroBanner
