@@ -12,6 +12,7 @@ import type {
   PpPengadaanItem,
 } from '../../../types/pp';
 import type { NotificationItem } from '../../../types/notification';
+import { PP_NAV_ITEMS } from '@/constants/ppNav';
 
 export interface PpDashboardTemplateProps {
   stats?: PpDashboardStats;
@@ -55,6 +56,7 @@ export const PpDashboardTemplate: FC<PpDashboardTemplateProps> = ({
       notifications={recentNotifications}
       unreadCount={unreadNotificationsCount}
       pendingCount={stats?.menunggu ?? 0}
+      navItems={PP_NAV_ITEMS}
       flash={errorMessage ? { error: errorMessage } : undefined}
     >
       <div className="space-y-6">
@@ -124,7 +126,7 @@ export const PpDashboardTemplate: FC<PpDashboardTemplateProps> = ({
                 <span>Rp50 - 200 juta</span>
               </span>
               <Link
-                to="/pp/pengajuan"
+                to="/pp/pengadaan"
                 className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0E7C5A] hover:underline"
               >
                 <span>Lihat Semua</span>

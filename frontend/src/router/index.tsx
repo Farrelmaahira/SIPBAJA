@@ -244,9 +244,9 @@ export const AppRoutes: FC = () => {
         {/* PP Routes */}
         <Route element={<RoleRoute allowedRoles={['PP']} />}>
           <Route path="/pp/dashboard" element={<PpDashboard />} />
-          <Route path="/pp/permohonan" element={<PpPengajuanIndex />} />
-          <Route path="/pp/permohonan/:id" element={<PpPengajuanShow />} />
-          <Route path="/pp/permohonan/:id/review" element={<PpPengajuanReview />} />
+          <Route path="/pp/pengadaan" element={<PpPengajuanIndex />} />
+          <Route path="/pp/pengadaan/:id" element={<PpPengajuanShow />} />
+          <Route path="/pp/pengadaan/:id/review" element={<PpPengajuanReview />} />
           <Route path="/pp/notifikasi" element={<PpNotifikasiIndex />} />
           <Route path="/pp/profil" element={<PpProfilIndex />} />
         </Route>
