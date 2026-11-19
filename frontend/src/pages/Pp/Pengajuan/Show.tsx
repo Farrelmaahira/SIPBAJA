@@ -1,9 +1,13 @@
 import { useState, useEffect, type FC } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import ppService from '../../../services/ppService';
-import PpPengajuanShowTemplate from '../../../components/templates/PP/PpPengajuanShowTemplate';
-import type { PpNavItem } from '../../../components/templates/PP/PpLayout';
-import type { PpPengadaanDetailPayload } from '../../../types/pp';
+import PpPengadaanDetailTemplate from '../../../components/templates/PP/PpPengadaanDetailTemplate';
+import { extractServerErrors } from '../../../utils/fileValidation';
+import type { AppNavItem as PpNavItem } from '../../../components/templates/General/AppLayout';
+import type {
+  PpPengadaanDetailPayload,
+  PpDocumentPreviewInfo,
+} from '../../../types/pp';
 import type { NotificationItem } from '../../../types/notification';
 
 export interface PpShowProps {
@@ -15,6 +19,8 @@ export interface PpShowProps {
   roleTitle?: string | null;
   roleSubtitle?: string | null;
   navItems?: PpNavItem[] | null;
+  keputusanTitle?: string;
+  keputusanNote?: string;
 }
 
 export const PpPengajuanShow: FC<PpShowProps> = ({
@@ -26,12 +32,21 @@ export const PpPengajuanShow: FC<PpShowProps> = ({
   roleTitle = null,
   roleSubtitle = null,
   navItems = null,
+  keputusanTitle = 'Keputusan PP',
+  keputusanNote = 'Khusus pengadaan Rp50 – 200 juta. Pastikan dokumen dan data sudah sesuai.',
 }) => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+
   const [detail, setDetail] = useState<PpPengadaanDetailPayload>(initialDetail || {});
   const [notifications, setNotifications] = useState<NotificationItem[]>(recentNotifications);
   const [unreadCount, setUnreadCount] = useState<number>(unreadNotificationsCount);
-  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [confirmApproveOpen, setConfirmApproveOpen] = useState(false);
+  const [rejectOpen, setRejectOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [rejectError, setRejectError] = useState('');
+  const [flashError, setFlashError] = useState('');
+  const [previewDoc, setPreviewDoc] = useState<PpDocumentPreviewInfo | null>(null);
 
   useEffect(() => {
     if (initialDetail) {
@@ -53,15 +68,56 @@ export const PpPengajuanShow: FC<PpShowProps> = ({
       })
       .catch((err: unknown) => {
         if (!controller.signal.aborted) {
-          console.error('Failed to fetch pengajuan detail:', err);
+          console.error('Failed to fetch pengadaan detail:', err);
+          setFlashError('Gagal memuat detail pengadaan.');
         }
       });
 
     return () => controller.abort();
   }, [id, initialDetail, basePath]);
 
+  const targetId = detail.pengadaan?.id || id;
+
+  const handleApprove = async () => {
+    if (!targetId) return;
+    setSubmitting(true);
+    setFlashError('');
+    try {
+      await ppService.approvePengadaan(targetId, basePath);
+      setConfirmApproveOpen(false);
+      navigate(`${basePath}/pengadaan`);
+    } catch (err: unknown) {
+      const serverErr = extractServerErrors(err);
+      setFlashError(serverErr.message || 'Gagal menyetujui dokumen pengadaan.');
+      setConfirmApproveOpen(false);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleReject = async (alasan: string) => {
+    if (!targetId) return;
+    setSubmitting(true);
+    setRejectError('');
+    try {
+      await ppService.rejectPengadaan(targetId, alasan, basePath);
+      setRejectOpen(false);
+      navigate(`${basePath}/pengadaan`);
+    } catch (err: unknown) {
+      const serverErr = extractServerErrors(err);
+      setRejectError(
+        serverErr.fieldErrors.alasan ||
+        serverErr.fieldErrors.catatan ||
+        serverErr.message ||
+        'Terjadi kesalahan saat memproses penolakan.'
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
-    <PpPengajuanShowTemplate
+    <PpPengadaanDetailTemplate
       detail={detail}
       recentNotifications={notifications}
       unreadNotificationsCount={unreadCount}
@@ -70,9 +126,24 @@ export const PpPengajuanShow: FC<PpShowProps> = ({
       roleTitle={roleTitle}
       roleSubtitle={roleSubtitle}
       navItems={navItems}
-      galleryOpen={galleryOpen}
-      onOpenGallery={() => setGalleryOpen(true)}
-      onCloseGallery={() => setGalleryOpen(false)}
+      keputusanTitle={keputusanTitle}
+      keputusanNote={keputusanNote}
+      confirmApproveOpen={confirmApproveOpen}
+      rejectOpen={rejectOpen}
+      submitting={submitting}
+      rejectError={rejectError}
+      flashError={flashError}
+      previewDoc={previewDoc}
+      onOpenConfirmApprove={() => setConfirmApproveOpen(true)}
+      onCloseConfirmApprove={() => setConfirmApproveOpen(false)}
+      onConfirmApprove={handleApprove}
+      onOpenReject={() => {
+        setRejectError('');
+        setRejectOpen(true);
+      }}
+      onCloseReject={() => setRejectOpen(false)}
+      onConfirmReject={handleReject}
+      onSelectPreviewDoc={setPreviewDoc}
     />
   );
 };

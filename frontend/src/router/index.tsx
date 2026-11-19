@@ -49,7 +49,6 @@ import PpbjPermohonanShow from '../pages/Ppbj/Permohonan/Show';
 import PpDashboard from '../pages/Pp/Dashboard';
 import PpPengajuanIndex from '../pages/Pp/Pengajuan/Index';
 import PpPengajuanShow from '../pages/Pp/Pengajuan/Show';
-import PpPengajuanReview from '../pages/Pp/Pengajuan/Review';
 import PpNotifikasiIndex from '../pages/Pp/Notifikasi/Index';
 import PpProfilIndex from '../pages/Pp/Profil/Index';
 
@@ -246,7 +245,6 @@ export const AppRoutes: FC = () => {
           <Route path="/pp/dashboard" element={<PpDashboard />} />
           <Route path="/pp/pengadaan" element={<PpPengajuanIndex />} />
           <Route path="/pp/pengadaan/:id" element={<PpPengajuanShow />} />
-          <Route path="/pp/pengadaan/:id/review" element={<PpPengajuanReview />} />
           <Route path="/pp/notifikasi" element={<PpNotifikasiIndex />} />
           <Route path="/pp/profil" element={<PpProfilIndex />} />
         </Route>

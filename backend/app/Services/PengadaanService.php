@@ -609,11 +609,21 @@ class PengadaanService
 
         $dokumenPermohonan = Dokumen::where('ref_type', 'permohonan')
             ->where('ref_id', $pengadaan->permohonan_id)
-            ->get();
+            ->get()
+            ->map(function (Dokumen $d) use ($pengadaan) {
+                $d->download_url = "/api/v1/pp/pengajuan/{$pengadaan->id}/dokumen/{$d->id}";
+
+                return $d;
+            });
 
         $dokumenPengadaan = Dokumen::where('ref_type', 'pengadaan')
             ->where('ref_id', $pengadaan->id)
-            ->get();
+            ->get()
+            ->map(function (Dokumen $d) use ($pengadaan) {
+                $d->download_url = "/api/v1/pp/pengajuan/{$pengadaan->id}/dokumen/{$d->id}";
+
+                return $d;
+            });
 
         $makList = DB::table('permohonan_mak')
             ->join('maks', 'permohonan_mak.mak_id', '=', 'maks.id')

@@ -155,6 +155,7 @@ Route::prefix('v1')->group(function () {
             Route::get('dashboard', DashboardPpController::class)->name('api.pp.dashboard');
             Route::get('pengajuan', [PpController::class, 'index'])->name('api.pp.pengajuan.index');
             Route::get('pengajuan/{pengadaan}/review', [PpController::class, 'review'])->name('api.pp.pengajuan.review');
+            Route::get('pengajuan/{pengadaan}/dokumen/{dokumen}', [PpController::class, 'downloadDokumen'])->name('api.pp.pengajuan.dokumen.download');
             Route::post('pengajuan/{pengadaan}/approve', [PpController::class, 'approve'])->name('api.pp.pengajuan.approve');
             Route::post('pengajuan/{pengadaan}/reject', [PpController::class, 'reject'])->name('api.pp.pengajuan.reject');
             Route::get('pengajuan/{pengadaan}', [PpController::class, 'show'])->name('api.pp.pengajuan.show');
