@@ -8,6 +8,7 @@ use App\Models\Kontrak;
 use App\Models\LevelPengadaan;
 use App\Models\Mak;
 use App\Models\MetodePengadaan;
+use App\Models\Notification;
 use App\Models\Pembayaran;
 use App\Models\Pengadaan;
 use App\Models\Permohonan;
@@ -225,6 +226,43 @@ class KeuanganSeeder extends Seeder
                         'ukuran_bytes' => 1024000,
                         'uploaded_by' => $keuanganUser->id,
                         'created_at' => Carbon::now()->subDays(5),
+                    ]
+                );
+            }
+        }
+
+        if ($keuanganUser) {
+            $sampleNotifs = [
+                [
+                    'judul' => 'Pembayaran Termin Siap Diproses',
+                    'pesan' => 'Paket Pengadaan Komputer Lab (01010-FF-11) telah disetujui PPK dan Bidang 2, siap untuk diproses pencairannya.',
+                    'channel' => 'in_app',
+                    'read_at' => null,
+                ],
+                [
+                    'judul' => 'Dokumen Legalitas Vendor Dilampirkan',
+                    'pesan' => 'PPBJ telah melampirkan berkas legalitas rekanan vendor untuk paket 01011-FF-11.',
+                    'channel' => 'in_app',
+                    'read_at' => null,
+                ],
+                [
+                    'judul' => 'Pencairan Dana Berhasil',
+                    'pesan' => 'Pembayaran paket Switch Jaringan Gedung A (01012-FF-11) telah berhasil diselesaikan.',
+                    'channel' => 'in_app',
+                    'read_at' => Carbon::now()->subDays(2),
+                ],
+            ];
+
+            foreach ($sampleNotifs as $notif) {
+                Notification::firstOrCreate(
+                    [
+                        'user_id' => $keuanganUser->id,
+                        'judul' => $notif['judul'],
+                    ],
+                    [
+                        'pesan' => $notif['pesan'],
+                        'channel' => $notif['channel'],
+                        'read_at' => $notif['read_at'],
                     ]
                 );
             }

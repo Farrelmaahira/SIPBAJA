@@ -71,6 +71,8 @@ import PerlengkapanNotifikasiIndex from '../pages/Perlengkapan/Notifikasi/Index'
 import PerlengkapanProfilIndex from '../pages/Perlengkapan/Profil/Index';
 import KeuanganDashboard from '../pages/Keuangan/Dashboard';
 import KeuanganPengadaanIndex from '../pages/Keuangan/Pengadaan/Index';
+import KeuanganNotifikasiIndex from '../pages/Keuangan/Notifikasi/Index';
+import KeuanganProfilIndex from '../pages/Keuangan/Profil/Index';
 
 // Shared Pages
 import SharedNotifikasiPage from '../pages/Shared/SharedNotifikasiPage';
@@ -282,6 +284,8 @@ export const AppRoutes: FC = () => {
         <Route element={<RoleRoute allowedRoles={['Keuangan']} />}>
           <Route path="/keuangan/dashboard" element={<KeuanganDashboard />} />
           <Route path="/keuangan/pengadaan" element={<KeuanganPengadaanIndex />} />
+          <Route path="/keuangan/notifikasi" element={<KeuanganNotifikasiIndex />} />
+          <Route path="/keuangan/profil" element={<KeuanganProfilIndex />} />
         </Route>
       </Route>
 
