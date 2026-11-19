@@ -1,10 +1,10 @@
 import { useState, useEffect, type FC } from 'react';
 import { useParams } from 'react-router-dom';
 import ppkService from '../../../services/ppkService';
-import { PPK_NAV_ITEMS } from '../Dashboard';
 import type { NotificationItem } from '../../../types/notification';
 import type { PpPengadaanDetailPayload } from '../../../types/pp';
 import PpPengajuanShowTemplate from '../../../components/templates/PP/PpPengajuanShowTemplate';
+import { PPK_NAV_ITEMS } from '@/constants/ppkNav';
 
 export interface PpkShowProps {
   detail?: PpPengadaanDetailPayload;
@@ -35,6 +35,7 @@ export const PpkPengajuanShow: FC<PpkShowProps> = ({
     ppkService
       .getPengajuanShow(id, controller.signal)
       .then((res) => {
+        console.log(res)
         const payload = res.detail || res.data || {};
         setDetail(payload);
         if (res.recentNotifications) setRecentNotifications(res.recentNotifications);

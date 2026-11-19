@@ -52,7 +52,7 @@ export const PengajuanIndex: FC = () => {
       onStatusChange={handleStatusChange}
       pagination={pagination}
       onPageChange={handlePageChange}
-      onViewDetail={(id) => navigate(`/bidang-2/pengajuan/${id}`)}
+      onViewDetail={(id) => navigate(`/bidang-2/permohonan/${id}`)}
       onDownloadDokumen={handleDownloadDokumen}
       onRetry={refetch}
     />

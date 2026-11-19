@@ -1,5 +1,5 @@
 import { useState, type FC, type FormEvent } from 'react';
-import { Package, Check, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Package, Check, Eye, EyeOff, AlertCircle, Zap } from 'lucide-react';
 
 export interface LoginFormState {
   data: {
@@ -11,6 +11,7 @@ export interface LoginFormState {
   setData: (fieldOrObj: any, value?: any) => void;
   processing?: boolean;
   errors?: Record<string, string>;
+  onShortcutLogin?: (email: string) => void;
 }
 
 export interface LoginTemplateProps {
@@ -18,8 +19,23 @@ export interface LoginTemplateProps {
   onSubmit: (e: FormEvent) => void;
 }
 
+const DEV_SHORTCUT_ACCOUNTS = [
+  { label: 'Pemohon (Jurusan)', email: 'jurusan@pnj.ac.id', role: 'Pemohon' },
+  { label: 'Perencanaan', email: 'perencanaan@pnj.ac.id', role: 'Perencanaan' },
+  { label: 'Bidang 2', email: 'bidang2@pnj.ac.id', role: 'Bidang 2' },
+  { label: 'PPK — BLU Fisik', email: 'ppk.blufisik@pnj.ac.id', role: 'PPK' },
+  { label: 'PPK — BLU Non-Fisik', email: 'ppk.blunonfisik@pnj.ac.id', role: 'PPK' },
+  { label: 'PPK — RM Fisik', email: 'ppk.rmfisik@pnj.ac.id', role: 'PPK' },
+  { label: 'PPK — RM Non-Fisik', email: 'ppk.rmnonfisik@pnj.ac.id', role: 'PPK' },
+  { label: 'PPBJ', email: 'ppbj@pnj.ac.id', role: 'PPBJ' },
+  { label: 'PP', email: 'pp@pnj.ac.id', role: 'PP' },
+  { label: 'Perlengkapan', email: 'perlengkapan@pnj.ac.id', role: 'Perlengkapan' },
+  { label: 'Keuangan', email: 'keuangan@pnj.ac.id', role: 'Keuangan' },
+  { label: 'Admin', email: 'admin@pnj.ac.id', role: 'Admin' },
+];
+
 export const LoginTemplate: FC<LoginTemplateProps> = ({ form, onSubmit }) => {
-  const { data, setData, processing = false, errors = {} } = form;
+  const { data, setData, processing = false, errors = {}, onShortcutLogin } = form;
   const [showPassword, setShowPassword] = useState(false);
 
   return (
@@ -142,6 +158,36 @@ export const LoginTemplate: FC<LoginTemplateProps> = ({ form, onSubmit }) => {
           <p className="text-xs sm:text-sm text-[#5F6F6A] mt-1.5 mb-6">
             Gunakan akun Anda untuk melanjutkan.
           </p>
+
+          {/* Dev Shortcut Dropdown (Hanya tampil di Environment Development) */}
+          {import.meta.env.DEV && onShortcutLogin && (
+            <div className="mb-6 p-4 bg-[#F0FDF4] border border-[#BBF7D0] rounded-2xl">
+              <div className="flex items-center gap-2 mb-2 text-[#15803D] font-semibold text-xs">
+                <Zap className="w-3.5 h-3.5 fill-[#15803D]" />
+                <span>Shortcut Login Development</span>
+              </div>
+              <select
+                onChange={(e) => {
+                  if (e.target.value) {
+                    onShortcutLogin(e.target.value);
+                    e.target.value = '';
+                  }
+                }}
+                disabled={processing}
+                defaultValue=""
+                className="w-full min-h-[42px] rounded-xl bg-white border border-[#86EFAC] px-3 py-2 text-xs font-medium text-[#14201C] focus:outline-none focus:border-[#15803D] focus:ring-2 focus:ring-[#15803D]/20 cursor-pointer disabled:opacity-50"
+              >
+                <option value="" disabled>
+                  ⚡ Pilih akun untuk instant login...
+                </option>
+                {DEV_SHORTCUT_ACCOUNTS.map((acc) => (
+                  <option key={acc.email} value={acc.email}>
+                    {acc.label} ({acc.email})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <form onSubmit={onSubmit} className="flex flex-col gap-4">
             {/* Input Email / Username */}

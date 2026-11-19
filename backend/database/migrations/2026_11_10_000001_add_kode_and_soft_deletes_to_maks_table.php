@@ -10,7 +10,10 @@ return new class extends Migration
     {
         Schema::table('maks', function (Blueprint $table) {
             if (! Schema::hasColumn('maks', 'kode')) {
-                $table->string('kode', 50)->nullable()->after('id');
+                $table->string('kode', 50)->after('id');
+            }
+            if (! Schema::hasColumn('maks', 'isActive')) {
+                $table->boolean('isActive')->default(true);
             }
             if (! Schema::hasColumn('maks', 'deleted_at')) {
                 $table->softDeletes();

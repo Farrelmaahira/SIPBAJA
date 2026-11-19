@@ -31,6 +31,23 @@ export const Login: FC = () => {
     }
   };
 
+  const handleShortcutLogin = async (email: string) => {
+    setProcessing(true);
+    setErrors({});
+    try {
+      // In development, we use 'password123' as defined in Seeders
+      const res = await login(email, 'password123', true);
+      const targetPath = getRoleDashboardPath(
+        res.role || res.user.role?.nama || res.user.Role?.nama
+      );
+      navigate(targetPath, { replace: true });
+    } catch (err: unknown) {
+      setErrors({ login: 'Gagal masuk menggunakan shortcut.' });
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setProcessing(true);
@@ -76,6 +93,7 @@ export const Login: FC = () => {
         setData,
         processing,
         errors,
+        onShortcutLogin: handleShortcutLogin,
       }}
       onSubmit={handleSubmit}
     />

@@ -124,6 +124,9 @@ export interface PerencanaanPengajuanDetail {
   };
   maks: PerencanaanMakItem[];
   selected_mak_ids: number[];
+  approval_perencanaan?: {
+    alasan: string | null;
+  } | null;
   dokumen?: DokumenPermohonanDetail | null;
   dokumen_permohonan?: DokumenPermohonanDetail[];
   rkakl_active?: DokumenPermohonanDetail | null;

@@ -210,7 +210,7 @@ class PermohonanApiTest extends TestCase
 
     public function test_ppk_can_list_pengajuan_and_notifikasi(): void
     {
-        $ppk = $this->user('ppk@pnj.ac.id');
+        $ppk = $this->user('ppk.blufisik@pnj.ac.id');
 
         $res1 = $this->actingAs($ppk, 'sanctum')->getJson('/api/v1/ppk/pengajuan');
         $res1->assertStatus(200)->assertJsonStructure(['pengajuan', 'filters']);

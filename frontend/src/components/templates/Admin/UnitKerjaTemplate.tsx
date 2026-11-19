@@ -8,25 +8,9 @@ import { FormField } from '../../molecules/FormField';
 import { TextInput } from '../../molecules/TextInput';
 import { PrimaryButton } from '../../atoms/PrimaryButton';
 import { ADMIN_NAV_ITEMS } from '../../../constants/adminNav';
+import { UnitKerjaFormState, UnitKerjaItem } from '@/types/admin';
+import HeroBanner from '@/components/organisms/HeroBanner';
 
-export interface UnitKerjaItem {
-  id?: number | string;
-  nama: string;
-  users_count?: number;
-  [key: string]: unknown;
-}
-
-export interface UnitKerjaFormData {
-  nama: string;
-  [key: string]: unknown;
-}
-
-export interface UnitKerjaFormState {
-  data: UnitKerjaFormData;
-  setData: (key: any, value?: any) => void;
-  errors: Record<string, string | undefined>;
-  processing: boolean;
-}
 
 export interface UnitKerjaTemplateProps {
   rows?: UnitKerjaItem[];
@@ -92,17 +76,13 @@ export const UnitKerjaTemplate = ({
       notifikasiHref="/admin/dashboard"
     >
       <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-bold text-[#14201C]">Unit Kerja</h1>
-            <p className="text-sm text-[#5F6F6A] mt-1">
-              Kelola daftar unit kerja, jurusan, dan bagian di lingkungan kampus.
-            </p>
-          </div>
-          <PrimaryButton icon={Plus} onClick={onOpenCreate}>
-            Tambah Unit Kerja
-          </PrimaryButton>
-        </div>
+        <HeroBanner
+          title='Unit Kerja'
+          description='Kelola daftar unit kerja, jurusan, dan bagian di lingkungan kampus.'
+          ctaLabel='Tambah Unit Kerja'
+          ctaIcon={Plus}
+          onCta={onOpenCreate}
+        />
 
         <CrudTable
           columns={columns}
@@ -127,7 +107,7 @@ export const UnitKerjaTemplate = ({
 
         <Modal
           open={modalMode !== null}
-          onClose={onCloseModal || (() => {})}
+          onClose={onCloseModal || (() => { })}
           title={isEdit ? 'Ubah Unit Kerja' : 'Tambah Unit Kerja'}
           footer={
             <>
@@ -159,7 +139,7 @@ export const UnitKerjaTemplate = ({
 
         <Modal
           open={deleteTarget !== null}
-          onClose={onCancelDelete || (() => {})}
+          onClose={onCancelDelete || (() => { })}
           title="Hapus Unit Kerja"
           footer={
             <>

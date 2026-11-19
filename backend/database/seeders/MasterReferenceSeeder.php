@@ -37,17 +37,18 @@ class MasterReferenceSeeder extends Seeder
         }
 
         $maks = [
-            'BLU Fisik' => 'ppk.blufisik@pnj.ac.id',
-            'BLU Non-Fisik' => 'ppk.blunonfisik@pnj.ac.id',
-            'RM Fisik' => 'ppk.rmfisik@pnj.ac.id',
-            'RM Non-Fisik' => 'ppk.rmnonfisik@pnj.ac.id',
+            'BLU Fisik' => ['email' => 'ppk.blufisik@pnj.ac.id', 'kode' => 'MAK-BLU-01'],
+            'BLU Non-Fisik' => ['email' => 'ppk.blunonfisik@pnj.ac.id', 'kode' => 'MAK-BLU-02'],
+            'RM Fisik' => ['email' => 'ppk.rmfisik@pnj.ac.id', 'kode' => 'MAK-RM-01'],
+            'RM Non-Fisik' => ['email' => 'ppk.rmnonfisik@pnj.ac.id', 'kode' => 'MAK-RM-02'],
         ];
 
-        foreach ($maks as $nama => $email) {
+        foreach ($maks as $nama => $data) {
             Mak::updateOrCreate(
                 ['nama' => $nama],
                 [
-                    'ppk_user_id' => $createdPpkUsers[$email]->id,
+                    'kode' => $data['kode'],
+                    'ppk_user_id' => $createdPpkUsers[$data['email']]->id,
                 ]
             );
         }

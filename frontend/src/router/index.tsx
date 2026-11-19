@@ -55,9 +55,10 @@ import PpProfilIndex from '../pages/Pp/Profil/Index';
 
 // PPK Pages
 import PpkDashboard from '../pages/Ppk/Dashboard';
-import PpkPengajuanIndex from '../pages/Ppk/Pengajuan/Index';
+import PpkPermohonanIndex from '../pages/Ppk/Pengajuan/Index';
+import PpkPermohonanReview from '../pages/Ppk/Pengajuan/Review';
+import PpkPengadaanReview from '../pages/Ppk/Pengadaan/Review';
 import PpkPengajuanShow from '../pages/Ppk/Pengajuan/Show';
-import PpkPengajuanReview from '../pages/Ppk/Pengajuan/Review';
 import PpkPengajuanPembayaran from '../pages/Ppk/Pengajuan/Pembayaran';
 import PpkNotifikasiIndex from '../pages/Ppk/Notifikasi/Index';
 import PpkProfilIndex from '../pages/Ppk/Profil/Index';
@@ -207,8 +208,8 @@ export const AppRoutes: FC = () => {
         {/* Perencanaan Routes */}
         <Route element={<RoleRoute allowedRoles={['Perencanaan']} />}>
           <Route path="/perencanaan/dashboard" element={<PerencanaanDashboard />} />
-          <Route path="/perencanaan/pengajuan" element={<PerencanaanPengajuanIndex />} />
-          <Route path="/perencanaan/pengajuan/:id" element={<PerencanaanPengajuanShow />} />
+          <Route path="/perencanaan/permohonan" element={<PerencanaanPengajuanIndex />} />
+          <Route path="/perencanaan/permohonan/:id" element={<PerencanaanPengajuanShow />} />
           <Route path="/perencanaan/jenis-mak" element={<PerencanaanJenisMakIndex />} />
           <Route path="/perencanaan/rkakl" element={<PerencanaanRkaklIndex />} />
           <Route path="/perencanaan/notifikasi" element={<PerencanaanNotifikasiIndex />} />
@@ -218,8 +219,8 @@ export const AppRoutes: FC = () => {
         {/* Bidang 2 Routes */}
         <Route element={<RoleRoute allowedRoles={['Bidang 2', 'bidang-2', 'bidang 2', 'bidang2', 'Wakil Direktur II', 'wakil-direktur-ii', 'Wadir 2', 'wadir-2']} />}>
           <Route path="/bidang-2/dashboard" element={<Bidang2Dashboard />} />
-          <Route path="/bidang-2/pengajuan" element={<Bidang2PengajuanIndex />} />
-          <Route path="/bidang-2/pengajuan/:id" element={<Bidang2PengajuanShow />} />
+          <Route path="/bidang-2/permohonan" element={<Bidang2PengajuanIndex />} />
+          <Route path="/bidang-2/permohonan/:id" element={<Bidang2PengajuanShow />} />
           <Route path="/bidang-2/pengadaan" element={<Bidang2PengadaanIndex />} />
           <Route path="/bidang-2/pengadaan/:id" element={<Bidang2PengadaanShow />} />
           <Route path="/bidang-2/rkakl" element={<Bidang2RkaklIndex />} />
@@ -243,9 +244,9 @@ export const AppRoutes: FC = () => {
         {/* PP Routes */}
         <Route element={<RoleRoute allowedRoles={['PP']} />}>
           <Route path="/pp/dashboard" element={<PpDashboard />} />
-          <Route path="/pp/pengajuan" element={<PpPengajuanIndex />} />
-          <Route path="/pp/pengajuan/:id" element={<PpPengajuanShow />} />
-          <Route path="/pp/pengajuan/:id/review" element={<PpPengajuanReview />} />
+          <Route path="/pp/pengadaan" element={<PpPengajuanIndex />} />
+          <Route path="/pp/pengadaan/:id" element={<PpPengajuanShow />} />
+          <Route path="/pp/pengadaan/:id/review" element={<PpPengajuanReview />} />
           <Route path="/pp/notifikasi" element={<PpNotifikasiIndex />} />
           <Route path="/pp/profil" element={<PpProfilIndex />} />
         </Route>
@@ -253,10 +254,12 @@ export const AppRoutes: FC = () => {
         {/* PPK Routes */}
         <Route element={<RoleRoute allowedRoles={['PPK']} />}>
           <Route path="/ppk/dashboard" element={<PpkDashboard />} />
-          <Route path="/ppk/pengajuan" element={<PpkPengajuanIndex />} />
-          <Route path="/ppk/pengajuan/:id" element={<PpkPengajuanShow />} />
-          <Route path="/ppk/pengajuan/:id/review" element={<PpkPengajuanReview />} />
-          <Route path="/ppk/pengajuan/:id/pembayaran" element={<PpkPengajuanPembayaran />} />
+          <Route path="/ppk/permohonan" element={<PpkPermohonanIndex />} />
+          <Route path="/ppk/permohonan/:id/review" element={<PpkPermohonanReview />} />
+          <Route path="/ppk/permohonan" element={<Navigate to="/ppk/permohonan" replace />} />
+          <Route path="/ppk/permohonan/:id" element={<PpkPengajuanShow />} />
+          <Route path="/ppk/pengadaan/:id/review" element={<PpkPengadaanReview />} />
+          <Route path="/ppk/pengadaan/:id/pembayaran" element={<PpkPengajuanPembayaran />} />
           <Route path="/ppk/notifikasi" element={<PpkNotifikasiIndex />} />
           <Route path="/ppk/profil" element={<PpkProfilIndex />} />
         </Route>

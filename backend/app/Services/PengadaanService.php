@@ -615,6 +615,12 @@ class PengadaanService
                     abort(403, 'Anda tidak memiliki akses pada dokumen pengadaan milik PPK lain.');
                 }
             }
+
+            // Syarat mutlak FR-49: Untuk pengadaan bernominal 50-200 juta (perlu_review_pp == true),
+            // dokumen harus berstatus 'diteruskan' (telah diverifikasi oleh PP) atau status selanjutnya.
+            if ($pengadaan->Level?->perlu_review_pp && ! in_array($pengadaan->status, ['diteruskan', 'disetujui', 'selesai'])) {
+                abort(403, 'Dokumen pengadaan ini belum diverifikasi oleh Pejabat Pengadaan (PP).');
+            }
         }
 
         $dokumenPermohonan = Dokumen::where('ref_type', 'permohonan')
