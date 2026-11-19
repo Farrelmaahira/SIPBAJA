@@ -48,6 +48,54 @@ class PengajuanApproveCatatanTest extends TestCase
         $this->assertEquals('Gunakan MAK 01 untuk belanja modal komputer lab.', $approval->alasan);
     }
 
+    public function test_detail_returns_latest_perencanaan_approval_reason_and_selected_mak(): void
+    {
+        $role = Role::create(['nama' => 'Perencanaan']);
+        $user = User::factory()->create(['role_id' => $role->id]);
+        $unit = Unit::create(['nama' => 'Teknik Informatika']);
+        $mak = Mak::create(['nama' => 'MAK 01', 'kode' => '01', 'ppk_user_id' => $user->id]);
+
+        $permohonan = Permohonan::create([
+            'unit_id' => $unit->id,
+            'created_by' => $user->id,
+            'nomor_surat' => '003/TI/2026',
+            'judul' => 'Pengadaan Printer',
+            'ringkasan_tujuan' => 'Printer Lab',
+            'estimasi_anggaran' => 10000000,
+            'status' => 'diteruskan',
+        ]);
+
+        ApprovalPermohonan::create([
+            'permohonan_id' => $permohonan->id,
+            'tahap' => 'PERENCANAAN',
+            'revisi_ke' => 0,
+            'keputusan' => 'ditolak',
+            'alasan' => 'Alasan lama.',
+            'actor_id' => $user->id,
+        ]);
+
+        ApprovalPermohonan::create([
+            'permohonan_id' => $permohonan->id,
+            'tahap' => 'PERENCANAAN',
+            'revisi_ke' => 1,
+            'keputusan' => 'disetujui',
+            'alasan' => 'MAK disetujui untuk printer.',
+            'actor_id' => $user->id,
+        ]);
+
+        $permohonan->PermohonanMak()->create([
+            'mak_id' => $mak->id,
+            'ditentukan_oleh' => $user->id,
+        ]);
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->getJson("/api/v1/perencanaan/pengajuan/{$permohonan->id}");
+
+        $response->assertOk()
+            ->assertJsonPath('detail.selected_mak_ids.0', $mak->id)
+            ->assertJsonPath('detail.approval_perencanaan.alasan', 'MAK disetujui untuk printer.');
+    }
+
     public function test_perencanaan_can_approve_permohonan_without_notes(): void
     {
         $role = Role::create(['nama' => 'Perencanaan']);

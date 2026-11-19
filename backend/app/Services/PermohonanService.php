@@ -657,6 +657,10 @@ class PermohonanService
 
         $maks = Mak::with('Ppk')->orderBy('id')->get();
         $selectedMakIds = $permohonan->PermohonanMak->pluck('mak_id')->toArray();
+        $approvalPerencanaan = $permohonan->Approvals()
+            ->where('tahap', 'PERENCANAAN')
+            ->latest('id')
+            ->first();
 
         $dokumenPermohonan = Dokumen::where('ref_type', 'permohonan')->where('ref_id', $permohonan->id)
             ->orderBy('id')
@@ -699,6 +703,9 @@ class PermohonanService
             'permohonan' => $permohonan,
             'maks' => $maks,
             'selected_mak_ids' => $selectedMakIds,
+            'approval_perencanaan' => $approvalPerencanaan ? [
+                'alasan' => $approvalPerencanaan->alasan,
+            ] : null,
             'dokumen_permohonan' => $dokumenPermohonan,
             'dokumen' => $dokumenInfo,
             'rkakl_active' => $rkaklInfo,
@@ -805,6 +812,11 @@ class PermohonanService
 
         return [
             'permohonan' => $permohonan,
+            'maks' => $maks,
+            'selected_mak_ids' => $selectedMakIds,
+            'approval_perencanaan' => $approvalPerencanaan ? [
+                'alasan' => $approvalPerencanaan->alasan,
+            ] : null,
             'dokumen_permohonan' => $dokumenPermohonan,
             'permohonan_mak_ppk' => $permohonan->PermohonanMak
                 ->filter(fn ($pm) => (int) ($pm->Mak?->ppk_user_id ?? 0) === (int) $ppk->id)

@@ -149,9 +149,52 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
       ? permohonan.permohonan_mak
         .map((pm) => pm.mak)
         .filter((m): m is PerencanaanMakItem => Boolean(m))
-      : maksList.filter((m) => selectedMakIds.includes(m.id));
+      : (detail?.maks ?? maksList).filter((m) => (detail?.selected_mak_ids ?? selectedMakIds).includes(m.id));
 
-  const selectedMaksDisplay = maksList.filter((m) => selectedMakIds.includes(m.id));
+  const timelineSteps: TimelineStepItem[] = [
+    {
+      title: 'Pengajuan Dibuat',
+      subtitle: `${permohonan?.pemohon?.nama || 'Pemohon'} • ${formatTanggalIndo(permohonan?.created_at ? String(permohonan.created_at) : undefined)}`,
+      state: 'done',
+    },
+    {
+      title:
+        mode === 'verifikasi'
+          ? 'Verifikasi Perencanaan'
+          : rawStatus === 'ditolak'
+            ? 'Ditolak Perencanaan'
+            : 'Disetujui Perencanaan',
+      subtitle:
+        mode === 'verifikasi'
+          ? 'Menunggu pemilihan Jenis MAK dan verifikasi anggaran'
+          : `Unit Perencanaan • ${formatTanggalIndo((permohonan as any)?.updated_at ? String((permohonan as any).updated_at) : undefined)}`,
+      state:
+        mode === 'verifikasi'
+          ? 'active'
+          : rawStatus === 'ditolak'
+            ? 'rejected'
+            : 'done',
+    },
+    {
+      title: 'Tindak Lanjut Bidang 2 / PPBJ / Pengadaan',
+      subtitle:
+        mode === 'pengadaan'
+          ? 'Sedang dalam proses pengadaan'
+          : mode === 'diteruskan'
+            ? 'Menunggu proses tahap selanjutnya'
+            : 'Menunggu persetujuan Perencanaan',
+      state:
+        mode === 'pengadaan'
+          ? 'done'
+          : mode === 'diteruskan' && rawStatus !== 'ditolak'
+            ? 'active'
+            : 'pending',
+    },
+  ];
+
+  const selectedMaksDisplay = (detail?.maks ?? maksList).filter((m) =>
+    (detail?.selected_mak_ids ?? selectedMakIds).includes(m.id)
+  );
 
   const unitNama =
     permohonan?.unit_kerja?.nama ||
@@ -474,6 +517,15 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
                   )}
                 </div>
               )}
+
+              <div className="mt-5 pt-4 border-t border-[#F0F4F2]">
+                 <p className="text-xs font-bold text-[#14201C]">Alasan Approval Perencanaan</p>
+                 <p className="mt-1.5 text-xs leading-relaxed text-[#5F6F6A]">
+                   {detail?.approval_perencanaan?.alasan || 'Tidak ada alasan approval.'}
+                 </p>
+               </div>
+
+               <RiwayatStatusTimeline steps={timelineSteps} />
             </div>
           </div>
         </>
