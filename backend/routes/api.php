@@ -11,6 +11,7 @@ use App\Http\Controllers\Bidang2\DashboardBidang2Controller;
 use App\Http\Controllers\Bidang2\PengajuanBidang2Controller;
 use App\Http\Controllers\Bidang2\RkaklBidang2Controller;
 use App\Http\Controllers\Keuangan\DashboardKeuanganController;
+use App\Http\Controllers\Keuangan\PengadaanKeuanganController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Pemohon\DashboardPemohonController;
 use App\Http\Controllers\Pemohon\PermohonanPemohonController;
@@ -200,6 +201,8 @@ Route::prefix('v1')->group(function () {
         // Keuangan Routes
         Route::prefix('keuangan')->middleware('role:Keuangan')->group(function () {
             Route::get('dashboard', DashboardKeuanganController::class)->name('api.keuangan.dashboard');
+            Route::get('pengadaan', [PengadaanKeuanganController::class, 'index'])->name('api.keuangan.pengadaan.index');
+            Route::get('profil', [PerencanaanProfilController::class, 'index'])->name('api.keuangan.profil.index');
         });
     });
 });

@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             RbacSeeder::class,
             MasterSeeder::class,
+            KeuanganSeeder::class,
             // PengadaanPpSeeder::class,
         ]);
     }
