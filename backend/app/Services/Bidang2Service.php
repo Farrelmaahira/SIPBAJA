@@ -21,9 +21,9 @@ class Bidang2Service
      */
     public function getPengajuanList(?string $status = 'semua', ?string $search = '', int $perPage = 10): LengthAwarePaginator
     {
-        $query = Permohonan::with(['Unit', 'Dokumen', 'PermohonanMak.Mak']);
+        $query = Permohonan::with(['Unit', 'Dokumen', 'PermohonanMak.Mak:id,nama,ppk_user_id', 'PermohonanMak.Mak.Ppk:id,nama,email']);
 
-        if (! empty($status) && $status !== 'semua') {
+        if (!empty($status) && $status !== 'semua') {
             $statuses = is_array($status) ? $status : explode(',', $status);
             $normalizedStatuses = [];
             foreach ($statuses as $s) {
@@ -32,16 +32,16 @@ class Bidang2Service
                     $normalizedStatuses[] = 'menunggu_persetujuan';
                     $normalizedStatuses[] = 'menunggu_bidang2';
                     $normalizedStatuses[] = 'diajukan';
-                } elseif (! empty($trimmed)) {
+                } elseif (!empty($trimmed)) {
                     $normalizedStatuses[] = $trimmed;
                 }
             }
-            if (! empty($normalizedStatuses)) {
+            if (!empty($normalizedStatuses)) {
                 $query->whereIn('status', array_unique($normalizedStatuses));
             }
         }
 
-        if (! empty($search)) {
+        if (!empty($search)) {
             $query->where(function ($q) use ($search) {
                 $q->where('nomor_surat', 'like', "%{$search}%")
                     ->orWhere('judul', 'like', "%{$search}%");
@@ -84,23 +84,23 @@ class Bidang2Service
 
         // 2. Ambil daftar MAK yang telah diverifikasi Perencanaan
         $makList = $permohonan->PermohonanMak
-            ->filter(fn ($pm) => $pm->Mak !== null)
-            ->map(fn ($pm) => [
+            ->filter(fn($pm) => $pm->Mak !== null)
+            ->map(fn($pm) => [
                 'id' => $pm->Mak->id,
                 'kode' => (string) ($pm->Mak->kode ?? $pm->Mak->nama),
                 'nama' => (string) $pm->Mak->nama,
-                'ppk_nama' => $pm->Mak->Ppk?->name ?? 'Budi Santoso',
+                'ppk_nama' => $pm->Mak->Ppk?->nama,
             ])
             ->values()
             ->all();
 
         // 3. Ambil catatan masukan dari Tim Perencanaan
         $approvalPerencanaan = $permohonan->Approvals
-            ->filter(fn ($a) => in_array(strtoupper((string) $a->tahap), ['PERENCANAAN', 'PERENCANAAN']))
+            ->filter(fn($a) => in_array(strtoupper((string) $a->tahap), ['PERENCANAAN', 'PERENCANAAN']))
             ->sortByDesc('id')
             ->first();
 
-        $isMakDetermined = ! empty($makList);
+        $isMakDetermined = !empty($makList);
         $catatanPerencanaan = [
             'pemeriksa_nama' => $approvalPerencanaan?->Actor?->nama ?? $approvalPerencanaan?->Actor?->name ?? null,
             'pemeriksa_peran' => $approvalPerencanaan ? 'Tim Perencanaan' : null,
@@ -123,7 +123,7 @@ class Bidang2Service
 
         // 5. Ambil data keputusan Bidang 2 jika sudah diputuskan
         $approvalBidang2 = $permohonan->Approvals
-            ->filter(fn ($a) => in_array(strtoupper((string) $a->tahap), ['BIDANG2', 'BIDANG 2']))
+            ->filter(fn($a) => in_array(strtoupper((string) $a->tahap), ['BIDANG2', 'BIDANG 2']))
             ->sortByDesc('id')
             ->first();
 
@@ -184,7 +184,7 @@ class Bidang2Service
             // 1. Simpan berkas fisik memo ke direktori privat
             $namaAsli = $fileMemo->getClientOriginalName();
             $extension = $fileMemo->getClientOriginalExtension() ?: 'pdf';
-            $namaHash = Str::uuid()->toString().'.'.$extension;
+            $namaHash = Str::uuid()->toString() . '.' . $extension;
             $pathSimpan = 'dokumen/memo';
 
             Storage::disk('local')->putFileAs($pathSimpan, $fileMemo, $namaHash);
@@ -240,7 +240,7 @@ class Bidang2Service
 
             // Jika kedua pihak telah setuju, broadcast notifikasi ke PPBJ
             if ($ppkSetuju) {
-                $ppbjUsers = User::whereHas('Role', fn ($q) => $q->where('nama', 'PPBJ'))->pluck('id');
+                $ppbjUsers = User::whereHas('Role', fn($q) => $q->where('nama', 'PPBJ'))->pluck('id');
                 $notificationService = app(NotificationService::class);
                 foreach ($ppbjUsers as $ppbjId) {
                     $notificationService->send(
@@ -320,7 +320,7 @@ class Bidang2Service
         abort_unless($approval && $approval->Memo, 404, 'Dokumen memo persetujuan tidak ditemukan.');
 
         $memo = $approval->Memo;
-        $path = 'dokumen/memo/'.$memo->nama_hash;
+        $path = 'dokumen/memo/' . $memo->nama_hash;
 
         abort_unless(Storage::disk('local')->exists($path), 404, 'Berkas fisik memo tidak ditemukan di server.');
 

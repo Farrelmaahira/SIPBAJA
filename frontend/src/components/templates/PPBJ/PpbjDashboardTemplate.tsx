@@ -66,9 +66,6 @@ export const PpbjDashboardTemplate: FC<PpbjDashboardTemplateProps> = ({
           eyebrow="DASHBOARD"
           title={`Selamat datang, ${displayName}`}
           description="Pantau, verifikasi, dan kelola seluruh permohonan pengadaan yang masuk dalam satu tempat."
-          ctaLabel="Lihat Pengajuan"
-          ctaVariant="translucent"
-          onCta={() => navigate('/ppbj/permohonan')}
         />
 
         {/* Stat Cards Grid */}

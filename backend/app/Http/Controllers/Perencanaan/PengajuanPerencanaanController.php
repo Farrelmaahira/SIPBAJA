@@ -47,7 +47,6 @@ class PengajuanPerencanaanController extends Controller
     public function show(Permohonan $permohonan): JsonResponse
     {
         $detail = $this->permohonanService->getDetailPermohonanPerencanaan($permohonan);
-
         return response()->json([
             'detail' => $detail,
         ]);
