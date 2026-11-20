@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ApprovalPermohonan;
 use App\Models\Dokumen;
 use App\Models\JenisPengadaan;
 use App\Models\Kontrak;
@@ -625,6 +626,8 @@ class PengadaanService
                 return $d;
             });
 
+        $memoPermohonan = $this->permohonanMemos($pengadaan, $actor);
+
         $makList = DB::table('permohonan_mak')
             ->join('maks', 'permohonan_mak.mak_id', '=', 'maks.id')
             ->where('permohonan_mak.permohonan_id', $pengadaan->permohonan_id)
@@ -635,8 +638,38 @@ class PengadaanService
             'pengadaan' => $pengadaan,
             'dokumen_permohonan' => $dokumenPermohonan,
             'dokumen_pengadaan' => $dokumenPengadaan,
+            'memo_permohonan' => $memoPermohonan,
             'mak_list' => $makList,
         ];
+    }
+
+    /**
+     * Mengambil memo persetujuan Bidang 2 dan PPK yang tersimpan sebagai dokumen approval_permohonan.
+     *
+     * @return Collection<int, Dokumen>
+     */
+    protected function permohonanMemos(Pengadaan $pengadaan, ?User $actor): Collection
+    {
+        return ApprovalPermohonan::where('permohonan_id', $pengadaan->permohonan_id)
+            ->where('keputusan', 'disetujui')
+            ->whereNotNull('memo_dokumen_id')
+            ->with('Memo')
+            ->orderBy('id')
+            ->get()
+            ->filter(fn (ApprovalPermohonan $approval) => $approval->Memo !== null)
+            ->map(function (ApprovalPermohonan $approval) use ($pengadaan, $actor) {
+                $memo = $approval->Memo;
+                $tahap = strtoupper((string) $approval->tahap);
+
+                $memo->tipe_dokumen = $tahap === 'BIDANG2' ? 'memo_persetujuan_bidang2' : 'memo_persetujuan_ppk';
+                $memo->tahap = $tahap;
+                $memo->download_url = $actor?->hasRole('PPK')
+                    ? "/api/v1/ppk/permohonan/{$pengadaan->permohonan_id}/dokumen?dokumen_id={$memo->id}"
+                    : "/api/v1/pp/pengajuan/{$pengadaan->id}/dokumen/{$memo->id}";
+
+                return $memo;
+            })
+            ->values();
     }
 
     protected function baseQueryPpk(User $ppk): Builder

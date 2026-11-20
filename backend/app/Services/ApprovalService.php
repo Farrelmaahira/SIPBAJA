@@ -199,7 +199,7 @@ class ApprovalService
             $memoDoc = $this->dokumenService->simpanDokumen(
                 file: $memoFile,
                 actor: $actor,
-                refType: 'permohonan',
+                refType: 'approval_permohonan',
                 refId: $permohonan->id,
                 tipeDokumen: 'memo_persetujuan',
                 folder: 'dokumen/permohonan/memo',

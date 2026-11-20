@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Pp;
 
+use App\Models\ApprovalPermohonan;
+use App\Models\Dokumen;
 use App\Models\LevelPengadaan;
 use App\Models\Pengadaan;
 use App\Models\User;
@@ -11,6 +13,7 @@ use Database\Seeders\RbacSeeder;
 use Database\Seeders\RoleSeeder;
 use Database\Seeders\UserSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class PpFeatureTest extends TestCase
@@ -163,6 +166,87 @@ class PpFeatureTest extends TestCase
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['alasan']);
+    }
+
+    public function test_pp_review_detail_includes_permohonan_approval_memos(): void
+    {
+        $pengadaan = Pengadaan::whereHas('Level', fn ($q) => $q->where('perlu_review_pp', true))->firstOrFail();
+        $permohonan = $pengadaan->Permohonan;
+
+        $bidang2Memo = $this->createMemoDokumen($permohonan->id, 'Memo_Bidang2.pdf', 'memo-bidang2.pdf');
+        $ppkMemo = $this->createMemoDokumen($permohonan->id, 'Memo_PPK.pdf', 'memo-ppk.pdf');
+
+        $this->createApprovalPermohonan($permohonan->id, 'BIDANG2', $bidang2Memo->id);
+        $this->createApprovalPermohonan($permohonan->id, 'PPK', $ppkMemo->id);
+
+        $response = $this->actingAs($this->ppUser, 'sanctum')
+            ->getJson("/api/v1/pp/pengajuan/{$pengadaan->id}/review");
+
+        $response->assertStatus(200);
+
+        $memos = collect($response->json('detail.memo_permohonan'));
+
+        $this->assertCount(2, $memos);
+        $this->assertSame('BIDANG2', $memos->firstWhere('id', $bidang2Memo->id)['tahap']);
+        $this->assertSame('memo_persetujuan_bidang2', $memos->firstWhere('id', $bidang2Memo->id)['tipe_dokumen']);
+        $this->assertSame('PPK', $memos->firstWhere('id', $ppkMemo->id)['tahap']);
+        $this->assertSame('memo_persetujuan_ppk', $memos->firstWhere('id', $ppkMemo->id)['tipe_dokumen']);
+        $this->assertStringContainsString(
+            "/api/v1/pp/pengajuan/{$pengadaan->id}/dokumen/{$bidang2Memo->id}",
+            $memos->firstWhere('id', $bidang2Memo->id)['download_url']
+        );
+    }
+
+    public function test_pp_can_preview_permohonan_approval_memo(): void
+    {
+        $pengadaan = Pengadaan::whereHas('Level', fn ($q) => $q->where('perlu_review_pp', true))->firstOrFail();
+        $permohonan = $pengadaan->Permohonan;
+
+        $bidang2Memo = $this->createMemoDokumen($permohonan->id, 'Memo_Bidang2.pdf', 'memo-bidang2.pdf');
+        $ppkMemo = $this->createMemoDokumen($permohonan->id, 'Memo_PPK.pdf', 'memo-ppk.pdf');
+
+        $this->createApprovalPermohonan($permohonan->id, 'BIDANG2', $bidang2Memo->id);
+        $this->createApprovalPermohonan($permohonan->id, 'PPK', $ppkMemo->id);
+
+        Storage::disk('local')->put('dokumen/memo/memo-bidang2.pdf', '%PDF-1.4 dummy');
+        Storage::disk('local')->put('dokumen/permohonan/memo/memo-ppk.pdf', '%PDF-1.4 dummy');
+
+        $this->actingAs($this->ppUser, 'sanctum')
+            ->get("/api/v1/pp/pengajuan/{$pengadaan->id}/dokumen/{$bidang2Memo->id}?disposition=inline")
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf');
+
+        $this->actingAs($this->ppUser, 'sanctum')
+            ->get("/api/v1/pp/pengajuan/{$pengadaan->id}/dokumen/{$ppkMemo->id}?disposition=inline")
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf');
+    }
+
+    private function createMemoDokumen(int $permohonanId, string $namaAsli, string $namaHash): Dokumen
+    {
+        return Dokumen::create([
+            'ref_type' => 'approval_permohonan',
+            'ref_id' => $permohonanId,
+            'tipe_dokumen' => 'memo_persetujuan',
+            'versi' => 1,
+            'nama_asli' => $namaAsli,
+            'nama_hash' => $namaHash,
+            'mime_type' => 'application/pdf',
+            'ukuran_bytes' => 1024,
+            'uploaded_by' => $this->ppUser->id,
+        ]);
+    }
+
+    private function createApprovalPermohonan(int $permohonanId, string $tahap, int $memoDokumenId): void
+    {
+        ApprovalPermohonan::create([
+            'permohonan_id' => $permohonanId,
+            'tahap' => $tahap,
+            'revisi_ke' => 0,
+            'keputusan' => 'disetujui',
+            'memo_dokumen_id' => $memoDokumenId,
+            'actor_id' => $this->ppUser->id,
+        ]);
     }
 
     public function test_pp_cannot_review_pengadaan_outside_their_level(): void

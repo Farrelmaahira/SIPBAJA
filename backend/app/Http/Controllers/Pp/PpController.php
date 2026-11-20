@@ -95,8 +95,9 @@ class PpController extends Controller
         // Validasi keterkaitan dokumen dengan pengadaan / permohonan ini
         $isPengadaanDoc = ($dokumen->ref_type === 'pengadaan' && (int) $dokumen->ref_id === (int) $pengadaan->id);
         $isPermohonanDoc = ($dokumen->ref_type === 'permohonan' && (int) $dokumen->ref_id === (int) $pengadaan->permohonan_id);
+        $isPermohonanMemo = ($dokumen->ref_type === 'approval_permohonan' && (int) $dokumen->ref_id === (int) $pengadaan->permohonan_id);
 
-        if (! $isPengadaanDoc && ! $isPermohonanDoc) {
+        if (! $isPengadaanDoc && ! $isPermohonanDoc && ! $isPermohonanMemo) {
             abort(404, 'Dokumen tidak berkaitan dengan pengadaan ini.');
         }
 
@@ -108,12 +109,16 @@ class PpController extends Controller
                 $path = 'dokumen/permohonan/'.$dokumen->nama_hash;
             } elseif ($dokumen->ref_type === 'pengadaan') {
                 $path = 'dokumen/pengadaan/'.$dokumen->nama_hash;
+            } elseif ($dokumen->ref_type === 'approval_permohonan') {
+                $path = $this->memoPath($dokumen);
             }
         }
 
-        if (Storage::disk('private')->exists($path)) {
-            $disk = 'private';
-        } elseif (! Storage::disk('local')->exists($path)) {
+        if (! $path) {
+            return response()->json(['message' => 'Berkas fisik dokumen tidak ditemukan di server.'], 404);
+        }
+
+        if (! Storage::disk('local')->exists($path)) {
             return response()->json(['message' => 'Berkas fisik dokumen tidak ditemukan di server.'], 404);
         }
 
@@ -157,5 +162,25 @@ class PpController extends Controller
             'recentNotifications' => $notifData['recentNotifications'],
             'unreadNotificationsCount' => $notifData['unreadNotificationsCount'],
         ]);
+    }
+
+    /**
+     * Menentukan lokasi penyimpanan berkas memo persetujuan permohonan.
+     */
+    private function memoPath(Dokumen $dokumen): ?string
+    {
+        $candidates = [
+            'dokumen/memo/'.$dokumen->nama_hash,
+            'dokumen/permohonan/memo/'.$dokumen->nama_hash,
+            'dokumen/permohonan/'.$dokumen->nama_hash,
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (Storage::disk('local')->exists($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return null;
     }
 }

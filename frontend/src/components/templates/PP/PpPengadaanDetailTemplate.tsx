@@ -1,23 +1,21 @@
 import { useState, useEffect, useMemo, type FC } from 'react';
-import { Link } from 'react-router-dom';
 import {
   ArrowLeft,
   FileText,
-  Calendar,
-  Layers,
-  Building2,
   Tag,
   CheckCircle2,
   XCircle,
-  Eye,
   Download,
   AlertCircle,
   UserCheck,
-  Coins,
   Loader2,
   ExternalLink,
 } from 'lucide-react';
 import AppLayout, { type AppNavItem as PpNavItem } from '../General/AppLayout';
+import HeroBanner from '../../organisms/HeroBanner';
+import { InformasiPengadaanCard } from '../../organisms/PP/InformasiPengadaanCard';
+import { CatatanRevisiCard } from '../../organisms/PP/CatatanRevisiCard';
+import DocumentCard from '../../organisms/DocumentCard';
 import KonfirmasiApproveModal from '../../organisms/KonfirmasiApproveModal';
 import TolakPengadaanModal from '../../organisms/TolakPengadaanModal';
 import DocumentPreviewModal from '../../organisms/DocumentPreviewModal';
@@ -112,15 +110,52 @@ export const PpPengadaanDetailTemplate: FC<PpPengadaanDetailTemplateProps> = ({
     );
   }, [rawDokumenPermohonan]);
 
-  const memoPersetujuanDoc = useMemo(() => {
-    return rawDokumenPermohonan.find(
+  // Memo Persetujuan 1: Dari Bidang 2
+  const memoBidang2Doc = useMemo(() => {
+    const fromApproval = (detail.memo_permohonan || []).find(
+      (d) => d.tahap === 'BIDANG2' || d.tipe_dokumen === 'memo_persetujuan_bidang2'
+    );
+    if (fromApproval) return fromApproval;
+
+    return (
+      rawDokumenPermohonan.find(
+        (d) =>
+          d.tipe_dokumen === 'memo_persetujuan_bidang2' ||
+          (d.tipe_dokumen && d.tipe_dokumen.toLowerCase().includes('bidang2')) ||
+          (d.nama_asli && d.nama_asli.toLowerCase().includes('bidang2'))
+      ) ||
+      rawDokumenPermohonan.filter(
+        (d) =>
+          d.tipe_dokumen === 'memo_persetujuan' ||
+          (d.tipe_dokumen && d.tipe_dokumen.toLowerCase().includes('memo'))
+      )[0] ||
+      null
+    );
+  }, [detail.memo_permohonan, rawDokumenPermohonan]);
+
+  // Memo Persetujuan 2: Dari PPK
+  const memoPpkDoc = useMemo(() => {
+    const fromApproval = (detail.memo_permohonan || []).find(
+      (d) => d.tahap === 'PPK' || d.tipe_dokumen === 'memo_persetujuan_ppk'
+    );
+    if (fromApproval) return fromApproval;
+
+    const specificPpk = rawDokumenPermohonan.find(
+      (d) =>
+        d.tipe_dokumen === 'memo_persetujuan_ppk' ||
+        (d.tipe_dokumen && d.tipe_dokumen.toLowerCase().includes('ppk')) ||
+        (d.nama_asli && d.nama_asli.toLowerCase().includes('ppk'))
+    );
+    if (specificPpk) return specificPpk;
+
+    const allMemos = rawDokumenPermohonan.filter(
       (d) =>
         d.tipe_dokumen === 'memo_persetujuan' ||
-        d.tipe_dokumen === 'memo_persetujuan_bidang2' ||
-        d.tipe_dokumen === 'memo_persetujuan_ppk' ||
         (d.tipe_dokumen && d.tipe_dokumen.toLowerCase().includes('memo'))
     );
-  }, [rawDokumenPermohonan]);
+    // Jika ada lebih dari satu memo, ambil memo kedua untuk PPK
+    return allMemos.length > 1 ? allMemos[1] : null;
+  }, [detail.memo_permohonan, rawDokumenPermohonan]);
 
   // Status Normalization
   const rawStatus = (pengadaan.status || 'menunggu_persetujuan').toLowerCase();
@@ -162,12 +197,12 @@ export const PpPengadaanDetailTemplate: FC<PpPengadaanDetailTemplateProps> = ({
 
     const tanggal = rejectedApp?.created_at
       ? new Date(rejectedApp.created_at).toLocaleDateString('id-ID', {
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        })
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
       : null;
 
     return {
@@ -364,152 +399,39 @@ export const PpPengadaanDetailTemplate: FC<PpPengadaanDetailTemplateProps> = ({
         )}
 
         {/* HERO BANNER */}
-        <section
-          className="relative overflow-hidden bg-gradient-to-r from-[#075E43] to-[#129A6E] text-white rounded-[24px] p-6 md:p-8 min-h-[148px] flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-[0_4px_20px_rgba(14,124,90,0.15)]"
-          aria-labelledby="hero-title"
-        >
-          {/* Decorative concentric circles (Figma Deco 1, 2, 3) */}
-          <div
-            className="absolute -right-16 -top-16 w-[260px] h-[260px] rounded-full border border-white/10 pointer-events-none hidden sm:block"
-            aria-hidden="true"
-          />
-          <div
-            className="absolute -right-6 -bottom-12 w-[170px] h-[170px] rounded-full border border-white/15 pointer-events-none hidden sm:block"
-            aria-hidden="true"
-          />
-          <div
-            className="absolute right-40 top-4 w-[80px] h-[80px] rounded-full border border-white/5 pointer-events-none hidden sm:block"
-            aria-hidden="true"
-          />
+        <HeroBanner
+          eyebrow="PENGADAAN"
+          title="Detail Pengadaan"
+          statusBadge={renderHeroStatusBadge()}
+          description={`Nomor ${nomorPermohonan} · Diajukan ${tanggalPengajuan}`}
+          ctaLink={`${basePath}/pengadaan`}
+          ctaLinkLabel="Kembali"
+          ctaLinkIcon={ArrowLeft}
+          ctaVariant="translucent"
+        />
 
-          <div className="relative z-10 max-w-xl">
-            <p className="text-[11px] font-bold text-white/75 tracking-wider uppercase mb-1">
-              PENGADAAN
-            </p>
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 id="hero-title" className="text-xl md:text-2xl font-bold tracking-tight text-white">
-                Detail Pengadaan
-              </h1>
-              {renderHeroStatusBadge()}
-            </div>
-            <p className="text-xs md:text-sm text-white/85 mt-1.5 leading-relaxed">
-              Nomor {nomorPermohonan} &nbsp;&middot;&nbsp; Diajukan {tanggalPengajuan}
-            </p>
-          </div>
+        {/* CARD INFORMASI PENGADAAN */}
+        <InformasiPengadaanCard
+          judul={judulPengadaan}
+          unitNama={unitNama}
+          nomorPengadaan={nomorPengadaan}
+          nomorPermohonan={nomorPermohonan}
+          tanggalPengajuan={tanggalPengajuan}
+          jenisPengadaan={jenis?.nama || 'Barang'}
+          metodePengadaan={metode?.nama || 'Pengadaan Langsung'}
+          levelPengadaan={level?.nama || '50-200 Juta'}
+          nominal={nominalEstimasi}
+          statusPpLabel={renderStatusPpValue()}
+          statusPengadaanPill={renderStatusPengadaanPill()}
+        />
 
-          <div className="relative z-10 shrink-0">
-            <Link
-              to={`${basePath}/pengadaan`}
-              className="inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors duration-150 bg-white/15 text-white hover:bg-white/25 border border-white/20 shadow-xs cursor-pointer"
-            >
-              <ArrowLeft className="w-4 h-4 text-white" />
-              <span>Kembali</span>
-            </Link>
-          </div>
-        </section>
-
-        {/* CARD INFORMASI PENGADAAN (GRID 3 KOLOM) */}
-        <div className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)]">
-          <div className="pb-4 mb-5 border-b border-[#F0F4F2]">
-            <p className="text-[11px] font-bold text-[#8A9A95] tracking-wider uppercase">
-              INFORMASI PENGADAAN
-            </p>
-            <h2 className="text-lg font-bold text-[#14201C] mt-1">{judulPengadaan}</h2>
-            <p className="text-xs text-[#8A9A95] mt-0.5">Diajukan oleh {unitNama}</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Kolom 1 */}
-            <div className="space-y-4">
-              <div>
-                <span className="text-[11px] font-medium text-[#8A9A95] block">No. Pengadaan</span>
-                <span className="text-sm font-bold text-[#14201C] block mt-0.5">
-                  {nomorPengadaan}
-                </span>
-              </div>
-              <div>
-                <span className="text-[11px] font-medium text-[#8A9A95] block">Nomor Permohonan</span>
-                <span className="text-sm font-bold text-[#14201C] block mt-0.5">
-                  {nomorPermohonan}
-                </span>
-              </div>
-              <div>
-                <span className="text-[11px] font-medium text-[#8A9A95] block">Tanggal Pengajuan</span>
-                <span className="text-sm font-bold text-[#14201C] block mt-0.5">
-                  {tanggalPengajuan}
-                </span>
-              </div>
-            </div>
-
-            {/* Kolom 2 */}
-            <div className="space-y-4">
-              <div>
-                <span className="text-[11px] font-medium text-[#8A9A95] block">Jenis Pengadaan</span>
-                <span className="text-sm font-bold text-[#14201C] block mt-0.5">
-                  {jenis?.nama || 'Barang'}
-                </span>
-              </div>
-              <div>
-                <span className="text-[11px] font-medium text-[#8A9A95] block">Metode Pengadaan</span>
-                <span className="text-sm font-bold text-[#14201C] block mt-0.5">
-                  {metode?.nama || 'Pengadaan Langsung'}
-                </span>
-              </div>
-              <div>
-                <span className="text-[11px] font-medium text-[#8A9A95] block">Level Pengadaan</span>
-                <span className="text-sm font-bold text-[#14201C] block mt-0.5">
-                  {level?.nama || '50-200 Juta'}
-                </span>
-              </div>
-            </div>
-
-            {/* Kolom 3 */}
-            <div className="space-y-4">
-              <div>
-                <span className="text-[11px] font-medium text-[#8A9A95] block">Nominal / Estimasi</span>
-                <span className="text-sm font-bold text-[#0E7C5A] block mt-0.5">
-                  {nominalEstimasi}
-                </span>
-              </div>
-              <div>
-                <span className="text-[11px] font-medium text-[#8A9A95] block">Status PP</span>
-                <span className="text-sm font-bold text-[#14201C] block mt-0.5">
-                  {renderStatusPpValue()}
-                </span>
-              </div>
-              <div>
-                <span className="text-[11px] font-medium text-[#8A9A95] block">Status Pengadaan</span>
-                <div className="mt-1">{renderStatusPengadaanPill()}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* CARD CATATAN REVISI (Hanya muncul jika Ditolak atau memiliki riwayat penolakan aktif) */}
+        {/* CARD CATATAN REVISI */}
         {isDitolak && (
-          <div className="bg-[#FEF3F2] rounded-[16px] p-6 border border-[#FECDCA] shadow-xs">
-            <div className="flex items-start gap-3.5 mb-4">
-              <div className="w-9 h-9 rounded-xl bg-[#FEE4E2] text-[#D92D20] flex items-center justify-center shrink-0">
-                <XCircle className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-[#B42318]">Catatan Revisi</h3>
-                <p className="text-xs text-[#8A9A95] mt-0.5">
-                  Ditolak oleh {rejectionInfo.actor}
-                  {rejectionInfo.tanggal ? ` \u00b7 ${rejectionInfo.tanggal}` : ''}
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-white/80 rounded-xl p-4 border border-[#FECDCA]/60">
-              <span className="text-[10px] font-extrabold tracking-wider text-[#B42318] uppercase block mb-1">
-                ALASAN PENOLAKAN
-              </span>
-              <p className="text-xs text-[#344054] leading-relaxed font-medium">
-                {rejectionInfo.alasan}
-              </p>
-            </div>
-          </div>
+          <CatatanRevisiCard
+            actor={rejectionInfo.actor}
+            tanggal={rejectionInfo.tanggal}
+            alasan={rejectionInfo.alasan}
+          />
         )}
 
         {/* CARD DOKUMEN PROSES SEBELUMNYA */}
@@ -521,146 +443,70 @@ export const PpPengadaanDetailTemplate: FC<PpPengadaanDetailTemplateProps> = ({
             </p>
           </div>
 
-          {/* Document Rows: Surat Permohonan & Memo Persetujuan */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            {/* Surat Permohonan Card */}
-            <div className="bg-white rounded-[14px] p-5 border border-[#E4EBE8] flex flex-col justify-between hover:border-[#129A6E]/50 transition-colors">
-              <div>
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="flex items-start gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-[#FEE4E2] text-[#D92D20] flex items-center justify-center shrink-0">
-                      <FileText className="w-5 h-5" />
-                    </div>
-                    <div className="min-w-0">
-                      <span className="text-[11px] font-bold text-[#8A9A95] block">
-                        Surat Permohonan
-                      </span>
-                      <p
-                        className="text-xs font-bold text-[#14201C] truncate mt-0.5"
-                        title={suratPermohonanDoc?.nama_asli || 'Surat Permohonan Pengadaan'}
-                      >
-                        {suratPermohonanDoc?.nama_asli || 'Surat_Permohonan.pdf'}
-                      </p>
-                      <p className="text-[11px] text-[#8A9A95] mt-0.5">
-                        PDF &bull;{' '}
-                        {suratPermohonanDoc?.ukuran_bytes
-                          ? formatBytes(suratPermohonanDoc.ukuran_bytes)
-                          : 'Tersedia'}
-                      </p>
-                    </div>
-                  </div>
-                  {suratPermohonanDoc?.download_url && (
-                    <button
-                      type="button"
-                      onClick={() => handleDownload(suratPermohonanDoc)}
-                      disabled={downloadingDocId === suratPermohonanDoc.id}
-                      className="w-8 h-8 rounded-lg border border-[#E4EBE8] text-[#5F6F6A] hover:bg-[#F4F7F5] hover:text-[#0E7C5A] flex items-center justify-center transition cursor-pointer"
-                      title="Unduh Berkas"
-                    >
-                      {downloadingDocId === suratPermohonanDoc.id ? (
-                        <Loader2 className="w-4 h-4 animate-spin text-[#0E7C5A]" />
-                      ) : (
-                        <Download className="w-4 h-4" />
-                      )}
-                    </button>
-                  )}
-                </div>
+          {/* Document Rows: Surat Permohonan (Full Width) & Memo Persetujuan (2 Kolom) */}
+          <div className="space-y-4 mb-6">
+            {/* Baris 1: Surat Permohonan (Lebar Penuh) */}
+            <DocumentCard
+              category="Surat Permohonan"
+              filename={suratPermohonanDoc?.nama_asli || 'Surat_Permohonan.pdf'}
+              size={
+                suratPermohonanDoc?.ukuran_bytes
+                  ? `PDF • ${formatBytes(suratPermohonanDoc.ukuran_bytes)}`
+                  : 'PDF • Tersedia'
+              }
+              onView={
+                suratPermohonanDoc
+                  ? () => handleViewModal(suratPermohonanDoc, 'Surat Permohonan')
+                  : undefined
+              }
+              onDownload={
+                suratPermohonanDoc?.download_url
+                  ? () => handleDownload(suratPermohonanDoc)
+                  : undefined
+              }
+            />
 
-                <div className="flex items-center gap-2 p-2 rounded-lg bg-[#F4F7F5] border border-[#E4EBE8]/60 text-xs text-[#5F6F6A] mb-4">
-                  <Tag className="w-3.5 h-3.5 text-[#0E7C5A] shrink-0" />
-                  <span className="text-[11px] text-[#8A9A95]">Jenis MAK:</span>
-                  <span className="text-[11px] font-bold text-[#14201C] truncate">
-                    {makList[0]?.nama || 'Belanja Modal Peralatan dan Mesin'}
-                  </span>
-                </div>
-              </div>
+            {/* Baris 2: Memo Persetujuan (2 Kolom) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <DocumentCard
+                category="Memo Persetujuan Bidang 2"
+                filename={memoBidang2Doc?.nama_asli || 'Memo_Persetujuan_Bidang2.pdf'}
+                size={
+                  memoBidang2Doc?.ukuran_bytes
+                    ? `PDF • ${formatBytes(memoBidang2Doc.ukuran_bytes)}`
+                    : 'PDF • Tersedia'
+                }
+                onView={
+                  memoBidang2Doc
+                    ? () => handleViewModal(memoBidang2Doc, 'Memo Persetujuan Bidang 2')
+                    : undefined
+                }
+                onDownload={
+                  memoBidang2Doc?.download_url
+                    ? () => handleDownload(memoBidang2Doc)
+                    : undefined
+                }
+              />
 
-              <div>
-                {suratPermohonanDoc ? (
-                  <button
-                    type="button"
-                    onClick={() => handleViewModal(suratPermohonanDoc, 'Surat Permohonan')}
-                    className="w-full py-2 px-3 rounded-xl border border-[#E4EBE8] bg-[#F8FAF9] hover:bg-[#EEF5F2] text-xs font-bold text-[#0E7C5A] transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                    <span>Lihat Dokumen</span>
-                  </button>
-                ) : (
-                  <span className="text-xs text-[#8A9A95] italic block text-center py-2">
-                    Berkas surat tidak ditemukan
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Memo Persetujuan Card */}
-            <div className="bg-white rounded-[14px] p-5 border border-[#E4EBE8] flex flex-col justify-between hover:border-[#129A6E]/50 transition-colors">
-              <div>
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="flex items-start gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-[#E8F5EF] text-[#0E7C5A] flex items-center justify-center shrink-0">
-                      <FileText className="w-5 h-5" />
-                    </div>
-                    <div className="min-w-0">
-                      <span className="text-[11px] font-bold text-[#8A9A95] block">
-                        Memo Persetujuan
-                      </span>
-                      <p
-                        className="text-xs font-bold text-[#14201C] truncate mt-0.5"
-                        title={memoPersetujuanDoc?.nama_asli || 'Memo Persetujuan'}
-                      >
-                        {memoPersetujuanDoc?.nama_asli || 'Memo_Persetujuan.pdf'}
-                      </p>
-                      <p className="text-[11px] text-[#8A9A95] mt-0.5">
-                        PDF &bull;{' '}
-                        {memoPersetujuanDoc?.ukuran_bytes
-                          ? formatBytes(memoPersetujuanDoc.ukuran_bytes)
-                          : 'Tersedia'}
-                      </p>
-                    </div>
-                  </div>
-                  {memoPersetujuanDoc?.download_url && (
-                    <button
-                      type="button"
-                      onClick={() => handleDownload(memoPersetujuanDoc)}
-                      disabled={downloadingDocId === memoPersetujuanDoc.id}
-                      className="w-8 h-8 rounded-lg border border-[#E4EBE8] text-[#5F6F6A] hover:bg-[#F4F7F5] hover:text-[#0E7C5A] flex items-center justify-center transition cursor-pointer"
-                      title="Unduh Berkas"
-                    >
-                      {downloadingDocId === memoPersetujuanDoc.id ? (
-                        <Loader2 className="w-4 h-4 animate-spin text-[#0E7C5A]" />
-                      ) : (
-                        <Download className="w-4 h-4" />
-                      )}
-                    </button>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2 p-2 rounded-lg bg-[#F4F7F5] border border-[#E4EBE8]/60 text-xs text-[#5F6F6A] mb-4">
-                  <Tag className="w-3.5 h-3.5 text-[#0E7C5A] shrink-0" />
-                  <span className="text-[11px] text-[#8A9A95]">Jenis MAK:</span>
-                  <span className="text-[11px] font-bold text-[#14201C] truncate">
-                    {makList[0]?.nama || 'Belanja Modal Peralatan dan Mesin'}
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                {memoPersetujuanDoc ? (
-                  <button
-                    type="button"
-                    onClick={() => handleViewModal(memoPersetujuanDoc, 'Memo Persetujuan')}
-                    className="w-full py-2 px-3 rounded-xl border border-[#E4EBE8] bg-[#F8FAF9] hover:bg-[#EEF5F2] text-xs font-bold text-[#0E7C5A] transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                    <span>Lihat Dokumen</span>
-                  </button>
-                ) : (
-                  <span className="text-xs text-[#8A9A95] italic block text-center py-2">
-                    Belum ada memo persetujuan
-                  </span>
-                )}
-              </div>
+              <DocumentCard
+                category="Memo Persetujuan PPK"
+                filename={memoPpkDoc?.nama_asli || 'Memo_Persetujuan_PPK.pdf'}
+                size={
+                  memoPpkDoc?.ukuran_bytes
+                    ? `PDF • ${formatBytes(memoPpkDoc.ukuran_bytes)}`
+                    : 'PDF • Tersedia'
+                }
+                onView={
+                  memoPpkDoc
+                    ? () => handleViewModal(memoPpkDoc, 'Memo Persetujuan PPK')
+                    : undefined
+                }
+                onDownload={
+                  memoPpkDoc?.download_url
+                    ? () => handleDownload(memoPpkDoc)
+                    : undefined
+                }
+              />
             </div>
           </div>
 
@@ -792,62 +638,7 @@ export const PpPengadaanDetailTemplate: FC<PpPengadaanDetailTemplateProps> = ({
             </div>
           </div>
 
-          {/* Kolom Kanan: Side Column (Rincian & Keputusan PP) */}
           <div className="lg:col-span-4 space-y-6">
-            {/* Box Rincian Pengadaan Mini */}
-            <div className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)]">
-              <h3 className="text-sm font-bold text-[#14201C] pb-3 border-b border-[#F0F4F2]">
-                Ringkasan Pengadaan
-              </h3>
-
-              <div className="divide-y divide-[#F0F4F2] text-xs">
-                <div className="flex items-center gap-3 py-3">
-                  <div className="w-8 h-8 rounded-lg bg-[#E8F5EF] text-[#0E7C5A] flex items-center justify-center shrink-0">
-                    <Coins className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <span className="text-[#8A9A95] block text-[11px]">Estimasi Anggaran</span>
-                    <span className="font-bold text-[#0E7C5A] block mt-0.5">
-                      {nominalEstimasi}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 py-3">
-                  <div className="w-8 h-8 rounded-lg bg-[#E8F5EF] text-[#0E7C5A] flex items-center justify-center shrink-0">
-                    <Layers className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <span className="text-[#8A9A95] block text-[11px]">Jenis Pengadaan</span>
-                    <span className="font-bold text-[#14201C] block mt-0.5">
-                      {jenis?.nama || 'Barang'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 py-3">
-                  <div className="w-8 h-8 rounded-lg bg-[#E8F5EF] text-[#0E7C5A] flex items-center justify-center shrink-0">
-                    <Building2 className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <span className="text-[#8A9A95] block text-[11px]">Diunggah Oleh</span>
-                    <span className="font-bold text-[#14201C] block mt-0.5">PPBJ</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 pt-3">
-                  <div className="w-8 h-8 rounded-lg bg-[#E8F5EF] text-[#0E7C5A] flex items-center justify-center shrink-0">
-                    <Calendar className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <span className="text-[#8A9A95] block text-[11px]">Tanggal Pengajuan</span>
-                    <span className="font-bold text-[#14201C] block mt-0.5">
-                      {tanggalPengajuan}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
 
             {/* Box Keputusan PP (Tampil aktif jika Menunggu Review) */}
             {isMenungguReview ? (
@@ -894,11 +685,10 @@ export const PpPengadaanDetailTemplate: FC<PpPengadaanDetailTemplateProps> = ({
                   </p>
                 </div>
                 <div
-                  className={`p-4 rounded-xl text-xs font-medium flex items-center gap-3 ${
-                    isTerverifikasi
-                      ? 'bg-[#E8F5EF] text-[#0E7C5A] border border-[#A3D9C3]'
-                      : 'bg-[#FEF3F2] text-[#B42318] border border-[#FECDCA]'
-                  }`}
+                  className={`p-4 rounded-xl text-xs font-medium flex items-center gap-3 ${isTerverifikasi
+                    ? 'bg-[#E8F5EF] text-[#0E7C5A] border border-[#A3D9C3]'
+                    : 'bg-[#FEF3F2] text-[#B42318] border border-[#FECDCA]'
+                    }`}
                 >
                   {isTerverifikasi ? (
                     <>
