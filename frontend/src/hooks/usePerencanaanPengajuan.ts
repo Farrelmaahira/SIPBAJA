@@ -297,16 +297,9 @@ export function usePerencanaanPengajuan({
       list.push(...detail.dokumen_permohonan);
     } else if (detail?.dokumen) {
       list.push(detail.dokumen);
-    } else if (permohonan?.id) {
-      list.push({
-        id: permohonan.id,
-        nama_asli: `Surat_Permohonan_${permohonan.nomor_surat || 'SIPBAJA'}.pdf`,
-        tipe_dokumen: 'surat_permohonan',
-        download_url: `/api/v1/perencanaan/pengajuan/${permohonan.id}/dokumen`,
-      });
     }
     return list;
-  }, [detail, permohonan]);
+  }, [detail]);
 
   // Preload preview blob for surat_permohonan document
   useEffect(() => {

@@ -11,6 +11,7 @@ use App\Models\Permohonan;
 use App\Services\ApprovalService;
 use App\Services\PengadaanService;
 use App\Services\PermohonanService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -53,11 +54,16 @@ class PengajuanPerencanaanController extends Controller
         ]);
     }
 
-    public function downloadDokumen(Request $request, Permohonan $permohonan): StreamedResponse
+    public function downloadDokumen(Request $request, Permohonan $permohonan): StreamedResponse|JsonResponse
     {
         $user = $request->user();
         $dokumenId = $request->filled('dokumen_id') ? $request->integer('dokumen_id') : null;
-        $info = $this->permohonanService->ambilDokumen($user, $permohonan, $dokumenId);
+
+        try {
+            $info = $this->permohonanService->ambilDokumen($user, $permohonan, $dokumenId);
+        } catch (ModelNotFoundException) {
+            return response()->json(['message' => 'Berkas fisik atau rekaman dokumen permohonan tidak ditemukan.'], 404);
+        }
 
         $disposition = $request->query('disposition', 'attachment');
         if ($disposition === 'inline') {
