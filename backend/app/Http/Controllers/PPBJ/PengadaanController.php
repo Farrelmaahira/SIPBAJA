@@ -63,6 +63,7 @@ class PengadaanController extends Controller
         $pengadaan = Pengadaan::findOrFail((int) $id);
         $fileDokumen = $request->file('dokumen');
 
+        $statusLama = $pengadaan->status;
         $updated = $this->pengadaanService->updateKlasifikasiPengadaan(
             $pengadaan,
             $request->validated(),
@@ -70,8 +71,12 @@ class PengadaanController extends Controller
             $request->user()
         );
 
+        $message = ($statusLama === 'ditolak' && $updated->status === 'menunggu_review')
+            ? 'Dokumen pengadaan revisi berhasil diperbarui dan dikirim kembali ke reviewer.'
+            : 'Klasifikasi pengadaan berhasil diperbarui.';
+
         return response()->json([
-            'message' => 'Klasifikasi pengadaan berhasil diperbarui.',
+            'message' => $message,
             'pengadaan' => $updated,
         ]);
     }
@@ -130,13 +135,18 @@ class PengadaanController extends Controller
             })
             ->firstOrFail();
 
-        if (! Storage::disk('private')->exists($dokumen->path)) {
-            return response()->json(['message' => 'Berkas fisik dokumen tidak ditemukan di server.'], 404);
+        $disk = 'local';
+        if (! Storage::disk('local')->exists($dokumen->path)) {
+            if (Storage::disk('private')->exists($dokumen->path)) {
+                $disk = 'private';
+            } else {
+                return response()->json(['message' => 'Berkas fisik dokumen tidak ditemukan di server.'], 404);
+            }
         }
 
         $disposition = $request->query('disposition') === 'inline' ? 'inline' : 'attachment';
 
-        return Storage::disk('private')->download(
+        return Storage::disk($disk)->download(
             $dokumen->path,
             $dokumen->nama_asli ?: 'dokumen.pdf',
             [

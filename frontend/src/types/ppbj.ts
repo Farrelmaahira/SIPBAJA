@@ -166,11 +166,23 @@ export interface PpbjStoreDraftPayload {
 
 export interface PpbjPengadaanDetail {
   id: number;
+  permohonan_mak_id?: number;
   nominal: number;
   status: string;
   revisi_ke: number;
   bisa_edit_draft: boolean;
   bisa_edit_kontrak: boolean;
+  available_mak?: Array<{
+    id: number;
+    mak_id?: number;
+    nama: string;
+    kode?: string;
+  }>;
+  reference_data?: {
+    jenis?: PpbjReferenceOption[];
+    metode?: PpbjReferenceOption[];
+    level?: PpbjReferenceOption[];
+  };
   permohonan: {
     id: number;
     nomor_surat: string;
