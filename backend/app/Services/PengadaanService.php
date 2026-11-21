@@ -98,7 +98,7 @@ class PengadaanService
 
         $referenceData = [
             'jenis' => JenisPengadaan::select(['id', 'nama'])->orderBy('id')->get()->toArray(),
-            'metode' => MetodePengadaan::select(['id', 'nama'])->orderBy('id')->get()->toArray(),
+            'metode' => MetodePengadaan::where('isActive', true)->select(['id', 'nama'])->orderBy('id')->get()->toArray(),
             'level' => LevelPengadaan::select(['id', 'nama', 'min_nominal', 'max_nominal', 'perlu_review_pp'])
                 ->orderBy('min_nominal')
                 ->get()
@@ -906,7 +906,10 @@ class PengadaanService
 
         $pengadaan->reference_data = [
             'jenis' => JenisPengadaan::select(['id', 'nama'])->orderBy('id')->get()->toArray(),
-            'metode' => MetodePengadaan::select(['id', 'nama'])->orderBy('id')->get()->toArray(),
+            'metode' => MetodePengadaan::where(function ($q) use ($pengadaan) {
+                $q->where('isActive', true)
+                    ->when($pengadaan->metode_id, fn ($sub) => $sub->orWhere('id', $pengadaan->metode_id));
+            })->select(['id', 'nama'])->orderBy('id')->get()->toArray(),
             'level' => LevelPengadaan::select(['id', 'nama', 'min_nominal', 'max_nominal', 'perlu_review_pp'])->orderBy('min_nominal')->get()->toArray(),
         ];
 
