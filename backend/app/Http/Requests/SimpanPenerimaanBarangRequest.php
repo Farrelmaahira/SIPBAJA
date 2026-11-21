@@ -18,13 +18,34 @@ class SimpanPenerimaanBarangRequest extends FormRequest
     {
         return [
             'tanggal_terima' => ['nullable', 'date'],
-            'dokumen_barang' => ['required', 'array', 'min:1'],
+            'retained_dokumen_ids' => ['nullable', 'array'],
+            'retained_dokumen_ids.*' => ['nullable'],
+            'retained_foto_ids' => ['nullable', 'array'],
+            'retained_foto_ids.*' => ['nullable'],
+            'clear_dokumen_barang' => ['nullable'],
+            'clear_dokumentasi_foto' => ['nullable'],
+            'dokumen_barang' => ['nullable', 'array'],
             'dokumen_barang.*' => ['required', 'file', 'max:10240', 'mimes:pdf,doc,docx,xls,xlsx'],
             'dokumen_barang_nama' => ['nullable', 'array'],
             'dokumen_barang_nama.*' => ['nullable', 'string', 'max:255'],
             'dokumentasi_foto' => ['nullable', 'array'],
             'dokumentasi_foto.*' => ['nullable', 'file', 'max:20480', 'mimes:jpg,jpeg,png,mp4'],
         ];
+    }
+
+    /**
+     * Konfigurasi validator untuk memastikan minimal 1 dokumen barang/jasa ada (baik berkas baru maupun yang dipertahankan).
+     */
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $hasNewFiles = $this->hasFile('dokumen_barang') && ! empty($this->file('dokumen_barang'));
+            $hasRetained = ! empty($this->input('retained_dokumen_ids', []));
+
+            if (! $hasNewFiles && ! $hasRetained) {
+                $validator->errors()->add('dokumen_barang', 'Minimal 1 dokumen barang/jasa (BAST) wajib dilampirkan.');
+            }
+        });
     }
 
     /**

@@ -117,6 +117,8 @@ export const PerlengkapanPengadaanMasukTable: FC<PerlengkapanPengadaanMasukTable
                     <RowActionMenu
                       item={item}
                       viewHref={`/perlengkapan/pengadaan/${item.id}`}
+                      editHref={`/perlengkapan/pengadaan/${item.id}/edit`}
+                      showDelete={false}
                     />
                   </td>
                 </tr>

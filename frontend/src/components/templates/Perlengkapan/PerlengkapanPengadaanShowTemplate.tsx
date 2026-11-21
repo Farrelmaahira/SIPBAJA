@@ -20,6 +20,7 @@ import {
   Info,
   Loader2,
   CheckCircle2,
+  Edit3,
 } from 'lucide-react';
 import AppLayout, { type AppTopbarUser } from '../General/AppLayout';
 import StatusPill from '../../atoms/StatusPill';
@@ -45,10 +46,19 @@ export interface PerlengkapanPengadaanShowTemplateProps {
   onRemoveDokumentasiFoto: (index: number) => void;
   onSubmitPenerimaan: () => void;
   onBack: () => void;
+  onEdit?: () => void;
   onViewDokumen?: (doc: PerlengkapanDokumenItem) => void;
   onDownloadDokumen?: (doc: PerlengkapanDokumenItem) => void;
+  onViewDokumentasi?: (foto: PerlengkapanDokumenItem) => void;
+  onDownloadDokumentasi?: (foto: PerlengkapanDokumenItem) => void;
+  onViewNewDokumen?: (file: File) => void;
+  onDownloadNewDokumen?: (file: File) => void;
+  onViewNewFoto?: (file: File) => void;
+  onDownloadNewFoto?: (file: File) => void;
   previewBlobUrl?: string | null;
   previewDocName?: string | null;
+  previewDocSize?: string | null;
+  onDownloadPreview?: () => void;
   onClosePreview?: () => void;
   isConfirmOpen?: boolean;
   onOpenConfirm?: () => void;
@@ -68,10 +78,19 @@ export const PerlengkapanPengadaanShowTemplate: FC<PerlengkapanPengadaanShowTemp
   onRemoveDokumentasiFoto,
   onSubmitPenerimaan,
   onBack,
+  onEdit,
   onViewDokumen,
   onDownloadDokumen,
+  onViewDokumentasi,
+  onDownloadDokumentasi,
+  onViewNewDokumen,
+  onDownloadNewDokumen,
+  onViewNewFoto,
+  onDownloadNewFoto,
   previewBlobUrl = null,
   previewDocName = null,
+  previewDocSize = null,
+  onDownloadPreview,
   onClosePreview,
   isConfirmOpen,
   onOpenConfirm,
@@ -116,6 +135,26 @@ export const PerlengkapanPengadaanShowTemplate: FC<PerlengkapanPengadaanShowTemp
       return `${Math.round(bytes / 1024)} KB`;
     }
     return `${bytes} B`;
+  };
+
+  const getDokumenBadge = (label?: string) => {
+    const norm = (label || '').toLowerCase();
+    if (norm.includes('kontrak')) {
+      return { bg: 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]', label: label || 'Surat Kontrak' };
+    }
+    if (norm.includes('spk')) {
+      return { bg: 'bg-[#F5F3FF] text-[#6D28D9] border-[#DDD6FE]', label: label || 'SPK' };
+    }
+    if (norm.includes('kwitansi')) {
+      return { bg: 'bg-[#ECFDF5] text-[#047857] border-[#A7F3D0]', label: label || 'Kwitansi' };
+    }
+    if (norm.includes('invoice')) {
+      return { bg: 'bg-[#FFFBEB] text-[#B45309] border-[#FDE68A]', label: label || 'Invoice' };
+    }
+    if (norm.includes('pembelian')) {
+      return { bg: 'bg-[#F0FDFA] text-[#0F766E] border-[#99F6E4]', label: label || 'Surat Pembelian' };
+    }
+    return { bg: 'bg-[#F0F4F2] text-[#2C4039] border-[#E4EBE8]', label: label || 'Dokumen' };
   };
 
   if (isLoading && !detail) {
@@ -187,90 +226,32 @@ export const PerlengkapanPengadaanShowTemplate: FC<PerlengkapanPengadaanShowTemp
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={onBack}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl border border-white/30 bg-white/10 hover:bg-white/20 text-xs sm:text-sm font-semibold transition-all cursor-pointer text-white self-start sm:self-auto shrink-0"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Kembali</span>
-            </button>
-          </div>
-        </div>
+            <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0">
+              {isSelesai && onEdit && (
+                <button
+                  type="button"
+                  onClick={onEdit}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-white text-[#0E7C5A] hover:bg-[#EEF5F2] text-xs sm:text-sm font-bold shadow-xs transition-all cursor-pointer"
+                  title="Edit data penerimaan barang dan dokumen"
+                >
+                  <Edit3 className="w-4 h-4" />
+                  <span>Edit Pengadaan</span>
+                </button>
+              )}
 
-        {/* Card 1: INFORMASI PENGADAAN */}
-        <div className="bg-white rounded-[22px] p-6 sm:p-7 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)]">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-[#8A9A95]">
-              INFORMASI PENGADAAN
-            </p>
-            <h2 className="text-lg sm:text-xl font-bold text-[#14201C] mt-1">
-              {detail?.judul || 'Pengadaan Komputer'}
-            </h2>
-            <p className="text-xs sm:text-sm text-[#5F6F6A] mt-0.5 font-medium">
-              Diajukan oleh {detail?.diajukan_oleh || 'Jurusan Teknik Informatika & Komputer'}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6 pt-6 border-t border-[#F0F4F2]">
-            {/* Box 1 */}
-            <div className="flex items-center gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-[#EEF5F2] text-[#0E7C5A] flex items-center justify-center shrink-0">
-                <Hash className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-[11px] font-medium text-[#8A9A95]">Nomor Pengadaan</p>
-                <p className="text-xs sm:text-sm font-bold text-[#14201C] mt-0.5">
-                  {detail?.nomor_pengadaan || 'PGD-2027-0001'}
-                </p>
-              </div>
-            </div>
-
-            {/* Box 2 */}
-            <div className="flex items-center gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-[#EEF5F2] text-[#0E7C5A] flex items-center justify-center shrink-0">
-                <Calendar className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-[11px] font-medium text-[#8A9A95]">Tanggal Pengajuan</p>
-                <p className="text-xs sm:text-sm font-bold text-[#14201C] mt-0.5">
-                  {detail?.tanggal_pengajuan || '04 Maret 2027'}
-                </p>
-              </div>
-            </div>
-
-            {/* Box 3 */}
-            <div className="flex items-center gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-[#EEF5F2] text-[#0E7C5A] flex items-center justify-center shrink-0">
-                <Banknote className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-[11px] font-medium text-[#8A9A95]">Nominal/Estimasi</p>
-                <p className="text-xs sm:text-sm font-bold text-[#14201C] mt-0.5">
-                  {formatRupiah(detail?.nominal || 100000000)}
-                </p>
-              </div>
-            </div>
-
-            {/* Box 4 */}
-            <div className="flex items-center gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-[#EEF5F2] text-[#0E7C5A] flex items-center justify-center shrink-0">
-                <Activity className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-[11px] font-medium text-[#8A9A95]">Status</p>
-                <div className="mt-1">
-                  <StatusPill
-                    status={detail?.status || 'sedang_diproses'}
-                    label={detail?.status_label || (isSelesai ? 'Selesai' : 'Sedang Diproses')}
-                  />
-                </div>
-              </div>
+              <button
+                type="button"
+                onClick={onBack}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl border border-white/30 bg-white/10 hover:bg-white/20 text-xs sm:text-sm font-semibold transition-all cursor-pointer text-white"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Kembali</span>
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Card 2: Tracking Proses */}
+        {/* 1. Card: Tracking Proses (Dipindahkan ke atas) */}
         <div className="bg-white rounded-[22px] p-6 sm:p-7 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)]">
           <div>
             <h3 className="text-base font-bold text-[#14201C]">Tracking Proses</h3>
@@ -369,364 +350,542 @@ export const PerlengkapanPengadaanShowTemplate: FC<PerlengkapanPengadaanShowTemp
           )}
         </div>
 
-        {/* Card 3: Vendor & Dokumen Pengadaan */}
-        <div className="bg-white rounded-[22px] p-6 sm:p-7 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)]">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#F0F4F2]">
+        {/* 2. Section Side-by-Side: Informasi Pengadaan & Vendor & Dokumen Pengadaan */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+          {/* Card: INFORMASI PENGADAAN */}
+          <div className="bg-white rounded-[22px] p-6 sm:p-7 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)] flex flex-col justify-between">
             <div>
-              <h3 className="text-base font-bold text-[#14201C]">Vendor &amp; Dokumen Pengadaan</h3>
-              <p className="text-xs text-[#5F6F6A] mt-0.5">
-                Data vendor dan dokumen dari PPBJ
-              </p>
-            </div>
+              <div className="pb-4 border-b border-[#F0F4F2]">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-[#8A9A95]">
+                  INFORMASI PENGADAAN
+                </p>
+                <h2 className="text-lg sm:text-xl font-bold text-[#14201C] mt-1">
+                  {detail?.judul || 'Pengadaan Komputer'}
+                </h2>
+                <p className="text-xs sm:text-sm text-[#5F6F6A] mt-0.5 font-medium">
+                  Diajukan oleh {detail?.diajukan_oleh || 'Jurusan Teknik Informatika & Komputer'}
+                </p>
+              </div>
 
-            <div className="flex items-center gap-2.5">
-              <span className="text-xs font-semibold text-[#5F6F6A]">Nama Vendor</span>
-              <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-[#E4EBE8] bg-[#F9FBFA] text-xs font-bold text-[#14201C]">
-                <Building2 className="w-4 h-4 text-[#0E7C5A]" />
-                <span>{detail?.vendor?.nama || 'PT PNJ PPBJ JAYA ABADI'}</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-5">
+                {/* Box 1 */}
+                <div className="flex items-center gap-3.5 p-3 rounded-xl bg-[#F9FBFA] border border-[#E4EBE8]">
+                  <div className="w-10 h-10 rounded-xl bg-[#EEF5F2] text-[#0E7C5A] flex items-center justify-center shrink-0">
+                    <Hash className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-medium text-[#8A9A95]">Nomor Pengadaan</p>
+                    <p className="text-xs sm:text-sm font-bold text-[#14201C] mt-0.5 truncate">
+                      {detail?.nomor_pengadaan || 'PGD-2027-0001'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Box 2 */}
+                <div className="flex items-center gap-3.5 p-3 rounded-xl bg-[#F9FBFA] border border-[#E4EBE8]">
+                  <div className="w-10 h-10 rounded-xl bg-[#EEF5F2] text-[#0E7C5A] flex items-center justify-center shrink-0">
+                    <Calendar className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-medium text-[#8A9A95]">Tanggal Pengajuan</p>
+                    <p className="text-xs sm:text-sm font-bold text-[#14201C] mt-0.5 truncate">
+                      {detail?.tanggal_pengajuan || '04 Maret 2027'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Box 3 */}
+                <div className="flex items-center gap-3.5 p-3 rounded-xl bg-[#F9FBFA] border border-[#E4EBE8]">
+                  <div className="w-10 h-10 rounded-xl bg-[#EEF5F2] text-[#0E7C5A] flex items-center justify-center shrink-0">
+                    <Banknote className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-medium text-[#8A9A95]">Nominal Fix (PPBJ)</p>
+                    <p className="text-xs sm:text-sm font-bold text-[#0E7C5A] mt-0.5 truncate">
+                      {formatRupiah(detail?.nominal_kontrak ?? detail?.nominal ?? 98500000)}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Box 4 */}
+                <div className="flex items-center gap-3.5 p-3 rounded-xl bg-[#F9FBFA] border border-[#E4EBE8]">
+                  <div className="w-10 h-10 rounded-xl bg-[#EEF5F2] text-[#0E7C5A] flex items-center justify-center shrink-0">
+                    <Activity className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-medium text-[#8A9A95]">Status Pengadaan</p>
+                    <div className="mt-1">
+                      <StatusPill
+                        status={detail?.status || 'sedang_diproses'}
+                        label={detail?.status_label || (isSelesai ? 'Selesai' : 'Sedang Diproses')}
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="mt-5">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-[#8A9A95] mb-3">
-              Dokumen Pengadaan
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {(detail?.vendor?.dokumen || []).map((doc) => (
-                <div
-                  key={doc.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl border border-[#E4EBE8] bg-[#FDFEFE] hover:bg-[#F9FBFA] transition-colors"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-[#FEECEC] text-[#E5484D] flex items-center justify-center shrink-0">
-                      <FileCode className="w-5 h-5" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold text-[#14201C] truncate">{doc.nama}</p>
-                      <p className="text-[11px] text-[#8A9A95] font-medium mt-0.5">
-                        {doc.label || 'Dokumen'} &bull; {doc.tipe} &bull; {doc.ukuran}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-                    <button
-                      type="button"
-                      onClick={() => onViewDokumen?.(doc)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[36px] rounded-lg border border-[#E4EBE8] bg-white text-[#14201C] hover:bg-[#F4F7F5] text-xs font-semibold transition-colors cursor-pointer"
-                    >
-                      <Eye className="w-3.5 h-3.5 text-[#5F6F6A]" />
-                      <span>Lihat</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onDownloadDokumen?.(doc)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[36px] rounded-lg bg-[#0E7C5A] hover:bg-[#09573E] text-white text-xs font-semibold transition-colors cursor-pointer"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      <span>Unduh</span>
-                    </button>
-                  </div>
+          {/* Card: VENDOR & DOKUMEN PENGADAAN */}
+          <div className="bg-white rounded-[22px] p-6 sm:p-7 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)] flex flex-col justify-between">
+            <div>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#F0F4F2]">
+                <div>
+                  <h3 className="text-base font-bold text-[#14201C]">Vendor &amp; Dokumen Pengadaan</h3>
+                  <p className="text-xs text-[#5F6F6A] mt-0.5">
+                    Data vendor dan lampiran dokumen dari PPBJ
+                  </p>
                 </div>
-              ))}
+
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[#E4EBE8] bg-[#F9FBFA] text-xs font-bold text-[#14201C] shrink-0 self-start sm:self-auto">
+                  <Building2 className="w-4 h-4 text-[#0E7C5A]" />
+                  <span>{detail?.vendor?.nama || 'PT PNJ PPBJ JAYA ABADI'}</span>
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <div className="flex items-center justify-between mb-2.5">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-[#8A9A95]">
+                    Dokumen Pengadaan ({detail?.vendor?.dokumen?.length || 0})
+                  </h4>
+                  <span className="text-[11px] text-[#8A9A95]">Lampiran PPBJ</span>
+                </div>
+
+                {detail?.vendor?.dokumen && detail.vendor.dokumen.length > 0 ? (
+                  <div className="space-y-2.5 max-h-[260px] overflow-y-auto pr-1">
+                    {detail.vendor.dokumen.map((doc) => {
+                      const badgeInfo = getDokumenBadge(doc.label);
+                      return (
+                        <div
+                          key={doc.id}
+                          className="flex items-center justify-between gap-3 p-3 rounded-xl border border-[#E4EBE8] bg-[#FDFEFE] hover:bg-[#F9FBFA] transition-colors"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-9 h-9 rounded-xl bg-[#FEECEC] text-[#E5484D] flex items-center justify-center shrink-0">
+                              <FileCode className="w-4 h-4" />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border ${badgeInfo.bg}`}>
+                                  {badgeInfo.label}
+                                </span>
+                                <p className="text-xs font-bold text-[#14201C] truncate max-w-[160px] sm:max-w-[220px]">
+                                  {doc.nama}
+                                </p>
+                              </div>
+                              <p className="text-[11px] text-[#8A9A95] font-medium mt-0.5">
+                                {doc.tipe} &bull; {doc.ukuran}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => onViewDokumen?.(doc)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 min-h-[32px] rounded-lg border border-[#E4EBE8] bg-white text-[#14201C] hover:bg-[#F4F7F5] text-xs font-semibold transition-colors cursor-pointer"
+                              title="Lihat Dokumen"
+                            >
+                              <Eye className="w-3.5 h-3.5 text-[#5F6F6A]" />
+                              <span className="hidden sm:inline">Lihat</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => onDownloadDokumen?.(doc)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 min-h-[32px] rounded-lg bg-[#0E7C5A] hover:bg-[#09573E] text-white text-xs font-semibold transition-colors cursor-pointer"
+                              title="Unduh Dokumen"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              <span className="hidden sm:inline">Unduh</span>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="p-6 rounded-xl border border-dashed border-[#D5DFDC] bg-[#F9FBFA] text-center">
+                    <FileText className="w-7 h-7 text-[#8A9A95] mx-auto mb-1.5" />
+                    <p className="text-xs font-bold text-[#14201C]">Belum Ada Dokumen Terlampir</p>
+                    <p className="text-[11px] text-[#5F6F6A] mt-0.5 max-w-sm mx-auto">
+                      PPBJ belum melampirkan berkas (seperti Surat Kontrak, SPK, Kwitansi, Invoice, atau Surat Pembelian) untuk pengadaan ini.
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Card 4: Dokumen Barang/Jasa */}
-        <div className="bg-white rounded-[22px] p-6 sm:p-7 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)]">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <h3 className="text-base font-bold text-[#14201C]">Dokumen Barang/Jasa</h3>
-              {!isSelesai ? (
-                <span className="w-2 h-2 rounded-full bg-[#E5484D]" title="Wajib diisi" />
-              ) : (
-                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#E4F6EC] text-[#0E7C5A]">
-                  Terverifikasi
-                </span>
-              )}
-            </div>
-          </div>
-          <p className="text-xs text-[#5F6F6A] mt-0.5">
-            {isSelesai
-              ? 'Berita Acara Serah Terima (BAST) dan dokumen serah terima yang telah diverifikasi'
-              : 'Berita acara serah terima dan dokumen pendukung lainnya'}
-          </p>
-
-          {/* Banner Peringatan Bertanda Tangan */}
-          {!isSelesai ? (
-            <div className="mt-4 p-3.5 rounded-xl bg-[#FEF2F2] border border-[#FEE2E2] flex items-start gap-2.5">
-              <span className="w-2 h-2 rounded-full bg-[#E5484D] mt-1 shrink-0" />
-              <p className="text-xs text-[#B91C1C] leading-relaxed">
-                <strong className="font-bold">Wajib ditandatangani terlebih dahulu:</strong>{' '}
-                Pastikan setiap dokumen sudah bertanda tangan sebelum diunggah.
-              </p>
-            </div>
-          ) : (
-            <div className="mt-4 p-3.5 rounded-xl bg-[#F0FDF4] border border-[#DCFCE7] flex items-center gap-2.5">
-              <CheckCircle2 className="w-4 h-4 text-[#16A34A] shrink-0" />
-              <p className="text-xs text-[#15803D] font-medium leading-relaxed">
-                Berita Acara Serah Terima (BAST) telah diterima dan diverifikasi oleh Unit Perlengkapan.
-              </p>
-            </div>
-          )}
-
-          {/* Dokumen yang Sudah Tersimpan (mode read-only / selesai) */}
-          {isSelesai && (
-            <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3.5">
-              {(detail?.penerimaan?.dokumen_barang && detail.penerimaan.dokumen_barang.length > 0
-                ? detail.penerimaan.dokumen_barang
-                : [
-                    {
-                      id: 'bast-fallback',
-                      nama: `BAST_Serah_Terima_${detail?.nomor_pengadaan || 'Pengadaan'}.pdf`,
-                      tipe: 'PDF',
-                      ukuran: '2.4 MB',
-                      url: `/api/v1/perlengkapan/pengadaan/${detail?.id || 1}/dokumen/bast`,
-                    },
-                  ]
-              ).map((doc) => (
-                <div
-                  key={doc.id}
-                  className="flex items-center justify-between p-3.5 rounded-xl border border-[#E4EBE8] bg-[#FDFEFE]"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-8 h-8 rounded-lg bg-[#FEECEC] text-[#E5484D] flex items-center justify-center shrink-0">
-                      <FileCode className="w-4 h-4" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-[#14201C] truncate">{doc.nama}</p>
-                      <p className="text-[11px] text-[#8A9A95]">{doc.tipe} &bull; {doc.ukuran}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => onViewDokumen?.(doc)}
-                      className="p-2 rounded-lg border border-[#E4EBE8] text-[#5F6F6A] hover:bg-[#F4F7F5] cursor-pointer"
-                      title="Lihat dokumen"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onDownloadDokumen?.(doc)}
-                      className="p-2 rounded-lg bg-[#0E7C5A] text-white hover:bg-[#09573E] cursor-pointer"
-                      title="Unduh dokumen"
-                    >
-                      <Download className="w-4 h-4" />
-                    </button>
-                  </div>
+        {/* 3. Section Side-by-Side: Dokumen Barang/Jasa & Dokumentasi */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+          {/* Card: Dokumen Barang/Jasa */}
+          <div className="bg-white rounded-[22px] p-6 sm:p-7 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)] flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between pb-3 border-b border-[#F0F4F2]">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-bold text-[#14201C]">Dokumen Barang/Jasa</h3>
+                  {!isSelesai ? (
+                    <span className="w-2 h-2 rounded-full bg-[#E5484D]" title="Wajib diisi" />
+                  ) : (
+                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#E4F6EC] text-[#0E7C5A]">
+                      Terverifikasi
+                    </span>
+                  )}
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+              <p className="text-xs text-[#5F6F6A] mt-2">
+                {isSelesai
+                  ? 'Berita Acara Serah Terima (BAST) dan dokumen serah terima yang telah diverifikasi'
+                  : 'Berita acara serah terima dan dokumen pendukung lainnya'}
+              </p>
 
-          {/* Dokumen Barang Baru yang Dipilih untuk Diunggah (HANYA saat belum selesai) */}
-          {!isSelesai && (
-            <>
-              {dokumenBarangFiles.length > 0 && (
-                <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                  {dokumenBarangFiles.map((file, idx) => (
+              {/* Banner Peringatan Bertanda Tangan */}
+              {!isSelesai ? (
+                <div className="mt-3.5 p-3 rounded-xl bg-[#FEF2F2] border border-[#FEE2E2] flex items-start gap-2.5">
+                  <span className="w-2 h-2 rounded-full bg-[#E5484D] mt-1 shrink-0" />
+                  <p className="text-xs text-[#B91C1C] leading-relaxed">
+                    <strong className="font-bold">Wajib ditandatangani terlebih dahulu:</strong>{' '}
+                    Pastikan setiap dokumen sudah bertanda tangan sebelum diunggah.
+                  </p>
+                </div>
+              ) : (
+                <div className="mt-3.5 p-3 rounded-xl bg-[#F0FDF4] border border-[#DCFCE7] flex items-center gap-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-[#16A34A] shrink-0" />
+                  <p className="text-xs text-[#15803D] font-medium leading-relaxed">
+                    Berita Acara Serah Terima (BAST) telah diterima dan diverifikasi oleh Unit Perlengkapan.
+                  </p>
+                </div>
+              )}
+
+              {/* Dokumen yang Sudah Tersimpan (mode read-only / selesai) */}
+              {isSelesai && (
+                <div className="mt-4 space-y-2.5">
+                  {(detail?.penerimaan?.dokumen_barang && detail.penerimaan.dokumen_barang.length > 0
+                    ? detail.penerimaan.dokumen_barang
+                    : [
+                        {
+                          id: 'bast-fallback',
+                          nama: `BAST_Serah_Terima_${detail?.nomor_pengadaan || 'Pengadaan'}.pdf`,
+                          tipe: 'PDF',
+                          ukuran: '2.4 MB',
+                          url: `/api/v1/perlengkapan/pengadaan/${detail?.id || 1}/dokumen/bast`,
+                        },
+                      ]
+                  ).map((doc) => (
                     <div
-                      key={idx}
-                      className="flex items-center justify-between p-3.5 rounded-xl border border-[#E4EBE8] bg-[#FDFEFE] group"
+                      key={doc.id}
+                      className="flex items-center justify-between p-3 rounded-xl border border-[#E4EBE8] bg-[#FDFEFE]"
                     >
-                      <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex items-center gap-2.5 min-w-0">
                         <div className="w-8 h-8 rounded-lg bg-[#FEECEC] text-[#E5484D] flex items-center justify-center shrink-0">
                           <FileCode className="w-4 h-4" />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-xs font-semibold text-[#14201C] truncate">
-                            {file.name}
-                          </p>
-                          <p className="text-[11px] text-[#8A9A95]">
-                            {file.name.split('.').pop()?.toUpperCase() || 'PDF'} &bull;{' '}
-                            {formatFileSize(file.size)}
-                          </p>
+                          <p className="text-xs font-semibold text-[#14201C] truncate">{doc.nama}</p>
+                          <p className="text-[11px] text-[#8A9A95]">{doc.tipe} &bull; {doc.ukuran}</p>
                         </div>
                       </div>
-
-                      <button
-                        type="button"
-                        onClick={() => onRemoveDokumenBarang(idx)}
-                        className="w-7 h-7 rounded-lg text-[#8A9A95] hover:text-[#E5484D] hover:bg-[#FEECEC] flex items-center justify-center transition-colors cursor-pointer"
-                        title="Hapus berkas"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => onViewDokumen?.(doc)}
+                          className="p-1.5 rounded-lg border border-[#E4EBE8] text-[#5F6F6A] hover:bg-[#F4F7F5] cursor-pointer"
+                          title="Lihat dokumen"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onDownloadDokumen?.(doc)}
+                          className="p-1.5 rounded-lg bg-[#0E7C5A] text-white hover:bg-[#09573E] cursor-pointer"
+                          title="Unduh dokumen"
+                        >
+                          <Download className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
               )}
 
-              {/* Tombol Tambah Dokumen */}
-              <input
-                ref={dokumenInputRef}
-                type="file"
-                multiple
-                accept=".pdf,.doc,.docx,.xls,.xlsx"
-                className="hidden"
-                onChange={handleDokumenChange}
-              />
-              <button
-                type="button"
-                onClick={() => dokumenInputRef.current?.click()}
-                className="mt-4 w-full py-3.5 rounded-xl border-2 border-dashed border-[#BDE8D1] hover:border-[#0E7C5A] bg-[#F9FDFB] hover:bg-[#EEF5F2] text-xs font-bold text-[#0E7C5A] flex items-center justify-center gap-2 transition-all cursor-pointer min-h-[44px]"
-              >
-                <Plus className="w-4 h-4" />
-                <span>+ Tambah Dokumen</span>
-              </button>
-            </>
-          )}
-        </div>
-
-        {/* Card 5: Dokumentasi */}
-        <div className="bg-white rounded-[22px] p-6 sm:p-7 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)]">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-base font-bold text-[#14201C]">Dokumentasi</h3>
-              <p className="text-xs text-[#5F6F6A] mt-0.5">
-                {isSelesai
-                  ? 'Foto fisik barang yang telah diperiksa pada saat serah terima'
-                  : 'Foto kondisi barang/jasa, bisa lebih dari satu'}
-              </p>
-            </div>
-            {isSelesai && (
-              <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#E4F6EC] text-[#0E7C5A]">
-                Foto Serah Terima
-              </span>
-            )}
-          </div>
-
-          {/* Foto yang Sudah Tersimpan (mode read-only / selesai) */}
-          {isSelesai && (
-            <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
-              {(detail?.penerimaan?.dokumentasi_foto && detail.penerimaan.dokumentasi_foto.length > 0
-                ? detail.penerimaan.dokumentasi_foto
-                : [
-                    {
-                      id: 'foto-fallback-1',
-                      nama: 'Dokumentasi_Fisik_Barang_1.jpg',
-                      tipe: 'JPG',
-                      ukuran: '1.8 MB',
-                      url: `/api/v1/perlengkapan/pengadaan/${detail?.id || 1}/dokumen/foto-1`,
-                    },
-                  ]
-              ).map((foto) => (
-                <div
-                  key={foto.id}
-                  className="flex items-center justify-between p-3 rounded-xl border border-[#E4EBE8] bg-[#FDFEFE]"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="px-2 py-1 rounded bg-[#E4F6EC] text-[#0E7C5A] text-[10px] font-bold">
-                      {foto.tipe}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-[#14201C] truncate">{foto.nama}</p>
-                      <p className="text-[10px] text-[#8A9A95]">{foto.ukuran}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => onViewDokumen?.(foto)}
-                      className="p-1.5 rounded-lg border border-[#E4EBE8] text-[#5F6F6A] hover:bg-[#F4F7F5] cursor-pointer"
-                      title="Lihat foto"
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onDownloadDokumen?.(foto)}
-                      className="p-1.5 rounded-lg bg-[#0E7C5A] text-white hover:bg-[#09573E] cursor-pointer"
-                      title="Unduh foto"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Dropzone Upload Foto (HANYA saat belum selesai) */}
-          {!isSelesai && (
-            <>
-              <input
-                ref={fotoInputRef}
-                type="file"
-                multiple
-                accept="image/jpeg,image/png,video/mp4"
-                className="hidden"
-                onChange={handleFotoChange}
-              />
-              <div
-                onClick={() => fotoInputRef.current?.click()}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={handleDropFoto}
-                className="mt-4 p-7 rounded-2xl border-2 border-dashed border-[#D5DFDC] hover:border-[#0E7C5A] bg-[#F9FBFA] hover:bg-[#EEF5F2] flex flex-col items-center justify-center text-center cursor-pointer transition-all"
-              >
-                <div className="w-10 h-10 rounded-full bg-[#E8F5EF] text-[#0E7C5A] flex items-center justify-center mb-2">
-                  <UploadCloud className="w-5 h-5" />
-                </div>
-                <p className="text-xs font-medium text-[#14201C]">
-                  <span className="text-[#0E7C5A] font-bold">Klik untuk upload</span> atau drag &amp; drop
-                </p>
-                <p className="text-[11px] text-[#8A9A95] mt-1">
-                  JPG, PNG, atau MP4 &bull; maksimal 20 MB per file
-                </p>
-              </div>
-
-              {/* Antrean Upload */}
-              {dokumentasiFotoFiles.length > 0 && (
-                <div className="mt-5 pt-4 border-t border-[#F0F4F2]">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-bold text-[#5F6F6A]">Antrean Upload</span>
-                    <span className="text-xs font-bold text-[#0E7C5A]">
-                      {dokumentasiFotoFiles.length} Siap
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {dokumentasiFotoFiles.map((file, idx) => {
-                      const ext = file.name.split('.').pop()?.toUpperCase() || 'JPG';
-                      return (
+              {/* Dokumen Barang Baru yang Dipilih untuk Diunggah (HANYA saat belum selesai) */}
+              {!isSelesai && (
+                <>
+                  {dokumenBarangFiles.length > 0 && (
+                    <div className="mt-4 space-y-2.5 max-h-[220px] overflow-y-auto pr-1">
+                      {dokumenBarangFiles.map((file, idx) => (
                         <div
                           key={idx}
-                          className="flex items-center justify-between p-3.5 rounded-xl border border-[#E4EBE8] bg-[#FDFEFE]"
+                          className="flex items-center justify-between p-3 rounded-xl border border-[#E4EBE8] bg-[#FDFEFE] group"
                         >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <span className="px-2 py-1 rounded bg-[#E4F6EC] text-[#0E7C5A] text-[10px] font-bold shrink-0">
-                              {ext}
-                            </span>
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="w-8 h-8 rounded-lg bg-[#FEECEC] text-[#E5484D] flex items-center justify-center shrink-0">
+                              <FileCode className="w-4 h-4" />
+                            </div>
                             <div className="min-w-0">
                               <p className="text-xs font-semibold text-[#14201C] truncate">
                                 {file.name}
                               </p>
                               <p className="text-[11px] text-[#8A9A95]">
+                                {file.name.split('.').pop()?.toUpperCase() || 'PDF'} &bull;{' '}
                                 {formatFileSize(file.size)}
                               </p>
                             </div>
                           </div>
 
-                          <button
-                            type="button"
-                            onClick={() => onRemoveDokumentasiFoto(idx)}
-                            className="w-7 h-7 rounded-lg text-[#8A9A95] hover:text-[#E5484D] hover:bg-[#FEECEC] flex items-center justify-center transition-colors cursor-pointer"
-                            title="Hapus foto"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => onViewNewDokumen ? onViewNewDokumen(file) : window.open(URL.createObjectURL(file), '_blank')}
+                              className="p-1.5 rounded-lg border border-[#E4EBE8] text-[#5F6F6A] hover:bg-[#F4F7F5] cursor-pointer"
+                              title="Lihat berkas di tab baru"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (onDownloadNewDokumen) {
+                                  onDownloadNewDokumen(file);
+                                } else {
+                                  const url = URL.createObjectURL(file);
+                                  const a = document.createElement('a');
+                                  a.href = url;
+                                  a.download = file.name;
+                                  document.body.appendChild(a);
+                                  a.click();
+                                  document.body.removeChild(a);
+                                  setTimeout(() => URL.revokeObjectURL(url), 1000);
+                                }
+                              }}
+                              className="p-1.5 rounded-lg bg-[#0E7C5A] text-white hover:bg-[#09573E] cursor-pointer"
+                              title="Unduh berkas"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => onRemoveDokumenBarang(idx)}
+                              className="w-7 h-7 rounded-lg text-[#8A9A95] hover:text-[#E5484D] hover:bg-[#FEECEC] flex items-center justify-center transition-colors cursor-pointer"
+                              title="Hapus berkas"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
-                      );
-                    })}
-                  </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Tombol Tambah Dokumen */}
+                  <input
+                    ref={dokumenInputRef}
+                    type="file"
+                    multiple
+                    accept=".pdf,.doc,.docx,.xls,.xlsx"
+                    className="hidden"
+                    onChange={handleDokumenChange}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => dokumenInputRef.current?.click()}
+                    className="mt-4 w-full py-3 rounded-xl border-2 border-dashed border-[#BDE8D1] hover:border-[#0E7C5A] bg-[#F9FDFB] hover:bg-[#EEF5F2] text-xs font-bold text-[#0E7C5A] flex items-center justify-center gap-2 transition-all cursor-pointer min-h-[44px]"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>+ Tambah Dokumen</span>
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Card: Dokumentasi */}
+          <div className="bg-white rounded-[22px] p-6 sm:p-7 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)] flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between pb-3 border-b border-[#F0F4F2]">
+                <div>
+                  <h3 className="text-base font-bold text-[#14201C]">Dokumentasi</h3>
+                  <p className="text-xs text-[#5F6F6A] mt-0.5">
+                    {isSelesai
+                      ? 'Foto fisik barang yang telah diperiksa pada saat serah terima'
+                      : 'Foto kondisi barang/jasa, bisa lebih dari satu'}
+                  </p>
+                </div>
+                {isSelesai && (
+                  <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#E4F6EC] text-[#0E7C5A]">
+                    Foto Serah Terima
+                  </span>
+                )}
+              </div>
+
+              {/* Foto yang Sudah Tersimpan (mode read-only / selesai) */}
+              {isSelesai && (
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {(detail?.penerimaan?.dokumentasi_foto && detail.penerimaan.dokumentasi_foto.length > 0
+                    ? detail.penerimaan.dokumentasi_foto
+                    : [
+                        {
+                          id: 'foto-fallback-1',
+                          nama: 'Dokumentasi_Fisik_Barang_1.jpg',
+                          tipe: 'JPG',
+                          ukuran: '1.8 MB',
+                          url: `/api/v1/perlengkapan/pengadaan/${detail?.id || 1}/dokumen/foto-1`,
+                        },
+                      ]
+                  ).map((foto) => (
+                    <div
+                      key={foto.id}
+                      className="flex items-center justify-between p-3 rounded-xl border border-[#E4EBE8] bg-[#FDFEFE]"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span className="px-2 py-1 rounded bg-[#E4F6EC] text-[#0E7C5A] text-[10px] font-bold">
+                          {foto.tipe}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-[#14201C] truncate">{foto.nama}</p>
+                          <p className="text-[10px] text-[#8A9A95]">{foto.ukuran}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => (onViewDokumentasi || onViewDokumen)?.(foto)}
+                          className="p-1.5 rounded-lg border border-[#E4EBE8] text-[#5F6F6A] hover:bg-[#F4F7F5] cursor-pointer"
+                          title="Lihat foto (pop up)"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => (onDownloadDokumentasi || onDownloadDokumen)?.(foto)}
+                          className="p-1.5 rounded-lg bg-[#0E7C5A] text-white hover:bg-[#09573E] cursor-pointer"
+                          title="Unduh foto"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
-            </>
-          )}
+
+              {/* Dropzone Upload Foto (HANYA saat belum selesai) */}
+              {!isSelesai && (
+                <>
+                  <input
+                    ref={fotoInputRef}
+                    type="file"
+                    multiple
+                    accept="image/jpeg,image/png,video/mp4"
+                    className="hidden"
+                    onChange={handleFotoChange}
+                  />
+                  <div
+                    onClick={() => fotoInputRef.current?.click()}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={handleDropFoto}
+                    className="mt-4 p-6 rounded-2xl border-2 border-dashed border-[#D5DFDC] hover:border-[#0E7C5A] bg-[#F9FBFA] hover:bg-[#EEF5F2] flex flex-col items-center justify-center text-center cursor-pointer transition-all"
+                  >
+                    <div className="w-9 h-9 rounded-full bg-[#E8F5EF] text-[#0E7C5A] flex items-center justify-center mb-1.5">
+                      <UploadCloud className="w-5 h-5" />
+                    </div>
+                    <p className="text-xs font-medium text-[#14201C]">
+                      <span className="text-[#0E7C5A] font-bold">Klik untuk upload</span> atau drag &amp; drop
+                    </p>
+                    <p className="text-[11px] text-[#8A9A95] mt-0.5">
+                      JPG, PNG, atau MP4 &bull; maks 20 MB per file
+                    </p>
+                  </div>
+
+                  {/* Antrean Upload */}
+                  {dokumentasiFotoFiles.length > 0 && (
+                    <div className="mt-4 pt-3 border-t border-[#F0F4F2]">
+                      <div className="flex items-center justify-between mb-2.5">
+                        <span className="text-xs font-bold text-[#5F6F6A]">Antrean Upload</span>
+                        <span className="text-xs font-bold text-[#0E7C5A]">
+                          {dokumentasiFotoFiles.length} Siap
+                        </span>
+                      </div>
+
+                      <div className="space-y-2.5 max-h-[180px] overflow-y-auto pr-1">
+                        {dokumentasiFotoFiles.map((file, idx) => {
+                          const ext = file.name.split('.').pop()?.toUpperCase() || 'JPG';
+                          return (
+                            <div
+                              key={idx}
+                              className="flex items-center justify-between p-2.5 rounded-xl border border-[#E4EBE8] bg-[#FDFEFE]"
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <span className="px-2 py-0.5 rounded bg-[#E4F6EC] text-[#0E7C5A] text-[10px] font-bold shrink-0">
+                                  {ext}
+                                </span>
+                                <div className="min-w-0">
+                                  <p className="text-xs font-semibold text-[#14201C] truncate">
+                                    {file.name}
+                                  </p>
+                                  <p className="text-[11px] text-[#8A9A95]">
+                                    {formatFileSize(file.size)}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-1 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (onViewNewFoto) {
+                                      onViewNewFoto(file);
+                                    } else {
+                                      const url = URL.createObjectURL(file);
+                                      window.open(url, '_blank');
+                                    }
+                                  }}
+                                  className="p-1 rounded-lg border border-[#E4EBE8] text-[#5F6F6A] hover:bg-[#F4F7F5] cursor-pointer"
+                                  title="Lihat foto (pop up)"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (onDownloadNewFoto) {
+                                      onDownloadNewFoto(file);
+                                    } else {
+                                      const url = URL.createObjectURL(file);
+                                      const a = document.createElement('a');
+                                      a.href = url;
+                                      a.download = file.name;
+                                      document.body.appendChild(a);
+                                      a.click();
+                                      document.body.removeChild(a);
+                                      setTimeout(() => URL.revokeObjectURL(url), 1000);
+                                    }
+                                  }}
+                                  className="p-1 rounded-lg bg-[#0E7C5A] text-white hover:bg-[#09573E] cursor-pointer"
+                                  title="Unduh foto"
+                                >
+                                  <Download className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => onRemoveDokumentasiFoto(idx)}
+                                  className="w-6 h-6 rounded-lg text-[#8A9A95] hover:text-[#E5484D] hover:bg-[#FEECEC] flex items-center justify-center transition-colors cursor-pointer"
+                                  title="Hapus foto"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Footer / Action Bar */}
@@ -767,9 +926,23 @@ export const PerlengkapanPengadaanShowTemplate: FC<PerlengkapanPengadaanShowTemp
                 )}
               </button>
             ) : (
-              <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#E4F6EC] text-[#0B7A4E] text-xs font-bold border border-[#BDE8D1]">
-                <CheckCircle2 className="w-4 h-4" />
-                <span>Penerimaan Barang Selesai</span>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#E4F6EC] text-[#0B7A4E] text-xs font-bold border border-[#BDE8D1]">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Penerimaan Barang Selesai</span>
+                </div>
+
+                {onEdit && (
+                  <button
+                    type="button"
+                    onClick={onEdit}
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 min-h-[44px] rounded-xl bg-[#0E7C5A] hover:bg-[#09573E] text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
+                    title="Edit dokumen atau penerimaan pengadaan ini"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                    <span>Edit Pengadaan</span>
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -793,7 +966,10 @@ export const PerlengkapanPengadaanShowTemplate: FC<PerlengkapanPengadaanShowTemp
         isOpen={previewBlobUrl !== null}
         onClose={onClosePreview || (() => {})}
         blobUrl={previewBlobUrl}
-        filename={previewDocName || 'Dokumen Pengadaan'}
+        filename={previewDocName || 'Dokumentasi_Foto.jpg'}
+        label="Pratinjau Dokumentasi"
+        size={previewDocSize || 'Foto Dokumentasi'}
+        onDownload={onDownloadPreview}
       />
     </AppLayout>
   );

@@ -10,6 +10,7 @@ use App\Models\PermohonanMak;
 use App\Models\StatusHistory;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -422,10 +423,38 @@ class PerlengkapanService
 
             if ($allPengadaanDocs->isNotEmpty()) {
                 foreach ($allPengadaanDocs as $doc) {
+                    $docType = strtolower($doc->tipe_dokumen ?? '');
+                    $lowerName = strtolower($doc->nama_asli ?? '');
+
+                    $label = match ($docType) {
+                        'surat_kontrak', 'kontrak' => 'Surat Kontrak',
+                        'spk' => 'SPK',
+                        'kwitansi' => 'Kwitansi',
+                        'invoice', 'faktur' => 'Invoice',
+                        'surat_pembelian', 'pesanan', 'po' => 'Surat Pembelian',
+                        default => null,
+                    };
+
+                    if (! $label) {
+                        if (str_contains($lowerName, 'kontrak')) {
+                            $label = 'Surat Kontrak';
+                        } elseif (str_contains($lowerName, 'spk')) {
+                            $label = 'SPK';
+                        } elseif (str_contains($lowerName, 'kwitansi')) {
+                            $label = 'Kwitansi';
+                        } elseif (str_contains($lowerName, 'invoice') || str_contains($lowerName, 'faktur')) {
+                            $label = 'Invoice';
+                        } elseif (str_contains($lowerName, 'pembelian') || str_contains($lowerName, 'pesanan')) {
+                            $label = 'Surat Pembelian';
+                        } else {
+                            $label = ucwords(str_replace('_', ' ', $doc->tipe_dokumen ?: 'Dokumen'));
+                        }
+                    }
+
                     $dokumenKontrak[] = [
                         'id' => $doc->id,
                         'nama' => $doc->nama_asli,
-                        'label' => $doc->tipe_dokumen === 'spk' ? 'SPK' : 'Surat Kontrak',
+                        'label' => $label,
                         'tipe' => strtoupper(pathinfo($doc->nama_asli, PATHINFO_EXTENSION) ?: 'PDF'),
                         'ukuran' => $this->formatBytes($doc->ukuran_bytes),
                         'url' => "/api/v1/perlengkapan/pengadaan/{$dbItem->id}/dokumen/{$doc->id}",
@@ -453,8 +482,8 @@ class PerlengkapanService
             }
 
             // Data penerimaan jika sudah ada atau status selesai
-            $penerimaanData = null;
-            if ($isSelesai) {
+            $penerimaanData = Cache::get("perlengkapan_penerimaan_{$dbItem->id}");
+            if (! $penerimaanData && $isSelesai) {
                 $penerimaanDocs = collect();
                 if ($dbItem->Penerimaan) {
                     $penerimaanDocs = Dokumen::where('ref_type', 'penerimaan_barang')
@@ -486,7 +515,7 @@ class PerlengkapanService
                     }
                 }
 
-                if (empty($dokumenBarang)) {
+                if (empty($dokumenBarang) && ! $dbItem->Penerimaan) {
                     $dokumenBarang[] = [
                         'id' => 'bast-verified',
                         'nama' => 'BAST_Penerimaan_Barang_'.$nomorKontrak.'.pdf',
@@ -496,7 +525,7 @@ class PerlengkapanService
                     ];
                 }
 
-                if (empty($dokumentasiFoto)) {
+                if (empty($dokumentasiFoto) && ! $dbItem->Penerimaan) {
                     $dokumentasiFoto[] = [
                         'id' => 'foto-verified-1',
                         'nama' => 'Dokumentasi_Fisik_Barang_1.jpg',
@@ -515,6 +544,8 @@ class PerlengkapanService
                 ];
             }
 
+            $nominalFix = (float) ($dbItem->Kontrak?->nominal_kontrak ?: ($dbItem->nominal ?: ($dbItem->Permohonan?->estimasi_anggaran ?? 100000000)));
+
             return [
                 'id' => $dbItem->id,
                 'nomor_pengadaan' => $nomorKontrak,
@@ -522,7 +553,8 @@ class PerlengkapanService
                 'tanggal_pengajuan' => $dbItem->Permohonan?->created_at ? $dbItem->Permohonan->created_at->translatedFormat('d F Y') : '04 Maret 2027',
                 'judul' => $dbItem->Permohonan?->judul ?? 'Pengadaan Komputer',
                 'diajukan_oleh' => $dbItem->Permohonan?->Unit?->nama ?? 'Jurusan Teknik Informatika & Komputer',
-                'nominal' => (float) ($dbItem->nominal ?: ($dbItem->Permohonan?->estimasi_anggaran ?? 100000000)),
+                'nominal' => $nominalFix,
+                'nominal_kontrak' => $nominalFix,
                 'status' => $isSelesai ? 'selesai' : 'sedang_diproses',
                 'status_label' => $isSelesai ? 'Selesai' : 'Sedang Diproses',
                 'vendor' => [
@@ -551,8 +583,8 @@ class PerlengkapanService
         $isMockSelesai = in_array((int) $id, [3, 5, 8, 10, 12, 14, 16], true);
         $mockNomor = sprintf('PGD-2027-%04d', (int) $id ?: 1);
 
-        $mockPenerimaan = null;
-        if ($isMockSelesai) {
+        $mockPenerimaan = Cache::get("perlengkapan_penerimaan_{$id}");
+        if (! $mockPenerimaan && $isMockSelesai) {
             $mockPenerimaan = [
                 'id' => (int) $id,
                 'tanggal_terima' => '15 Maret 2027',
@@ -578,6 +610,61 @@ class PerlengkapanService
             ];
         }
 
+        $catalogDokumenPPBJ = [
+            [
+                'id' => 1,
+                'nama' => "Surat_Kontrak_{$mockNomor}.pdf",
+                'label' => 'Surat Kontrak',
+                'tipe' => 'PDF',
+                'ukuran' => '3.2 MB',
+                'url' => "/api/v1/perlengkapan/pengadaan/{$id}/dokumen/1",
+            ],
+            [
+                'id' => 2,
+                'nama' => "SPK_{$mockNomor}.pdf",
+                'label' => 'SPK',
+                'tipe' => 'PDF',
+                'ukuran' => '1.5 MB',
+                'url' => "/api/v1/perlengkapan/pengadaan/{$id}/dokumen/2",
+            ],
+            [
+                'id' => 3,
+                'nama' => "Kwitansi_Pembayaran_{$mockNomor}.pdf",
+                'label' => 'Kwitansi',
+                'tipe' => 'PDF',
+                'ukuran' => '850 KB',
+                'url' => "/api/v1/perlengkapan/pengadaan/{$id}/dokumen/3",
+            ],
+            [
+                'id' => 4,
+                'nama' => "Invoice_Tagihan_{$mockNomor}.pdf",
+                'label' => 'Invoice',
+                'tipe' => 'PDF',
+                'ukuran' => '1.1 MB',
+                'url' => "/api/v1/perlengkapan/pengadaan/{$id}/dokumen/4",
+            ],
+            [
+                'id' => 5,
+                'nama' => "Surat_Pembelian_Pesanan_{$mockNomor}.pdf",
+                'label' => 'Surat Pembelian',
+                'tipe' => 'PDF',
+                'ukuran' => '920 KB',
+                'url' => "/api/v1/perlengkapan/pengadaan/{$id}/dokumen/5",
+            ],
+        ];
+
+        // Variasikan dokumen terlampir sesuai ID (tidak wajib semua ada, tergantung kebutuhan & unggahan PPBJ)
+        $docVariant = (int) $id % 4;
+        if ($docVariant === 1) {
+            $mockDokumen = [$catalogDokumenPPBJ[0], $catalogDokumenPPBJ[1]];
+        } elseif ($docVariant === 2) {
+            $mockDokumen = [$catalogDokumenPPBJ[1], $catalogDokumenPPBJ[2], $catalogDokumenPPBJ[3]];
+        } elseif ($docVariant === 3) {
+            $mockDokumen = [$catalogDokumenPPBJ[4], $catalogDokumenPPBJ[2], $catalogDokumenPPBJ[3]];
+        } else {
+            $mockDokumen = $catalogDokumenPPBJ;
+        }
+
         return [
             'id' => $id,
             'nomor_pengadaan' => $mockNomor,
@@ -585,29 +672,13 @@ class PerlengkapanService
             'tanggal_pengajuan' => '04 Maret 2027',
             'judul' => 'Pengadaan Komputer',
             'diajukan_oleh' => 'Jurusan Teknik Informatika & Komputer',
-            'nominal' => 100000000.0,
+            'nominal' => 98500000.0,
+            'nominal_kontrak' => 98500000.0,
             'status' => $isMockSelesai ? 'selesai' : 'sedang_diproses',
             'status_label' => $isMockSelesai ? 'Selesai' : 'Sedang Diproses',
             'vendor' => [
                 'nama' => 'PT PNJ PPBJ JAYA ABADI',
-                'dokumen' => [
-                    [
-                        'id' => 1,
-                        'nama' => 'Surat_Kontrak_111-FFF-111.pdf',
-                        'label' => 'Surat Kontrak',
-                        'tipe' => 'PDF',
-                        'ukuran' => '3 MB',
-                        'url' => "/api/v1/perlengkapan/pengadaan/{$id}/dokumen/1",
-                    ],
-                    [
-                        'id' => 2,
-                        'nama' => 'SPK_111-FFF-111.pdf',
-                        'label' => 'SPK',
-                        'tipe' => 'PDF',
-                        'ukuran' => '1 MB',
-                        'url' => "/api/v1/perlengkapan/pengadaan/{$id}/dokumen/2",
-                    ],
-                ],
+                'dokumen' => $mockDokumen,
             ],
             'tracking' => [
                 'stepper' => [
@@ -686,6 +757,48 @@ class PerlengkapanService
             );
             $penerimaanId = $penerimaan->id;
 
+            // Hapus dokumen barang lama yang sengaja dihapus pengguna
+            $hasRetainedDoc = isset($data['retained_dokumen_ids']);
+            $clearDokumenBarang = ! empty($data['clear_dokumen_barang']);
+            if ($hasRetainedDoc || $clearDokumenBarang) {
+                $rawRetained = $data['retained_dokumen_ids'] ?? [];
+                $retainedDocIds = array_values(array_filter(array_map('intval', is_array($rawRetained) ? $rawRetained : [])));
+
+                $deletedDocs = Dokumen::where('ref_type', 'penerimaan_barang')
+                    ->where('ref_id', $penerimaanId)
+                    ->where('tipe_dokumen', '!=', 'foto_barang')
+                    ->when(! empty($retainedDocIds), fn ($q) => $q->whereNotIn('id', $retainedDocIds))
+                    ->get();
+
+                foreach ($deletedDocs as $d) {
+                    if ($d->nama_hash) {
+                        Storage::disk('local')->delete('dokumen/penerimaan/'.$d->nama_hash);
+                    }
+                    $d->delete();
+                }
+            }
+
+            // Hapus foto dokumentasi lama yang sengaja dihapus pengguna
+            $hasRetainedFoto = isset($data['retained_foto_ids']);
+            $clearDokumentasiFoto = ! empty($data['clear_dokumentasi_foto']);
+            if ($hasRetainedFoto || $clearDokumentasiFoto) {
+                $rawRetainedFoto = $data['retained_foto_ids'] ?? [];
+                $retainedFotoIds = array_values(array_filter(array_map('intval', is_array($rawRetainedFoto) ? $rawRetainedFoto : [])));
+
+                $deletedFotos = Dokumen::where('ref_type', 'penerimaan_barang')
+                    ->where('ref_id', $penerimaanId)
+                    ->where('tipe_dokumen', 'foto_barang')
+                    ->when(! empty($retainedFotoIds), fn ($q) => $q->whereNotIn('id', $retainedFotoIds))
+                    ->get();
+
+                foreach ($deletedFotos as $f) {
+                    if ($f->nama_hash) {
+                        Storage::disk('local')->delete('dokumen/penerimaan/'.$f->nama_hash);
+                    }
+                    $f->delete();
+                }
+            }
+
             $folderDokumen = 'dokumen/penerimaan';
             $savedDokumenBarang = [];
             foreach ($dokumenBarangFiles as $file) {
@@ -744,6 +857,36 @@ class PerlengkapanService
                     ];
                 }
             }
+
+            // Kumpulkan seluruh dokumen & foto yang tersisa untuk update cache
+            $allActiveDocs = Dokumen::where('ref_type', 'penerimaan_barang')
+                ->where('ref_id', $penerimaanId)
+                ->get();
+
+            $activeDokumenBarang = [];
+            $activeDokumentasiFoto = [];
+            foreach ($allActiveDocs as $ad) {
+                $itemFmt = [
+                    'id' => $ad->id,
+                    'nama' => $ad->nama_asli,
+                    'tipe' => strtoupper(pathinfo($ad->nama_asli, PATHINFO_EXTENSION) ?: ($ad->tipe_dokumen === 'foto_barang' ? 'JPG' : 'PDF')),
+                    'ukuran' => $this->formatBytes($ad->ukuran_bytes),
+                    'url' => "/api/v1/perlengkapan/pengadaan/{$pengadaanId}/dokumen/{$ad->id}",
+                ];
+                if ($ad->tipe_dokumen === 'foto_barang') {
+                    $activeDokumentasiFoto[] = $itemFmt;
+                } else {
+                    $activeDokumenBarang[] = $itemFmt;
+                }
+            }
+
+            Cache::put("perlengkapan_penerimaan_{$pengadaanId}", [
+                'id' => $penerimaanId,
+                'tanggal_terima' => now()->translatedFormat('d F Y'),
+                'diterima_oleh' => $actor->nama ?? 'Unit Perlengkapan',
+                'dokumen_barang' => $activeDokumenBarang,
+                'dokumentasi_foto' => $activeDokumentasiFoto,
+            ], now()->addDays(7));
 
             if ($pengadaan) {
                 $statusLama = $pengadaan->status;

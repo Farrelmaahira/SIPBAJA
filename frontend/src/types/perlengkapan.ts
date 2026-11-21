@@ -71,6 +71,7 @@ export interface PerlengkapanPengadaanDetail {
   judul: string;
   diajukan_oleh: string;
   nominal: number;
+  nominal_kontrak?: number | null;
   status: string;
   status_label?: string;
   vendor: PerlengkapanVendorInfo;

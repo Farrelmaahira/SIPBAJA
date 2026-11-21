@@ -67,6 +67,7 @@ import PpkProfilIndex from '../pages/Ppk/Profil/Index';
 import PerlengkapanDashboard from '../pages/Perlengkapan/Dashboard';
 import PerlengkapanPengadaanIndex from '../pages/Perlengkapan/Pengadaan/Index';
 import PerlengkapanPengadaanShow from '../pages/Perlengkapan/Pengadaan/Show';
+import PerlengkapanPengadaanEdit from '../pages/Perlengkapan/Pengadaan/Edit';
 import PerlengkapanNotifikasiIndex from '../pages/Perlengkapan/Notifikasi/Index';
 import PerlengkapanProfilIndex from '../pages/Perlengkapan/Profil/Index';
 import KeuanganDashboard from '../pages/Keuangan/Dashboard';
@@ -74,6 +75,7 @@ import KeuanganDashboard from '../pages/Keuangan/Dashboard';
 // Shared Pages
 import SharedNotifikasiPage from '../pages/Shared/SharedNotifikasiPage';
 import SharedProfilPage from '../pages/Shared/SharedProfilPage';
+import DocumentPreviewPage from '../pages/Shared/DocumentPreviewPage';
 
 // Error Pages
 import Error403 from '../pages/Errors/403';
@@ -189,6 +191,7 @@ export const AppRoutes: FC = () => {
         {/* Centralized Notifications & Profile Routes */}
         <Route path="/notifikasi" element={<SharedNotifikasiPage />} />
         <Route path="/profil" element={<SharedProfilPage />} />
+        <Route path="/preview/dokumen" element={<DocumentPreviewPage />} />
 
         {/* Admin Routes */}
         <Route element={<RoleRoute allowedRoles={['Admin']} />}>
@@ -273,6 +276,7 @@ export const AppRoutes: FC = () => {
           <Route path="/perlengkapan/dashboard" element={<PerlengkapanDashboard />} />
           <Route path="/perlengkapan/pengadaan" element={<PerlengkapanPengadaanIndex />} />
           <Route path="/perlengkapan/pengadaan/:id" element={<PerlengkapanPengadaanShow />} />
+          <Route path="/perlengkapan/pengadaan/:id/edit" element={<PerlengkapanPengadaanEdit />} />
           <Route path="/perlengkapan/notifikasi" element={<PerlengkapanNotifikasiIndex />} />
           <Route path="/perlengkapan/profil" element={<PerlengkapanProfilIndex />} />
         </Route>

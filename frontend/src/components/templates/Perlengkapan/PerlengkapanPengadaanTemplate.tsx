@@ -1,10 +1,10 @@
-import type { FC, FormEvent } from 'react';
+import { useRef, type FC, type FormEvent } from 'react';
 import { Filter, Search, PackageOpen, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import AppLayout from '../General/AppLayout';
 import HeroBanner from '../../organisms/HeroBanner';
 import StatusPill from '../../atoms/StatusPill';
 import RowActionMenu from '../../organisms/RowActionMenu';
-import FilterPengajuanModal, { type FilterStatusOption } from '../../organisms/FilterPengajuanModal';
+import FilterStatusPopover, { type FilterStatusOption } from '../../molecules/FilterStatusPopover';
 import { PERLENGKAPAN_NAV_ITEMS } from '../../../constants/perlengkapanNav';
 import { formatRupiah } from '../../../utils/formatters';
 import type { PerlengkapanPengadaanItem } from '../../../types/perlengkapan';
@@ -63,6 +63,8 @@ export const PerlengkapanPengadaanTemplate: FC<PerlengkapanPengadaanTemplateProp
   onCloseFilterModal,
   onApplyFilter,
 }) => {
+  const filterContainerRef = useRef<HTMLDivElement>(null);
+
   return (
     <AppLayout
       activeRoute="pengadaan"
@@ -94,24 +96,38 @@ export const PerlengkapanPengadaanTemplate: FC<PerlengkapanPengadaanTemplateProp
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              {/* Filter Button */}
-              <button
-                type="button"
-                onClick={onOpenFilterModal}
-                className={`inline-flex items-center gap-2 px-3.5 py-2 min-h-[44px] rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
-                  selectedStatuses.length > 0
-                    ? 'bg-[#E8F5EF] text-[#0E7C5A] border-[#0E7C5A]'
-                    : 'bg-white text-[#14201C] border-[#E4EBE8] hover:bg-[#F4F7F5]'
-                }`}
-              >
-                <Filter className="w-3.5 h-3.5 text-[#5F6F6A]" />
-                <span>Filter</span>
-                {selectedStatuses.length > 0 && (
-                  <span className="w-4 h-4 rounded-full bg-[#0E7C5A] text-white text-[10px] font-bold flex items-center justify-center">
-                    {selectedStatuses.length}
-                  </span>
-                )}
-              </button>
+              {/* Filter Button with Dropdown Popover */}
+              <div className="relative inline-block" ref={filterContainerRef}>
+                <button
+                  type="button"
+                  onClick={() => (filterModalOpen ? onCloseFilterModal() : onOpenFilterModal())}
+                  className={`inline-flex items-center gap-2 px-3.5 py-2 min-h-[44px] rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+                    selectedStatuses.length > 0
+                      ? 'bg-[#E8F5EF] text-[#0E7C5A] border-[#0E7C5A]'
+                      : 'bg-white text-[#14201C] border-[#E4EBE8] hover:bg-[#F4F7F5]'
+                  }`}
+                  aria-expanded={filterModalOpen}
+                  aria-label="Filter status pengadaan"
+                >
+                  <Filter className="w-3.5 h-3.5 text-[#5F6F6A]" />
+                  <span>Filter</span>
+                  {selectedStatuses.length > 0 && (
+                    <span className="w-4 h-4 rounded-full bg-[#0E7C5A] text-white text-[10px] font-bold flex items-center justify-center">
+                      {selectedStatuses.length}
+                    </span>
+                  )}
+                </button>
+
+                <FilterStatusPopover
+                  isOpen={filterModalOpen}
+                  onClose={onCloseFilterModal}
+                  selectedStatuses={selectedStatuses}
+                  onApply={onApplyFilter}
+                  options={PERLENGKAPAN_STATUS_OPTIONS}
+                  statusSectionTitle="Status Pengadaan"
+                  containerRef={filterContainerRef}
+                />
+              </div>
 
               {/* Search Form */}
               <form onSubmit={onSearchSubmit} className="relative">
@@ -206,6 +222,8 @@ export const PerlengkapanPengadaanTemplate: FC<PerlengkapanPengadaanTemplateProp
                         <RowActionMenu
                           item={item}
                           viewHref={`/perlengkapan/pengadaan/${item.id}`}
+                          editHref={`/perlengkapan/pengadaan/${item.id}/edit`}
+                          showDelete={false}
                         />
                       </td>
                     </tr>
@@ -281,15 +299,6 @@ export const PerlengkapanPengadaanTemplate: FC<PerlengkapanPengadaanTemplateProp
           )}
         </div>
       </div>
-
-      {/* Filter Modal */}
-      <FilterPengajuanModal
-        isOpen={filterModalOpen}
-        onClose={onCloseFilterModal}
-        selectedStatuses={selectedStatuses}
-        onApply={onApplyFilter}
-        options={PERLENGKAPAN_STATUS_OPTIONS}
-      />
     </AppLayout>
   );
 };
