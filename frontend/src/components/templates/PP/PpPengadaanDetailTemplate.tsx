@@ -18,12 +18,10 @@ import { CatatanRevisiCard } from '../../organisms/PP/CatatanRevisiCard';
 import DocumentCard from '../../organisms/DocumentCard';
 import KonfirmasiApproveModal from '../../organisms/KonfirmasiApproveModal';
 import TolakPengadaanModal from '../../organisms/TolakPengadaanModal';
-import DocumentPreviewModal from '../../organisms/DocumentPreviewModal';
 import { ppService } from '../../../services/ppService';
 import { formatBytes } from '../../../utils/formatters';
 import type {
   PpPengadaanDetailPayload,
-  PpDocumentPreviewInfo,
   PpMakItem,
 } from '../../../types/pp';
 import type { NotificationItem } from '../../../types/notification';
@@ -46,14 +44,12 @@ export interface PpPengadaanDetailTemplateProps {
   submitting: boolean;
   rejectError: string;
   flashError?: string;
-  previewDoc: PpDocumentPreviewInfo | null;
   onOpenConfirmApprove: () => void;
   onCloseConfirmApprove: () => void;
   onConfirmApprove: () => void;
   onOpenReject: () => void;
   onCloseReject: () => void;
   onConfirmReject: (alasan: string) => void;
-  onSelectPreviewDoc: (doc: PpDocumentPreviewInfo | null) => void;
 }
 
 export const PpPengadaanDetailTemplate: FC<PpPengadaanDetailTemplateProps> = ({
@@ -72,14 +68,12 @@ export const PpPengadaanDetailTemplate: FC<PpPengadaanDetailTemplateProps> = ({
   submitting,
   rejectError,
   flashError = '',
-  previewDoc,
   onOpenConfirmApprove,
   onCloseConfirmApprove,
   onConfirmApprove,
   onOpenReject,
   onCloseReject,
   onConfirmReject,
-  onSelectPreviewDoc,
 }) => {
   const pengadaan = detail.pengadaan || { id: 0 };
   const permohonan = pengadaan.permohonan || pengadaan.Permohonan || {};
@@ -291,15 +285,17 @@ export const PpPengadaanDetailTemplate: FC<PpPengadaanDetailTemplateProps> = ({
     }
   };
 
-  // View modal handler (untuk dokumen proses sebelumnya)
-  const handleViewModal = (doc: DokumenItem, category: string) => {
-    onSelectPreviewDoc({
-      category,
-      filename: doc.nama_asli,
-      size: formatBytes(doc.ukuran_bytes || 0),
-      fileUrl: doc.download_url || undefined,
-      download_url: doc.download_url || undefined,
-    });
+  // Handler buka dokumen proses sebelumnya di tab baru
+  const handleViewNewTab = async (doc: DokumenItem) => {
+    if (!doc.download_url) return;
+    try {
+      const { blob } = await ppService.fetchDokumenBlob(doc.download_url, 'inline');
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank');
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+    } catch (err) {
+      console.error('Gagal membuka dokumen:', err);
+    }
   };
 
   const nomorPengadaan = `PGD-${new Date(pengadaan.created_at || Date.now()).getFullYear()}-${String(pengadaan.id || 0).padStart(4, '0')}`;
@@ -455,8 +451,8 @@ export const PpPengadaanDetailTemplate: FC<PpPengadaanDetailTemplateProps> = ({
                   : 'PDF • Tersedia'
               }
               onView={
-                suratPermohonanDoc
-                  ? () => handleViewModal(suratPermohonanDoc, 'Surat Permohonan')
+                suratPermohonanDoc?.download_url
+                  ? () => handleViewNewTab(suratPermohonanDoc)
                   : undefined
               }
               onDownload={
@@ -477,8 +473,8 @@ export const PpPengadaanDetailTemplate: FC<PpPengadaanDetailTemplateProps> = ({
                     : 'PDF • Tersedia'
                 }
                 onView={
-                  memoBidang2Doc
-                    ? () => handleViewModal(memoBidang2Doc, 'Memo Persetujuan Bidang 2')
+                  memoBidang2Doc?.download_url
+                    ? () => handleViewNewTab(memoBidang2Doc)
                     : undefined
                 }
                 onDownload={
@@ -497,8 +493,8 @@ export const PpPengadaanDetailTemplate: FC<PpPengadaanDetailTemplateProps> = ({
                     : 'PDF • Tersedia'
                 }
                 onView={
-                  memoPpkDoc
-                    ? () => handleViewModal(memoPpkDoc, 'Memo Persetujuan PPK')
+                  memoPpkDoc?.download_url
+                    ? () => handleViewNewTab(memoPpkDoc)
                     : undefined
                 }
                 onDownload={
@@ -734,15 +730,6 @@ export const PpPengadaanDetailTemplate: FC<PpPengadaanDetailTemplateProps> = ({
           }}
           isSubmitting={submitting}
           error={rejectError}
-        />
-
-        {/* MODAL PREVIEW DOKUMEN PROSES SEBELUMNYA */}
-        <DocumentPreviewModal
-          isOpen={Boolean(previewDoc)}
-          onClose={() => onSelectPreviewDoc(null)}
-          category={previewDoc?.category}
-          filename={previewDoc?.filename}
-          size={previewDoc?.size}
         />
       </div>
     </AppLayout>

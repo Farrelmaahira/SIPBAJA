@@ -8,7 +8,6 @@ import {
   Activity,
   Banknote,
   Eye,
-  Download,
   Tag,
   Hash,
   Image as ImageIcon,

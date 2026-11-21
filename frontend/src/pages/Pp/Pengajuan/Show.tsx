@@ -4,10 +4,7 @@ import ppService from '../../../services/ppService';
 import PpPengadaanDetailTemplate from '../../../components/templates/PP/PpPengadaanDetailTemplate';
 import { extractServerErrors } from '../../../utils/fileValidation';
 import type { AppNavItem as PpNavItem } from '../../../components/templates/General/AppLayout';
-import type {
-  PpPengadaanDetailPayload,
-  PpDocumentPreviewInfo,
-} from '../../../types/pp';
+import type { PpPengadaanDetailPayload } from '../../../types/pp';
 import type { NotificationItem } from '../../../types/notification';
 
 export interface PpShowProps {
@@ -46,7 +43,6 @@ export const PpPengajuanShow: FC<PpShowProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const [rejectError, setRejectError] = useState('');
   const [flashError, setFlashError] = useState('');
-  const [previewDoc, setPreviewDoc] = useState<PpDocumentPreviewInfo | null>(null);
 
   useEffect(() => {
     if (initialDetail) {
@@ -96,6 +92,10 @@ export const PpPengajuanShow: FC<PpShowProps> = ({
   };
 
   const handleReject = async (alasan: string) => {
+    if (!alasan || !alasan.trim()) {
+      setRejectError('Alasan penolakan / catatan revisi wajib diisi.');
+      return;
+    }
     if (!targetId) return;
     setSubmitting(true);
     setRejectError('');
@@ -133,7 +133,6 @@ export const PpPengajuanShow: FC<PpShowProps> = ({
       submitting={submitting}
       rejectError={rejectError}
       flashError={flashError}
-      previewDoc={previewDoc}
       onOpenConfirmApprove={() => setConfirmApproveOpen(true)}
       onCloseConfirmApprove={() => setConfirmApproveOpen(false)}
       onConfirmApprove={handleApprove}
@@ -143,7 +142,6 @@ export const PpPengajuanShow: FC<PpShowProps> = ({
       }}
       onCloseReject={() => setRejectOpen(false)}
       onConfirmReject={handleReject}
-      onSelectPreviewDoc={setPreviewDoc}
     />
   );
 };
