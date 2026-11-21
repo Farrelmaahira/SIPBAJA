@@ -780,14 +780,12 @@ class PengadaanService
             ->withQueryString();
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function getDetailPengadaanPpbj(int $pengadaanId): array
+    public function getDetailPengadaanPpbj(int $pengadaanId): Pengadaan
     {
         $pengadaan = Pengadaan::with([
             'Permohonan.Unit',
             'Permohonan.Creator',
+            'Permohonan.PermohonanMak.Mak',
             'PermohonanMak.Mak.Ppk',
             'Jenis',
             'Metode',
@@ -801,94 +799,70 @@ class PengadaanService
         ])->findOrFail($pengadaanId);
 
         $isBarangDiterima = $pengadaan->Penerimaan !== null || in_array($pengadaan->status, ['barang_diterima', 'selesai'], true);
-        $bisaEditDraft = in_array($pengadaan->status, ['draft', 'ditolak'], true);
-        $bisaEditKontrak = in_array($pengadaan->status, ['disetujui', 'siap_spk', 'kontrak_terbit', 'berjalan'], true) && ! $isBarangDiterima;
+        $pengadaan->bisa_edit_draft = in_array($pengadaan->status, ['draft', 'ditolak'], true);
+        $pengadaan->bisa_edit_kontrak = in_array($pengadaan->status, ['disetujui', 'siap_spk', 'kontrak_terbit', 'berjalan'], true) && ! $isBarangDiterima;
 
         $kontrak = $pengadaan->Kontrak;
-        $rencanaPembayaran = $kontrak?->RencanaPembayaran?->first();
-        $reminder = $rencanaPembayaran?->Reminders?->first();
-        $dokumenKontrak = $kontrak?->Dokumen?->first();
+        $pengadaan->nominal = $kontrak?->nominal_kontrak ? (float) $kontrak->nominal_kontrak : null;
 
-        return [
-            'id' => $pengadaan->id,
+        // Pasang download_url untuk dokumen pengadaan
+        $pengadaan->Dokumen->each(function (Dokumen $d) use ($pengadaan) {
+            $d->download_url = "/api/v1/ppbj/pengadaan/{$pengadaan->id}/dokumen/{$d->id}";
+        });
+
+        if ($kontrak) {
+            $rencana = $kontrak->RencanaPembayaran?->first();
+            $reminder = $rencana?->Reminders?->first();
+            $kontrak->tanggal_jatuh_tempo = $rencana?->tanggal_jatuh_tempo ? Carbon::parse($rencana->tanggal_jatuh_tempo)->format('Y-m-d') : null;
+            $kontrak->tanggal_reminder = $reminder?->tanggal_reminder ? Carbon::parse($reminder->tanggal_reminder)->format('Y-m-d') : null;
+
+            if ($kontrak->Dokumen) {
+                $kontrak->Dokumen->each(function (Dokumen $d) use ($pengadaan) {
+                    $d->download_url = "/api/v1/ppbj/pengadaan/{$pengadaan->id}/dokumen/{$d->id}";
+                });
+                $kontrak->dokumen = $kontrak->Dokumen->first();
+            }
+        }
+
+        // Data MAK untuk kemudahan akses frontend & konsistensi pengeditan
+        $pengadaan->mak = [
+            'id' => $pengadaan->PermohonanMak?->Mak?->id,
             'permohonan_mak_id' => $pengadaan->permohonan_mak_id,
-            'nominal' => $kontrak?->nominal_kontrak ? (float) $kontrak->nominal_kontrak : null,
-            'status' => $pengadaan->status,
-            'revisi_ke' => $pengadaan->revisi_ke,
-            'bisa_edit_draft' => $bisaEditDraft,
-            'bisa_edit_kontrak' => $bisaEditKontrak,
-            'permohonan' => [
-                'id' => $pengadaan->Permohonan?->id,
-                'nomor_surat' => $pengadaan->Permohonan?->nomor_surat,
-                'judul' => $pengadaan->Permohonan?->judul,
-                'estimasi_anggaran' => (float) ($pengadaan->Permohonan?->estimasi_anggaran ?? 0),
-                'unit_nama' => $pengadaan->Permohonan?->Unit?->nama ?? '-',
-            ],
-            'mak' => [
-                'id' => $pengadaan->PermohonanMak?->Mak?->id,
-                'permohonan_mak_id' => $pengadaan->permohonan_mak_id,
-                'nama' => $pengadaan->PermohonanMak?->Mak?->nama ?? '-',
-                'kode' => $pengadaan->PermohonanMak?->Mak?->kode ?? '-',
-                'ppk_nama' => $pengadaan->Ppk?->nama ?? $pengadaan->PermohonanMak?->Mak?->Ppk?->nama ?? '-',
-            ],
-            'available_mak' => $pengadaan->Permohonan?->PermohonanMak
-                ?->filter(fn ($pm) => $pm->Mak !== null)
-                ->map(fn ($pm) => [
-                    'id' => (int) $pm->id,
-                    'mak_id' => (int) $pm->Mak->id,
-                    'nama' => (string) $pm->Mak->nama,
-                    'kode' => (string) ($pm->Mak->kode ?? $pm->Mak->nama),
-                ])->values()->all() ?? [],
-            'reference_data' => [
-                'jenis' => JenisPengadaan::select(['id', 'nama'])->orderBy('id')->get()->toArray(),
-                'metode' => MetodePengadaan::select(['id', 'nama'])->orderBy('id')->get()->toArray(),
-                'level' => LevelPengadaan::select(['id', 'nama', 'min_nominal', 'max_nominal', 'perlu_review_pp'])->orderBy('min_nominal')->get()->toArray(),
-            ],
-            'jenis' => [
-                'id' => $pengadaan->Jenis?->id,
-                'nama' => $pengadaan->Jenis?->nama ?? '-',
-            ],
-            'metode' => [
-                'id' => $pengadaan->Metode?->id,
-                'nama' => $pengadaan->Metode?->nama ?? '-',
-            ],
-            'level' => [
-                'id' => $pengadaan->Level?->id,
-                'nama' => $pengadaan->Level?->nama ?? '-',
-                'perlu_review_pp' => (bool) ($pengadaan->Level?->perlu_review_pp ?? false),
-            ],
-            'kontrak' => $kontrak ? [
-                'id' => $kontrak->id,
-                'tipe' => $kontrak->tipe,
-                'nomor' => $kontrak->nomor,
-                'tanggal' => $kontrak->tanggal ? Carbon::parse($kontrak->tanggal)->format('Y-m-d') : null,
-                'vendor_nama' => $kontrak->vendor_nama,
-                'nominal_kontrak' => $kontrak->nominal_kontrak !== null ? (float) $kontrak->nominal_kontrak : null,
-                'tanggal_jatuh_tempo' => $rencanaPembayaran?->tanggal_jatuh_tempo ? Carbon::parse($rencanaPembayaran->tanggal_jatuh_tempo)->format('Y-m-d') : null,
-                'tanggal_reminder' => $reminder?->tanggal_reminder ? Carbon::parse($reminder->tanggal_reminder)->format('Y-m-d') : null,
-                'dokumen' => $dokumenKontrak ? [
-                    'id' => $dokumenKontrak->id,
-                    'nama_asli' => $dokumenKontrak->nama_asli,
-                    'download_url' => "/api/v1/ppbj/pengadaan/{$pengadaan->id}/dokumen/{$dokumenKontrak->id}",
-                ] : null,
-            ] : null,
-            'dokumen_list' => $pengadaan->Dokumen->map(fn (Dokumen $d) => [
-                'id' => $d->id,
-                'nama_asli' => $d->nama_asli,
-                'tipe_dokumen' => $d->tipe_dokumen,
-                'ukuran_bytes' => $d->ukuran_bytes,
-                'mime_type' => $d->mime_type,
-                'download_url' => "/api/v1/ppbj/pengadaan/{$pengadaan->id}/dokumen/{$d->id}",
-            ])->values()->all(),
-            'approvals' => $pengadaan->Approvals->map(fn ($app) => [
-                'id' => $app->id,
-                'tahap' => $app->tahap,
-                'keputusan' => $app->keputusan,
-                'catatan' => $app->catatan,
-                'actor_nama' => $app->Actor?->nama ?? '-',
-                'created_at' => $app->created_at ? (string) $app->created_at : null,
-            ])->values()->all(),
+            'nama' => $pengadaan->PermohonanMak?->Mak?->nama ?? '-',
+            'kode' => $pengadaan->PermohonanMak?->Mak?->kode ?? '-',
+            'ppk_nama' => $pengadaan->Ppk?->nama ?? $pengadaan->PermohonanMak?->Mak?->Ppk?->nama ?? '-',
         ];
+
+        // Format dokumen_list & unit_nama untuk kompatibilitas frontend
+        $pengadaan->dokumen_list = $pengadaan->Dokumen->take(1)->values();
+        if ($pengadaan->Permohonan) {
+            $pengadaan->Permohonan->unit_nama = $pengadaan->Permohonan->Unit?->nama ?? '-';
+        }
+
+        if ($pengadaan->Approvals) {
+            $pengadaan->Approvals->each(function ($app) {
+                $app->catatan = $app->alasan;
+                $app->actor_nama = $app->Actor?->nama ?? '-';
+            });
+        }
+
+        // Available MAK & Reference data untuk form modal klasifikasi
+        $pengadaan->available_mak = $pengadaan->Permohonan?->PermohonanMak
+            ?->filter(fn ($pm) => $pm->Mak !== null)
+            ->map(fn ($pm) => [
+                'id' => (int) $pm->id,
+                'mak_id' => (int) $pm->Mak->id,
+                'nama' => (string) $pm->Mak->nama,
+                'kode' => (string) ($pm->Mak->kode ?? $pm->Mak->nama),
+            ])->values()->all() ?? [];
+
+        $pengadaan->reference_data = [
+            'jenis' => JenisPengadaan::select(['id', 'nama'])->orderBy('id')->get()->toArray(),
+            'metode' => MetodePengadaan::select(['id', 'nama'])->orderBy('id')->get()->toArray(),
+            'level' => LevelPengadaan::select(['id', 'nama', 'min_nominal', 'max_nominal', 'perlu_review_pp'])->orderBy('min_nominal')->get()->toArray(),
+        ];
+
+        return $pengadaan;
     }
 
     public function updateKlasifikasiPengadaan(Pengadaan $pengadaan, array $data, ?UploadedFile $fileDokumen, User $user): Pengadaan
