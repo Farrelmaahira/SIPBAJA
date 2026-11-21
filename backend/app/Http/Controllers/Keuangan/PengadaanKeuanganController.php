@@ -8,6 +8,7 @@ use App\Services\KeuanganService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PengadaanKeuanganController extends Controller
@@ -73,24 +74,43 @@ class PengadaanKeuanganController extends Controller
     /**
      * Mengunduh atau menampilkan pratinjau dokumen pengadaan/bukti bayar.
      */
-    public function downloadDokumen(Request $request, int|string $pengadaan, int|string $dokumenId): StreamedResponse|JsonResponse
+    public function downloadDokumen(Request $request, int|string $pengadaan, int|string $dokumenId): StreamedResponse|BinaryFileResponse|JsonResponse
     {
+        $disposition = $request->query('disposition') === 'inline' ? 'inline' : 'attachment';
+
         if (is_numeric($dokumenId)) {
             $dokumen = Dokumen::find((int) $dokumenId);
             if ($dokumen) {
-                $path = "dokumen/pembayaran/{$dokumen->nama_hash}";
+                $possiblePaths = [
+                    "dokumen/pembayaran/{$dokumen->nama_hash}",
+                    "dokumen/kontrak/{$dokumen->nama_hash}",
+                    "dokumen/pengadaan/{$dokumen->nama_hash}",
+                    "dokumen/permohonan/{$dokumen->nama_hash}",
+                    "dokumen/memo/{$dokumen->nama_hash}",
+                ];
 
-                if (Storage::disk('local')->exists($path)) {
-                    $disposition = $request->query('disposition') === 'inline' ? 'inline' : 'attachment';
+                foreach ($possiblePaths as $path) {
+                    if (Storage::disk('local')->exists($path)) {
+                        $fullPath = Storage::disk('local')->path($path);
 
-                    return Storage::disk('local')->download(
-                        $path,
-                        $dokumen->nama_asli ?: 'bukti_pembayaran.pdf',
-                        [
-                            'Content-Type' => $dokumen->mime_type ?: 'application/pdf',
-                            'Content-Disposition' => "{$disposition}; filename=\"".($dokumen->nama_asli ?: 'bukti_pembayaran.pdf').'"',
-                        ]
-                    );
+                        if ($disposition === 'inline') {
+                            return response()->file(
+                                $fullPath,
+                                [
+                                    'Content-Type' => $dokumen->mime_type ?: 'application/pdf',
+                                    'Content-Disposition' => 'inline; filename="'.($dokumen->nama_asli ?: 'dokumen.pdf').'"',
+                                ]
+                            );
+                        }
+
+                        return Storage::disk('local')->download(
+                            $path,
+                            $dokumen->nama_asli ?: 'dokumen.pdf',
+                            [
+                                'Content-Type' => $dokumen->mime_type ?: 'application/pdf',
+                            ]
+                        );
+                    }
                 }
             }
         }
@@ -106,8 +126,8 @@ class PengadaanKeuanganController extends Controller
             $namaFile,
             [
                 'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="'.$namaFile.'"',
-            ]
+            ],
+            $disposition
         );
     }
 }

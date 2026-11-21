@@ -14,7 +14,6 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 
 class KeuanganService
 {
@@ -274,117 +273,238 @@ class KeuanganService
             ? Carbon::parse($rencana->tanggal_jatuh_tempo)->locale('id')->isoFormat('DD MMMM YYYY')
             : '18 Maret 2027';
 
-        // 12 Dokumen Diterima
-        $listDokumen = [
+        // Dokumen Permohonan (Surat Permohonan, Memo Permohonan Bidang 2, Memo Permohonan PPK)
+        $dokumenPermohonan = [
             [
                 'id' => 1,
-                'tipe' => 'Memo Permohonan',
-                'nama' => 'Memo_Persetujuan_'.$nomorPermohonan.'.pdf',
-                'ukuran' => 'PDF · 1 MB',
-                'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/1?nama=Memo_Persetujuan_{$nomorPermohonan}.pdf",
+                'tipe' => 'Surat Permohonan',
+                'kategori' => 'permohonan',
+                'nama' => 'Surat_Permohonan_'.$nomorPermohonan.'.pdf',
+                'ukuran' => 'PDF · 2 MB',
+                'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/1?nama=Surat_Permohonan_{$nomorPermohonan}.pdf",
                 'is_image' => false,
             ],
             [
                 'id' => 2,
-                'tipe' => 'Dokumen Pengadaan',
-                'nama' => 'Dokumen_Pengadaan_Komputer.pdf',
-                'ukuran' => 'PDF · 5 MB',
-                'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/2?nama=Dokumen_Pengadaan_Komputer.pdf",
+                'tipe' => 'Memo Permohonan Bidang 2',
+                'kategori' => 'permohonan',
+                'nama' => 'Memo_Permohonan_Bidang_2_'.$nomorPermohonan.'.pdf',
+                'ukuran' => 'PDF · 1 MB',
+                'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/2?nama=Memo_Permohonan_Bidang_2_{$nomorPermohonan}.pdf",
                 'is_image' => false,
             ],
             [
                 'id' => 3,
-                'tipe' => 'Surat Kontrak',
-                'nama' => 'Surat_Kontrak_Komputer.pdf',
-                'ukuran' => 'PDF · 3 MB',
-                'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/3?nama=Surat_Kontrak_Komputer.pdf",
-                'is_image' => false,
-            ],
-            [
-                'id' => 4,
-                'tipe' => 'SPK',
-                'nama' => 'SPK_Komputer_TIK.pdf',
-                'ukuran' => 'PDF · 2 MB',
-                'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/4?nama=SPK_Komputer_TIK.pdf",
-                'is_image' => false,
-            ],
-            [
-                'id' => 5,
-                'tipe' => 'Surat Pembelian',
-                'nama' => 'Surat_Pembelian_Komputer.pdf',
-                'ukuran' => 'PDF · 2 MB',
-                'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/5?nama=Surat_Pembelian_Komputer.pdf",
-                'is_image' => false,
-            ],
-            [
-                'id' => 6,
-                'tipe' => 'Kwitansi',
-                'nama' => 'Kwitansi_Komputer_TIK.pdf',
+                'tipe' => 'Memo Permohonan PPK',
+                'kategori' => 'permohonan',
+                'nama' => 'Memo_Permohonan_PPK_'.$nomorPermohonan.'.pdf',
                 'ukuran' => 'PDF · 1 MB',
-                'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/6?nama=Kwitansi_Komputer_TIK.pdf",
-                'is_image' => false,
-            ],
-            [
-                'id' => 7,
-                'tipe' => 'Invoice',
-                'nama' => 'Invoice_Komputer_TIK.pdf',
-                'ukuran' => 'PDF · 1 MB',
-                'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/7?nama=Invoice_Komputer_TIK.pdf",
-                'is_image' => false,
-            ],
-            [
-                'id' => 8,
-                'tipe' => 'Dokumen Penerimaan Barang',
-                'nama' => 'Penerimaan_Barang_Komputer.pdf',
-                'ukuran' => 'PDF · 4 MB · 6 Foto Dokumentasi',
-                'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/8?nama=Penerimaan_Barang_Komputer.pdf",
-                'is_image' => false,
-            ],
-            [
-                'id' => 9,
-                'tipe' => 'Dokumentasi Penerimaan Barang',
-                'nama' => 'Dokumentasi Fisik Barang',
-                'ukuran' => '4 MB · 6 Foto Dokumentasi',
-                'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/9?nama=Dokumentasi_Fisik_Barang.jpg",
-                'is_image' => true,
-            ],
-            [
-                'id' => 10,
-                'tipe' => 'Dokumen Pembayaran',
-                'nama' => 'Dokumen_Pembayaran_Komputer.pdf',
-                'ukuran' => 'PDF · 3 MB',
-                'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/10?nama=Dokumen_Pembayaran_Komputer.pdf",
-                'is_image' => false,
-            ],
-            [
-                'id' => 11,
-                'tipe' => 'Memo Pembayaran',
-                'nama' => 'Memo_Pembayaran_'.$nomorPermohonan.'.pdf',
-                'ukuran' => 'PDF · 1 MB',
-                'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/11?nama=Memo_Pembayaran_{$nomorPermohonan}.pdf",
-                'is_image' => false,
-            ],
-            [
-                'id' => 12,
-                'tipe' => 'Legalitas Vendor',
-                'nama' => 'Legalitas_Vendor_'.$nomorPermohonan.'.pdf',
-                'ukuran' => 'PDF · 3 MB',
-                'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/12?nama=Legalitas_Vendor_{$nomorPermohonan}.pdf",
+                'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/3?nama=Memo_Permohonan_PPK_{$nomorPermohonan}.pdf",
                 'is_image' => false,
             ],
         ];
 
-        // Kartu Jenis MAK
-        $jenisMakCards = [
+        // Dokumen Pengadaan (Dokumen Pengadaan, status Verifikasi PP dan PPK)
+        $dokumenPengadaan = [
             [
-                'kode' => '532111',
-                'nama' => 'Belanja Modal Peralatan dan Mesin',
-                'penanggung_jawab' => 'Budi Santoso · PPK',
+                'id' => 4,
+                'tipe' => 'Dokumen Pengadaan',
+                'kategori' => 'pengadaan',
+                'nama' => 'Dokumen_Pengadaan_Komputer.pdf',
+                'ukuran' => 'PDF · 5 MB',
+                'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/4?nama=Dokumen_Pengadaan_Komputer.pdf",
+                'is_image' => false,
+            ],
+        ];
+
+        // Dokumen Pembelian (Surat Kontrak, SPK, Kwitansi, Invoice, dan Surat Pembelian) - hanya yg diupload PPBJ
+        $dokumenPembelian = [];
+        if ($kontrak && $kontrak->Dokumen && $kontrak->Dokumen->isNotEmpty()) {
+            foreach ($kontrak->Dokumen as $kDoc) {
+                $tipeLower = strtolower($kDoc->tipe_dokumen ?? '');
+                if (in_array($tipeLower, ['kontrak', 'surat_kontrak', 'spk', 'kwitansi', 'invoice', 'surat_pembelian', 'dokumen_kontrak', 'faktur'], true)) {
+                    $label = match ($tipeLower) {
+                        'kontrak', 'surat_kontrak', 'dokumen_kontrak' => 'Surat Kontrak',
+                        'spk' => 'SPK',
+                        'kwitansi' => 'Kwitansi',
+                        'invoice', 'faktur' => 'Invoice',
+                        'surat_pembelian' => 'Surat Pembelian',
+                        default => ucwords(str_replace('_', ' ', $tipeLower)),
+                    };
+                    $dokumenPembelian[] = [
+                        'id' => $kDoc->id,
+                        'tipe' => $label,
+                        'kategori' => 'pembelian',
+                        'nama' => $kDoc->nama_asli,
+                        'ukuran' => $this->formatBytes($kDoc->ukuran_bytes ?? 2097152),
+                        'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/{$kDoc->id}",
+                        'is_image' => false,
+                    ];
+                }
+            }
+        }
+
+        // Mock default untuk sample/demo jika belum ada dokumen DB
+        if (empty($dokumenPembelian)) {
+            $dokumenPembelian = [
+                [
+                    'id' => 5,
+                    'tipe' => 'Surat Kontrak',
+                    'kategori' => 'pembelian',
+                    'nama' => 'Surat_Kontrak_'.$nomorPermohonan.'.pdf',
+                    'ukuran' => 'PDF · 3 MB',
+                    'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/5?nama=Surat_Kontrak_{$nomorPermohonan}.pdf",
+                    'is_image' => false,
+                ],
+                [
+                    'id' => 6,
+                    'tipe' => 'SPK',
+                    'kategori' => 'pembelian',
+                    'nama' => 'SPK_'.$nomorPermohonan.'.pdf',
+                    'ukuran' => 'PDF · 2 MB',
+                    'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/6?nama=SPK_{$nomorPermohonan}.pdf",
+                    'is_image' => false,
+                ],
+                [
+                    'id' => 7,
+                    'tipe' => 'Kwitansi',
+                    'kategori' => 'pembelian',
+                    'nama' => 'Kwitansi_'.$nomorPermohonan.'.pdf',
+                    'ukuran' => 'PDF · 1 MB',
+                    'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/7?nama=Kwitansi_{$nomorPermohonan}.pdf",
+                    'is_image' => false,
+                ],
+                [
+                    'id' => 8,
+                    'tipe' => 'Invoice',
+                    'kategori' => 'pembelian',
+                    'nama' => 'Invoice_'.$nomorPermohonan.'.pdf',
+                    'ukuran' => 'PDF · 1 MB',
+                    'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/8?nama=Invoice_{$nomorPermohonan}.pdf",
+                    'is_image' => false,
+                ],
+                [
+                    'id' => 9,
+                    'tipe' => 'Surat Pembelian',
+                    'kategori' => 'pembelian',
+                    'nama' => 'Surat_Pembelian_'.$nomorPermohonan.'.pdf',
+                    'ukuran' => 'PDF · 2 MB',
+                    'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/9?nama=Surat_Pembelian_{$nomorPermohonan}.pdf",
+                    'is_image' => false,
+                ],
+            ];
+        }
+
+        // Dokumen Pembayaran (Dokumen Pembayaran, Memo Persetujuan Bidang 2, dan Memo Persetujuan PPK)
+        $dokumenPembayaran = [
+            [
+                'id' => 10,
+                'tipe' => 'Dokumen Pembayaran',
+                'kategori' => 'pembayaran',
+                'nama' => 'Dokumen_Pembayaran_'.$nomorPermohonan.'.pdf',
+                'ukuran' => 'PDF · 3 MB',
+                'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/10?nama=Dokumen_Pembayaran_{$nomorPermohonan}.pdf",
+                'is_image' => false,
             ],
             [
-                'kode' => '521211',
-                'nama' => 'Belanja Bahan',
-                'penanggung_jawab' => 'Siti Rahmawati · PPK',
+                'id' => 11,
+                'tipe' => 'Memo Persetujuan Bidang 2',
+                'kategori' => 'pembayaran',
+                'nama' => 'Memo_Persetujuan_Pembayaran_Bidang_2_'.$nomorPermohonan.'.pdf',
+                'ukuran' => 'PDF · 1 MB',
+                'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/11?nama=Memo_Persetujuan_Pembayaran_Bidang_2_{$nomorPermohonan}.pdf",
+                'is_image' => false,
+            ],
+            [
+                'id' => 12,
+                'tipe' => 'Memo Persetujuan PPK',
+                'kategori' => 'pembayaran',
+                'nama' => 'Memo_Persetujuan_Pembayaran_PPK_'.$nomorPermohonan.'.pdf',
+                'ukuran' => 'PDF · 1 MB',
+                'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/12?nama=Memo_Persetujuan_Pembayaran_PPK_{$nomorPermohonan}.pdf",
+                'is_image' => false,
+            ],
+        ];
+
+        // Dokumen Vendor (Dokumen Legalitas Vendor) - hanya yg diupload PPBJ
+        $dokumenVendor = [];
+        if ($kontrak && $kontrak->Dokumen && $kontrak->Dokumen->isNotEmpty()) {
+            foreach ($kontrak->Dokumen as $kDoc) {
+                $tipeLower = strtolower($kDoc->tipe_dokumen ?? '');
+                if (in_array($tipeLower, ['legalitas', 'legalitas_vendor', 'vendor', 'akta', 'nib', 'npwp', 'siup'], true)) {
+                    $dokumenVendor[] = [
+                        'id' => $kDoc->id,
+                        'tipe' => 'Dokumen Legalitas Vendor',
+                        'kategori' => 'vendor',
+                        'nama' => $kDoc->nama_asli,
+                        'ukuran' => $this->formatBytes($kDoc->ukuran_bytes ?? 3145728),
+                        'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/{$kDoc->id}",
+                        'is_image' => false,
+                    ];
+                }
+            }
+        }
+
+        // Mock default vendor legalitas jika belum ada dokumen DB
+        if (empty($dokumenVendor)) {
+            $dokumenVendor = [
+                [
+                    'id' => 13,
+                    'tipe' => 'Dokumen Legalitas Vendor',
+                    'kategori' => 'vendor',
+                    'nama' => 'Legalitas_Vendor_'.$nomorPermohonan.'.pdf',
+                    'ukuran' => 'PDF · 3 MB',
+                    'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/13?nama=Legalitas_Vendor_{$nomorPermohonan}.pdf",
+                    'is_image' => false,
+                ],
+            ];
+        }
+
+        $listDokumen = array_merge(
+            $dokumenPermohonan,
+            $dokumenPengadaan,
+            $dokumenPembelian,
+            $dokumenPembayaran,
+            $dokumenVendor
+        );
+
+        $dokumenKategori = [
+            'permohonan' => [
+                'label' => 'Dokumen Permohonan',
+                'deskripsi' => 'Surat Permohonan, Memo Permohonan Bidang 2, dan Memo Permohonan PPK',
+                'items' => $dokumenPermohonan,
+            ],
+            'pengadaan' => [
+                'label' => 'Dokumen Pengadaan',
+                'deskripsi' => 'Dokumen Pengadaan beserta status verifikasi PP dan PPK',
+                'items' => $dokumenPengadaan,
+                'verifikasi_pp' => 'Diverifikasi oleh PP',
+                'persetujuan_ppk' => 'Disetujui oleh PPK',
+            ],
+            'pembelian' => [
+                'label' => 'Dokumen Pembelian',
+                'deskripsi' => 'Surat Kontrak, SPK, Kwitansi, Invoice, dan Surat Pembelian (diunggah oleh PPBJ)',
+                'items' => $dokumenPembelian,
+            ],
+            'pembayaran' => [
+                'label' => 'Dokumen Pembayaran',
+                'deskripsi' => 'Dokumen Pembayaran, Memo Persetujuan Bidang 2, dan Memo Persetujuan PPK',
+                'items' => $dokumenPembayaran,
+            ],
+            'vendor' => [
+                'label' => 'Dokumen Vendor',
+                'deskripsi' => 'Dokumen Legalitas Vendor (diunggah oleh PPBJ)',
+                'items' => $dokumenVendor,
+            ],
+        ];
+
+        // Kartu Jenis MAK (hanya 1 Jenis MAK yang digunakan pengadaan)
+        $firstMak = $permohonan?->PermohonanMak?->first()?->Mak;
+        $jenisMakCards = [
+            [
+                'kode' => $firstMak?->kode ?: '532111',
+                'nama' => $firstMak?->nama ?: 'Belanja Modal Peralatan dan Mesin',
+                'penanggung_jawab' => ($firstMak?->Ppk?->nama ? $firstMak->Ppk->nama.' · PPK' : 'Budi Santoso · PPK'),
             ],
         ];
 
@@ -483,6 +603,7 @@ class KeuanganService
                 'timeline' => $timeline,
             ],
             'dokumen_diterima' => $listDokumen,
+            'dokumen_kategori' => $dokumenKategori,
             'jenis_mak' => $jenisMakCards,
             'pembayaran' => [
                 'status' => $isSelesai ? 'selesai' : 'menunggu_keuangan',

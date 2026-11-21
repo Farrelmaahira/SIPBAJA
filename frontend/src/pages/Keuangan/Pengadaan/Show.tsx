@@ -61,14 +61,21 @@ export const KeuanganPengadaanShow: FC = () => {
   };
 
   const handleViewDokumen = async (doc: KeuanganDokumenItem) => {
-    setPreviewDocName(doc.nama);
-
+    if (!doc.url) return;
     try {
-      const res = await api.get(doc.url, { responseType: 'blob' });
-      const blobUrl = URL.createObjectURL(res.data);
-      setPreviewBlobUrl(blobUrl);
-    } catch (err) {
-      console.error('Failed to preview document:', err);
+      const res = await api.get(doc.url, {
+        params: { disposition: 'inline' },
+        responseType: 'blob',
+      });
+      const contentType = typeof res.headers['content-type'] === 'string'
+        ? res.headers['content-type']
+        : (doc.is_image ? 'image/jpeg' : 'application/pdf');
+      const blob = new Blob([res.data], { type: contentType });
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank');
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+    } catch {
+      window.open(`${doc.url}?disposition=inline`, '_blank');
     }
   };
 
@@ -81,18 +88,32 @@ export const KeuanganPengadaanShow: FC = () => {
   };
 
   const handleDownloadDokumen = async (doc: KeuanganDokumenItem) => {
+    if (!doc.url) return;
     try {
-      const res = await api.get(doc.url, { responseType: 'blob' });
-      const blobUrl = URL.createObjectURL(res.data);
+      const res = await api.get(doc.url, {
+        params: { disposition: 'attachment' },
+        responseType: 'blob',
+      });
+      const contentType = typeof res.headers['content-type'] === 'string'
+        ? res.headers['content-type']
+        : 'application/octet-stream';
+      const blob = new Blob([res.data], { type: contentType });
+      const blobUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = blobUrl;
-      link.download = doc.nama;
+      link.download = doc.nama || 'dokumen.pdf';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      URL.revokeObjectURL(blobUrl);
-    } catch (err) {
-      console.error('Failed to download document:', err);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+    } catch {
+      const link = document.createElement('a');
+      link.href = doc.url;
+      link.download = doc.nama || 'dokumen.pdf';
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   };
 

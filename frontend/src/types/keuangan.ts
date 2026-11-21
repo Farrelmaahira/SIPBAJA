@@ -49,6 +49,23 @@ export interface KeuanganDokumenItem {
   ukuran: string;
   url: string;
   is_image?: boolean;
+  kategori?: 'permohonan' | 'pengadaan' | 'pembelian' | 'pembayaran' | 'vendor' | string;
+}
+
+export interface KeuanganDokumenKategoriGroup {
+  label: string;
+  deskripsi: string;
+  items: KeuanganDokumenItem[];
+  verifikasi_pp?: string;
+  persetujuan_ppk?: string;
+}
+
+export interface KeuanganDokumenKategoriMap {
+  permohonan: KeuanganDokumenKategoriGroup;
+  pengadaan: KeuanganDokumenKategoriGroup;
+  pembelian: KeuanganDokumenKategoriGroup;
+  pembayaran: KeuanganDokumenKategoriGroup;
+  vendor: KeuanganDokumenKategoriGroup;
 }
 
 export interface KeuanganMakItem {
@@ -103,6 +120,7 @@ export interface KeuanganPengadaanDetail {
     timeline: KeuanganTimelineItem[];
   };
   dokumen_diterima: KeuanganDokumenItem[];
+  dokumen_kategori?: KeuanganDokumenKategoriMap;
   jenis_mak: KeuanganMakItem[];
   pembayaran?: KeuanganPembayaranDetail;
 }

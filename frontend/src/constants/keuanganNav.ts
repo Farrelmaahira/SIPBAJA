@@ -13,7 +13,6 @@ export const KEUANGAN_NAV_ITEMS: AppNavItem[] = [
     label: 'List Pengadaan',
     href: '/keuangan/pengadaan',
     icon: ClipboardList,
-    badge: 4,
   },
 ];
 

@@ -117,6 +117,7 @@ export const KeuanganPengadaanMenungguTable: FC<KeuanganPengadaanMenungguTablePr
                     <RowActionMenu
                       item={item}
                       viewHref={`/keuangan/pengadaan/${item.id}`}
+                      showDelete={false}
                     />
                   </td>
                 </tr>

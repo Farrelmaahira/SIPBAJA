@@ -360,6 +360,43 @@ export const KeuanganPengadaanShowTemplate: FC<KeuanganPengadaanShowTemplateProp
                 </div>
               </div>
             </div>
+
+            {/* Jenis MAK dari Perencanaan (1 MAK yang Digunakan) */}
+            {detail?.jenis_mak && detail.jenis_mak.length > 0 && (
+              <div className="pt-5 border-t border-[#F0F4F2] space-y-2.5">
+                <span className="text-[11px] font-bold text-[#8A9A95] uppercase tracking-wider block">
+                  Jenis MAK yang Digunakan (Perencanaan)
+                </span>
+                {(() => {
+                  const mak = detail.jenis_mak[0];
+                  return (
+                    <div className="bg-[#FAFCFB] border border-[#D1E7DD] rounded-xl p-4 flex items-center justify-between gap-4 flex-wrap">
+                      <div className="flex items-center gap-3.5 min-w-0">
+                        <div className="w-9 h-9 rounded-xl bg-[#DCFCE7] text-[#16A34A] flex items-center justify-center shrink-0">
+                          <Banknote className="w-5 h-5" />
+                        </div>
+                        <div className="space-y-0.5 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-[#DCFCE7] text-[#16A34A]">
+                              MAK {mak.kode}
+                            </span>
+                            <span className="font-bold text-xs text-[#14201C] truncate" title={mak.nama}>
+                              {mak.nama}
+                            </span>
+                          </div>
+                          <span className="text-[11px] text-[#5F6F6A] block">
+                            Penanggung Jawab MAK: <strong className="text-[#14201C]">{mak.penanggung_jawab}</strong>
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-[11px] font-semibold text-[#0E7C5A] bg-[#EEF5F2] px-3 py-1 rounded-full shrink-0">
+                        Terverifikasi Perencanaan
+                      </span>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
           </div>
         </div>
 
@@ -412,97 +449,327 @@ export const KeuanganPengadaanShowTemplate: FC<KeuanganPengadaanShowTemplateProp
           </div>
         </div>
 
-        {/* Card 3: Dokumen yang Diterima */}
-        <div className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)] space-y-6">
-          <div>
-            <h2 className="text-base font-bold text-[#14201C]">Dokumen yang Diterima</h2>
-            <p className="text-xs text-[#5F6F6A]">
-              Dokumen dari tahap sebelumnya dan jenis MAK dari Perencanaan
-            </p>
-          </div>
+        {(() => {
+          const allDocs = detail?.dokumen_diterima || [];
 
-          {/* 12 Grid Dokumen */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {(detail?.dokumen_diterima || []).map((doc) => (
-              <div
-                key={doc.id}
-                className="bg-[#FAFCFB] border border-[#E4EBE8] rounded-2xl p-4 flex flex-col justify-between hover:border-[#A8DAC7] transition-all"
-              >
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-[#5F6F6A] uppercase tracking-wider block">
-                      {doc.tipe}
-                    </span>
-                    {onDownloadDokumen && (
-                      <button
-                        type="button"
-                        onClick={() => onDownloadDokumen(doc)}
-                        className="text-[#8A9A95] hover:text-[#0E7C5A] transition-colors p-1"
-                        title="Unduh Berkas"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
+          // 1. Dokumen Permohonan (Surat Permohonan, Memo Permohonan Bidang 2, Memo Permohonan PPK)
+          const permohonanDocs = allDocs.filter(
+            (d) => d.kategori === 'permohonan' || d.tipe.toLowerCase().includes('permohonan')
+          );
 
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-[#FDECEC] text-[#E5484D] flex items-center justify-center shrink-0">
-                      {doc.is_image ? <ImageIcon className="w-4 h-4" /> : <FileCode className="w-4 h-4" />}
-                    </div>
-                    <div className="overflow-hidden">
-                      <span className="font-bold text-xs text-[#14201C] block truncate" title={doc.nama}>
-                        {doc.nama}
-                      </span>
-                      <span className="text-[10px] text-[#8A9A95] font-medium block">
-                        {doc.ukuran}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+          // 2. Dokumen Pengadaan (Dokumen Pengadaan, status Verifikasi PP dan PPK)
+          const pengadaanDocs = allDocs.filter(
+            (d) =>
+              d.kategori === 'pengadaan' ||
+              (d.tipe.toLowerCase().includes('pengadaan') && !d.tipe.toLowerCase().includes('penerimaan'))
+          );
 
-                <div className="pt-3 mt-3 border-t border-[#EEF3F0]">
-                  {onViewDokumen && (
+          // 3. Dokumen Pembelian (Surat Kontrak, SPK, Kwitansi, Invoice, Surat Pembelian) - hanya yg diunggah PPBJ
+          const pembelianDocs = allDocs.filter(
+            (d) =>
+              d.kategori === 'pembelian' ||
+              d.tipe.toLowerCase().includes('kontrak') ||
+              d.tipe.toLowerCase().includes('spk') ||
+              d.tipe.toLowerCase().includes('kwitansi') ||
+              d.tipe.toLowerCase().includes('invoice') ||
+              d.tipe.toLowerCase().includes('surat pembelian')
+          );
+
+          // 4. Dokumen Pembayaran (Dokumen Pembayaran, Memo Persetujuan Bidang 2, Memo Persetujuan PPK)
+          const pembayaranDocs = allDocs.filter(
+            (d) =>
+              d.kategori === 'pembayaran' ||
+              (d.tipe.toLowerCase().includes('persetujuan') && !d.tipe.toLowerCase().includes('permohonan')) ||
+              (d.tipe.toLowerCase().includes('pembayaran') && !d.tipe.toLowerCase().includes('bukti'))
+          );
+
+          // 5. Dokumen Vendor (Dokumen Legalitas Vendor dari PPBJ)
+          const vendorDocs = allDocs.filter(
+            (d) =>
+              d.kategori === 'vendor' ||
+              d.tipe.toLowerCase().includes('legalitas') ||
+              d.tipe.toLowerCase().includes('vendor')
+          );
+
+          const renderDocCard = (doc: KeuanganDokumenItem) => (
+            <div
+              key={doc.id}
+              className="bg-[#FAFCFB] border border-[#E4EBE8] rounded-2xl p-4 flex flex-col justify-between hover:border-[#A8DAC7] transition-all"
+            >
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-[#5F6F6A] uppercase tracking-wider block">
+                    {doc.tipe}
+                  </span>
+                  {onDownloadDokumen && (
                     <button
                       type="button"
-                      onClick={() => onViewDokumen(doc)}
-                      className="w-full py-1.5 px-3 rounded-lg bg-white border border-[#E2E8F0] hover:bg-[#F0F4F2] text-[#0E7C5A] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                      onClick={() => onDownloadDokumen(doc)}
+                      className="text-[#8A9A95] hover:text-[#0E7C5A] transition-colors p-1"
+                      title="Unduh Berkas"
                     >
-                      <Eye className="w-3.5 h-3.5" />
-                      <span>{doc.is_image ? 'Lihat Foto' : 'Lihat Dokumen'}</span>
+                      <Download className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
-              </div>
-            ))}
-          </div>
 
-          {/* Kartu MAK dari Perencanaan */}
-          {detail?.jenis_mak && detail.jenis_mak.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-              {detail.jenis_mak.map((mak, idx) => (
-                <div
-                  key={idx}
-                  className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-2xl p-4 flex items-start gap-3"
-                >
-                  <div className="w-8 h-8 rounded-xl bg-[#DCFCE7] text-[#16A34A] flex items-center justify-center shrink-0 mt-0.5">
-                    <Banknote className="w-4 h-4" />
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-[#FDECEC] text-[#E5484D] flex items-center justify-center shrink-0">
+                    {doc.is_image ? <ImageIcon className="w-4 h-4" /> : <FileCode className="w-4 h-4" />}
                   </div>
-                  <div className="space-y-0.5">
-                    <span className="text-[10px] font-bold text-[#16A34A] uppercase tracking-wider block">
-                      JENIS MAK DARI PERENCANAAN
+                  <div className="overflow-hidden min-w-0 flex-1">
+                    <span className="font-bold text-xs text-[#14201C] block truncate" title={doc.nama}>
+                      {doc.nama}
                     </span>
-                    <span className="font-bold text-xs text-[#14201C] block">
-                      {mak.kode} - {mak.nama}
-                    </span>
-                    <span className="text-[11px] text-[#5F6F6A] block">
-                      Penanggung Jawab MAK: {mak.penanggung_jawab}
+                    <span className="text-[10px] text-[#8A9A95] font-medium block">
+                      {doc.ukuran}
                     </span>
                   </div>
                 </div>
-              ))}
+              </div>
+
+              <div className="pt-3 mt-3 border-t border-[#EEF3F0]">
+                {onViewDokumen && (
+                  <button
+                    type="button"
+                    onClick={() => onViewDokumen(doc)}
+                    className="w-full py-1.5 px-3 rounded-lg bg-white border border-[#E2E8F0] hover:bg-[#F0F4F2] text-[#0E7C5A] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>{doc.is_image ? 'Lihat Foto' : 'Lihat Dokumen'}</span>
+                  </button>
+                )}
+              </div>
             </div>
-          )}
-        </div>
+          );
+
+          return (
+            <>
+              {/* Card 3: Dokumen Permohonan */}
+              <div className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)] space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-base font-bold text-[#14201C]">Dokumen Permohonan</h2>
+                    <p className="text-xs text-[#5F6F6A]">
+                      Surat Permohonan, Memo Permohonan Bidang 2, dan Memo Permohonan PPK
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-[#EEF5F2] text-[#0E7C5A]">
+                    {permohonanDocs.length} Berkas
+                  </span>
+                </div>
+
+                {permohonanDocs.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {permohonanDocs.map(renderDocCard)}
+                  </div>
+                ) : (
+                  <div className="p-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-center text-xs text-[#8A9A95]">
+                    Tidak ada dokumen permohonan.
+                  </div>
+                )}
+              </div>
+
+              {/* Card 4: Dokumen Pengadaan (3 Bagian Menyamping: Dokumen Pengadaan, Verifikasi PP, dan Persetujuan PPK) */}
+              <div className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)] space-y-5">
+                <div>
+                  <h2 className="text-base font-bold text-[#14201C]">Dokumen Pengadaan</h2>
+                  <p className="text-xs text-[#5F6F6A]">
+                    Berkas dokumen pengadaan serta status verifikasi oleh Pejabat Pengadaan (PP) dan persetujuan oleh PPK
+                  </p>
+                </div>
+
+                {/* 3 Bagian Menyamping */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
+                  {/* Bagian 1: Berkas Dokumen Pengadaan */}
+                  <div className="flex flex-col space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-[#8A9A95] uppercase tracking-wider block">
+                        1. Dokumen Pengadaan
+                      </span>
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#EEF5F2] text-[#0E7C5A]">
+                        {pengadaanDocs.length} Berkas
+                      </span>
+                    </div>
+
+                    {pengadaanDocs.length > 0 ? (
+                      <div className="space-y-3 flex-1 flex flex-col justify-start">
+                        {pengadaanDocs.map(renderDocCard)}
+                      </div>
+                    ) : (
+                      <div className="p-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl text-center text-xs text-[#8A9A95] flex-1 flex items-center justify-center">
+                        Tidak ada berkas dokumen pengadaan.
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Bagian 2: Verifikasi oleh PP */}
+                  <div className="flex flex-col space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-[#8A9A95] uppercase tracking-wider block">
+                        2. Verifikasi oleh PP
+                      </span>
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#DCFCE7] text-[#16A34A]">
+                        Terverifikasi
+                      </span>
+                    </div>
+
+                    <div className="bg-[#FAFCFB] border border-[#D1E7DD] rounded-2xl p-4 flex flex-col justify-between flex-1 space-y-3 hover:border-[#86EFAC] transition-all">
+                      <div className="space-y-2.5">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-xl bg-[#DCFCE7] text-[#16A34A] flex items-center justify-center shrink-0">
+                            <ShieldCheck className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <span className="text-[10px] font-bold text-[#16A34A] uppercase tracking-wider block">
+                              PEJABAT PENGADAAN (PP)
+                            </span>
+                            <span className="font-bold text-xs text-[#14201C] block truncate">
+                              {detail?.informasi_pengadaan?.verifikasi_pp || 'Diverifikasi oleh PP'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <p className="text-[11px] text-[#5F6F6A] leading-relaxed">
+                          Dokumen pengadaan telah diverifikasi oleh Pejabat Pengadaan (PP) dan dinyatakan memenuhi syarat.
+                        </p>
+                      </div>
+
+                      <div className="pt-2.5 border-t border-[#EEF3F0] flex items-center justify-between text-[11px]">
+                        <span className="text-[#8A9A95] font-medium">Status</span>
+                        <span className="font-semibold text-[#16A34A] bg-[#DCFCE7] px-2 py-0.5 rounded-md">
+                          Diverifikasi
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bagian 3: Persetujuan oleh PPK */}
+                  <div className="flex flex-col space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-[#8A9A95] uppercase tracking-wider block">
+                        3. Persetujuan oleh PPK
+                      </span>
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#DCFCE7] text-[#16A34A]">
+                        Disetujui
+                      </span>
+                    </div>
+
+                    <div className="bg-[#FAFCFB] border border-[#D1E7DD] rounded-2xl p-4 flex flex-col justify-between flex-1 space-y-3 hover:border-[#86EFAC] transition-all">
+                      <div className="space-y-2.5">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-xl bg-[#DCFCE7] text-[#16A34A] flex items-center justify-center shrink-0">
+                            <CheckCircle2 className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <span className="text-[10px] font-bold text-[#16A34A] uppercase tracking-wider block">
+                              PEJABAT PEMBUAT KOMITMEN (PPK)
+                            </span>
+                            <span className="font-bold text-xs text-[#14201C] block truncate">
+                              {detail?.informasi_pengadaan?.persetujuan_ppk || 'Disetujui oleh PPK'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <p className="text-[11px] text-[#5F6F6A] leading-relaxed">
+                          Paket pengadaan telah disetujui oleh PPK untuk dapat dilanjutkan ke tahap pembelian barang/jasa.
+                        </p>
+                      </div>
+
+                      <div className="pt-2.5 border-t border-[#EEF3F0] flex items-center justify-between text-[11px]">
+                        <span className="text-[#8A9A95] font-medium">Status</span>
+                        <span className="font-semibold text-[#16A34A] bg-[#DCFCE7] px-2 py-0.5 rounded-md">
+                          Disetujui
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 5: Dokumen Pembelian (oleh PPBJ) */}
+              <div className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)] space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-base font-bold text-[#14201C]">Dokumen Pembelian (oleh PPBJ)</h2>
+                    <p className="text-xs text-[#5F6F6A]">
+                      Surat Kontrak, SPK, Kwitansi, Invoice, dan Surat Pembelian yang diunggah oleh PPBJ
+                    </p>
+                  </div>
+                  {pembelianDocs.length > 0 && (
+                    <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-[#EEF5F2] text-[#0E7C5A]">
+                      {pembelianDocs.length} Berkas
+                    </span>
+                  )}
+                </div>
+
+                {pembelianDocs.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {pembelianDocs.map(renderDocCard)}
+                  </div>
+                ) : (
+                  <div className="p-4 bg-[#F8FAFC] border border-[#E2E8F0] border-dashed rounded-xl flex items-center justify-center gap-2 text-xs text-[#8A9A95]">
+                    <Info className="w-4 h-4 text-[#8A9A95]" />
+                    <span>Belum ada dokumen pembelian yang diunggah oleh PPBJ.</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Card 6: Dokumen Pembayaran */}
+              <div className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)] space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-base font-bold text-[#14201C]">Dokumen Pembayaran</h2>
+                    <p className="text-xs text-[#5F6F6A]">
+                      Dokumen Pembayaran, Memo Persetujuan Bidang 2, dan Memo Persetujuan PPK
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-[#EEF5F2] text-[#0E7C5A]">
+                    {pembayaranDocs.length} Berkas
+                  </span>
+                </div>
+
+                {pembayaranDocs.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {pembayaranDocs.map(renderDocCard)}
+                  </div>
+                ) : (
+                  <div className="p-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-center text-xs text-[#8A9A95]">
+                    Tidak ada dokumen pembayaran.
+                  </div>
+                )}
+              </div>
+
+              {/* Card 7: Dokumen Vendor (oleh PPBJ) */}
+              <div className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)] space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-base font-bold text-[#14201C]">Dokumen Vendor (Legalitas Vendor oleh PPBJ)</h2>
+                    <p className="text-xs text-[#5F6F6A]">
+                      Dokumen legalitas vendor yang diunggah oleh PPBJ
+                    </p>
+                  </div>
+                  {vendorDocs.length > 0 && (
+                    <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-[#EEF5F2] text-[#0E7C5A]">
+                      {vendorDocs.length} Berkas
+                    </span>
+                  )}
+                </div>
+
+                {vendorDocs.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {vendorDocs.map(renderDocCard)}
+                  </div>
+                ) : (
+                  <div className="p-4 bg-[#F8FAFC] border border-[#E2E8F0] border-dashed rounded-xl flex items-center justify-center gap-2 text-xs text-[#8A9A95]">
+                    <Info className="w-4 h-4 text-[#8A9A95]" />
+                    <span>Belum ada dokumen legalitas vendor yang diunggah oleh PPBJ.</span>
+                  </div>
+                )}
+              </div>
+            </>
+          );
+        })()}
 
         {/* Card 4: Form Bukti Pembayaran */}
         <div className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)] space-y-6">

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Pengadaan;
 use App\Models\User;
 use Database\Seeders\KeuanganSeeder;
 use Database\Seeders\MasterReferenceSeeder;
@@ -155,9 +156,10 @@ class KeuanganApiTest extends TestCase
         $this->assertArrayHasKey('informasi_pengadaan', $json);
         $this->assertArrayHasKey('tracking_proses', $json);
         $this->assertArrayHasKey('dokumen_diterima', $json);
+        $this->assertArrayHasKey('dokumen_kategori', $json);
         $this->assertArrayHasKey('jenis_mak', $json);
         $this->assertArrayHasKey('pembayaran', $json);
-        $this->assertCount(12, $json['dokumen_diterima']);
+        $this->assertCount(13, $json['dokumen_diterima']);
     }
 
     public function test_keuangan_can_submit_bukti_pembayaran_and_updates_database(): void
@@ -198,7 +200,7 @@ class KeuanganApiTest extends TestCase
     {
         Storage::fake('local');
 
-        $pengadaan = \App\Models\Pengadaan::first();
+        $pengadaan = Pengadaan::first();
         if ($pengadaan->Kontrak) {
             $pengadaan->Kontrak->nominal_kontrak = null;
             $pengadaan->Kontrak->save();

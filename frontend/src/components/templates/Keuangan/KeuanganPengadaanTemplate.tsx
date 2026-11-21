@@ -4,7 +4,8 @@ import AppLayout from '../General/AppLayout';
 import HeroBanner from '../../organisms/HeroBanner';
 import StatusPill from '../../atoms/StatusPill';
 import RowActionMenu from '../../organisms/RowActionMenu';
-import FilterPengajuanModal, { type FilterStatusOption } from '../../organisms/FilterPengajuanModal';
+import FilterStatusPopover from '../../molecules/FilterStatusPopover';
+import type { FilterStatusOption } from '../../organisms/FilterPengajuanModal';
 import { KEUANGAN_NAV_ITEMS } from '../../../constants/keuanganNav';
 import { formatRupiah } from '../../../utils/formatters';
 import type { KeuanganPengadaanItem } from '../../../types/keuangan';
@@ -94,25 +95,36 @@ export const KeuanganPengadaanTemplate: FC<KeuanganPengadaanTemplateProps> = ({
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              {/* Filter Button */}
-              <button
-                type="button"
-                onClick={onOpenFilterModal}
-                className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C5A] ${
-                  selectedStatuses.length > 0
-                    ? 'bg-[#EEF5F2] text-[#0E7C5A] border-[#A8DAC7]'
-                    : 'bg-white text-[#4A5568] border-[#E2E8F0] hover:bg-slate-50'
-                }`}
-                aria-label="Filter status pengadaan"
-              >
-                <Filter className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Filter</span>
-                {selectedStatuses.length > 0 && (
-                  <span className="w-4 h-4 rounded-full bg-[#0E7C5A] text-white text-[10px] font-bold flex items-center justify-center">
-                    {selectedStatuses.length}
-                  </span>
-                )}
-              </button>
+              {/* Filter Button & Popover */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={filterModalOpen ? onCloseFilterModal : onOpenFilterModal}
+                  className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C5A] ${
+                    selectedStatuses.length > 0
+                      ? 'bg-[#EEF5F2] text-[#0E7C5A] border-[#A8DAC7]'
+                      : 'bg-white text-[#4A5568] border-[#E2E8F0] hover:bg-slate-50'
+                  }`}
+                  aria-label="Filter status pengadaan"
+                  aria-expanded={filterModalOpen}
+                >
+                  <Filter className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>Filter</span>
+                  {selectedStatuses.length > 0 && (
+                    <span className="w-4 h-4 rounded-full bg-[#0E7C5A] text-white text-[10px] font-bold flex items-center justify-center">
+                      {selectedStatuses.length}
+                    </span>
+                  )}
+                </button>
+
+                <FilterStatusPopover
+                  isOpen={filterModalOpen}
+                  onClose={onCloseFilterModal}
+                  selectedStatuses={selectedStatuses}
+                  onApply={onApplyFilter}
+                  options={KEUANGAN_STATUS_OPTIONS}
+                />
+              </div>
 
               {/* Search Bar */}
               <form onSubmit={onSearchSubmit} className="relative w-full sm:w-64">
@@ -210,6 +222,7 @@ export const KeuanganPengadaanTemplate: FC<KeuanganPengadaanTemplateProps> = ({
                         <RowActionMenu
                           item={item}
                           viewHref={`/keuangan/pengadaan/${item.id}`}
+                          showDelete={false}
                         />
                       </td>
                     </tr>
@@ -277,15 +290,6 @@ export const KeuanganPengadaanTemplate: FC<KeuanganPengadaanTemplateProps> = ({
           )}
         </div>
       </div>
-
-      {/* Filter Modal */}
-      <FilterPengajuanModal
-        isOpen={filterModalOpen}
-        onClose={onCloseFilterModal}
-        onApply={onApplyFilter}
-        selectedStatuses={selectedStatuses}
-        options={KEUANGAN_STATUS_OPTIONS}
-      />
     </AppLayout>
   );
 };
