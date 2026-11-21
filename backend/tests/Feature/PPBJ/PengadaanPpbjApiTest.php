@@ -12,6 +12,7 @@ use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\PpbjDummySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -93,6 +94,67 @@ class PengadaanPpbjApiTest extends TestCase
 
         $pengadaan->refresh();
         $this->assertEquals($level->id, $pengadaan->level_id);
+    }
+
+    public function test_ppbj_dapat_memperbarui_klasifikasi_pengadaan_berstatus_ditolak(): void
+    {
+        $pengadaan = Pengadaan::firstOrFail();
+        $pengadaan->status = 'ditolak';
+        $pengadaan->revisi_ke = 1;
+        $pengadaan->save();
+
+        $mak = PermohonanMak::where('permohonan_id', $pengadaan->permohonan_id)->firstOrFail();
+        $jenis = JenisPengadaan::firstOrFail();
+        $metode = MetodePengadaan::firstOrFail();
+        $level = LevelPengadaan::firstOrFail();
+
+        $response = $this->actingAs($this->ppbjUser)->putJson("/api/v1/ppbj/pengadaan/{$pengadaan->id}", [
+            'permohonan_mak_id' => $mak->id,
+            'jenis_id' => $jenis->id,
+            'metode_id' => $metode->id,
+            'level_id' => $level->id,
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('message', 'Dokumen pengadaan revisi berhasil diperbarui dan dikirim kembali ke reviewer.');
+
+        $pengadaan->refresh();
+        $this->assertEquals('menunggu_review', $pengadaan->status);
+        $this->assertEquals(1, $pengadaan->revisi_ke);
+    }
+
+    public function test_ppbj_dapat_mengunggah_ulang_dokumen_pengadaan_saat_revisi(): void
+    {
+        Storage::fake('local');
+        Storage::fake('private');
+
+        $pengadaan = Pengadaan::firstOrFail();
+        $pengadaan->status = 'ditolak';
+        $pengadaan->revisi_ke = 1;
+        $pengadaan->save();
+
+        $mak = PermohonanMak::where('permohonan_id', $pengadaan->permohonan_id)->firstOrFail();
+        $jenis = JenisPengadaan::firstOrFail();
+        $metode = MetodePengadaan::firstOrFail();
+        $level = LevelPengadaan::firstOrFail();
+        $file = UploadedFile::fake()->create('dokumen_revisi.pdf', 500, 'application/pdf');
+
+        $response = $this->actingAs($this->ppbjUser)->put("/api/v1/ppbj/pengadaan/{$pengadaan->id}", [
+            'permohonan_mak_id' => $mak->id,
+            'jenis_id' => $jenis->id,
+            'metode_id' => $metode->id,
+            'level_id' => $level->id,
+            'dokumen' => $file,
+        ]);
+
+        $response->assertOk();
+        $pengadaan->refresh();
+        $this->assertEquals('menunggu_review', $pengadaan->status);
+        $this->assertDatabaseHas('dokumen', [
+            'ref_type' => 'pengadaan',
+            'ref_id' => $pengadaan->id,
+            'nama_asli' => 'dokumen_revisi.pdf',
+        ]);
     }
 
     public function test_update_klasifikasi_gagal_jika_status_bukan_draft_atau_ditolak(): void

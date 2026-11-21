@@ -15,6 +15,7 @@ export const PpbjPengadaanShow: FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [flash, setFlash] = useState<{ success?: string; error?: string }>({});
   const [isEditKlasifikasiOpen, setIsEditKlasifikasiOpen] = useState<boolean>(false);
+  const [isSubmittingKlasifikasi, setIsSubmittingKlasifikasi] = useState<boolean>(false);
   const [isKontrakModalOpen, setIsKontrakModalOpen] = useState<boolean>(false);
   const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
   const [previewDocId, setPreviewDocId] = useState<number | string | null>(null);
@@ -46,14 +47,18 @@ export const PpbjPengadaanShow: FC = () => {
 
   const handleSubmitEditKlasifikasi = async (payload: PpbjUpdateKlasifikasiPayload) => {
     if (!id) return;
+    setIsSubmittingKlasifikasi(true);
     try {
       const res = await ppbjService.updateKlasifikasiPengadaan(id, payload);
-      setFlash({ success: res.message || 'Klasifikasi pengadaan berhasil diperbarui.' });
+      setFlash({ success: res.message || 'Klasifikasi dan dokumen pengadaan berhasil diperbarui.' });
       setIsEditKlasifikasiOpen(false);
       fetchDetail();
     } catch (err: any) {
       const msg = err?.response?.data?.message || 'Gagal memperbarui klasifikasi pengadaan.';
       setFlash({ error: msg });
+      throw err;
+    } finally {
+      setIsSubmittingKlasifikasi(false);
     }
   };
 
@@ -120,6 +125,7 @@ export const PpbjPengadaanShow: FC = () => {
       isLoading={isLoading}
       flash={flash}
       isEditKlasifikasiOpen={isEditKlasifikasiOpen}
+      isSubmittingKlasifikasi={isSubmittingKlasifikasi}
       isKontrakModalOpen={isKontrakModalOpen}
       onOpenEditKlasifikasi={() => setIsEditKlasifikasiOpen(true)}
       onCloseEditKlasifikasi={() => setIsEditKlasifikasiOpen(false)}

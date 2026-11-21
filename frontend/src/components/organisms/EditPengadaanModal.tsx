@@ -8,6 +8,7 @@ export interface EditPengadaanModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (payload: PpbjUpdateKlasifikasiPayload) => Promise<void> | void;
+  isDitolak?: boolean;
   initialData?: {
     permohonan_mak_id?: number | string;
     jenis_id?: number | string;
@@ -28,6 +29,7 @@ export const EditPengadaanModal: FC<EditPengadaanModalProps> = ({
   isOpen,
   onClose,
   onSubmit,
+  isDitolak = false,
   initialData = null,
   availableMak = [],
   referenceData = {},
@@ -84,20 +86,24 @@ export const EditPengadaanModal: FC<EditPengadaanModalProps> = ({
     }
 
     setErrorLocal(null);
-    await onSubmit({
-      permohonan_mak_id: permohonanMakId,
-      jenis_id: jenisId,
-      metode_id: metodeId,
-      level_id: levelId,
-      dokumen: fileDokumen,
-    });
+    try {
+      await onSubmit({
+        permohonan_mak_id: permohonanMakId,
+        jenis_id: jenisId,
+        metode_id: metodeId,
+        level_id: levelId,
+        dokumen: fileDokumen,
+      });
+    } catch (err: any) {
+      setErrorLocal(err?.response?.data?.message || err?.message || 'Gagal menyimpan pembaruan pengadaan.');
+    }
   };
 
   return (
     <Modal
       open={isOpen}
       onClose={onClose}
-      title="Perbarui Klasifikasi & Dokumen Pengadaan"
+      title={isDitolak ? 'Revisi Dokumen & Klasifikasi Pengadaan' : 'Perbarui Klasifikasi & Dokumen Pengadaan'}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {errorLocal && (
@@ -214,7 +220,11 @@ export const EditPengadaanModal: FC<EditPengadaanModalProps> = ({
             disabled={isSubmitting}
             className="px-6 py-2.5 rounded-xl bg-[#0E7C5A] text-white hover:bg-[#0B664A] text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer shadow-xs"
           >
-            {isSubmitting ? 'Menyimpan...' : 'Perbarui Pengadaan'}
+            {isSubmitting
+              ? 'Menyimpan...'
+              : isDitolak
+                ? 'Kirim Revisi ke Reviewer'
+                : 'Perbarui Pengadaan'}
           </button>
         </div>
       </form>

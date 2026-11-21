@@ -24,6 +24,10 @@ use Illuminate\Validation\ValidationException;
 
 class PengadaanService
 {
+    public function __construct(
+        protected NotificationService $notificationService
+    ) {}
+
     /**
      * Mengambil konteks dan kelayakan pemecahan pengadaan untuk permohonan tertentu.
      *
@@ -853,6 +857,7 @@ class PengadaanService
 
         return [
             'id' => $pengadaan->id,
+            'permohonan_mak_id' => $pengadaan->permohonan_mak_id,
             'nominal' => $kontrak?->nominal_kontrak ? (float) $kontrak->nominal_kontrak : null,
             'status' => $pengadaan->status,
             'revisi_ke' => $pengadaan->revisi_ke,
@@ -867,9 +872,23 @@ class PengadaanService
             ],
             'mak' => [
                 'id' => $pengadaan->PermohonanMak?->Mak?->id,
+                'permohonan_mak_id' => $pengadaan->permohonan_mak_id,
                 'nama' => $pengadaan->PermohonanMak?->Mak?->nama ?? '-',
                 'kode' => $pengadaan->PermohonanMak?->Mak?->kode ?? '-',
                 'ppk_nama' => $pengadaan->Ppk?->nama ?? $pengadaan->PermohonanMak?->Mak?->Ppk?->nama ?? '-',
+            ],
+            'available_mak' => $pengadaan->Permohonan?->PermohonanMak
+                ?->filter(fn ($pm) => $pm->Mak !== null)
+                ->map(fn ($pm) => [
+                    'id' => (int) $pm->id,
+                    'mak_id' => (int) $pm->Mak->id,
+                    'nama' => (string) $pm->Mak->nama,
+                    'kode' => (string) ($pm->Mak->kode ?? $pm->Mak->nama),
+                ])->values()->all() ?? [],
+            'reference_data' => [
+                'jenis' => JenisPengadaan::select(['id', 'nama'])->orderBy('id')->get()->toArray(),
+                'metode' => MetodePengadaan::select(['id', 'nama'])->orderBy('id')->get()->toArray(),
+                'level' => LevelPengadaan::select(['id', 'nama', 'min_nominal', 'max_nominal', 'perlu_review_pp'])->orderBy('min_nominal')->get()->toArray(),
             ],
             'jenis' => [
                 'id' => $pengadaan->Jenis?->id,
@@ -935,26 +954,30 @@ class PengadaanService
             $pengadaan->level_id = $data['level_id'];
 
             if ($statusSebelumnya === 'ditolak') {
-                $pengadaan->revisi_ke = ((int) $pengadaan->revisi_ke) + 1;
-                $pengadaan->status = 'draft';
+                $pengadaan->status = 'menunggu_review';
             }
 
             $pengadaan->save();
 
             if ($fileDokumen) {
                 $namaHash = $fileDokumen->hashName();
-                $path = $fileDokumen->storeAs('dokumen/pengadaan', $namaHash, 'private');
+                $path = $fileDokumen->storeAs('dokumen/pengadaan', $namaHash, 'local');
+
+                $versiBaru = ((int) Dokumen::where('ref_type', 'pengadaan')
+                    ->where('ref_id', $pengadaan->id)
+                    ->where('tipe_dokumen', 'dokumen_pengadaan')
+                    ->max('versi')) + 1;
 
                 Dokumen::create([
                     'ref_type' => 'pengadaan',
                     'ref_id' => $pengadaan->id,
                     'tipe_dokumen' => 'dokumen_pengadaan',
+                    'versi' => $versiBaru > 0 ? $versiBaru : 1,
                     'nama_asli' => $fileDokumen->getClientOriginalName(),
                     'nama_hash' => $namaHash,
-                    'path' => $path,
                     'ukuran_bytes' => $fileDokumen->getSize(),
                     'mime_type' => $fileDokumen->getClientMimeType() ?: 'application/pdf',
-                    'dibuat_oleh' => $user->id,
+                    'uploaded_by' => $user->id,
                 ]);
             }
 
@@ -966,6 +989,30 @@ class PengadaanService
                 'actor_id' => $user->id,
                 'created_at' => now(),
             ]);
+
+            if ($statusSebelumnya === 'ditolak') {
+                $pengadaan->loadMissing('Level', 'Permohonan');
+                if ($pengadaan->Level?->perlu_review_pp) {
+                    $ppUsers = User::whereHas('Role', fn ($q) => $q->where('nama', 'PP'))->pluck('id');
+                    foreach ($ppUsers as $ppId) {
+                        $this->notificationService->send(
+                            user: (int) $ppId,
+                            judul: 'Dokumen Pengadaan Telah Direvisi',
+                            pesan: "Dokumen pengadaan paket #{$pengadaan->id} ('{$pengadaan->Permohonan?->judul}') telah direvisi oleh PPBJ dan dikirim kembali untuk diverifikasi.",
+                            refType: 'pengadaan',
+                            refId: $pengadaan->id,
+                        );
+                    }
+                } elseif ($pengadaan->ppk_id) {
+                    $this->notificationService->send(
+                        user: (int) $pengadaan->ppk_id,
+                        judul: 'Dokumen Pengadaan Telah Direvisi',
+                        pesan: "Dokumen pengadaan paket #{$pengadaan->id} ('{$pengadaan->Permohonan?->judul}') telah direvisi oleh PPBJ dan dikirim kembali untuk diotorisasi.",
+                        refType: 'pengadaan',
+                        refId: $pengadaan->id,
+                    );
+                }
+            }
 
             return $pengadaan->fresh(['Permohonan', 'PermohonanMak.Mak', 'Jenis', 'Metode', 'Level', 'Ppk']);
         });
@@ -1006,18 +1053,23 @@ class PengadaanService
             // Upload dokumen kontrak jika ada
             if ($fileDokumen) {
                 $namaHash = $fileDokumen->hashName();
-                $path = $fileDokumen->storeAs('dokumen/kontrak', $namaHash, 'private');
+                $path = $fileDokumen->storeAs('dokumen/kontrak', $namaHash, 'local');
+
+                $versiBaru = ((int) Dokumen::where('ref_type', 'kontrak')
+                    ->where('ref_id', $kontrak->id)
+                    ->where('tipe_dokumen', 'dokumen_kontrak')
+                    ->max('versi')) + 1;
 
                 Dokumen::create([
                     'ref_type' => 'kontrak',
                     'ref_id' => $kontrak->id,
                     'tipe_dokumen' => 'dokumen_kontrak',
+                    'versi' => $versiBaru > 0 ? $versiBaru : 1,
                     'nama_asli' => $fileDokumen->getClientOriginalName(),
                     'nama_hash' => $namaHash,
-                    'path' => $path,
                     'ukuran_bytes' => $fileDokumen->getSize(),
                     'mime_type' => $fileDokumen->getClientMimeType() ?: 'application/pdf',
-                    'dibuat_oleh' => $user->id,
+                    'uploaded_by' => $user->id,
                 ]);
             }
 
