@@ -237,7 +237,12 @@ export interface PpbjPengadaanDetail {
     tahap: string;
     keputusan: string;
     catatan?: string | null;
-    actor_nama: string;
+    alasan?: string | null;
+    actor_nama?: string;
+    actor?: {
+      id?: number;
+      nama?: string;
+    };
     created_at?: string | null;
   }>;
 }

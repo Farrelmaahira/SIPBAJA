@@ -147,8 +147,8 @@ export const PpbjPengadaanShowTemplate: FC<PpbjPengadaanShowTemplateProps> = ({
             {isDitolak && latestRejection && (
               <CatatanPenolakanCard
                 catatan={{
-                  alasan: latestRejection.catatan || 'Dokumen pengadaan memerlukan perbaikan.',
-                  pemeriksa_nama: latestRejection.actor_nama,
+                  alasan: latestRejection.alasan || latestRejection.catatan || 'Dokumen pengadaan memerlukan perbaikan.',
+                  pemeriksa_nama: latestRejection.actor?.nama || latestRejection.actor_nama || '-',
                   pemeriksa_peran: latestRejection.tahap,
                   diperiksa_at: latestRejection.created_at || null,
                 }}
