@@ -314,9 +314,10 @@ class PpkFeatureTest extends TestCase
     public function test_ppk_can_approve_pengadaan(): void
     {
         $pengadaan = Pengadaan::firstOrFail();
+        $statusAwal = $pengadaan->Level?->perlu_review_pp ? 'diteruskan' : 'menunggu_persetujuan';
         $pengadaan->update([
             'ppk_id' => $this->ppkUser->id,
-            'status' => 'menunggu_persetujuan',
+            'status' => $statusAwal,
         ]);
 
         $response = $this->actingAs($this->ppkUser, 'sanctum')

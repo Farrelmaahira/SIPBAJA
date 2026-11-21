@@ -222,18 +222,44 @@ class PermohonanService
         abort_unless($isReviewer || ($user->unit_id && $user->unit_id === $permohonan->unit_id), 403, 'Akses tidak diizinkan untuk unit lain.');
 
         if ($dokumenId) {
-            $dokumen = $permohonan->Dokumen()->where('id', $dokumenId)->firstOrFail();
+            $dokumen = $permohonan->Dokumen()->where('id', $dokumenId)->first()
+                ?? Dokumen::where('ref_type', 'approval_permohonan')
+                    ->where('ref_id', $permohonan->id)
+                    ->where('id', $dokumenId)
+                    ->firstOrFail();
         } else {
             $dokumen = $permohonan->Dokumen()->where('tipe_dokumen', 'surat_permohonan')->latest('versi')->firstOrFail();
         }
-        $path = 'dokumen/permohonan/' . $dokumen->nama_hash;
+        $path = $dokumen->ref_type === 'approval_permohonan'
+            ? $this->memoPath($dokumen)
+            : 'dokumen/permohonan/'.$dokumen->nama_hash;
 
-        abort_unless(Storage::disk('local')->exists($path), 404, 'Berkas dokumen tidak ditemukan di server.');
+        abort_unless($path && Storage::disk('local')->exists($path), 404, 'Berkas dokumen tidak ditemukan di server.');
 
         return [
             'path' => $path,
             'nama_asli' => $dokumen->nama_asli,
         ];
+    }
+
+    /**
+     * Menentukan lokasi penyimpanan berkas memo persetujuan permohonan.
+     */
+    private function memoPath(Dokumen $dokumen): ?string
+    {
+        $candidates = [
+            'dokumen/memo/'.$dokumen->nama_hash,
+            'dokumen/permohonan/memo/'.$dokumen->nama_hash,
+            'dokumen/permohonan/'.$dokumen->nama_hash,
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (Storage::disk('local')->exists($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return null;
     }
 
     /**

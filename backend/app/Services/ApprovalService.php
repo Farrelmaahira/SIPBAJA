@@ -199,7 +199,7 @@ class ApprovalService
             $memoDoc = $this->dokumenService->simpanDokumen(
                 file: $memoFile,
                 actor: $actor,
-                refType: 'permohonan',
+                refType: 'approval_permohonan',
                 refId: $permohonan->id,
                 tipeDokumen: 'memo_persetujuan',
                 folder: 'dokumen/permohonan/memo',
@@ -450,6 +450,11 @@ class ApprovalService
     public function approvePengadaanPpk(Pengadaan $pengadaan, User $actor): Pengadaan
     {
         $this->pastikanPpkBerhakAtasPengadaan($pengadaan, $actor);
+
+        $pengadaan->loadMissing('Level', 'Permohonan');
+        if ($pengadaan->Level?->perlu_review_pp && $pengadaan->status !== 'diteruskan') {
+            abort(422, 'Dokumen pengadaan dengan nominal Rp50–200 juta harus diverifikasi oleh Pejabat Pengadaan (PP) terlebih dahulu.');
+        }
 
         return DB::transaction(function () use ($pengadaan, $actor) {
             $statusLama = $pengadaan->status;

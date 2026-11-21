@@ -66,11 +66,7 @@ export const PpPengajuanIndexTemplate: FC<PpPengajuanIndexTemplateProps> = ({
       className: 'font-bold text-[#0E7C5A] whitespace-nowrap',
       render: (item) => {
         const permohonan = item.permohonan || item.Permohonan;
-        const isWaiting =
-          item.status === 'menunggu_persetujuan' || item.status === 'menunggu_review';
-        const targetHref = isWaiting
-          ? `/pp/pengadaan/${item.id}/review`
-          : `/pp/pengadaan/${item.id}`;
+        const targetHref = `/pp/pengadaan/${item.id}`;
 
         return (
           <Link to={targetHref} className="hover:underline">
@@ -174,10 +170,7 @@ export const PpPengajuanIndexTemplate: FC<PpPengajuanIndexTemplateProps> = ({
             {
               key: 'view',
               label: 'Detail / Review',
-              href: (row) =>
-                row.status === 'menunggu_persetujuan' || row.status === 'menunggu_review'
-                  ? `/pp/pengadaan/${row.id}/review`
-                  : `/pp/pengadaan/${row.id}`,
+              href: (row) => `/pp/pengadaan/${row.id}`,
             },
           ]}
         />

@@ -3603,6 +3603,391 @@
             "description": "Membatalkan atau menghapus permohonan."
           },
           "response": []
+        },
+        {
+          "name": "Daftar Pengadaan (PPBJ)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ppbj/pengadaan?q=&status=&bulan=&tahun=&page=1&per_page=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ppbj",
+                "pengadaan"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "",
+                  "description": "Pencarian nomor surat atau judul permohonan"
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "Filter status pengadaan (draft, menunggu_review, disetujui, ditolak, dll)"
+                },
+                {
+                  "key": "bulan",
+                  "value": "",
+                  "description": "Filter bulan pengadaan (1-12)"
+                },
+                {
+                  "key": "tahun",
+                  "value": "",
+                  "description": "Filter tahun pengadaan"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Mengambil daftar seluruh paket pengadaan untuk peran PPBJ dengan fitur pencarian dan filter status."
+          },
+          "response": []
+        },
+        {
+          "name": "Detail Pengadaan (PPBJ)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ppbj/pengadaan/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ppbj",
+                "pengadaan",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "ID paket pengadaan"
+                }
+              ]
+            },
+            "description": "Menampilkan detail terpadu pengadaan, alokasi anggaran MAK, riwayat revisi dan catatan penolakan, data kontrak/vendor, dan daftar berkas untuk PPBJ."
+          },
+          "response": []
+        },
+        {
+          "name": "Perbarui Klasifikasi & Revisi Pengadaan (PPBJ)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "_method",
+                  "value": "PUT",
+                  "type": "text"
+                },
+                {
+                  "key": "permohonan_mak_id",
+                  "value": "1",
+                  "type": "text",
+                  "description": "ID relasi permohonan_mak"
+                },
+                {
+                  "key": "jenis_id",
+                  "value": "1",
+                  "type": "text",
+                  "description": "ID jenis pengadaan (Barang, Jasa Lainnya, dll)"
+                },
+                {
+                  "key": "metode_id",
+                  "value": "1",
+                  "type": "text",
+                  "description": "ID metode pengadaan (Pengadaan Langsung, E-Purchasing, dll)"
+                },
+                {
+                  "key": "level_id",
+                  "value": "2",
+                  "type": "text",
+                  "description": "ID level pengadaan"
+                },
+                {
+                  "key": "dokumen",
+                  "type": "file",
+                  "src": "",
+                  "description": "Unggah ulang berkas dokumen pengadaan revisi (PDF max 10MB)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ppbj/pengadaan/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ppbj",
+                "pengadaan",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "ID paket pengadaan yang diperbarui"
+                }
+              ]
+            },
+            "description": "Memperbarui klasifikasi pengadaan dan mengunggah dokumen baru jika berstatus draft atau ditolak. Pengadaan berstatus ditolak otomatis diteruskan kembali ke antrean review."
+          },
+          "response": []
+        },
+        {
+          "name": "Simpan Data Kontrak & Vendor (PPBJ)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "tipe",
+                  "value": "spk",
+                  "type": "text",
+                  "description": "spk atau kontrak"
+                },
+                {
+                  "key": "nomor",
+                  "value": "SPK/2026/001",
+                  "type": "text"
+                },
+                {
+                  "key": "tanggal",
+                  "value": "2026-05-15",
+                  "type": "text"
+                },
+                {
+                  "key": "vendor_nama",
+                  "value": "PT Sumber Rejeki Abadi",
+                  "type": "text"
+                },
+                {
+                  "key": "nominal_kontrak",
+                  "value": "95000000",
+                  "type": "text"
+                },
+                {
+                  "key": "tanggal_jatuh_tempo",
+                  "value": "2026-06-15",
+                  "type": "text"
+                },
+                {
+                  "key": "tanggal_reminder",
+                  "value": "2026-06-08",
+                  "type": "text"
+                },
+                {
+                  "key": "dokumen",
+                  "type": "file",
+                  "src": "",
+                  "description": "Berkas fisik kontrak/SPK (PDF max 10MB)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ppbj/pengadaan/:id/kontrak",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ppbj",
+                "pengadaan",
+                ":id",
+                "kontrak"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "ID paket pengadaan"
+                }
+              ]
+            },
+            "description": "Menyimpan data vendor, biaya riil kontrak, jadwal reminder pembayaran termin, dan dokumen pembelian setelah pengadaan disetujui."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Data Kontrak & Vendor (PPBJ)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "_method",
+                  "value": "PUT",
+                  "type": "text"
+                },
+                {
+                  "key": "tipe",
+                  "value": "spk",
+                  "type": "text"
+                },
+                {
+                  "key": "nomor",
+                  "value": "SPK/2026/001-REV",
+                  "type": "text"
+                },
+                {
+                  "key": "tanggal",
+                  "value": "2026-05-15",
+                  "type": "text"
+                },
+                {
+                  "key": "vendor_nama",
+                  "value": "PT Sumber Rejeki Abadi",
+                  "type": "text"
+                },
+                {
+                  "key": "nominal_kontrak",
+                  "value": "95000000",
+                  "type": "text"
+                },
+                {
+                  "key": "tanggal_jatuh_tempo",
+                  "value": "2026-06-15",
+                  "type": "text"
+                },
+                {
+                  "key": "tanggal_reminder",
+                  "value": "2026-06-08",
+                  "type": "text"
+                },
+                {
+                  "key": "dokumen",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ppbj/pengadaan/:id/kontrak",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ppbj",
+                "pengadaan",
+                ":id",
+                "kontrak"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "ID paket pengadaan"
+                }
+              ]
+            },
+            "description": "Memperbarui data kontrak, vendor, atau jadwal reminder selama barang belum diverifikasi oleh Perlengkapan."
+          },
+          "response": []
+        },
+        {
+          "name": "Download Dokumen Pengadaan / Kontrak (PPBJ)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ppbj/pengadaan/:pengadaanId/dokumen/:dokumenId?disposition=inline",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ppbj",
+                "pengadaan",
+                ":pengadaanId",
+                "dokumen",
+                ":dokumenId"
+              ],
+              "query": [
+                {
+                  "key": "disposition",
+                  "value": "inline",
+                  "description": "inline untuk pratinjau PDF di browser atau attachment untuk unduh berkas"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "pengadaanId",
+                  "value": "1",
+                  "description": "ID paket pengadaan"
+                },
+                {
+                  "key": "dokumenId",
+                  "value": "1",
+                  "description": "ID berkas dokumen"
+                }
+              ]
+            },
+            "description": "Mengunduh atau menampilkan pratinjau berkas dokumen pengadaan atau berkas kontrak bagi PPBJ."
+          },
+          "response": []
         }
       ]
     },
@@ -3955,6 +4340,55 @@
               ]
             },
             "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Download Dokumen Pengadaan (PP)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pp/pengajuan/:pengadaan/dokumen/:dokumen?disposition=inline",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pp",
+                "pengajuan",
+                ":pengadaan",
+                "dokumen",
+                ":dokumen"
+              ],
+              "query": [
+                {
+                  "key": "disposition",
+                  "value": "inline",
+                  "description": "inline untuk pratinjau atau attachment untuk mengunduh berkas"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "pengadaan",
+                  "value": "1",
+                  "description": "ID paket pengadaan"
+                },
+                {
+                  "key": "dokumen",
+                  "value": "1",
+                  "description": "ID berkas dokumen pengadaan atau memo"
+                }
+              ]
+            },
+            "description": "Mengunduh atau melihat pratinjau dokumen pengadaan, dokumen permohonan, atau memo persetujuan untuk verifikasi PP."
           },
           "response": []
         }
@@ -4698,6 +5132,55 @@
                 }
               }
             }
+          },
+          "response": []
+        },
+        {
+          "name": "Download Dokumen Pengadaan (PPK)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ppk/pengajuan/:pengadaan/dokumen/:dokumen?disposition=inline",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ppk",
+                "pengajuan",
+                ":pengadaan",
+                "dokumen",
+                ":dokumen"
+              ],
+              "query": [
+                {
+                  "key": "disposition",
+                  "value": "inline",
+                  "description": "inline untuk pratinjau atau attachment untuk mengunduh berkas"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "pengadaan",
+                  "value": "1",
+                  "description": "ID paket pengadaan"
+                },
+                {
+                  "key": "dokumen",
+                  "value": "1",
+                  "description": "ID berkas dokumen pengadaan atau memo"
+                }
+              ]
+            },
+            "description": "Mengunduh atau melihat pratinjau berkas fisik dokumen pengadaan, permohonan, atau memo persetujuan yang ditugaskan kepada PPK."
           },
           "response": []
         }

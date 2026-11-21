@@ -175,6 +175,7 @@ Route::prefix('v1')->group(function () {
             Route::get('dashboard', DashboardPpController::class)->name('api.pp.dashboard');
             Route::get('pengajuan', [PpController::class, 'index'])->name('api.pp.pengajuan.index');
             Route::get('pengajuan/{pengadaan}/review', [PpController::class, 'review'])->name('api.pp.pengajuan.review');
+            Route::get('pengajuan/{pengadaan}/dokumen/{dokumen}', [PpController::class, 'downloadDokumen'])->name('api.pp.pengajuan.dokumen.download');
             Route::post('pengajuan/{pengadaan}/approve', [PpController::class, 'approve'])->name('api.pp.pengajuan.approve');
             Route::post('pengajuan/{pengadaan}/reject', [PpController::class, 'reject'])->name('api.pp.pengajuan.reject');
             Route::get('pengajuan/{pengadaan}', [PpController::class, 'show'])->name('api.pp.pengajuan.show');
@@ -194,6 +195,7 @@ Route::prefix('v1')->group(function () {
             Route::post('permohonan/{permohonan}/reject', [PermohonanPpkController::class, 'rejectPermohonan'])->name('api.ppk.permohonan.reject');
             Route::get('pengajuan', [PpkController::class, 'index'])->name('api.ppk.pengajuan.index');
             Route::get('pengajuan/{pengadaan}/review', [PpkController::class, 'review'])->name('api.ppk.pengajuan.review');
+            Route::get('pengajuan/{pengadaan}/dokumen/{dokumen}', [PpkController::class, 'downloadDokumen'])->name('api.ppk.pengajuan.dokumen.download');
             Route::post('pengajuan/{pengadaan}/approve', [PpkController::class, 'approve'])->name('api.ppk.pengajuan.approve');
             Route::post('pengajuan/{pengadaan}/reject', [PpkController::class, 'reject'])->name('api.ppk.pengajuan.reject');
             Route::get('pengajuan/{pengadaan}/pembayaran', [PpkController::class, 'pembayaran'])->name('api.ppk.pengajuan.pembayaran');

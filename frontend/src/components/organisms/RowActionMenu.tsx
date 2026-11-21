@@ -97,11 +97,7 @@ export const RowActionMenu: FC<RowActionMenuProps> = ({
     };
   }, [open]);
 
-  const targetHref =
-    viewHref ||
-    (item?.status === 'menunggu_persetujuan'
-      ? `/pp/pengadaan/${item?.id}/review`
-      : `/pp/pengadaan/${item?.id}`);
+  const targetHref = viewHref || `/pp/pengadaan/${item?.id}`;
 
   return (
     <div className="relative inline-block text-left">

@@ -17,13 +17,14 @@ export const ppService = {
   },
 
   /**
-   * Mengambil daftar pengajuan pengadaan level Rp50-200 juta untuk PP.
+   * Mengambil daftar pengajuan pengadaan level Rp50-200 juta untuk PP (atau pengadaan PPK).
    */
   async getPengajuanList(
     params?: PpPengajuanFilterParams,
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    basePath = '/pp'
   ): Promise<PpPengajuanListResponse> {
-    const response = await api.get<PpPengajuanListResponse>('/v1/pp/pengajuan', {
+    const response = await api.get<PpPengajuanListResponse>(`/v1${basePath}/pengajuan`, {
       params,
       signal,
     });
@@ -86,6 +87,34 @@ export const ppService = {
       { alasan, catatan: alasan }
     );
     return response.data;
+  },
+
+  /**
+   * Mengambil blob file dokumen PDF terotentikasi untuk inline preview atau unduhan.
+   */
+  async fetchDokumenBlob(
+    downloadUrl: string,
+    disposition: 'inline' | 'attachment' = 'attachment',
+    signal?: AbortSignal
+  ): Promise<{ blob: Blob; contentType?: string }> {
+    const normalizedUrl = downloadUrl.replace(/^\/api(?=\/)/, '');
+    const separator = normalizedUrl.includes('?') ? '&' : '?';
+    const finalUrl =
+      disposition === 'inline'
+        ? `${normalizedUrl}${separator}disposition=inline`
+        : normalizedUrl;
+
+    const response = await api.get<Blob>(finalUrl, {
+      responseType: 'blob',
+      signal,
+    });
+    const rawContentType = response.headers['content-type'];
+    const contentType =
+      typeof rawContentType === 'string' ? rawContentType : 'application/pdf';
+    return {
+      blob: new Blob([response.data], { type: contentType }),
+      contentType,
+    };
   },
 };
 
