@@ -418,28 +418,55 @@ class PermohonanService
      */
     public function hapusPermohonan(User $user, Permohonan $permohonan): void
     {
-        if ($user->unit_id && $permohonan->unit_id !== $user->unit_id) {
+        if ($user->unit_id && (int) $permohonan->unit_id !== (int) $user->unit_id) {
             abort(403, 'Anda tidak berhak menghapus permohonan milik unit lain.');
         }
 
-        $allowedStatuses = ['diajukan', 'menunggu_verifikasi', 'menunggu_persetujuan', 'ditolak', 'draft'];
-        if (! in_array($permohonan->status, $allowedStatuses, true)) {
-            abort(422, 'Permohonan yang sedang dalam proses pengadaan atau sudah selesai tidak dapat dihapus.');
+        // Syarat FR-24: Belum diproses atau disetujui pada tahapan selanjutnya
+        $sudahDisetujuiLanjutan = $permohonan->Approvals()->where('keputusan', 'disetujui')->exists();
+        $adaPengadaan = $permohonan->Pengadaan()->exists();
+        $statusTidakBoleh = in_array($permohonan->status, [
+            'menunggu_persetujuan',
+            'disetujui',
+            'diproses_ppbj',
+            'pengadaan',
+            'siap_spk',
+            'kontrak_terbit',
+            'berjalan',
+            'barang_diterima',
+            'selesai',
+        ], true);
+
+        if ($sudahDisetujuiLanjutan || $adaPengadaan || $statusTidakBoleh) {
+            abort(422, 'Permohonan tidak dapat dibatalkan atau dihapus karena sudah diproses atau disetujui pada tahapan selanjutnya.');
         }
 
         DB::transaction(function () use ($permohonan) {
-            $dokumens = Dokumen::where('ref_type', 'permohonan')
+            $dokumens = Dokumen::whereIn('ref_type', ['permohonan', 'approval_permohonan'])
                 ->where('ref_id', $permohonan->id)
                 ->get();
 
             foreach ($dokumens as $dokumen) {
-                if ($dokumen->file_path && Storage::disk('local')->exists($dokumen->file_path)) {
-                    Storage::disk('local')->delete($dokumen->file_path);
+                if ($dokumen->nama_hash) {
+                    $candidates = [
+                        'dokumen/permohonan/'.$dokumen->nama_hash,
+                        'dokumen/permohonan/memo/'.$dokumen->nama_hash,
+                        'dokumen/memo/'.$dokumen->nama_hash,
+                    ];
+                    foreach ($candidates as $cand) {
+                        if (Storage::disk('local')->exists($cand)) {
+                            Storage::disk('local')->delete($cand);
+                        }
+                    }
                 }
                 $dokumen->delete();
             }
 
-            StatusHistory::where('permohonan_id', $permohonan->id)->delete();
+            StatusHistory::where('ref_type', 'permohonan')
+                ->where('ref_id', $permohonan->id)
+                ->delete();
+
+            $permohonan->Approvals()->delete();
             $permohonan->PermohonanMak()->delete();
             $permohonan->delete();
         });

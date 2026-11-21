@@ -520,13 +520,13 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
               )}
 
               <div className="mt-5 pt-4 border-t border-[#F0F4F2]">
-                 <p className="text-xs font-bold text-[#14201C]">Alasan Approval Perencanaan</p>
-                 <p className="mt-1.5 text-xs leading-relaxed text-[#5F6F6A]">
-                   {detail?.approval_perencanaan?.alasan || 'Tidak ada alasan approval.'}
-                 </p>
-               </div>
+                <p className="text-xs font-bold text-[#14201C]">Alasan Approval Perencanaan</p>
+                <p className="mt-1.5 text-xs leading-relaxed text-[#5F6F6A]">
+                  {detail?.approval_perencanaan?.alasan || 'Tidak ada alasan approval.'}
+                </p>
+              </div>
 
-               <RiwayatStatusTimeline steps={timelineSteps} />
+              <RiwayatStatusTimeline steps={timelineSteps} />
             </div>
           </div>
         </>

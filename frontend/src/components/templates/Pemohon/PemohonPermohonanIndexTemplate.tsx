@@ -1,12 +1,12 @@
 import type { FC, FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { Eye, Pencil, Plus, Trash2 } from 'lucide-react';
 import AppLayout from '../General/AppLayout';
 import HeroBanner from '../../organisms/HeroBanner';
 import FilterPermohonanModal from '../../molecules/FilterPermohonanModal';
 import TableToolbar from '../../molecules/TableToolbar';
 import TableFooter from '../../molecules/TableFooter';
-import CrudTable, { type CrudColumn } from '../../organisms/CrudTable';
+import CrudTable, { type CrudActionItem, type CrudColumn } from '../../organisms/CrudTable';
 import Modal from '../../organisms/Modal';
 import StatusPill from '../../atoms/StatusPill';
 import { PEMOHON_NAV_ITEMS } from '../../../constants/pemohonNav';
@@ -182,9 +182,49 @@ export const PemohonPermohonanIndexTemplate: FC<
                   : 'Belum ada permohonan yang diajukan oleh unit Anda.'
               }
               actionsAlign="right"
-              onView={(item) => onView(item)}
-              onEdit={(item) => onEdit(item)}
-              onDelete={(item) => onDelete(item)}
+              actions={(item) => {
+                const list: CrudActionItem<PermohonanItem>[] = [
+                  {
+                    key: 'view',
+                    label: 'Lihat',
+                    icon: Eye,
+                    onClick: (r) => onView(r),
+                  },
+                ];
+
+                if (item.status === 'ditolak') {
+                  list.push({
+                    key: 'edit',
+                    label: 'Revisi',
+                    icon: Pencil,
+                    onClick: (r) => onEdit(r),
+                  });
+                }
+
+                const s = (item.status || '').toLowerCase();
+                const nonDeletable = [
+                  'menunggu_persetujuan',
+                  'disetujui',
+                  'diproses_ppbj',
+                  'pengadaan',
+                  'siap_spk',
+                  'kontrak_terbit',
+                  'berjalan',
+                  'barang_diterima',
+                  'selesai',
+                ];
+                if (!nonDeletable.includes(s)) {
+                  list.push({
+                    key: 'delete',
+                    label: 'Batalkan / Hapus',
+                    icon: Trash2,
+                    variant: 'danger',
+                    onClick: (r) => onDelete(r),
+                  });
+                }
+
+                return list;
+              }}
               footer={
                 <TableFooter
                   currentPage={pagination.currentPage}
