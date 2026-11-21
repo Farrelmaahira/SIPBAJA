@@ -85,8 +85,16 @@ export const PpPengadaanDetailTemplate: FC<PpPengadaanDetailTemplateProps> = ({
   const level = pengadaan.level || pengadaan.Level;
   const makList: PpMakItem[] = detail.mak_list || [];
 
-  const rawDokumenPengadaan: DokumenItem[] = (detail.dokumen_pengadaan as DokumenItem[]) || [];
-  const rawDokumenPermohonan: DokumenItem[] = (detail.dokumen_permohonan as DokumenItem[]) || [];
+  const rawDokumenPengadaan: DokumenItem[] = Array.isArray(detail.dokumen_pengadaan)
+    ? (detail.dokumen_pengadaan as DokumenItem[])
+    : detail.dokumen_pengadaan
+      ? [detail.dokumen_pengadaan as DokumenItem]
+      : [];
+  const rawDokumenPermohonan: DokumenItem[] = Array.isArray(detail.dokumen_permohonan)
+    ? (detail.dokumen_permohonan as DokumenItem[])
+    : detail.dokumen_permohonan
+      ? [detail.dokumen_permohonan as DokumenItem]
+      : [];
 
   // Cari file dokumen pengadaan utama
   const primaryDokumenPengadaan = useMemo(() => {

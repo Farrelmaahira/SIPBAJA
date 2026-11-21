@@ -625,6 +625,8 @@ class PengadaanService
 
         $dokumenPengadaan = Dokumen::where('ref_type', 'pengadaan')
             ->where('ref_id', $pengadaan->id)
+            ->latest('id')
+            ->take(1)
             ->get()
             ->map(function (Dokumen $d) use ($pengadaan, $actor) {
                 $base = $actor?->hasRole('PPK') ? 'ppk' : 'pp';
@@ -843,7 +845,7 @@ class PengadaanService
             'Kontrak.Dokumen',
             'Penerimaan',
             'Approvals.Actor',
-            'Dokumen',
+            'Dokumen' => fn ($query) => $query->latest('id'),
         ])->findOrFail($pengadaanId);
 
         $isBarangDiterima = $pengadaan->Penerimaan !== null || in_array($pengadaan->status, ['barang_diterima', 'selesai'], true);
@@ -918,7 +920,7 @@ class PengadaanService
                     'download_url' => "/api/v1/ppbj/pengadaan/{$pengadaan->id}/dokumen/{$dokumenKontrak->id}",
                 ] : null,
             ] : null,
-            'dokumen_list' => $pengadaan->Dokumen->map(fn (Dokumen $d) => [
+            'dokumen_list' => $pengadaan->Dokumen->take(1)->map(fn (Dokumen $d) => [
                 'id' => $d->id,
                 'nama_asli' => $d->nama_asli,
                 'tipe_dokumen' => $d->tipe_dokumen,
