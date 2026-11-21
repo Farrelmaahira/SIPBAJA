@@ -451,6 +451,11 @@ class ApprovalService
     {
         $this->pastikanPpkBerhakAtasPengadaan($pengadaan, $actor);
 
+        $pengadaan->loadMissing('Level', 'Permohonan');
+        if ($pengadaan->Level?->perlu_review_pp && $pengadaan->status !== 'diteruskan') {
+            abort(422, 'Dokumen pengadaan dengan nominal Rp50–200 juta harus diverifikasi oleh Pejabat Pengadaan (PP) terlebih dahulu.');
+        }
+
         return DB::transaction(function () use ($pengadaan, $actor) {
             $statusLama = $pengadaan->status;
             $statusBaru = 'disetujui';
