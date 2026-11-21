@@ -14,7 +14,6 @@ use App\Models\PenerimaanBarang;
 use App\Models\Pengadaan;
 use App\Models\Permohonan;
 use App\Models\PermohonanMak;
-use App\Models\RencanaPembayaran;
 use App\Models\Unit;
 use App\Models\User;
 use Carbon\Carbon;
@@ -69,7 +68,7 @@ class PengadaanPpSeeder extends Seeder
                 'judul' => 'Pengadaan Switch Jaringan Gedung A',
                 'ringkasan' => 'Pengadaan managed gigabit switch untuk infrastruktur jaringan backbone.',
                 'nominal' => 92750000,
-                'status' => 'menunggu_persetujuan',
+                'status' => 'selesai',
                 'created_at' => Carbon::now()->subDays(13),
             ],
             [
@@ -168,7 +167,7 @@ class PengadaanPpSeeder extends Seeder
                 );
 
                 // 3. Pengadaan
-                $pengadaan = Pengadaan::firstOrCreate(
+                $pengadaan = Pengadaan::updateOrCreate(
                     [
                         'permohonan_id' => $permohonan->id,
                         'permohonan_mak_id' => $permohonanMak->id,
@@ -267,35 +266,93 @@ class PengadaanPpSeeder extends Seeder
                     );
                 }
 
-                // If selesai, create sample Kontrak & Penerimaan
-                if ($item['status'] === 'selesai') {
+                // Buat Kontrak & SPK untuk paket yang tidak ditolak agar dapat diproses oleh Perlengkapan
+                if ($item['status'] !== 'ditolak') {
                     $kontrak = Kontrak::firstOrCreate(
                         ['pengadaan_id' => $pengadaan->id],
                         [
                             'tipe' => 'SPK',
-                            'nomor' => 'SPK/PPBJ/2026/001',
+                            'nomor' => 'SPK/PPBJ/2026/'.sprintf('%03d', $pengadaan->id),
                             'tanggal' => $item['created_at']->copy()->addDays(2),
                         ]
                     );
 
-                    RencanaPembayaran::firstOrCreate(
+                    Dokumen::firstOrCreate(
                         [
-                            'kontrak_id' => $kontrak->id,
-                            'termin_ke' => 1,
+                            'ref_type' => 'kontrak',
+                            'ref_id' => $kontrak->id,
+                            'tipe_dokumen' => 'spk',
                         ],
                         [
-                            'nominal_rencana' => $item['nominal'],
-                            'tanggal_jatuh_tempo' => $item['created_at']->copy()->addDays(20),
-                            'status' => 'lunas',
+                            'versi' => 1,
+                            'nama_asli' => "SPK_{$item['nomor_surat']}.pdf",
+                            'nama_hash' => "docs/dummy_spk_{$item['nomor_surat']}.pdf",
+                            'mime_type' => 'application/pdf',
+                            'ukuran_bytes' => 1048576,
+                            'uploaded_by' => $ppUser?->id ?? 1,
                             'created_at' => $item['created_at']->copy()->addDays(2),
                         ]
                     );
 
-                    PenerimaanBarang::firstOrCreate(
+                    Dokumen::firstOrCreate(
+                        [
+                            'ref_type' => 'kontrak',
+                            'ref_id' => $kontrak->id,
+                            'tipe_dokumen' => 'surat_kontrak',
+                        ],
+                        [
+                            'versi' => 1,
+                            'nama_asli' => "Surat_Kontrak_{$item['nomor_surat']}.pdf",
+                            'nama_hash' => "docs/dummy_kontrak_{$item['nomor_surat']}.pdf",
+                            'mime_type' => 'application/pdf',
+                            'ukuran_bytes' => 2097152,
+                            'uploaded_by' => $ppUser?->id ?? 1,
+                            'created_at' => $item['created_at']->copy()->addDays(2),
+                        ]
+                    );
+                }
+
+                // If selesai, create sample PenerimaanBarang & Dokumen BAST/Foto
+                if ($item['status'] === 'selesai') {
+                    $penerimaan = PenerimaanBarang::firstOrCreate(
                         ['pengadaan_id' => $pengadaan->id],
                         [
                             'tanggal_terima' => $item['created_at']->copy()->addDays(15),
-                            'diterima_oleh' => $ppkUser->id,
+                            'diterima_oleh' => $ppkUser?->id ?? 1,
+                        ]
+                    );
+
+                    Dokumen::firstOrCreate(
+                        [
+                            'ref_type' => 'penerimaan_barang',
+                            'ref_id' => $penerimaan->id,
+                            'tipe_dokumen' => 'berita_acara',
+                        ],
+                        [
+                            'versi' => 1,
+                            'nama_asli' => "BAST_Serah_Terima_{$item['nomor_surat']}.pdf",
+                            'nama_hash' => "docs/dummy_bast_{$item['nomor_surat']}.pdf",
+                            'mime_type' => 'application/pdf',
+                            'ukuran_bytes' => 2450000,
+                            'uploaded_by' => $ppkUser?->id ?? 1,
+                            'created_at' => $item['created_at']->copy()->addDays(15),
+                        ]
+                    );
+
+                    Dokumen::firstOrCreate(
+                        [
+                            'ref_type' => 'penerimaan_barang',
+                            'ref_id' => $penerimaan->id,
+                            'tipe_dokumen' => 'foto_barang',
+                        ],
+                        [
+                            'versi' => 1,
+                            'nama_asli' => "Dokumentasi_Fisik_{$item['nomor_surat']}.jpg",
+                            'nama_hash' => "docs/dummy_foto_{$item['nomor_surat']}.jpg",
+                            'mime_type' => 'image/jpeg',
+                            'ukuran_bytes' => 1850000,
+                            'uploaded_by' => $ppkUser?->id ?? 1,
+                            'created_at' => $item['created_at']->copy()->addDays(15),
                         ]
                     );
                 }

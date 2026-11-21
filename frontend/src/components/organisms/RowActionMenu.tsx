@@ -12,15 +12,19 @@ export interface RowActionMenuItem {
 export interface RowActionMenuProps {
   item?: RowActionMenuItem;
   viewHref?: string;
+  editHref?: string;
   onEdit?: ((item?: RowActionMenuItem) => void) | null;
   onDelete?: ((item?: RowActionMenuItem) => void) | null;
+  showDelete?: boolean;
 }
 
 export const RowActionMenu: FC<RowActionMenuProps> = ({
   item,
   viewHref,
+  editHref,
   onEdit = null,
   onDelete = null,
+  showDelete = true,
 }) => {
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
@@ -31,7 +35,7 @@ export const RowActionMenu: FC<RowActionMenuProps> = ({
     if (!buttonRef.current) return;
     const rect = buttonRef.current.getBoundingClientRect();
     const menuWidth = 160; // w-40 = 160px
-    const menuHeight = 145; // perkiraan tinggi dropdown
+    const menuHeight = showDelete ? 145 : 95; // perkiraan tinggi dropdown
 
     const spaceBelow = window.innerHeight - rect.bottom;
     const openUpwards = spaceBelow < menuHeight && rect.top > menuHeight;
@@ -134,7 +138,16 @@ export const RowActionMenu: FC<RowActionMenuProps> = ({
               <span>Lihat</span>
             </Link>
 
-            {onEdit ? (
+            {editHref ? (
+              <Link
+                to={editHref}
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 px-3.5 py-2 text-xs font-semibold text-[#14201C] hover:bg-[#F4F7F5] transition-colors"
+              >
+                <Pencil className="w-4 h-4 text-[#5F6F6A]" />
+                <span>Edit</span>
+              </Link>
+            ) : onEdit ? (
               <button
                 type="button"
                 onClick={() => {
@@ -153,25 +166,29 @@ export const RowActionMenu: FC<RowActionMenuProps> = ({
               </div>
             )}
 
-            <div className="border-t border-[#F0F4F2] my-1" />
+            {showDelete && (
+              <>
+                <div className="border-t border-[#F0F4F2] my-1" />
 
-            {onDelete ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setOpen(false);
-                  onDelete(item);
-                }}
-                className="w-full flex items-center gap-3 px-3.5 py-2 text-xs font-semibold text-[#D92D20] hover:bg-[#FEE4E2]/50 transition-colors cursor-pointer text-left"
-              >
-                <Trash2 className="w-4 h-4 text-[#D92D20]" />
-                <span>Hapus</span>
-              </button>
-            ) : (
-              <div className="flex items-center gap-3 px-3.5 py-2 text-xs font-medium text-[#C5D2CD] cursor-not-allowed select-none">
-                <Trash2 className="w-4 h-4 text-[#C5D2CD]" />
-                <span>Hapus</span>
-              </div>
+                {onDelete ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpen(false);
+                      onDelete(item);
+                    }}
+                    className="w-full flex items-center gap-3 px-3.5 py-2 text-xs font-semibold text-[#D92D20] hover:bg-[#FEE4E2]/50 transition-colors cursor-pointer text-left"
+                  >
+                    <Trash2 className="w-4 h-4 text-[#D92D20]" />
+                    <span>Hapus</span>
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-3 px-3.5 py-2 text-xs font-medium text-[#C5D2CD] cursor-not-allowed select-none">
+                    <Trash2 className="w-4 h-4 text-[#C5D2CD]" />
+                    <span>Hapus</span>
+                  </div>
+                )}
+              </>
             )}
           </div>,
           document.body

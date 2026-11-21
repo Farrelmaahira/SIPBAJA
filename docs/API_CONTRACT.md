@@ -985,7 +985,50 @@ Catatan: endpoint RKAKL untuk PPK (`/api/v1/ppk/rkakl`, `/api/v1/ppk/rkakl/dokum
 
 ### 3.9 Modul Perlengkapan & Keuangan
 
-- **Dashboard Perlengkapan:** `GET /api/v1/perlengkapan/dashboard` (`role:Perlengkapan`)
+#### 1. Modul Perlengkapan (`role:Perlengkapan`)
+- **Dashboard Perlengkapan:** `GET /api/v1/perlengkapan/dashboard`
+  - Success Response: `200 OK`
+- **List Pengadaan:** `GET /api/v1/perlengkapan/pengadaan?search={keyword}&status={status}&page={page}&per_page={per_page}`
+  - Success Response: `200 OK` (Paginasi daftar pengadaan masuk yang ditangani Perlengkapan)
+- **Detail Pengadaan:** `GET /api/v1/perlengkapan/pengadaan/{id}`
+  - Success Response: `200 OK` (Memuat informasi pengadaan, tracking 5-tahap, data vendor, berkas Kontrak/SPK, dan status penerimaan barang)
+- **Simpan Penerimaan Barang (BAST & Foto):** `POST /api/v1/perlengkapan/pengadaan/{id}/penerimaan`
+  - Content-Type: `multipart/form-data`
+  - Body:
+    - `tanggal_terima`: string date (opsional, default hari ini)
+    - `dokumen_barang[]`: array of file berkas BAST/pendukung bertanda tangan (wajib, max 10MB per file)
+    - `dokumentasi_foto[]`: array of file foto fisik kondisi barang (opsional, max 20MB per file)
+  - Success Response: `201 Created`
+    ```json
+    {
+      "message": "Dokumen barang/jasa dan dokumentasi fisik serah terima berhasil disimpan.",
+      "penerimaan_id": 1,
+      "dokumen_barang": [],
+      "dokumentasi_foto": []
+    }
+    ```
+- **Unduh/Lihat Dokumen Pengadaan/Penerimaan:** `GET /api/v1/perlengkapan/pengadaan/{id}/dokumen/{dokumenId}?disposition={inline|attachment}`
+- **Profil Pengguna Perlengkapan:** `GET /api/v1/perlengkapan/profil`
+  - Success Response: `200 OK`
+    ```json
+    {
+      "user": {
+        "id": 1,
+        "nama": "Staf Perlengkapan",
+        "email": "perlengkapan@pnj.ac.id",
+        "role": {
+          "id": 7,
+          "nama": "Perlengkapan"
+        },
+        "unit": {
+          "id": 1,
+          "nama": "Unit Perlengkapan"
+        }
+      }
+    }
+    ```
+
+#### 2. Modul Keuangan (`role:Keuangan`)
 - **Dashboard Keuangan:** `GET /api/v1/keuangan/dashboard` (`role:Keuangan`)
   - Success Response: `200 OK`
 

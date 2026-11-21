@@ -21,6 +21,7 @@ export interface DocumentPreviewModalProps {
   label?: string;
   downloadUrl?: string;
   blobUrl?: string | null;
+  onDownload?: () => void;
 }
 
 export const DocumentPreviewModal: FC<DocumentPreviewModalProps> = ({
@@ -34,6 +35,7 @@ export const DocumentPreviewModal: FC<DocumentPreviewModalProps> = ({
   label: propLabel,
   downloadUrl: propDownloadUrl,
   blobUrl,
+  onDownload,
 }) => {
   const visible = Boolean(open || isOpen) && Boolean(document || propFilename || category || blobUrl);
   if (!visible) return null;
@@ -42,6 +44,22 @@ export const DocumentPreviewModal: FC<DocumentPreviewModalProps> = ({
   const filename = propFilename || document?.filename || 'Dokumen_Pengadaan_SIPBAJA.pdf';
   const size = propSize || document?.size || document?.meta || 'PDF • 1.2 MB';
   const resolvedDownloadUrl = propDownloadUrl || (document?.download_url as string | undefined) || '/pp/dokumen/1/download';
+  const isImage = /\.(jpg|jpeg|png|webp|gif)$/i.test(filename) || size.toLowerCase().includes('jpg') || size.toLowerCase().includes('png');
+
+  const handleDownloadClick = () => {
+    if (onDownload) {
+      onDownload();
+      return;
+    }
+    if (blobUrl) {
+      const link = window.document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      window.document.body.appendChild(link);
+      link.click();
+      window.document.body.removeChild(link);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-[2px] p-4">
@@ -61,15 +79,26 @@ export const DocumentPreviewModal: FC<DocumentPreviewModalProps> = ({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <a
-              href={resolvedDownloadUrl}
-              target={resolvedDownloadUrl.startsWith('http') || resolvedDownloadUrl.includes('/api/') ? '_blank' : undefined}
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0E7C5A] hover:bg-[#0b6347] text-white text-xs font-bold transition"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>Unduh PDF</span>
-            </a>
+            {onDownload || blobUrl ? (
+              <button
+                type="button"
+                onClick={handleDownloadClick}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0E7C5A] hover:bg-[#0b6347] text-white text-xs font-bold transition cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>{isImage ? 'Unduh Foto' : 'Unduh Berkas'}</span>
+              </button>
+            ) : (
+              <a
+                href={resolvedDownloadUrl}
+                target={resolvedDownloadUrl.startsWith('http') || resolvedDownloadUrl.includes('/api/') ? '_blank' : undefined}
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0E7C5A] hover:bg-[#0b6347] text-white text-xs font-bold transition"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Unduh PDF</span>
+              </a>
+            )}
             <button
               type="button"
               onClick={onClose}
@@ -84,17 +113,27 @@ export const DocumentPreviewModal: FC<DocumentPreviewModalProps> = ({
         <div className="bg-[#EEF3F0] p-4 sm:p-6 max-h-[78vh] overflow-y-auto">
           {blobUrl ? (
             <div className="space-y-3">
-              <iframe
-                src={`${blobUrl}#toolbar=1&navpanes=0`}
-                title={`Pratinjau Dokumen ${filename}`}
-                className="w-full h-[65vh] rounded-xl border border-[#E4EBE8] bg-white shadow-xs"
-              />
+              {isImage ? (
+                <div className="flex items-center justify-center p-4 bg-white rounded-xl border border-[#E4EBE8] min-h-[300px]">
+                  <img
+                    src={blobUrl}
+                    alt={filename}
+                    className="max-h-[62vh] max-w-full rounded-lg object-contain shadow-xs"
+                  />
+                </div>
+              ) : (
+                <iframe
+                  src={`${blobUrl}#toolbar=1&navpanes=0`}
+                  title={`Pratinjau Dokumen ${filename}`}
+                  className="w-full h-[65vh] rounded-xl border border-[#E4EBE8] bg-white shadow-xs"
+                />
+              )}
               <div className="flex items-center justify-between px-2 text-xs text-[#5F6F6A]">
                 <span className="font-medium text-[#14201C] truncate max-w-sm">
                   {filename}
                 </span>
                 <span className="px-3 py-1 bg-[#14201C] text-white rounded-full text-[10px] font-semibold tracking-wide">
-                  Berkas Asli Jurusan
+                  {isImage ? 'Dokumentasi Fisik' : 'Berkas Asli'}
                 </span>
               </div>
             </div>

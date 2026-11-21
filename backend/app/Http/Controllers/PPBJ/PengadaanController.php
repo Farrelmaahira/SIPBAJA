@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\PPBJ;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\PPBJ\HapusDraftPengadaanRequest;
 use App\Http\Requests\PPBJ\SimpanKontrakPengadaanRequest;
 use App\Http\Requests\PPBJ\UpdateKlasifikasiPengadaanRequest;
 use App\Models\Dokumen;
@@ -10,6 +11,7 @@ use App\Models\Pengadaan;
 use App\Services\PengadaanService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -181,5 +183,15 @@ class PengadaanController extends Controller
                 'Content-Disposition' => "{$disposition}; filename=\"".($dokumen->nama_asli ?: 'dokumen.pdf').'"',
             ]
         );
+    }
+
+    /**
+     * Menghapus paket pengadaan berstatus draft.
+     */
+    public function destroy(HapusDraftPengadaanRequest $request, string $id): Response
+    {
+        $this->pengadaanService->hapusDraftPengadaan((int) $id, $request->user());
+
+        return response()->noContent();
     }
 }
