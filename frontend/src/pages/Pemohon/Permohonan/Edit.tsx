@@ -124,8 +124,12 @@ export const PermohonPermohonanEdit: FC = () => {
 
       await pemohonService.revisiPermohonan(id, payload);
 
+      const successMsg = permohonan?.status === 'ditolak'
+        ? 'Permohonan berhasil diperbaiki dan diajukan ulang.'
+        : 'Permohonan berhasil diperbarui.';
+
       navigate(`/pemohon/permohonan/${id}`, {
-        state: { flashMessage: 'Permohonan berhasil diperbaiki dan diajukan ulang.' },
+        state: { flashMessage: successMsg },
       });
     } catch (err: unknown) {
       if (axios.isAxiosError(err) && err.response?.status === 422 && err.response?.data?.errors) {

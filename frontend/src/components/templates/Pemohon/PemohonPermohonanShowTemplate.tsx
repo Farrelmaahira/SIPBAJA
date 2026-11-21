@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   X,
   AlertCircle,
+  Pencil,
   Trash2,
 } from 'lucide-react';
 import AppLayout from '../General/AppLayout';
@@ -60,10 +61,10 @@ export const PemohonPermohonanShowTemplate: FC<
 }) => {
     const isDitolak = permohonan?.status === 'ditolak';
 
-    const canDelete = useMemo(() => {
+    const canModifyOrDelete = useMemo(() => {
       if (!permohonan) return false;
       const s = (permohonan.status || '').toLowerCase();
-      const nonDeletable = [
+      const nonModifiable = [
         'menunggu_persetujuan',
         'disetujui',
         'diproses_ppbj',
@@ -74,7 +75,7 @@ export const PemohonPermohonanShowTemplate: FC<
         'barang_diterima',
         'selesai',
       ];
-      return !nonDeletable.includes(s);
+      return !nonModifiable.includes(s);
     }, [permohonan]);
 
     const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
@@ -308,26 +309,6 @@ export const PemohonPermohonanShowTemplate: FC<
             {/* Informasi Permohonan */}
             <PermohonanInfoSection permohonan={permohonan} />
 
-            {/* Aksi Pembatalan / Hapus (FR-24) */}
-            {canDelete && onDelete && (
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-white rounded-2xl border border-[#E4EBE8] shadow-xs">
-                <div>
-                  <h4 className="text-xs font-bold text-[#14201C]">Batalkan atau Hapus Permohonan?</h4>
-                  <p className="text-[11px] text-[#5F6F6A] mt-0.5">
-                    Permohonan ini belum diproses/disetujui pada tahap selanjutnya dan masih dapat dibatalkan.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={onDelete}
-                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-[#FECDCA] bg-white hover:bg-[#FEE4E2]/60 text-[#D92D20] text-xs font-bold transition-all shadow-xs shrink-0 cursor-pointer"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Batalkan Permohonan</span>
-                </button>
-              </div>
-            )}
-
             {/* Conditional Layouts based on Status */}
             {isDitolak ? (
               <div className="space-y-6">
@@ -369,6 +350,40 @@ export const PemohonPermohonanShowTemplate: FC<
                   previewDocId={previewDocId}
                   isLoadingPreview={isLoadingPreview}
                 />
+              </div>
+            )}
+
+            {/* Aksi Pengelolaan Permohonan: Ubah & Batalkan / Hapus (Kondisi belum diproses/disetujui) */}
+            {canModifyOrDelete && (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-white rounded-2xl border border-[#E4EBE8] shadow-xs">
+                <div>
+                  <h4 className="text-sm font-bold text-[#14201C]">Kelola Permohonan</h4>
+                  <p className="text-xs text-[#5F6F6A] mt-0.5">
+                    Permohonan ini belum diproses atau disetujui pada tahapan selanjutnya, sehingga Anda masih dapat melakukan perubahan data atau membatalkannya.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                  {onRevisi && (
+                    <button
+                      type="button"
+                      onClick={onRevisi}
+                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2 min-h-[40px] rounded-xl border border-[#0E7C5A] bg-[#EEF5F2] hover:bg-[#E0EFEA] text-[#0E7C5A] text-xs font-bold transition-all shadow-xs cursor-pointer"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                      <span>{isDitolak ? 'Revisi Permohonan' : 'Ubah Permohonan'}</span>
+                    </button>
+                  )}
+                  {onDelete && (
+                    <button
+                      type="button"
+                      onClick={onDelete}
+                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2 min-h-[40px] rounded-xl border border-[#FECDCA] bg-white hover:bg-[#FEE4E2]/60 text-[#D92D20] text-xs font-bold transition-all shadow-xs cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Batalkan Permohonan</span>
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </div>

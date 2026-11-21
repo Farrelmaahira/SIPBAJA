@@ -71,7 +71,34 @@ class PermohonanRevisiTest extends TestCase
         $response->assertStatus(403);
     }
 
-    public function test_cannot_revise_permohonan_if_status_not_ditolak(): void
+    public function test_cannot_revise_permohonan_if_already_approved_or_processed(): void
+    {
+        $pemohon = $this->getPemohonUser();
+
+        $permohonan = Permohonan::create([
+            'unit_id' => $pemohon->unit_id,
+            'created_by' => $pemohon->id,
+            'nomor_surat' => '01014-FF-11',
+            'judul' => 'Pengadaan Printer Laboratorium',
+            'ringkasan_tujuan' => 'Kebutuhan cetak lab',
+            'estimasi_anggaran' => 27800000,
+            'revisi_ke' => 0,
+            'status' => 'disetujui',
+            'created_at' => now(),
+        ]);
+
+        $response = $this->actingAs($pemohon, 'sanctum')->postJson("/api/v1/pemohon/permohonan/{$permohonan->id}/revisi", [
+            'judul' => 'Pengadaan Printer Laboratorium Revisi',
+            'estimasi_anggaran' => 25000000,
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJson([
+                'message' => 'Permohonan tidak dapat diubah karena sudah diproses atau disetujui pada tahapan selanjutnya.',
+            ]);
+    }
+
+    public function test_pemohon_can_revise_permohonan_with_status_diajukan(): void
     {
         $pemohon = $this->getPemohonUser();
 
@@ -88,11 +115,19 @@ class PermohonanRevisiTest extends TestCase
         ]);
 
         $response = $this->actingAs($pemohon, 'sanctum')->postJson("/api/v1/pemohon/permohonan/{$permohonan->id}/revisi", [
-            'judul' => 'Pengadaan Printer Laboratorium Revisi',
+            'judul' => 'Pengadaan Printer Laboratorium Terupdate',
             'estimasi_anggaran' => 25000000,
         ]);
 
-        $response->assertStatus(422);
+        $response->assertStatus(200)
+            ->assertJson([
+                'message' => 'Permohonan pengadaan berhasil diperbarui.',
+            ]);
+
+        $permohonan->refresh();
+        $this->assertEquals('Pengadaan Printer Laboratorium Terupdate', $permohonan->judul);
+        $this->assertEquals(25000000, (float) $permohonan->estimasi_anggaran);
+        $this->assertEquals('diajukan', $permohonan->status);
     }
 
     public function test_revisi_validation_requires_valid_data(): void

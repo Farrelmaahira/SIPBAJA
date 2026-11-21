@@ -192,17 +192,8 @@ export const PemohonPermohonanIndexTemplate: FC<
                   },
                 ];
 
-                if (item.status === 'ditolak') {
-                  list.push({
-                    key: 'edit',
-                    label: 'Revisi',
-                    icon: Pencil,
-                    onClick: (r) => onEdit(r),
-                  });
-                }
-
                 const s = (item.status || '').toLowerCase();
-                const nonDeletable = [
+                const nonModifiable = [
                   'menunggu_persetujuan',
                   'disetujui',
                   'diproses_ppbj',
@@ -213,7 +204,15 @@ export const PemohonPermohonanIndexTemplate: FC<
                   'barang_diterima',
                   'selesai',
                 ];
-                if (!nonDeletable.includes(s)) {
+                const canModifyOrDelete = !nonModifiable.includes(s);
+
+                if (canModifyOrDelete) {
+                  list.push({
+                    key: 'edit',
+                    label: item.status === 'ditolak' ? 'Revisi' : 'Ubah',
+                    icon: Pencil,
+                    onClick: (r) => onEdit(r),
+                  });
                   list.push({
                     key: 'delete',
                     label: 'Batalkan / Hapus',

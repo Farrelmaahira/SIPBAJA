@@ -97,22 +97,43 @@ class PermohonanService
     }
 
     /**
-     * Memperbarui data permohonan yang ditolak dan mengajukan ulang ke antrean verifikasi.
+     * Memperbarui data permohonan yang ditolak atau masih dalam status pengajuan awal (belum disetujui/diproses).
      * Menggunakan transaksi database agar update data, dokumen baru (jika ada), dan riwayat status bersifat atomik.
      */
     public function revisiPermohonan(User $user, Permohonan $permohonan, array $data, ?UploadedFile $file = null): Permohonan
     {
         $user->loadMissing('Role');
-        abort_unless($user->unit_id && $user->unit_id === $permohonan->unit_id, 403, 'Anda tidak memiliki hak akses untuk merevisi permohonan unit lain.');
-        abort_unless($permohonan->status === 'ditolak', 422, 'Hanya permohonan dengan status ditolak yang dapat diajukan ulang.');
+        abort_unless($user->unit_id && (int) $user->unit_id === (int) $permohonan->unit_id, 403, 'Anda tidak memiliki hak akses untuk merevisi permohonan unit lain.');
+
+        // Syarat: Belum diproses atau disetujui pada tahapan selanjutnya
+        $sudahDisetujuiLanjutan = $permohonan->Approvals()->where('keputusan', 'disetujui')->exists();
+        $adaPengadaan = $permohonan->Pengadaan()->exists();
+        $statusTidakBoleh = in_array($permohonan->status, [
+            'menunggu_persetujuan',
+            'disetujui',
+            'diproses_ppbj',
+            'pengadaan',
+            'siap_spk',
+            'kontrak_terbit',
+            'berjalan',
+            'barang_diterima',
+            'selesai',
+        ], true);
+
+        if ($sudahDisetujuiLanjutan || $adaPengadaan || $statusTidakBoleh) {
+            abort(422, 'Permohonan tidak dapat diubah karena sudah diproses atau disetujui pada tahapan selanjutnya.');
+        }
 
         return DB::transaction(function () use ($user, $permohonan, $data, $file) {
+            $statusLama = $permohonan->status;
             $permohonan->judul = trim($data['judul']);
             $permohonan->estimasi_anggaran = (float) $data['estimasi_anggaran'];
-            if (! empty($data['ringkasan_tujuan'])) {
-                $permohonan->ringkasan_tujuan = trim($data['ringkasan_tujuan']);
+            if (array_key_exists('ringkasan_tujuan', $data)) {
+                $permohonan->ringkasan_tujuan = ! empty($data['ringkasan_tujuan']) ? trim($data['ringkasan_tujuan']) : null;
             }
-            $permohonan->revisi_ke = ($permohonan->revisi_ke ?? 0) + 1;
+            if ($statusLama === 'ditolak') {
+                $permohonan->revisi_ke = ($permohonan->revisi_ke ?? 0) + 1;
+            }
             $permohonan->status = 'diajukan';
             $permohonan->save();
 

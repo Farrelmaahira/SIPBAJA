@@ -93,7 +93,7 @@ class PermohonanPemohonController extends Controller
     }
 
     /**
-     * Memperbarui permohonan yang ditolak dan mengajukan ulang melalui PermohonanService.
+     * Memperbarui permohonan yang belum diproses/disetujui atau ditolak dan mengajukan ulang melalui PermohonanService.
      */
     public function update(RevisiPermohonanRequest $request, Permohonan $permohonan): JsonResponse
     {
@@ -101,10 +101,15 @@ class PermohonanPemohonController extends Controller
         $validated = $request->validated();
         $file = $request->file('file_dokumen');
 
+        $statusLama = $permohonan->status;
         $updatedPermohonan = $this->permohonanService->revisiPermohonan($user, $permohonan, $validated, $file);
 
+        $message = $statusLama === 'ditolak'
+            ? 'Permohonan pengadaan berhasil diperbaiki dan diajukan ulang.'
+            : 'Permohonan pengadaan berhasil diperbarui.';
+
         return response()->json([
-            'message' => 'Permohonan pengadaan berhasil diperbaiki dan diajukan ulang.',
+            'message' => $message,
             'permohonan' => $updatedPermohonan,
         ], 200);
     }

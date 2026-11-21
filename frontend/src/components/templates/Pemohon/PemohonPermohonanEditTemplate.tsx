@@ -40,6 +40,7 @@ export interface PemohonPermohonanEditTemplateProps {
 export const PemohonPermohonanEditTemplate: FC<
   PemohonPermohonanEditTemplateProps
 > = ({
+  user = null,
   permohonan,
   formData,
   formErrors,
@@ -53,12 +54,14 @@ export const PemohonPermohonanEditTemplate: FC<
   onRetry,
   onViewCurrentDokumen,
 }) => {
+    const isDitolak = permohonan?.status === 'ditolak';
     const currentDokumen: PermohonanDokumenDetail | null = permohonan?.dokumen
       ? (permohonan.dokumen as unknown as PermohonanDokumenDetail)
       : null;
 
     return (
       <AppLayout
+        user={user}
         activeRoute="permohonan"
         navItems={PEMOHON_NAV_ITEMS}
         roleInitials="PM"
@@ -138,16 +141,20 @@ export const PemohonPermohonanEditTemplate: FC<
           <div className="space-y-6">
             {/* Hero Banner */}
             <HeroBanner
-              eyebrow="EDIT PERMOHONAN"
+              eyebrow={isDitolak ? 'REVISI PERMOHONAN' : 'UBAH PERMOHONAN'}
               title={
                 <div className="flex items-center gap-3 flex-wrap">
                   <span className="text-2xl md:text-3xl font-extrabold tracking-tight">
-                    Edit Permohonan Pengadaan
+                    {isDitolak ? 'Revisi Permohonan Pengadaan' : 'Ubah Permohonan Pengadaan'}
                   </span>
-                  <StatusPill status={permohonan.status || 'ditolak'} />
+                  <StatusPill status={permohonan.status || 'diajukan'} />
                 </div>
               }
-              description={`Nomor ${permohonan.nomor_surat ?? '-'} · Perbaiki data sesuai catatan revisi pemeriksa.`}
+              description={
+                isDitolak
+                  ? `Nomor ${permohonan.nomor_surat ?? '-'} · Perbaiki data sesuai catatan revisi pemeriksa.`
+                  : `Nomor ${permohonan.nomor_surat ?? '-'} · Ubah rincian permohonan pengadaan sebelum diproses.`
+              }
               ctaLabel="Kembali"
               ctaIcon={ArrowLeft}
               ctaVariant="translucent"
@@ -179,6 +186,7 @@ export const PemohonPermohonanEditTemplate: FC<
                   errors={formErrors}
                   processing={isSubmitting}
                   onSubmit={onSubmit}
+                  submitLabel={isDitolak ? 'Ajukan Ulang' : 'Simpan Perubahan'}
                 />
               </div>
 
