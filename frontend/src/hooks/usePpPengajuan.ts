@@ -28,7 +28,7 @@ export interface UsePpPengajuanResult {
   refetch: () => void;
 }
 
-export function usePpPengajuan(): UsePpPengajuanResult {
+export function usePpPengajuan(basePath = '/pp'): UsePpPengajuanResult {
   const [data, setData] = useState<PpPengajuanListResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -72,7 +72,7 @@ export function usePpPengajuan(): UsePpPengajuanResult {
     };
 
     ppService
-      .getPengajuanList(params, controller.signal)
+      .getPengajuanList(params, controller.signal, basePath)
       .then((res) => {
         setData(res);
       })

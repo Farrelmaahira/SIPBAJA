@@ -17,13 +17,14 @@ export const ppService = {
   },
 
   /**
-   * Mengambil daftar pengajuan pengadaan level Rp50-200 juta untuk PP.
+   * Mengambil daftar pengajuan pengadaan level Rp50-200 juta untuk PP (atau pengadaan PPK).
    */
   async getPengajuanList(
     params?: PpPengajuanFilterParams,
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    basePath = '/pp'
   ): Promise<PpPengajuanListResponse> {
-    const response = await api.get<PpPengajuanListResponse>('/v1/pp/pengajuan', {
+    const response = await api.get<PpPengajuanListResponse>(`/v1${basePath}/pengajuan`, {
       params,
       signal,
     });
