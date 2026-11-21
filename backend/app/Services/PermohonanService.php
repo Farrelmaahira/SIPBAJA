@@ -678,8 +678,14 @@ class PermohonanService
             'PermohonanMak.Mak.Ppk:id,nama',
         ]);
 
-        $maks = Mak::with('Ppk')->orderBy('id')->get();
         $selectedMakIds = $permohonan->PermohonanMak->pluck('mak_id')->toArray();
+        $maks = Mak::with('Ppk')
+            ->where(function ($q) use ($selectedMakIds) {
+                $q->where('isActive', true)
+                    ->when(! empty($selectedMakIds), fn ($sub) => $sub->orWhereIn('id', $selectedMakIds));
+            })
+            ->orderBy('id')
+            ->get();
         $approvalPerencanaan = $permohonan->Approvals()
             ->where('tahap', 'PERENCANAAN')
             ->latest('id')

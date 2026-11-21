@@ -16,6 +16,7 @@ export interface PerencanaanMakItem {
   kode?: string | null;
   ppk_user_id?: number | null;
   permohonan_mak_count?: number;
+  isActive?: boolean;
   Ppk?: PpkOption | null;
   ppk?: PpkOption | null;
   ppk_user?: PpkOption | null;

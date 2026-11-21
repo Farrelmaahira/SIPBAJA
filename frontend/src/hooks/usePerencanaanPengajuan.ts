@@ -161,7 +161,11 @@ export function usePerencanaanPengajuan({
         ? 'pengadaan'
         : 'diteruskan';
 
-  const maksList = detail?.maks || [];
+  const maksList = useMemo(() => {
+    return (detail?.maks || []).filter(
+      (m) => (m.isActive ?? true) || selectedMakIds.includes(m.id)
+    );
+  }, [detail?.maks, selectedMakIds]);
 
   const handleAddMakDropdown = useCallback(() => {
     if (maksList.length === 0) return;
