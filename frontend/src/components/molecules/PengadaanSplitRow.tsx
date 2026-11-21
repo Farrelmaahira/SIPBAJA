@@ -15,10 +15,8 @@ import {
 
 export interface PengadaanItem {
   permohonan_mak_id?: string | number;
-  isLevelOverridden?: boolean;
   level_id?: string | number;
   dokumen?: File | null;
-  nominal?: string | number;
   jenis_id?: string | number;
   metode_id?: string | number;
   pp_id?: string | number;
@@ -114,23 +112,7 @@ export const PengadaanSplitRow: FC<PengadaanSplitRowProps> = ({
   );
 
   const handleLevelChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    const val = e.target.value;
-    const matched = (referenceData.level || []).find((l) => String(l.id) === String(val));
-    let nom = item.nominal;
-    if (!nom || Number(nom) === 0) {
-      if (matched?.min_nominal && Number(matched.min_nominal) > 0) {
-        nom = matched.min_nominal;
-      } else if (matched?.max_nominal) {
-        nom = matched.max_nominal;
-      } else {
-        nom = 50000000;
-      }
-    }
-    onChange(index, {
-      level_id: val,
-      isLevelOverridden: true,
-      nominal: nom,
-    });
+    onChange(index, 'level_id', e.target.value);
   };
 
   const handleFileSelect = (file: File | null) => {

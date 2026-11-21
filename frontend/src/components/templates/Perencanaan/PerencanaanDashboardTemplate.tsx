@@ -6,12 +6,12 @@ import HeroBanner from '../../organisms/HeroBanner';
 import StatCard from '../../molecules/StatCard';
 import StatistikChart from '../../organisms/StatistikChart';
 import PerencanaanPermohonanTerbaruTable from '../../organisms/PerencanaanPermohonanTerbaruTable';
-import { PERENCANAAN_NAV_ITEMS } from '../../../pages/Perencanaan/Dashboard';
 import type {
   PerencanaanDashboardStats,
   PermohonanTerbaruItem,
 } from '../../../types/perencanaan';
 import type { NotificationItem } from '../../../types/notification';
+import { PERENCANAAN_NAV_ITEMS } from '@/constants/perencanaanNav';
 
 export interface PerencanaanDashboardTemplateProps {
   stats?: PerencanaanDashboardStats;
@@ -58,7 +58,7 @@ export const PerencanaanDashboardTemplate: FC<PerencanaanDashboardTemplateProps>
           description="Pantau permohonan pengadaan yang masuk, serta kelola Jenis MAK dan Dokumen RKAKL."
           ctaLabel="Lihat Permohonan"
           ctaIcon={FileText}
-          onCta={() => navigate('/perencanaan/pengajuan')}
+          onCta={() => navigate('/perencanaan/permohonan')}
         />
 
         {/* 4 Stat Cards */}

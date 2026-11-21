@@ -58,7 +58,6 @@ export const PpbjDashboardTemplate: FC<PpbjDashboardTemplateProps> = ({
       user={user}
       breadcrumb={[
         { label: 'DASHBOARD', href: '/ppbj/dashboard' },
-        { label: 'RINGKASAN' },
       ]}
     >
       <div className="space-y-6">

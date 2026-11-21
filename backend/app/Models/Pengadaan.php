@@ -20,7 +20,6 @@ class Pengadaan extends Model
         'metode_id',
         'level_id',
         'ppk_id',
-        'nominal',
         'revisi_ke',
         'status',
     ];
@@ -28,7 +27,6 @@ class Pengadaan extends Model
     protected function casts(): array
     {
         return [
-            'nominal' => 'decimal:2',
             'revisi_ke' => 'integer',
         ];
     }

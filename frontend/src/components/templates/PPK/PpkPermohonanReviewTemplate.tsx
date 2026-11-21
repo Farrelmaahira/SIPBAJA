@@ -1,26 +1,20 @@
 import { useRef, type FC, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
 import {
-  ArrowLeft,
   FileText,
-  Calendar,
-  Tag,
-  Building2,
-  Banknote,
   XCircle,
   CheckCircle2,
   Info,
-  Hash,
   Upload,
   X,
   AlertTriangle,
 } from 'lucide-react';
 import AppLayout, { type AppNavItem as PpNavItem } from '../General/AppLayout';
 import { DokumenListCard } from '../../organisms/DokumenListCard';
-import { formatRupiah, formatTanggal } from '../../../utils/formatters';
+import { PermohonanInfoSection } from '../../organisms/PermohonanInfoSection';
 import type { NotificationItem } from '../../../types/notification';
 import type { DokumenItem } from '../../../types/dokumen';
 import type { PpkPermohonanViewModel } from '../../../utils/ppkPermohonan';
+import HeroBanner from '@/components/organisms/HeroBanner';
 
 export interface PpkPermohonanReviewTemplateProps {
   navItems: PpNavItem[];
@@ -107,38 +101,11 @@ export const PpkPermohonanReviewTemplate: FC<PpkPermohonanReviewTemplateProps> =
       ]}
     >
       <div className="space-y-6">
-        {/* Hero Top Banner */}
-        <div className="relative overflow-hidden rounded-[24px] bg-gradient-to-br from-[#0A5C42] to-[#17A373] p-6 sm:px-9 sm:py-8 text-white shadow-[0_10px_24px_rgba(13,51,38,0.14)]">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
-            <div>
-              <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-white/75 block mb-2">
-                PERSETUJUAN AWAL PERMOHONAN
-              </span>
-              <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-2xl sm:text-[28px] font-extrabold tracking-tight leading-9">
-                  Review Permohonan
-                </h1>
-                {viewModel?.canDecide && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/16 text-white">
-                    Menunggu Persetujuan PPK
-                  </span>
-                )}
-              </div>
-              <p className="text-sm text-white/85 mt-2">
-                Nomor {viewModel?.nomorSurat ?? '-'} · Diajukan{' '}
-                {formatTanggal(viewModel?.tanggal)}
-              </p>
-            </div>
-
-            <Link
-              to="/ppk/permohonan"
-              className="inline-flex items-center gap-2 px-5 py-3.5 rounded-[14px] bg-white/16 hover:bg-white/25 border border-white/35 text-white text-sm font-semibold transition-colors shrink-0 self-start sm:self-auto"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Kembali</span>
-            </Link>
-          </div>
-        </div>
+        <HeroBanner
+          eyebrow="REVIEW PERMOHONAN"
+          title={viewModel ? `Permohonan ${viewModel.nomorSurat}` : 'Review Permohonan PPK'}
+          description="Tinjau informasi dan dokumen permohonan sebelum memberikan keputusan."
+        />
 
         {isLoading ? (
           <div className="bg-white rounded-[20px] p-12 border border-[#E3EAE6] text-center">
@@ -155,97 +122,16 @@ export const PpkPermohonanReviewTemplate: FC<PpkPermohonanReviewTemplateProps> =
           </div>
         ) : (
           <>
-            {/* Informasi Permohonan */}
-            <div className="bg-white rounded-[20px] p-6 sm:p-8 border border-[#E3EAE6] shadow-[0_8px_12px_rgba(13,26,20,0.06)]">
-              <div className="mb-6 pb-4 border-b border-[#E3EAE6]">
-                <h3 className="text-lg font-bold text-[#0E1B16]">Informasi Permohonan</h3>
-                <p className="text-xs text-[#6B7A73] mt-0.5">
-                  Ringkasan permohonan yang terikat dengan Jenis MAK Anda
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 text-sm">
-                <div className="flex items-center gap-3.5 pb-4 border-b border-[#E3EAE6]">
-                  <div className="w-10 h-10 rounded-xl bg-[#EBF7F1] text-[#0F6A49] flex items-center justify-center shrink-0">
-                    <Hash className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-[#6B7A73]">Nomor Permohonan</p>
-                    <p className="font-semibold text-sm text-[#0F6A49] mt-0.5">
-                      {viewModel.nomorSurat}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3.5 pb-4 border-b border-[#E3EAE6]">
-                  <div className="w-10 h-10 rounded-xl bg-[#EBF7F1] text-[#0F6A49] flex items-center justify-center shrink-0">
-                    <Calendar className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-[#6B7A73]">Tanggal Pengajuan</p>
-                    <p className="font-semibold text-sm text-[#0E1B16] mt-0.5">
-                      {formatTanggal(viewModel.tanggal)}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3.5 pb-4 border-b border-[#E3EAE6]">
-                  <div className="w-10 h-10 rounded-xl bg-[#EBF7F1] text-[#0F6A49] flex items-center justify-center shrink-0">
-                    <FileText className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-[#6B7A73]">Judul Permohonan</p>
-                    <p className="font-semibold text-sm text-[#0E1B16] mt-0.5">
-                      {viewModel.judul}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3.5 pb-4 border-b border-[#E3EAE6]">
-                  <div className="w-10 h-10 rounded-xl bg-[#EBF7F1] text-[#0F6A49] flex items-center justify-center shrink-0">
-                    <Building2 className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-[#6B7A73]">Unit Pemohon</p>
-                    <p className="font-semibold text-sm text-[#0E1B16] mt-0.5">
-                      {viewModel.unitNama}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-[#EBF7F1] text-[#0F6A49] flex items-center justify-center shrink-0">
-                    <Banknote className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-[#6B7A73]">Estimasi Anggaran</p>
-                    <p className="font-semibold text-sm text-[#0E1B16] mt-0.5">
-                      {formatRupiah(viewModel.estimasiAnggaran)}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-[#EBF7F1] text-[#0F6A49] flex items-center justify-center shrink-0">
-                    <Tag className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-[#6B7A73]">Jenis MAK Terikat PPK</p>
-                    <div className="font-semibold text-xs text-[#0E1B16] mt-0.5 space-y-0.5">
-                      {viewModel.makList.length > 0 ? (
-                        viewModel.makList.map((mak) => (
-                          <p key={mak.id}>
-                            {mak.kode} · {mak.nama}
-                          </p>
-                        ))
-                      ) : (
-                        <p className="text-[#8A9A95]">Belum ada MAK terikat</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <PermohonanInfoSection
+              permohonan={{
+                nomor_surat: viewModel.nomorSurat,
+                created_at: viewModel.tanggal,
+                judul: viewModel.judul,
+                unit_nama: viewModel.unitNama,
+                estimasi_anggaran: viewModel.estimasiAnggaran,
+                status: viewModel.status,
+              }}
+            />
 
             {/* Dokumen Permohonan + Keputusan PPK */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

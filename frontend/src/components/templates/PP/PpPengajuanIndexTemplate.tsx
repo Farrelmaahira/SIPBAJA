@@ -10,6 +10,7 @@ import FilterPengajuanModal from '../../organisms/FilterPengajuanModal';
 import { formatRupiah, formatTanggal } from '../../../utils/formatters';
 import type { PpPengadaanItem } from '../../../types/pp';
 import type { NotificationItem } from '../../../types/notification';
+import { PP_NAV_ITEMS } from '@/constants/ppNav';
 
 export interface PpPengajuanIndexTemplateProps {
   items: PpPengadaanItem[];
@@ -65,11 +66,7 @@ export const PpPengajuanIndexTemplate: FC<PpPengajuanIndexTemplateProps> = ({
       className: 'font-bold text-[#0E7C5A] whitespace-nowrap',
       render: (item) => {
         const permohonan = item.permohonan || item.Permohonan;
-        const isWaiting =
-          item.status === 'menunggu_persetujuan' || item.status === 'menunggu_review';
-        const targetHref = isWaiting
-          ? `/pp/pengajuan/${item.id}/review`
-          : `/pp/pengajuan/${item.id}`;
+        const targetHref = `/pp/pengadaan/${item.id}`;
 
         return (
           <Link to={targetHref} className="hover:underline">
@@ -147,17 +144,18 @@ export const PpPengajuanIndexTemplate: FC<PpPengajuanIndexTemplateProps> = ({
       notifikasiHref="/pp/notifikasi"
       notifications={recentNotifications}
       unreadCount={unreadNotificationsCount}
+      navItems={PP_NAV_ITEMS}
       breadcrumb={[
-        { label: 'PEJABAT PENGADAAN', href: '/pp/dashboard' },
-        { label: 'DAFTAR PENGAJUAN' },
+        { label: 'PP', href: '/pp/dashboard' },
+        { label: 'DAFTAR PENGADAAN' },
       ]}
       flash={errorMessage ? { error: errorMessage } : undefined}
     >
       <div className="space-y-6">
         <HeroBanner
-          eyebrow="DAFTAR PENGAJUAN"
-          title="Daftar Pengajuan PP"
-          description="Pantau dan kelola pengajuan pengadaan bernilai Rp50 - 200 juta yang membutuhkan verifikasi Pejabat Pengadaan."
+          eyebrow="DAFTAR PENGADAAN"
+          title="Daftar Pengadaan PP"
+          description="Pantau dan kelola pengadaan bernilai Rp50 - 200 juta yang membutuhkan verifikasi Pejabat Pengadaan."
         />
 
         <CrudTable
@@ -172,10 +170,7 @@ export const PpPengajuanIndexTemplate: FC<PpPengajuanIndexTemplateProps> = ({
             {
               key: 'view',
               label: 'Detail / Review',
-              href: (row) =>
-                row.status === 'menunggu_persetujuan' || row.status === 'menunggu_review'
-                  ? `/pp/pengajuan/${row.id}/review`
-                  : `/pp/pengajuan/${row.id}`,
+              href: (row) => `/pp/pengadaan/${row.id}`,
             },
           ]}
         />

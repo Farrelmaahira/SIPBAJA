@@ -68,7 +68,7 @@ class DashboardBidang2Service
                     'nomor_permohonan' => $item->Permohonan?->nomor_surat ?? '-',
                     'judul' => $item->Permohonan?->judul ?? '-',
                     'unit_nama' => $item->Permohonan?->unit?->nama ?? '-',
-                    'nominal' => (float) $item->nominal,
+                    'nominal' => $item->Kontrak?->nominal_kontrak ? (float) $item->Kontrak->nominal_kontrak : null,
                     'status' => $item->status,
                     'created_at' => $item->created_at,
                 ];

@@ -2,7 +2,6 @@ import type { FC } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
-  Send,
   Lock,
   Info,
   CheckCircle2,
@@ -12,11 +11,11 @@ import AppLayout from '../General/AppLayout';
 import HeroBanner from '../../organisms/HeroBanner';
 import StatusPill from '../../atoms/StatusPill';
 import DokumenListCard from '../../organisms/DokumenListCard';
+import { PermohonanInfoSection } from '../../organisms/PermohonanInfoSection';
 import PermohonanShowMakList from '../../molecules/PermohonanShowMakList';
-import PermohonanShowPaketList from '../../molecules/PermohonanShowPaketList';
 import PengadaanSplitForm from '../../organisms/PengadaanSplitForm';
 import { PPBJ_NAV_ITEMS } from '../../../constants/ppbjNav';
-import { formatRupiah, formatTanggalIndo } from '../../../utils/formatters';
+import { formatTanggalIndo } from '../../../utils/formatters';
 import type { PpbjPermohonanDetail } from '../../../types/ppbj';
 import type { DokumenItem } from '../../../types/dokumen';
 import type { AppTopbarUser } from '../../organisms/AppTopbar';
@@ -50,8 +49,6 @@ export const PpbjPermohonanShowTemplate: FC<PpbjPermohonanShowTemplateProps> = (
   isLoading = false,
   flash = {},
   onSaveDraft,
-  onDeleteDraft,
-  onSubmitToReviewer,
   onViewDokumen,
   onDownloadDokumen,
   previewBlobUrl = null,
@@ -65,37 +62,6 @@ export const PpbjPermohonanShowTemplate: FC<PpbjPermohonanShowTemplateProps> = (
   const canSplit = Boolean(permohonan?.bisaDipecah);
   const isLocked = Boolean(permohonan?.sudahDikunci);
 
-  const draftPackages = (permohonan?.paketList || []).filter(
-    (p) => p.status === 'draft'
-  );
-  const hasDrafts = draftPackages.length > 0;
-
-  // Semua draft harus memiliki dokumen pengadaan sebelum tombol Kirim aktif
-  const allDraftsHaveDocs =
-    hasDrafts &&
-    draftPackages.every(
-      (p) => Array.isArray(p.dokumenList) && p.dokumenList.length > 0
-    );
-
-  const handleSubmitToReviewer = () => {
-    if (!allDraftsHaveDocs) {
-      alert(
-        'Seluruh paket pengadaan wajib memiliki berkas dokumen pengadaan sebelum dikirim ke reviewer.'
-      );
-      return;
-    }
-
-    if (
-      confirm(
-        'Apakah Anda yakin ingin mengirim seluruh paket pengadaan ke reviewer? Setelah dikirim, Anda tidak dapat lagi menambah atau mengubah paket pengadaan (paket akan dikunci).'
-      )
-    ) {
-      if (onSubmitToReviewer) {
-        onSubmitToReviewer();
-      }
-    }
-  };
-
   return (
     <AppLayout
       activeRoute="permohonan"
@@ -105,7 +71,7 @@ export const PpbjPermohonanShowTemplate: FC<PpbjPermohonanShowTemplateProps> = (
       roleSubtitle="Pengadaan Barang & Jasa"
       user={user}
       breadcrumb={[
-        { label: 'DASHBOARD', href: '/ppbj/dashboard' },
+        { label: 'PPBJ', href: '/ppbj/dashboard' },
         { label: 'DAFTAR PERMOHONAN', href: '/ppbj/permohonan' },
         { label: permohonan?.nomorSurat || 'DETAIL PERMOHONAN' },
       ]}
@@ -159,89 +125,17 @@ export const PpbjPermohonanShowTemplate: FC<PpbjPermohonanShowTemplateProps> = (
             />
 
             {/* Card 1: Informasi Permohonan */}
-            <section
-              className="bg-white rounded-[22px] border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.05)] p-6"
-              aria-labelledby="heading-info"
-            >
-              <div className="mb-5 pb-4 border-b border-[#F0F4F2]">
-                <h2 id="heading-info" className="text-base font-bold text-[#14201C]">
-                  Informasi Permohonan
-                </h2>
-                <p className="text-xs text-[#5F6F6A] mt-0.5">
-                  Ringkasan data yang diajukan
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-5 gap-x-8 text-xs">
-                <div>
-                  <span className="block text-[11px] font-bold text-[#5F6F6A] uppercase tracking-wider mb-1">
-                    Nomor Permohonan
-                  </span>
-                  <p className="text-sm font-bold text-[#14201C]">
-                    {permohonan.nomorSurat || '-'}
-                  </p>
-                </div>
-
-                <div>
-                  <span className="block text-[11px] font-bold text-[#5F6F6A] uppercase tracking-wider mb-1">
-                    Judul Permohonan
-                  </span>
-                  <p className="text-sm font-semibold text-[#14201C]">
-                    {permohonan.judul || '-'}
-                  </p>
-                </div>
-
-                <div>
-                  <span className="block text-[11px] font-bold text-[#5F6F6A] uppercase tracking-wider mb-1">
-                    Nominal/Estimasi
-                  </span>
-                  <p className="text-base font-extrabold text-[#0E7C5A] tabular-nums">
-                    {formatRupiah(permohonan.estimasiAnggaran)}
-                  </p>
-                </div>
-
-                <div>
-                  <span className="block text-[11px] font-bold text-[#5F6F6A] uppercase tracking-wider mb-1">
-                    Tanggal Pengajuan
-                  </span>
-                  <p className="text-sm text-[#14201C]">
-                    {formatTanggalIndo(permohonan.tanggalPengajuan, true)}
-                  </p>
-                </div>
-
-                <div>
-                  <span className="block text-[11px] font-bold text-[#5F6F6A] uppercase tracking-wider mb-1">
-                    Diajukan Oleh
-                  </span>
-                  <p className="text-sm font-medium text-[#14201C]">
-                    {permohonan.unitNama || '-'} {permohonan.pembuatNama ? `(${permohonan.pembuatNama})` : ''}
-                  </p>
-                </div>
-
-                <div>
-                  <span className="block text-[11px] font-bold text-[#5F6F6A] uppercase tracking-wider mb-1">
-                    Status
-                  </span>
-                  <div className="mt-1">
-                    <StatusPill
-                      status={permohonan.status}
-                      label={permohonan.status === 'disetujui' ? 'Review PPBJ' : undefined}
-                    />
-                  </div>
-                </div>
-
-                {permohonan.ringkasanTujuan && (
-                  <div className="md:col-span-2 pt-3 border-t border-[#F0F4F2]">
-                    <span className="block text-[11px] font-bold text-[#5F6F6A] uppercase tracking-wider mb-1">
-                      Ringkasan Tujuan
-                    </span>
-                    <p className="text-xs text-[#14201C] leading-relaxed whitespace-pre-line">
-                      {permohonan.ringkasanTujuan}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </section>
+            <PermohonanInfoSection
+              permohonan={{
+                nomor_surat: permohonan.nomorSurat,
+                created_at: permohonan.tanggalPengajuan,
+                judul: permohonan.judul,
+                unit_nama: permohonan.unitNama,
+                pembuat_nama: permohonan.pembuatNama,
+                estimasi_anggaran: permohonan.estimasiAnggaran,
+                status: permohonan.status,
+              }}
+            />
 
             {/* Card 2: Dokumen Proses Sebelumnya */}
             <div className="space-y-4">
@@ -320,8 +214,8 @@ export const PpbjPermohonanShowTemplate: FC<PpbjPermohonanShowTemplateProps> = (
                   <Info className="w-5 h-5 text-[#5F6F6A] shrink-0 mt-0.5" />
                   <div className="text-xs text-[#5F6F6A] leading-relaxed">
                     Permohonan belum dapat diproses dokumen pengadaannya karena belum memperoleh persetujuan lengkap dari{' '}
-                    <strong className="text-[#14201C]">Perencanaan</strong> dan{' '}
-                    <strong className="text-[#14201C]">Bidang 2</strong>.
+                    <strong className="text-[#14201C]">Bidang 2</strong> dan{' '}
+                    <strong className="text-[#14201C]">PPK</strong>.
                   </div>
                 </div>
               )}
@@ -348,49 +242,6 @@ export const PpbjPermohonanShowTemplate: FC<PpbjPermohonanShowTemplateProps> = (
                   onSubmit={onSaveDraft}
                 />
               )}
-            </section>
-
-            {/* Card 5: Daftar Paket Pengadaan */}
-            <section
-              className="bg-white rounded-[22px] border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.05)] p-6"
-              aria-labelledby="heading-paket"
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
-                <div className="flex items-center gap-2.5">
-                  <h2 id="heading-paket" className="text-base font-bold text-[#14201C]">
-                    Daftar Paket Pengadaan
-                  </h2>
-                  {permohonan.paketList && permohonan.paketList.length > 0 && (
-                    <span className="text-xs font-semibold text-[#5F6F6A] bg-[#F1F7F4] px-2.5 py-1 rounded-full">
-                      {permohonan.paketList.length} Paket
-                    </span>
-                  )}
-                </div>
-
-                {/* Tombol Kirim ke Reviewer (Hanya jika belum dikunci) */}
-                {!isLocked && hasDrafts && (
-                  <button
-                    type="button"
-                    onClick={handleSubmitToReviewer}
-                    disabled={!allDraftsHaveDocs}
-                    className="min-h-[44px] px-5 py-2.5 rounded-xl bg-[#0E7C5A] hover:bg-[#0B664A] text-white text-sm font-semibold inline-flex items-center justify-center gap-2 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                    title={
-                      allDraftsHaveDocs
-                        ? 'Kirim seluruh paket ke reviewer'
-                        : 'Lengkapi dokumen pada seluruh paket draft terlebih dahulu'
-                    }
-                  >
-                    <Send className="w-4 h-4" />
-                    <span>Kirim ke Reviewer</span>
-                  </button>
-                )}
-              </div>
-
-              <PermohonanShowPaketList
-                paketList={permohonan.paketList || []}
-                sudahDikunci={isLocked}
-                onDelete={onDeleteDraft}
-              />
             </section>
           </>
         )}

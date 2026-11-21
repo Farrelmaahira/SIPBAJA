@@ -81,12 +81,13 @@ class PengajuanBidang2DetailTest extends TestCase
 
         $mak = Mak::first();
         if ($mak) {
-            $mak->update(['nama' => '532111']);
+            $mak->update(['kode' => '532111']);
         } else {
-            $ppk = User::where('email', 'ppk@pnj.ac.id')->first();
+            $ppk = User::where('email', 'ppk.blufisik@pnj.ac.id')->firstOrFail();
             $mak = Mak::create([
-                'nama' => '532111',
-                'ppk_user_id' => $ppk?->id,
+                'kode' => '532111',
+                'nama' => 'BLU Fisik',
+                'ppk_user_id' => $ppk->id,
             ]);
         }
 
@@ -105,7 +106,7 @@ class PengajuanBidang2DetailTest extends TestCase
             'actor_id' => $perencanaan->id,
         ]);
 
-        $ppkUser = User::where('email', 'ppk@pnj.ac.id')->first();
+        $ppkUser = User::where('email', 'ppk.blufisik@pnj.ac.id')->first();
         if ($ppkUser) {
             ApprovalPermohonan::create([
                 'permohonan_id' => $permohonan->id,

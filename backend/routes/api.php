@@ -23,6 +23,7 @@ use App\Http\Controllers\Perlengkapan\DashboardPerlengkapanController;
 use App\Http\Controllers\Pp\DashboardPpController;
 use App\Http\Controllers\Pp\PpController;
 use App\Http\Controllers\PPBJ\DashboardPpbjController;
+use App\Http\Controllers\PPBJ\PengadaanController;
 use App\Http\Controllers\PPBJ\PermohonanController as PpbjPermohonanController;
 use App\Http\Controllers\Ppk\DashboardPpkController;
 use App\Http\Controllers\Ppk\PermohonanPpkController;
@@ -67,6 +68,8 @@ Route::prefix('v1')->group(function () {
         Route::prefix('admin')->middleware('role:Admin')->group(function () {
             Route::get('dashboard', DashboardAdminController::class)->name('api.admin.dashboard');
             Route::apiResource('pengguna', PenggunaController::class)->names('api.admin.pengguna');
+            Route::post('pengguna/{pengguna}/deactivate', [PenggunaController::class, 'deactivate'])->name('api.admin.pengguna.deactivate');
+            Route::post('pengguna/{pengguna}/activate', [PenggunaController::class, 'activate'])->name('api.admin.pengguna.activate');
             Route::apiResource('unit-kerja', UnitKerjaController::class)->parameters(['unit-kerja' => 'unit'])->names('api.admin.unit-kerja');
             Route::apiResource('mak', MakController::class)->names('api.admin.mak');
             Route::apiResource('role', RoleController::class)->names('api.admin.role');
@@ -137,6 +140,10 @@ Route::prefix('v1')->group(function () {
         Route::prefix('ppbj')->middleware('role:PPBJ')->group(function () {
             Route::get('dashboard', DashboardPpbjController::class)->name('api.ppbj.dashboard');
             Route::apiResource('permohonan', PpbjPermohonanController::class)->names('api.ppbj.permohonan');
+            Route::apiResource('pengadaan', PengadaanController::class)->except(['destroy'])->names('api.ppbj.pengadaan');
+            Route::post('pengadaan/{id}/kontrak', [PengadaanController::class, 'storeKontrak'])->name('api.ppbj.pengadaan.kontrak.store');
+            Route::put('pengadaan/{id}/kontrak', [PengadaanController::class, 'updateKontrak'])->name('api.ppbj.pengadaan.kontrak.update');
+            Route::get('pengadaan/{pengadaanId}/dokumen/{dokumenId}', [PengadaanController::class, 'downloadDokumen'])->name('api.ppbj.pengadaan.dokumen.download');
             Route::get('permohonan/{permohonan}/dokumen', [PpbjPermohonanController::class, 'downloadDokumen'])->name('api.ppbj.permohonan.dokumen.download');
             Route::post('permohonan/{id}/pengadaan/draft', [PpbjPermohonanController::class, 'storeDraft'])->name('api.ppbj.permohonan.pengadaan.draft');
             Route::delete('pengadaan/{id}', [PpbjPermohonanController::class, 'destroyDraft'])->name('api.ppbj.pengadaan.destroy');
@@ -148,6 +155,7 @@ Route::prefix('v1')->group(function () {
             Route::get('dashboard', DashboardPpController::class)->name('api.pp.dashboard');
             Route::get('pengajuan', [PpController::class, 'index'])->name('api.pp.pengajuan.index');
             Route::get('pengajuan/{pengadaan}/review', [PpController::class, 'review'])->name('api.pp.pengajuan.review');
+            Route::get('pengajuan/{pengadaan}/dokumen/{dokumen}', [PpController::class, 'downloadDokumen'])->name('api.pp.pengajuan.dokumen.download');
             Route::post('pengajuan/{pengadaan}/approve', [PpController::class, 'approve'])->name('api.pp.pengajuan.approve');
             Route::post('pengajuan/{pengadaan}/reject', [PpController::class, 'reject'])->name('api.pp.pengajuan.reject');
             Route::get('pengajuan/{pengadaan}', [PpController::class, 'show'])->name('api.pp.pengajuan.show');

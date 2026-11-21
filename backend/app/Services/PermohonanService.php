@@ -220,18 +220,45 @@ class PermohonanService
         abort_unless($isReviewer || ($user->unit_id && $user->unit_id === $permohonan->unit_id), 403, 'Akses tidak diizinkan untuk unit lain.');
 
         if ($dokumenId) {
-            $dokumen = $permohonan->Dokumen()->where('id', $dokumenId)->firstOrFail();
+            $dokumen = $permohonan->Dokumen()->where('id', $dokumenId)->first()
+                ?? Dokumen::where('ref_type', 'approval_permohonan')
+                    ->where('ref_id', $permohonan->id)
+                    ->where('id', $dokumenId)
+                    ->firstOrFail();
         } else {
             $dokumen = $permohonan->Dokumen()->where('tipe_dokumen', 'surat_permohonan')->latest('versi')->firstOrFail();
         }
-        $path = 'dokumen/permohonan/'.$dokumen->nama_hash;
 
-        abort_unless(Storage::disk('local')->exists($path), 404, 'Berkas dokumen tidak ditemukan di server.');
+        $path = $dokumen->ref_type === 'approval_permohonan'
+            ? $this->memoPath($dokumen)
+            : 'dokumen/permohonan/'.$dokumen->nama_hash;
+
+        abort_unless($path && Storage::disk('local')->exists($path), 404, 'Berkas dokumen tidak ditemukan di server.');
 
         return [
             'path' => $path,
             'nama_asli' => $dokumen->nama_asli,
         ];
+    }
+
+    /**
+     * Menentukan lokasi penyimpanan berkas memo persetujuan permohonan.
+     */
+    private function memoPath(Dokumen $dokumen): ?string
+    {
+        $candidates = [
+            'dokumen/memo/'.$dokumen->nama_hash,
+            'dokumen/permohonan/memo/'.$dokumen->nama_hash,
+            'dokumen/permohonan/'.$dokumen->nama_hash,
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (Storage::disk('local')->exists($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -509,7 +536,7 @@ class PermohonanService
             ->map(fn ($p) => [
                 'id' => (int) $p->id,
                 'makKode' => (string) ($p->PermohonanMak?->Mak?->nama ?? $p->PermohonanMak?->Mak?->kode ?? '-'),
-                'nominal' => (float) ($p->nominal ?? 0),
+                'nominal' => $p->Kontrak?->nominal_kontrak ? (float) $p->Kontrak->nominal_kontrak : null,
                 'status' => (string) ($p->status ?? '-'),
             ])
             ->values()
@@ -657,6 +684,10 @@ class PermohonanService
 
         $maks = Mak::with('Ppk')->orderBy('id')->get();
         $selectedMakIds = $permohonan->PermohonanMak->pluck('mak_id')->toArray();
+        $approvalPerencanaan = $permohonan->Approvals()
+            ->where('tahap', 'PERENCANAAN')
+            ->latest('id')
+            ->first();
 
         $dokumenPermohonan = Dokumen::where('ref_type', 'permohonan')->where('ref_id', $permohonan->id)
             ->orderBy('id')
@@ -699,6 +730,9 @@ class PermohonanService
             'permohonan' => $permohonan,
             'maks' => $maks,
             'selected_mak_ids' => $selectedMakIds,
+            'approval_perencanaan' => $approvalPerencanaan ? [
+                'alasan' => $approvalPerencanaan->alasan,
+            ] : null,
             'dokumen_permohonan' => $dokumenPermohonan,
             'dokumen' => $dokumenInfo,
             'rkakl_active' => $rkaklInfo,

@@ -11,7 +11,7 @@ export const BIDANG2_NAV_ITEMS = [
     key: 'pengajuan',
     label: 'List Permohonan',
     icon: ClipboardList,
-    href: '/bidang-2/pengajuan',
+    href: '/bidang-2/permohonan',
   },
   {
     key: 'pengadaan',

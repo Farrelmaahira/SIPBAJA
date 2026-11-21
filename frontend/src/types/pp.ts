@@ -167,10 +167,15 @@ export interface PpPengajuanListResponse {
   unreadNotificationsCount?: number;
 }
 
+export interface PpMemoPermohonanItem extends DokumenItem {
+  tahap?: string;
+}
+
 export interface PpPengadaanDetailPayload {
   pengadaan?: PpPengadaanItem;
   dokumen_permohonan?: DokumenItem[];
   dokumen_pengadaan?: DokumenItem[];
+  memo_permohonan?: PpMemoPermohonanItem[];
   mak_list?: PpMakItem[];
 }
 
