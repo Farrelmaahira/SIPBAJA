@@ -1,4 +1,5 @@
 import type { DokumenItem } from '../types/dokumen';
+import type { CatatanPerencanaanData } from '../types/bidang2';
 import type {
   PpkPermohonanDetailPayload,
   PpkPermohonanItem,
@@ -10,6 +11,8 @@ export interface PpkPermohonanMakView {
   id: number | string;
   kode: string;
   nama: string;
+  ppk_nama?: string | null;
+  [key: string]: unknown;
 }
 
 export interface PpkPermohonanViewModel {
@@ -23,6 +26,7 @@ export interface PpkPermohonanViewModel {
   dokumenList: DokumenItem[];
   canDecide: boolean;
   decisionBlockedReason: string | null;
+  catatanPerencanaan?: CatatanPerencanaanData | null;
 }
 
 export interface PpkDecisionState {
@@ -87,6 +91,44 @@ export function normalizePpkPermohonanDetail(
   const makItems = normalisasiMakList(detail);
   const decision = getPpkDecisionState(permohonan.status ?? '', makItems.length);
 
+  const makList: PpkPermohonanMakView[] =
+    detail.mak_list && detail.mak_list.length > 0
+      ? detail.mak_list.map((m) => ({
+          id: m.id,
+          kode: m.kode,
+          nama: m.nama,
+          ppk_nama: m.ppk_nama ?? null,
+        }))
+      : makItems.map((item) => {
+          const mak = item.Mak ?? item.mak;
+          const ppk = (mak as { Ppk?: { nama?: string } | null; ppk?: { nama?: string } | null } | null | undefined)?.Ppk
+            ?? (mak as { Ppk?: { nama?: string } | null; ppk?: { nama?: string } | null } | null | undefined)?.ppk;
+
+          return {
+            id: item.id,
+            kode: mak?.kode ?? String(mak?.id ?? item.mak_id),
+            nama: mak?.nama ?? 'Jenis MAK',
+            ppk_nama: ppk?.nama ?? null,
+          };
+        });
+
+  let catatanPerencanaan: CatatanPerencanaanData | null = detail.catatan_perencanaan ?? null;
+  if (!catatanPerencanaan && permohonan) {
+    const approvals = (permohonan.Approvals ?? permohonan.approvals ?? []) as Array<Record<string, any>>;
+    const appPerencanaan = approvals.find((a) => {
+      const t = String(a.tahap || '').toUpperCase();
+      return t === 'PERENCANAAN';
+    });
+    if (appPerencanaan) {
+      catatanPerencanaan = {
+        pemeriksa_nama: String(appPerencanaan.actor?.nama ?? appPerencanaan.actor?.name ?? 'Tim Perencanaan'),
+        pemeriksa_peran: 'Tim Perencanaan',
+        tanggal: appPerencanaan.created_at ? String(appPerencanaan.created_at) : null,
+        catatan: appPerencanaan.alasan ? String(appPerencanaan.alasan) : null,
+      };
+    }
+  }
+
   return {
     nomorSurat: permohonan.nomor_surat ?? '-',
     judul: permohonan.judul ?? '-',
@@ -94,18 +136,11 @@ export function normalizePpkPermohonanDetail(
     tanggal: permohonan.created_at ?? null,
     estimasiAnggaran: normalisasiNominal(permohonan.estimasi_anggaran),
     status: permohonan.status ?? '',
-    makList: makItems.map((item) => {
-      const mak = item.Mak ?? item.mak;
-
-      return {
-        id: item.id,
-        kode: mak?.kode ?? String(mak?.id ?? item.mak_id),
-        nama: mak?.nama ?? 'Jenis MAK',
-      };
-    }),
+    makList,
     dokumenList: detail.dokumen_permohonan ?? [],
     canDecide: decision.canDecide,
     decisionBlockedReason: decision.reason,
+    catatanPerencanaan,
   };
 }
 

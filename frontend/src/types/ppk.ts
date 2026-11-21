@@ -1,4 +1,5 @@
 import type { NotificationItem } from './notification';
+import type { CatatanPerencanaanData, Bidang2PermohonanMakItem } from './bidang2';
 import type {
   PpApprovalItem,
   PpDokumenItem,
@@ -83,6 +84,8 @@ export interface PpkPermohonanDetailPayload {
   permohonan: PpkPermohonanItem;
   dokumen_permohonan?: PpDokumenItem[];
   permohonan_mak_ppk?: PpkPermohonanMakItem[];
+  catatan_perencanaan?: CatatanPerencanaanData | null;
+  mak_list?: Bidang2PermohonanMakItem[];
 }
 
 export interface PpkDashboardResponse {

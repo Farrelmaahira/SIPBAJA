@@ -11,6 +11,7 @@ import {
 import AppLayout, { type AppNavItem as PpNavItem } from '../General/AppLayout';
 import { DokumenListCard } from '../../organisms/DokumenListCard';
 import { PermohonanInfoSection } from '../../organisms/PermohonanInfoSection';
+import CatatanPerencanaanCard from '../../organisms/Bidang2/CatatanPerencanaanCard';
 import type { NotificationItem } from '../../../types/notification';
 import type { DokumenItem } from '../../../types/dokumen';
 import type { PpkPermohonanViewModel } from '../../../utils/ppkPermohonan';
@@ -153,6 +154,11 @@ export const PpkPermohonanReviewTemplate: FC<PpkPermohonanReviewTemplateProps> =
               </div>
 
               <div className="lg:col-span-5 space-y-6">
+                <CatatanPerencanaanCard
+                  catatan={viewModel.catatanPerencanaan}
+                  makList={viewModel.makList}
+                />
+
                 <div className="bg-white rounded-[20px] p-6 sm:p-8 border border-[#E3EAE6] shadow-[0_8px_12px_rgba(13,26,20,0.06)]">
                   <div className="mb-5">
                     <h3 className="text-lg font-bold text-[#0E1B16]">

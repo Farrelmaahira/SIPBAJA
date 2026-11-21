@@ -875,7 +875,7 @@ class PermohonanService
         $permohonan->load([
             'Unit',
             'Creator',
-            'PermohonanMak.Mak',
+            'PermohonanMak.Mak.Ppk',
             'Approvals.Actor',
             'Approvals.Memo',
             'Dokumen',
@@ -888,9 +888,37 @@ class PermohonanService
                 $doc->setAttribute('download_url', "/api/v1/ppk/permohonan/{$permohonan->id}/dokumen?dokumen_id={$doc->id}");
             });
 
+        // Ambil catatan masukan dari Tim Perencanaan
+        $approvalPerencanaan = $permohonan->Approvals
+            ->filter(fn ($a) => in_array(strtoupper((string) $a->tahap), ['PERENCANAAN', 'PERENCANAAN']))
+            ->sortByDesc('id')
+            ->first();
+
+        $catatanPerencanaan = [
+            'pemeriksa_nama' => $approvalPerencanaan?->Actor?->nama ?? $approvalPerencanaan?->Actor?->name ?? null,
+            'pemeriksa_peran' => $approvalPerencanaan ? 'Tim Perencanaan' : null,
+            'tanggal' => $approvalPerencanaan?->created_at
+                ? Carbon::parse($approvalPerencanaan->created_at)->translatedFormat('d F Y, H:i')
+                : null,
+            'catatan' => $approvalPerencanaan?->alasan ?? null,
+        ];
+
+        $makList = $permohonan->PermohonanMak
+            ->filter(fn ($pm) => $pm->Mak !== null)
+            ->map(fn ($pm) => [
+                'id' => $pm->Mak->id,
+                'kode' => (string) ($pm->Mak->kode ?? $pm->Mak->nama),
+                'nama' => (string) $pm->Mak->nama,
+                'ppk_nama' => $pm->Mak->Ppk?->nama,
+            ])
+            ->values()
+            ->all();
+
         return [
             'permohonan' => $permohonan,
             'dokumen_permohonan' => $dokumenPermohonan,
+            'catatan_perencanaan' => $catatanPerencanaan,
+            'mak_list' => $makList,
             'permohonan_mak_ppk' => $permohonan->PermohonanMak
                 ->filter(fn ($pm) => (int) ($pm->Mak?->ppk_user_id ?? 0) === (int) $ppk->id)
                 ->values(),
