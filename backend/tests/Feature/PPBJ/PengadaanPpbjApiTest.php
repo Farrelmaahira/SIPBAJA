@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\PPBJ;
 
+use App\Models\Dokumen;
 use App\Models\JenisPengadaan;
 use App\Models\LevelPengadaan;
 use App\Models\MetodePengadaan;
@@ -231,5 +232,49 @@ class PengadaanPpbjApiTest extends TestCase
         ]);
 
         $response->assertStatus(422);
+    }
+
+    public function test_ppbj_dapat_mengunduh_atau_melihat_dokumen_pengadaan_dan_permohonan(): void
+    {
+        Storage::fake('local');
+        $pengadaan = Pengadaan::firstOrFail();
+
+        // Dokumen permohonan
+        $dokumenPermohonan = Dokumen::create([
+            'ref_type' => 'permohonan',
+            'ref_id' => $pengadaan->permohonan_id,
+            'tipe_dokumen' => 'surat_permohonan',
+            'versi' => 1,
+            'nama_asli' => 'surat_permohonan.pdf',
+            'nama_hash' => 'hash_permohonan.pdf',
+            'mime_type' => 'application/pdf',
+            'ukuran_bytes' => 1024,
+            'uploaded_by' => $this->ppbjUser->id,
+        ]);
+        Storage::disk('local')->put('dokumen/permohonan/hash_permohonan.pdf', 'dummy content permohonan');
+
+        $responsePermohonan = $this->actingAs($this->ppbjUser)
+            ->get("/api/v1/ppbj/pengadaan/{$pengadaan->id}/dokumen/{$dokumenPermohonan->id}?disposition=inline");
+
+        $responsePermohonan->assertOk();
+
+        // Dokumen pengadaan
+        $dokumenPengadaan = Dokumen::create([
+            'ref_type' => 'pengadaan',
+            'ref_id' => $pengadaan->id,
+            'tipe_dokumen' => 'dokumen_pengadaan',
+            'versi' => 1,
+            'nama_asli' => 'dokumen_pengadaan.pdf',
+            'nama_hash' => 'hash_pengadaan.pdf',
+            'mime_type' => 'application/pdf',
+            'ukuran_bytes' => 2048,
+            'uploaded_by' => $this->ppbjUser->id,
+        ]);
+        Storage::disk('local')->put('dokumen/pengadaan/hash_pengadaan.pdf', 'dummy content pengadaan');
+
+        $responsePengadaan = $this->actingAs($this->ppbjUser)
+            ->get("/api/v1/ppbj/pengadaan/{$pengadaan->id}/dokumen/{$dokumenPengadaan->id}?disposition=inline");
+
+        $responsePengadaan->assertOk();
     }
 }
