@@ -46,6 +46,8 @@ export interface AdminUnitItem {
   nama: string;
   kode?: string;
   users_count?: number;
+  isActive?: boolean;
+  status?: 'aktif' | 'nonaktif' | string;
   created_at?: string;
   updated_at?: string;
   [key: string]: unknown;
@@ -61,7 +63,9 @@ export interface AdminMakItem {
     nama: string;
     email: string;
   } | null;
+  isActive?: boolean;
   status?: string;
+  [key: string]: unknown;
 }
 
 export interface AdminRoleItem {
@@ -69,6 +73,9 @@ export interface AdminRoleItem {
   nama: string;
   deskripsi?: string;
   permissions_count?: number;
+  isActive?: boolean;
+  status?: 'aktif' | 'nonaktif' | string;
+  [key: string]: unknown;
 }
 
 export interface AdminPermissionItem {
@@ -145,6 +152,8 @@ export interface MakRowItem {
     email?: string;
   };
   permohonan_mak_count?: number;
+  isActive?: boolean;
+  status?: string;
   [key: string]: unknown;
 }
 
@@ -159,6 +168,8 @@ export interface UnitKerjaItem {
   id?: number | string;
   nama: string;
   users_count?: number;
+  isActive?: boolean;
+  status?: 'aktif' | 'nonaktif' | string;
   [key: string]: unknown;
 }
 
@@ -179,5 +190,33 @@ export interface RoleRowItem {
   nama: string;
   permissions_count?: number;
   users_count?: number;
+  isActive?: boolean;
+  status?: 'aktif' | 'nonaktif' | string;
   [key: string]: unknown;
+}
+
+export interface AdminMetodePengadaanItem {
+  id: number;
+  nama: string;
+  isActive: boolean;
+  pengadaan_count?: number;
+  [key: string]: unknown;
+}
+
+export interface AdminMetodePengadaanResponse {
+  metode_pengadaan: PaginatedResponse<AdminMetodePengadaanItem>;
+  filters: { q: string };
+}
+
+export interface MetodePengadaanFormData {
+  nama: string;
+  isActive?: boolean;
+  [key: string]: unknown;
+}
+
+export interface MetodePengadaanFormState {
+  data: MetodePengadaanFormData;
+  setData: (key: any, value?: any) => void;
+  errors: Record<string, string | undefined>;
+  processing: boolean;
 }

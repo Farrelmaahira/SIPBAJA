@@ -59,6 +59,33 @@ class MakService
         return true;
     }
 
+    public function deactivate(Mak $mak): Mak
+    {
+        return DB::transaction(function () use ($mak) {
+            $mak->update(['isActive' => false]);
+
+            return $mak->fresh();
+        });
+    }
+
+    public function activate(Mak $mak): Mak
+    {
+        return DB::transaction(function () use ($mak) {
+            $mak->update(['isActive' => true]);
+
+            return $mak->fresh();
+        });
+    }
+
+    public function toggleStatus(Mak $mak): Mak
+    {
+        return DB::transaction(function () use ($mak) {
+            $mak->update(['isActive' => ! ($mak->isActive ?? true)]);
+
+            return $mak->fresh();
+        });
+    }
+
     public function count(): int
     {
         return Mak::count();

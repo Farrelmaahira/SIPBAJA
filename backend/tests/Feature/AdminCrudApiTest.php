@@ -234,4 +234,99 @@ class AdminCrudApiTest extends TestCase
         $this->assertArrayHasKey('groupedPermissions', $matrix);
         $this->assertArrayHasKey('assignments', $matrix);
     }
+
+    public function test_admin_can_manage_metode_pengadaan_without_delete(): void
+    {
+        $listRes = $this->actingAs($this->admin(), 'sanctum')->getJson('/api/v1/admin/metode-pengadaan');
+        $listRes->assertStatus(200)->assertJsonStructure([
+            'metode_pengadaan' => ['data', 'total', 'current_page'],
+            'filters',
+        ]);
+
+        $createRes = $this->actingAs($this->admin(), 'sanctum')->postJson('/api/v1/admin/metode-pengadaan', [
+            'nama' => 'Metode Uji Coba Baru',
+        ]);
+        $createRes->assertStatus(201)
+            ->assertJsonPath('metode_pengadaan.nama', 'Metode Uji Coba Baru')
+            ->assertJsonPath('metode_pengadaan.isActive', true);
+
+        $metodeId = $createRes->json('metode_pengadaan.id');
+
+        $updateRes = $this->actingAs($this->admin(), 'sanctum')->putJson("/api/v1/admin/metode-pengadaan/{$metodeId}", [
+            'nama' => 'Metode Uji Coba Diperbarui',
+        ]);
+        $updateRes->assertStatus(200)
+            ->assertJsonPath('metode_pengadaan.nama', 'Metode Uji Coba Diperbarui');
+
+        $deactivateRes = $this->actingAs($this->admin(), 'sanctum')->postJson("/api/v1/admin/metode-pengadaan/{$metodeId}/deactivate");
+        $deactivateRes->assertStatus(200)
+            ->assertJsonPath('metode_pengadaan.isActive', false);
+
+        $activateRes = $this->actingAs($this->admin(), 'sanctum')->postJson("/api/v1/admin/metode-pengadaan/{$metodeId}/activate");
+        $activateRes->assertStatus(200)
+            ->assertJsonPath('metode_pengadaan.isActive', true);
+
+        $toggleRes = $this->actingAs($this->admin(), 'sanctum')->postJson("/api/v1/admin/metode-pengadaan/{$metodeId}/toggle-status");
+        $toggleRes->assertStatus(200)
+            ->assertJsonPath('metode_pengadaan.isActive', false);
+
+        $deleteRes = $this->actingAs($this->admin(), 'sanctum')->deleteJson("/api/v1/admin/metode-pengadaan/{$metodeId}");
+        $deleteRes->assertStatus(405);
+    }
+
+    public function test_admin_can_toggle_unit_kerja_status(): void
+    {
+        $createRes = $this->actingAs($this->admin(), 'sanctum')->postJson('/api/v1/admin/unit-kerja', [
+            'nama' => 'Unit Uji Coba',
+        ]);
+        $createRes->assertStatus(201);
+        $unitId = $createRes->json('unit.id');
+
+        $deactivateRes = $this->actingAs($this->admin(), 'sanctum')->postJson("/api/v1/admin/unit-kerja/{$unitId}/deactivate");
+        $deactivateRes->assertStatus(200)->assertJsonPath('unit.isActive', false);
+
+        $activateRes = $this->actingAs($this->admin(), 'sanctum')->postJson("/api/v1/admin/unit-kerja/{$unitId}/activate");
+        $activateRes->assertStatus(200)->assertJsonPath('unit.isActive', true);
+
+        $toggleRes = $this->actingAs($this->admin(), 'sanctum')->postJson("/api/v1/admin/unit-kerja/{$unitId}/toggle-status");
+        $toggleRes->assertStatus(200)->assertJsonPath('unit.isActive', false);
+    }
+
+    public function test_admin_can_toggle_mak_status(): void
+    {
+        $ppk = User::where('email', 'ppk.blufisik@pnj.ac.id')->firstOrFail();
+        $mak = Mak::create([
+            'kode' => 'MAK-TOGGLE-TEST',
+            'nama' => 'MAK Toggle Test',
+            'ppk_user_id' => $ppk->id,
+            'isActive' => true,
+        ]);
+
+        $deactivateRes = $this->actingAs($this->admin(), 'sanctum')->postJson("/api/v1/admin/mak/{$mak->id}/deactivate");
+        $deactivateRes->assertStatus(200)->assertJsonPath('mak.isActive', false);
+
+        $activateRes = $this->actingAs($this->admin(), 'sanctum')->postJson("/api/v1/admin/mak/{$mak->id}/activate");
+        $activateRes->assertStatus(200)->assertJsonPath('mak.isActive', true);
+
+        $toggleRes = $this->actingAs($this->admin(), 'sanctum')->postJson("/api/v1/admin/mak/{$mak->id}/toggle-status");
+        $toggleRes->assertStatus(200)->assertJsonPath('mak.isActive', false);
+    }
+
+    public function test_admin_can_toggle_role_status(): void
+    {
+        $createRes = $this->actingAs($this->admin(), 'sanctum')->postJson('/api/v1/admin/role', [
+            'nama' => 'Peran Uji Coba',
+        ]);
+        $createRes->assertStatus(201);
+        $roleId = $createRes->json('role.id');
+
+        $deactivateRes = $this->actingAs($this->admin(), 'sanctum')->postJson("/api/v1/admin/role/{$roleId}/deactivate");
+        $deactivateRes->assertStatus(200)->assertJsonPath('role.isActive', false);
+
+        $activateRes = $this->actingAs($this->admin(), 'sanctum')->postJson("/api/v1/admin/role/{$roleId}/activate");
+        $activateRes->assertStatus(200)->assertJsonPath('role.isActive', true);
+
+        $toggleRes = $this->actingAs($this->admin(), 'sanctum')->postJson("/api/v1/admin/role/{$roleId}/toggle-status");
+        $toggleRes->assertStatus(200)->assertJsonPath('role.isActive', false);
+    }
 }

@@ -15,7 +15,14 @@ class Role extends Model
 
     public $timestamps = true;
 
-    protected $fillable = ['nama'];
+    protected $fillable = ['nama', 'isActive'];
+
+    protected function casts(): array
+    {
+        return [
+            'isActive' => 'boolean',
+        ];
+    }
 
     public function Users(): HasMany
     {

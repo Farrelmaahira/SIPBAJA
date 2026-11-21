@@ -36,6 +36,33 @@ class RoleService
         });
     }
 
+    public function deactivate(Role $role): Role
+    {
+        return DB::transaction(function () use ($role) {
+            $role->update(['isActive' => false]);
+
+            return $role->fresh();
+        });
+    }
+
+    public function activate(Role $role): Role
+    {
+        return DB::transaction(function () use ($role) {
+            $role->update(['isActive' => true]);
+
+            return $role->fresh();
+        });
+    }
+
+    public function toggleStatus(Role $role): Role
+    {
+        return DB::transaction(function () use ($role) {
+            $role->update(['isActive' => ! ($role->isActive ?? true)]);
+
+            return $role->fresh();
+        });
+    }
+
     public function delete(Role $role): bool
     {
         if ($role->Users()->exists()) {

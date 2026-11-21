@@ -1,4 +1,4 @@
-import { LayoutGrid, Users, Building, Layers, ShieldCheck, KeyRound } from 'lucide-react';
+import { LayoutGrid, Users, Building, Layers, ShieldCheck, KeyRound, SlidersHorizontal } from 'lucide-react';
 import type { AppNavItem } from '../components/organisms/AppSidebar';
 
 export const ADMIN_NAV_ITEMS: AppNavItem[] = [
@@ -25,6 +25,12 @@ export const ADMIN_NAV_ITEMS: AppNavItem[] = [
     label: 'Master MAK',
     icon: Layers,
     href: '/admin/mak',
+  },
+  {
+    key: 'metode-pengadaan',
+    label: 'Metode Pengadaan',
+    icon: SlidersHorizontal,
+    href: '/admin/metode-pengadaan',
   },
   {
     key: 'role',

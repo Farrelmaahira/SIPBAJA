@@ -365,6 +365,7 @@ Prefix Rute: `/api/v1/admin`
 - **List Role:** `GET /api/v1/admin/role`
 - **Tambah Role:** `POST /api/v1/admin/role` -> `{ "nama": "Auditor" }`
 - **Hapus Role:** `DELETE /api/v1/admin/role/{id}`
+- **Toggle Status Role:** `POST /api/v1/admin/role/{id}/toggle-status` (atau `/deactivate` / `/activate`)
 - **Matrix Role Permission:** `GET /api/v1/admin/role-permission`
   - **Success Response (200 OK):**
     ```json
@@ -382,6 +383,35 @@ Prefix Rute: `/api/v1/admin`
 - **Update Role Permissions:** `PUT /api/v1/admin/role-permission/{roleId}`
   - **Request Body:** `{ "permission_ids": [1, 2, 5, 8] }`
   - **Success Response (200 OK):** `{ "message": "Hak akses berhasil disimpan." }`
+
+---
+
+#### 6. Manajemen Metode Pengadaan (CRUD tanpa Delete)
+
+- **List Metode Pengadaan:** `GET /api/v1/admin/metode-pengadaan?q={keyword}&page={page}`
+  - **Success Response (200 OK):**
+    ```json
+    {
+      "metode_pengadaan": {
+        "current_page": 1,
+        "data": [
+          { "id": 1, "nama": "E-Purchasing", "isActive": true, "pengadaan_count": 5 }
+        ],
+        "total": 6
+      },
+      "filters": { "q": "" }
+    }
+    ```
+- **Tambah Metode Pengadaan:** `POST /api/v1/admin/metode-pengadaan`
+  - **Request Body:** `{ "nama": "Tender Cepat" }`
+  - **Success Response (201 Created):** `{ "message": "Metode pengadaan berhasil ditambahkan.", "metode_pengadaan": { ... } }`
+- **Ubah Metode Pengadaan:** `PUT /api/v1/admin/metode-pengadaan/{id}`
+  - **Request Body:** `{ "nama": "Tender Cepat Terbuka" }`
+  - **Success Response (200 OK):** `{ "message": "Metode pengadaan berhasil diubah.", "metode_pengadaan": { ... } }`
+- **Toggle Status:** `POST /api/v1/admin/metode-pengadaan/{id}/toggle-status`
+  - **Success Response (200 OK):** `{ "message": "Metode pengadaan berhasil dinonaktifkan.", "metode_pengadaan": { "id": 1, "isActive": false } }`
+- **Nonaktifkan:** `POST /api/v1/admin/metode-pengadaan/{id}/deactivate`
+- **Aktifkan:** `POST /api/v1/admin/metode-pengadaan/{id}/activate`
 
 ---
 

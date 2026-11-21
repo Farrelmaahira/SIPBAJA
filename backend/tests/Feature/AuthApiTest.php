@@ -156,4 +156,25 @@ class AuthApiTest extends TestCase
 
         $response->assertStatus(401);
     }
+
+    public function test_deactivated_user_cannot_login(): void
+    {
+        $role = Role::factory()->create(['nama' => 'Admin']);
+        $user = User::factory()->create([
+            'email' => 'inactive@example.com',
+            'password' => Hash::make('password123'),
+            'role_id' => $role->id,
+            'isActive' => false,
+        ]);
+
+        $response = $this->postJson('/api/v1/login', [
+            'login' => 'inactive@example.com',
+            'password' => 'password123',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['login']);
+
+        $this->assertGuest();
+    }
 }

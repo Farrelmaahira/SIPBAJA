@@ -47,6 +47,33 @@ class UnitService
         return true;
     }
 
+    public function deactivate(Unit $unit): Unit
+    {
+        return DB::transaction(function () use ($unit) {
+            $unit->update(['isActive' => false]);
+
+            return $unit->fresh();
+        });
+    }
+
+    public function activate(Unit $unit): Unit
+    {
+        return DB::transaction(function () use ($unit) {
+            $unit->update(['isActive' => true]);
+
+            return $unit->fresh();
+        });
+    }
+
+    public function toggleStatus(Unit $unit): Unit
+    {
+        return DB::transaction(function () use ($unit) {
+            $unit->update(['isActive' => ! ($unit->isActive ?? true)]);
+
+            return $unit->fresh();
+        });
+    }
+
     public function count(): int
     {
         return Unit::count();

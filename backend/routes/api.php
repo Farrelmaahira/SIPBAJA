@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\DashboardAdminController;
 use App\Http\Controllers\Admin\MakController;
+use App\Http\Controllers\Admin\MetodePengadaanController;
 use App\Http\Controllers\Admin\PenggunaController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\RolePermissionController;
@@ -32,7 +33,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return response()->json($request->user()->load('Role'));
+    $user = $request->user();
+    if (! ($user->isActive ?? true)) {
+        abort(403, 'Akun Anda telah dinonaktifkan. Silakan hubungi administrator.');
+    }
+
+    return response()->json($user->load('Role'));
 });
 
 Route::prefix('v1')->group(function () {
@@ -70,9 +76,23 @@ Route::prefix('v1')->group(function () {
             Route::apiResource('pengguna', PenggunaController::class)->names('api.admin.pengguna');
             Route::post('pengguna/{pengguna}/deactivate', [PenggunaController::class, 'deactivate'])->name('api.admin.pengguna.deactivate');
             Route::post('pengguna/{pengguna}/activate', [PenggunaController::class, 'activate'])->name('api.admin.pengguna.activate');
+            Route::post('pengguna/{pengguna}/toggle-status', [PenggunaController::class, 'toggleStatus'])->name('api.admin.pengguna.toggle-status');
             Route::apiResource('unit-kerja', UnitKerjaController::class)->parameters(['unit-kerja' => 'unit'])->names('api.admin.unit-kerja');
+            Route::post('unit-kerja/{unit}/toggle-status', [UnitKerjaController::class, 'toggleStatus'])->name('api.admin.unit-kerja.toggle-status');
+            Route::post('unit-kerja/{unit}/deactivate', [UnitKerjaController::class, 'deactivate'])->name('api.admin.unit-kerja.deactivate');
+            Route::post('unit-kerja/{unit}/activate', [UnitKerjaController::class, 'activate'])->name('api.admin.unit-kerja.activate');
             Route::apiResource('mak', MakController::class)->names('api.admin.mak');
+            Route::post('mak/{mak}/toggle-status', [MakController::class, 'toggleStatus'])->name('api.admin.mak.toggle-status');
+            Route::post('mak/{mak}/deactivate', [MakController::class, 'deactivate'])->name('api.admin.mak.deactivate');
+            Route::post('mak/{mak}/activate', [MakController::class, 'activate'])->name('api.admin.mak.activate');
             Route::apiResource('role', RoleController::class)->names('api.admin.role');
+            Route::post('role/{role}/toggle-status', [RoleController::class, 'toggleStatus'])->name('api.admin.role.toggle-status');
+            Route::post('role/{role}/deactivate', [RoleController::class, 'deactivate'])->name('api.admin.role.deactivate');
+            Route::post('role/{role}/activate', [RoleController::class, 'activate'])->name('api.admin.role.activate');
+            Route::apiResource('metode-pengadaan', MetodePengadaanController::class)->parameters(['metode-pengadaan' => 'metode_pengadaan'])->except(['destroy'])->names('api.admin.metode-pengadaan');
+            Route::post('metode-pengadaan/{metode_pengadaan}/toggle-status', [MetodePengadaanController::class, 'toggleStatus'])->name('api.admin.metode-pengadaan.toggle-status');
+            Route::post('metode-pengadaan/{metode_pengadaan}/deactivate', [MetodePengadaanController::class, 'deactivate'])->name('api.admin.metode-pengadaan.deactivate');
+            Route::post('metode-pengadaan/{metode_pengadaan}/activate', [MetodePengadaanController::class, 'activate'])->name('api.admin.metode-pengadaan.activate');
             Route::get('role-permission', [RolePermissionController::class, 'index'])->name('api.admin.role-permission.index');
             Route::put('role-permission/{role}', [RolePermissionController::class, 'update'])->name('api.admin.role-permission.update');
         });

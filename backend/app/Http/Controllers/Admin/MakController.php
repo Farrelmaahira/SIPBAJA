@@ -55,6 +55,43 @@ class MakController extends Controller
         ]);
     }
 
+    public function toggleStatus(Mak $mak): JsonResponse
+    {
+        $this->authorize('update', $mak);
+
+        $mak = $this->maks->toggleStatus($mak);
+        $statusText = $mak->isActive ? 'diaktifkan' : 'dinonaktifkan';
+
+        return response()->json([
+            'message' => "MAK berhasil {$statusText}.",
+            'mak' => $mak,
+        ]);
+    }
+
+    public function deactivate(Mak $mak): JsonResponse
+    {
+        $this->authorize('update', $mak);
+
+        $mak = $this->maks->deactivate($mak);
+
+        return response()->json([
+            'message' => 'MAK berhasil dinonaktifkan.',
+            'mak' => $mak,
+        ]);
+    }
+
+    public function activate(Mak $mak): JsonResponse
+    {
+        $this->authorize('update', $mak);
+
+        $mak = $this->maks->activate($mak);
+
+        return response()->json([
+            'message' => 'MAK berhasil diaktifkan.',
+            'mak' => $mak,
+        ]);
+    }
+
     public function destroy(Mak $mak): Response
     {
         $this->authorize('delete', $mak);
