@@ -175,6 +175,7 @@ Route::prefix('v1')->group(function () {
             Route::post('permohonan/{permohonan}/reject', [PermohonanPpkController::class, 'rejectPermohonan'])->name('api.ppk.permohonan.reject');
             Route::get('pengajuan', [PpkController::class, 'index'])->name('api.ppk.pengajuan.index');
             Route::get('pengajuan/{pengadaan}/review', [PpkController::class, 'review'])->name('api.ppk.pengajuan.review');
+            Route::get('pengajuan/{pengadaan}/dokumen/{dokumen}', [PpkController::class, 'downloadDokumen'])->name('api.ppk.pengajuan.dokumen.download');
             Route::post('pengajuan/{pengadaan}/approve', [PpkController::class, 'approve'])->name('api.ppk.pengajuan.approve');
             Route::post('pengajuan/{pengadaan}/reject', [PpkController::class, 'reject'])->name('api.ppk.pengajuan.reject');
             Route::get('pengajuan/{pengadaan}/pembayaran', [PpkController::class, 'pembayaran'])->name('api.ppk.pengajuan.pembayaran');

@@ -601,9 +601,10 @@ class PengadaanService
                 }
             }
 
-            // Syarat mutlak FR-49: Untuk pengadaan bernominal 50-200 juta (perlu_review_pp == true),
-            // dokumen harus berstatus 'diteruskan' (telah diverifikasi oleh PP) atau status selanjutnya.
-            if ($pengadaan->Level?->perlu_review_pp && ! in_array($pengadaan->status, ['diteruskan', 'disetujui', 'selesai'])) {
+            // FR-49: Khusus endpoint review (/review), dokumen 50-200jt harus telah berstatus 'diteruskan'.
+            // Namun untuk endpoint detail (/pengajuan/{id}), PPK tetap diizinkan melihat data pratinjau.
+            $isReviewRoute = request()->is('*/review*');
+            if ($isReviewRoute && $pengadaan->Level?->perlu_review_pp && ! in_array($pengadaan->status, ['diteruskan', 'disetujui', 'selesai'])) {
                 abort(403, 'Dokumen pengadaan ini belum diverifikasi oleh Pejabat Pengadaan (PP).');
             }
         }
@@ -611,8 +612,9 @@ class PengadaanService
         $dokumenPermohonan = Dokumen::where('ref_type', 'permohonan')
             ->where('ref_id', $pengadaan->permohonan_id)
             ->get()
-            ->map(function (Dokumen $d) use ($pengadaan) {
-                $d->download_url = "/api/v1/pp/pengajuan/{$pengadaan->id}/dokumen/{$d->id}";
+            ->map(function (Dokumen $d) use ($pengadaan, $actor) {
+                $base = $actor?->hasRole('PPK') ? 'ppk' : 'pp';
+                $d->download_url = "/api/v1/{$base}/pengajuan/{$pengadaan->id}/dokumen/{$d->id}";
 
                 return $d;
             });
@@ -620,8 +622,9 @@ class PengadaanService
         $dokumenPengadaan = Dokumen::where('ref_type', 'pengadaan')
             ->where('ref_id', $pengadaan->id)
             ->get()
-            ->map(function (Dokumen $d) use ($pengadaan) {
-                $d->download_url = "/api/v1/pp/pengajuan/{$pengadaan->id}/dokumen/{$d->id}";
+            ->map(function (Dokumen $d) use ($pengadaan, $actor) {
+                $base = $actor?->hasRole('PPK') ? 'ppk' : 'pp';
+                $d->download_url = "/api/v1/{$base}/pengajuan/{$pengadaan->id}/dokumen/{$d->id}";
 
                 return $d;
             });
@@ -664,7 +667,7 @@ class PengadaanService
                 $memo->tipe_dokumen = $tahap === 'BIDANG2' ? 'memo_persetujuan_bidang2' : 'memo_persetujuan_ppk';
                 $memo->tahap = $tahap;
                 $memo->download_url = $actor?->hasRole('PPK')
-                    ? "/api/v1/ppk/permohonan/{$pengadaan->permohonan_id}/dokumen?dokumen_id={$memo->id}"
+                    ? "/api/v1/ppk/pengajuan/{$pengadaan->id}/dokumen/{$memo->id}"
                     : "/api/v1/pp/pengajuan/{$pengadaan->id}/dokumen/{$memo->id}";
 
                 return $memo;

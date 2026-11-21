@@ -40,7 +40,7 @@ export const PpkPengadaanDetail: FC<PpkPengadaanDetailProps> = ({
     const controller = new AbortController();
 
     ppkService
-      .getPengajuanReview(id, controller.signal)
+      .getPengajuanShow(id, controller.signal)
       .then((res) => {
         if (controller.signal.aborted) {
           return;
@@ -54,7 +54,7 @@ export const PpkPengadaanDetail: FC<PpkPengadaanDetailProps> = ({
       })
       .catch((err: unknown) => {
         if (!controller.signal.aborted) {
-          console.error('Gagal memuat review pengadaan PPK:', err);
+          console.error('Gagal memuat detail pengadaan PPK:', err);
           setFlashError('Gagal memuat data pengadaan.');
         }
       });
