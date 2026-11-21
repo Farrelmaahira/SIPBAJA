@@ -128,26 +128,53 @@ class PengadaanController extends Controller
      */
     public function downloadDokumen(Request $request, string $pengadaanId, string $dokumenId): StreamedResponse|JsonResponse
     {
-        $dokumen = Dokumen::where('id', (int) $dokumenId)
-            ->where(function ($q) use ($pengadaanId) {
-                $q->where(fn ($sub) => $sub->where('ref_type', 'pengadaan')->where('ref_id', (int) $pengadaanId))
-                    ->orWhere(fn ($sub) => $sub->where('ref_type', 'kontrak')->whereHas('Kontrak', fn ($k) => $k->where('pengadaan_id', (int) $pengadaanId)));
-            })
-            ->firstOrFail();
+        $pengadaan = Pengadaan::with('Kontrak')->findOrFail((int) $pengadaanId);
+        $dokumen = Dokumen::findOrFail((int) $dokumenId);
+
+        $isPengadaanDoc = ($dokumen->ref_type === 'pengadaan' && (int) $dokumen->ref_id === (int) $pengadaan->id);
+        $isPermohonanDoc = ($dokumen->ref_type === 'permohonan' && (int) $dokumen->ref_id === (int) $pengadaan->permohonan_id);
+        $isPermohonanMemo = ($dokumen->ref_type === 'approval_permohonan' && (int) $dokumen->ref_id === (int) $pengadaan->permohonan_id);
+        $isKontrakDoc = ($dokumen->ref_type === 'kontrak' && (int) $dokumen->ref_id === (int) ($pengadaan->Kontrak?->id ?? 0));
+
+        if (! $isPengadaanDoc && ! $isPermohonanDoc && ! $isPermohonanMemo && ! $isKontrakDoc) {
+            abort(404, 'Dokumen tidak berkaitan dengan pengadaan ini.');
+        }
+
+        $namaHash = basename($dokumen->nama_hash);
+        $candidates = array_unique(array_filter([
+            $dokumen->nama_hash,
+            'dokumen/pengadaan/'.$namaHash,
+            'dokumen_pengadaan/'.$namaHash,
+            'dokumen/kontrak/'.$namaHash,
+            'dokumen/permohonan/'.$namaHash,
+            'dokumen/memo/'.$namaHash,
+            'dokumen/permohonan/memo/'.$namaHash,
+        ]));
 
         $disk = 'local';
-        if (! Storage::disk('local')->exists($dokumen->path)) {
-            if (Storage::disk('private')->exists($dokumen->path)) {
-                $disk = 'private';
-            } else {
-                return response()->json(['message' => 'Berkas fisik dokumen tidak ditemukan di server.'], 404);
+        $path = null;
+
+        foreach ($candidates as $candidate) {
+            if (Storage::disk('local')->exists($candidate)) {
+                $path = $candidate;
+                $disk = 'local';
+                break;
             }
+            if (Storage::disk('public')->exists($candidate)) {
+                $path = $candidate;
+                $disk = 'public';
+                break;
+            }
+        }
+
+        if (! $path) {
+            return response()->json(['message' => 'Berkas fisik dokumen tidak ditemukan di server.'], 404);
         }
 
         $disposition = $request->query('disposition') === 'inline' ? 'inline' : 'attachment';
 
         return Storage::disk($disk)->download(
-            $dokumen->path,
+            $path,
             $dokumen->nama_asli ?: 'dokumen.pdf',
             [
                 'Content-Type' => $dokumen->mime_type ?: 'application/pdf',
