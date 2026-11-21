@@ -511,7 +511,7 @@ class PermohonanService
             ->map(fn($p) => [
                 'id' => (int) $p->id,
                 'makKode' => (string) ($p->PermohonanMak?->Mak?->nama ?? $p->PermohonanMak?->Mak?->kode ?? '-'),
-                'nominal' => (float) ($p->nominal ?? 0),
+                'nominal' => $p->Kontrak?->nominal_kontrak ? (float) $p->Kontrak->nominal_kontrak : null,
                 'status' => (string) ($p->status ?? '-'),
             ])
             ->values()
@@ -811,11 +811,6 @@ class PermohonanService
 
         return [
             'permohonan' => $permohonan,
-            'maks' => $maks,
-            'selected_mak_ids' => $selectedMakIds,
-            'approval_perencanaan' => $approvalPerencanaan ? [
-                'alasan' => $approvalPerencanaan->alasan,
-            ] : null,
             'dokumen_permohonan' => $dokumenPermohonan,
             'permohonan_mak_ppk' => $permohonan->PermohonanMak
                 ->filter(fn($pm) => (int) ($pm->Mak?->ppk_user_id ?? 0) === (int) $ppk->id)

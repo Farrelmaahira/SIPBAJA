@@ -162,10 +162,7 @@ export const ppbjService = {
     formData.append('permohonan_mak_id', String(payload.permohonan_mak_id));
     formData.append('jenis_id', String(payload.jenis_id));
     formData.append('metode_id', String(payload.metode_id));
-    formData.append('nominal', String(payload.nominal));
-    if (payload.level_id) {
-      formData.append('level_id', String(payload.level_id));
-    }
+    formData.append('level_id', String(payload.level_id));
     if (payload.dokumen) {
       formData.append('dokumen', payload.dokumen);
     }

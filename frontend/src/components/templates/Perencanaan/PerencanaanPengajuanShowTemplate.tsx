@@ -15,6 +15,7 @@ import AppLayout from '../General/AppLayout';
 import HeroBanner from '../../organisms/HeroBanner';
 import StatusPill from '../../atoms/StatusPill';
 import DokumenListCard from '../../organisms/DokumenListCard';
+import RiwayatStatusTimeline, { type TimelineStepItem } from '../../organisms/RiwayatStatusTimeline';
 import PerencanaanVerifikasiMakCard from '../../organisms/PerencanaanVerifikasiMakCard';
 import { formatRupiah, formatTanggalIndo } from '../../../utils/formatters';
 import { PERENCANAAN_NAV_ITEMS } from '@/constants/perencanaanNav';

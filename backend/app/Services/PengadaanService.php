@@ -23,6 +23,10 @@ use Illuminate\Validation\ValidationException;
 
 class PengadaanService
 {
+    public function __construct(
+        protected NotificationService $notificationService
+    ) {}
+
     /**
      * Mengambil konteks dan kelayakan pemecahan pengadaan untuk permohonan tertentu.
      *
@@ -75,9 +79,8 @@ class PengadaanService
             return $paket->status !== 'draft';
         });
 
-        $totalNominalPaket = (float) $permohonan->Pengadaan->sum(fn ($p) => (float) ($p->nominal ?? 0));
         $estimasi = (float) ($permohonan->estimasi_anggaran ?? 0);
-        $sisaAnggaran = max(0.0, $estimasi - $totalNominalPaket);
+        $sisaAnggaran = $estimasi;
 
         $availableMak = $permohonan->PermohonanMak
             ->filter(fn ($pm) => $pm->Mak !== null)
@@ -105,7 +108,7 @@ class PengadaanService
             'bisaDipecah' => $bisaDipecah,
             'sudahDikunci' => $sudahDikunci,
             'sisaAnggaran' => $sisaAnggaran,
-            'totalNominalPaket' => $totalNominalPaket,
+            'totalNominalPaket' => 0.0,
             'availableMak' => $availableMak,
             'referenceData' => $referenceData,
         ];
@@ -144,20 +147,9 @@ class PengadaanService
 
         $permohonan = Permohonan::with(['PermohonanMak.Mak.Ppk', 'Pengadaan'])->findOrFail($permohonanId);
 
-        $existingTotal = (float) $permohonan->Pengadaan->sum(fn ($p) => (float) ($p->nominal ?? 0));
-        $newTotal = (float) array_sum(array_map(fn ($item) => (float) ($item['nominal'] ?? 0), $items));
-        $estimasi = (float) ($permohonan->estimasi_anggaran ?? 0);
-
-        if (($existingTotal + $newTotal) > $estimasi) {
-            throw ValidationException::withMessages([
-                'nominal' => 'Total nominal paket melebihi estimasi anggaran permohonan.',
-            ]);
-        }
-
         $makMap = $permohonan->PermohonanMak->keyBy('id');
-        $levels = LevelPengadaan::orderBy('min_nominal')->get();
 
-        return DB::transaction(function () use ($permohonan, $items, $actor, $makMap, $levels) {
+        return DB::transaction(function () use ($permohonan, $items, $actor, $makMap) {
             $createdPengadaan = [];
 
             foreach ($items as $item) {
@@ -170,10 +162,7 @@ class PengadaanService
                     ]);
                 }
 
-                $nominal = (float) $item['nominal'];
-                $levelId = isset($item['level_id']) && $item['level_id'] !== null && $item['level_id'] !== ''
-                    ? (int) $item['level_id']
-                    : $this->resolveLevelId($nominal, $levels);
+                $levelId = (int) $item['level_id'];
 
                 $pengadaan = Pengadaan::create([
                     'permohonan_id' => $permohonan->id,
@@ -182,7 +171,6 @@ class PengadaanService
                     'metode_id' => (int) $item['metode_id'],
                     'level_id' => $levelId,
                     'ppk_id' => $pm->Mak?->ppk_user_id,
-                    'nominal' => $nominal,
                     'revisi_ke' => 0,
                     'status' => 'draft',
                 ]);
@@ -274,9 +262,9 @@ class PengadaanService
                 ]);
             }
 
-            if (! $paket->permohonan_mak_id || ! $paket->jenis_id || ! $paket->metode_id || ! $paket->level_id || (float) $paket->nominal <= 0) {
+            if (! $paket->permohonan_mak_id || ! $paket->jenis_id || ! $paket->metode_id || ! $paket->level_id) {
                 throw ValidationException::withMessages([
-                    'paket' => 'Seluruh informasi paket (MAK, Jenis, Metode, Level, dan Nominal) wajib diisi lengkap.',
+                    'paket' => 'Seluruh informasi paket (MAK, Jenis, Metode, dan Level) wajib diisi lengkap.',
                 ]);
             }
         }
@@ -792,14 +780,12 @@ class PengadaanService
             ->withQueryString();
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function getDetailPengadaanPpbj(int $pengadaanId): array
+    public function getDetailPengadaanPpbj(int $pengadaanId): Pengadaan
     {
         $pengadaan = Pengadaan::with([
             'Permohonan.Unit',
             'Permohonan.Creator',
+            'Permohonan.PermohonanMak.Mak',
             'PermohonanMak.Mak.Ppk',
             'Jenis',
             'Metode',
@@ -813,79 +799,70 @@ class PengadaanService
         ])->findOrFail($pengadaanId);
 
         $isBarangDiterima = $pengadaan->Penerimaan !== null || in_array($pengadaan->status, ['barang_diterima', 'selesai'], true);
-        $bisaEditDraft = in_array($pengadaan->status, ['draft', 'ditolak'], true);
-        $bisaEditKontrak = in_array($pengadaan->status, ['disetujui', 'siap_spk', 'kontrak_terbit', 'berjalan'], true) && ! $isBarangDiterima;
+        $pengadaan->bisa_edit_draft = in_array($pengadaan->status, ['draft', 'ditolak'], true);
+        $pengadaan->bisa_edit_kontrak = in_array($pengadaan->status, ['disetujui', 'siap_spk', 'kontrak_terbit', 'berjalan'], true) && ! $isBarangDiterima;
 
         $kontrak = $pengadaan->Kontrak;
-        $rencanaPembayaran = $kontrak?->RencanaPembayaran?->first();
-        $reminder = $rencanaPembayaran?->Reminders?->first();
-        $dokumenKontrak = $kontrak?->Dokumen?->first();
+        $pengadaan->nominal = $kontrak?->nominal_kontrak ? (float) $kontrak->nominal_kontrak : null;
 
-        return [
-            'id' => $pengadaan->id,
-            'nominal' => (float) $pengadaan->nominal,
-            'status' => $pengadaan->status,
-            'revisi_ke' => $pengadaan->revisi_ke,
-            'bisa_edit_draft' => $bisaEditDraft,
-            'bisa_edit_kontrak' => $bisaEditKontrak,
-            'permohonan' => [
-                'id' => $pengadaan->Permohonan?->id,
-                'nomor_surat' => $pengadaan->Permohonan?->nomor_surat,
-                'judul' => $pengadaan->Permohonan?->judul,
-                'estimasi_anggaran' => (float) ($pengadaan->Permohonan?->estimasi_anggaran ?? 0),
-                'unit_nama' => $pengadaan->Permohonan?->Unit?->nama ?? '-',
-            ],
-            'mak' => [
-                'id' => $pengadaan->PermohonanMak?->Mak?->id,
-                'nama' => $pengadaan->PermohonanMak?->Mak?->nama ?? '-',
-                'kode' => $pengadaan->PermohonanMak?->Mak?->kode ?? '-',
-                'ppk_nama' => $pengadaan->Ppk?->nama ?? $pengadaan->PermohonanMak?->Mak?->Ppk?->nama ?? '-',
-            ],
-            'jenis' => [
-                'id' => $pengadaan->Jenis?->id,
-                'nama' => $pengadaan->Jenis?->nama ?? '-',
-            ],
-            'metode' => [
-                'id' => $pengadaan->Metode?->id,
-                'nama' => $pengadaan->Metode?->nama ?? '-',
-            ],
-            'level' => [
-                'id' => $pengadaan->Level?->id,
-                'nama' => $pengadaan->Level?->nama ?? '-',
-                'perlu_review_pp' => (bool) ($pengadaan->Level?->perlu_review_pp ?? false),
-            ],
-            'kontrak' => $kontrak ? [
-                'id' => $kontrak->id,
-                'tipe' => $kontrak->tipe,
-                'nomor' => $kontrak->nomor,
-                'tanggal' => $kontrak->tanggal ? Carbon::parse($kontrak->tanggal)->format('Y-m-d') : null,
-                'vendor_nama' => $kontrak->vendor_nama,
-                'nominal_kontrak' => (float) ($kontrak->nominal_kontrak ?? $pengadaan->nominal),
-                'tanggal_jatuh_tempo' => $rencanaPembayaran?->tanggal_jatuh_tempo ? Carbon::parse($rencanaPembayaran->tanggal_jatuh_tempo)->format('Y-m-d') : null,
-                'tanggal_reminder' => $reminder?->tanggal_reminder ? Carbon::parse($reminder->tanggal_reminder)->format('Y-m-d') : null,
-                'dokumen' => $dokumenKontrak ? [
-                    'id' => $dokumenKontrak->id,
-                    'nama_asli' => $dokumenKontrak->nama_asli,
-                    'download_url' => "/api/v1/ppbj/pengadaan/{$pengadaan->id}/dokumen/{$dokumenKontrak->id}",
-                ] : null,
-            ] : null,
-            'dokumen_list' => $pengadaan->Dokumen->map(fn (Dokumen $d) => [
-                'id' => $d->id,
-                'nama_asli' => $d->nama_asli,
-                'tipe_dokumen' => $d->tipe_dokumen,
-                'ukuran_bytes' => $d->ukuran_bytes,
-                'mime_type' => $d->mime_type,
-                'download_url' => "/api/v1/ppbj/pengadaan/{$pengadaan->id}/dokumen/{$d->id}",
-            ])->values()->all(),
-            'approvals' => $pengadaan->Approvals->map(fn ($app) => [
-                'id' => $app->id,
-                'tahap' => $app->tahap,
-                'keputusan' => $app->keputusan,
-                'catatan' => $app->catatan,
-                'actor_nama' => $app->Actor?->nama ?? '-',
-                'created_at' => $app->created_at ? (string) $app->created_at : null,
-            ])->values()->all(),
+        // Pasang download_url untuk dokumen pengadaan
+        $pengadaan->Dokumen->each(function (Dokumen $d) use ($pengadaan) {
+            $d->download_url = "/api/v1/ppbj/pengadaan/{$pengadaan->id}/dokumen/{$d->id}";
+        });
+
+        if ($kontrak) {
+            $rencana = $kontrak->RencanaPembayaran?->first();
+            $reminder = $rencana?->Reminders?->first();
+            $kontrak->tanggal_jatuh_tempo = $rencana?->tanggal_jatuh_tempo ? Carbon::parse($rencana->tanggal_jatuh_tempo)->format('Y-m-d') : null;
+            $kontrak->tanggal_reminder = $reminder?->tanggal_reminder ? Carbon::parse($reminder->tanggal_reminder)->format('Y-m-d') : null;
+
+            if ($kontrak->Dokumen) {
+                $kontrak->Dokumen->each(function (Dokumen $d) use ($pengadaan) {
+                    $d->download_url = "/api/v1/ppbj/pengadaan/{$pengadaan->id}/dokumen/{$d->id}";
+                });
+                $kontrak->dokumen = $kontrak->Dokumen->first();
+            }
+        }
+
+        // Data MAK untuk kemudahan akses frontend & konsistensi pengeditan
+        $pengadaan->mak = [
+            'id' => $pengadaan->PermohonanMak?->Mak?->id,
+            'permohonan_mak_id' => $pengadaan->permohonan_mak_id,
+            'nama' => $pengadaan->PermohonanMak?->Mak?->nama ?? '-',
+            'kode' => $pengadaan->PermohonanMak?->Mak?->kode ?? '-',
+            'ppk_nama' => $pengadaan->Ppk?->nama ?? $pengadaan->PermohonanMak?->Mak?->Ppk?->nama ?? '-',
         ];
+
+        // Format dokumen_list & unit_nama untuk kompatibilitas frontend
+        $pengadaan->dokumen_list = $pengadaan->Dokumen->take(1)->values();
+        if ($pengadaan->Permohonan) {
+            $pengadaan->Permohonan->unit_nama = $pengadaan->Permohonan->Unit?->nama ?? '-';
+        }
+
+        if ($pengadaan->Approvals) {
+            $pengadaan->Approvals->each(function ($app) {
+                $app->catatan = $app->alasan;
+                $app->actor_nama = $app->Actor?->nama ?? '-';
+            });
+        }
+
+        // Available MAK & Reference data untuk form modal klasifikasi
+        $pengadaan->available_mak = $pengadaan->Permohonan?->PermohonanMak
+            ?->filter(fn ($pm) => $pm->Mak !== null)
+            ->map(fn ($pm) => [
+                'id' => (int) $pm->id,
+                'mak_id' => (int) $pm->Mak->id,
+                'nama' => (string) $pm->Mak->nama,
+                'kode' => (string) ($pm->Mak->kode ?? $pm->Mak->nama),
+            ])->values()->all() ?? [];
+
+        $pengadaan->reference_data = [
+            'jenis' => JenisPengadaan::select(['id', 'nama'])->orderBy('id')->get()->toArray(),
+            'metode' => MetodePengadaan::select(['id', 'nama'])->orderBy('id')->get()->toArray(),
+            'level' => LevelPengadaan::select(['id', 'nama', 'min_nominal', 'max_nominal', 'perlu_review_pp'])->orderBy('min_nominal')->get()->toArray(),
+        ];
+
+        return $pengadaan;
     }
 
     public function updateKlasifikasiPengadaan(Pengadaan $pengadaan, array $data, ?UploadedFile $fileDokumen, User $user): Pengadaan
@@ -902,43 +879,33 @@ class PengadaanService
             $pengadaan->permohonan_mak_id = $data['permohonan_mak_id'];
             $pengadaan->jenis_id = $data['jenis_id'];
             $pengadaan->metode_id = $data['metode_id'];
-            $pengadaan->nominal = $data['nominal'];
-
-            if (! empty($data['level_id'])) {
-                $pengadaan->level_id = $data['level_id'];
-            } else {
-                $nominal = (float) $data['nominal'];
-                $level = LevelPengadaan::where('min_nominal', '<=', $nominal)
-                    ->where(function ($q) use ($nominal) {
-                        $q->whereNull('max_nominal')->orWhere('max_nominal', '>=', $nominal);
-                    })
-                    ->first();
-                if ($level) {
-                    $pengadaan->level_id = $level->id;
-                }
-            }
+            $pengadaan->level_id = $data['level_id'];
 
             if ($statusSebelumnya === 'ditolak') {
-                $pengadaan->revisi_ke = ((int) $pengadaan->revisi_ke) + 1;
-                $pengadaan->status = 'draft';
+                $pengadaan->status = 'menunggu_review';
             }
 
             $pengadaan->save();
 
             if ($fileDokumen) {
                 $namaHash = $fileDokumen->hashName();
-                $path = $fileDokumen->storeAs('dokumen/pengadaan', $namaHash, 'private');
+                $path = $fileDokumen->storeAs('dokumen/pengadaan', $namaHash, 'local');
+
+                $versiBaru = ((int) Dokumen::where('ref_type', 'pengadaan')
+                    ->where('ref_id', $pengadaan->id)
+                    ->where('tipe_dokumen', 'dokumen_pengadaan')
+                    ->max('versi')) + 1;
 
                 Dokumen::create([
                     'ref_type' => 'pengadaan',
                     'ref_id' => $pengadaan->id,
                     'tipe_dokumen' => 'dokumen_pengadaan',
+                    'versi' => $versiBaru > 0 ? $versiBaru : 1,
                     'nama_asli' => $fileDokumen->getClientOriginalName(),
                     'nama_hash' => $namaHash,
-                    'path' => $path,
                     'ukuran_bytes' => $fileDokumen->getSize(),
                     'mime_type' => $fileDokumen->getClientMimeType() ?: 'application/pdf',
-                    'dibuat_oleh' => $user->id,
+                    'uploaded_by' => $user->id,
                 ]);
             }
 
@@ -950,6 +917,30 @@ class PengadaanService
                 'actor_id' => $user->id,
                 'created_at' => now(),
             ]);
+
+            if ($statusSebelumnya === 'ditolak') {
+                $pengadaan->loadMissing('Level', 'Permohonan');
+                if ($pengadaan->Level?->perlu_review_pp) {
+                    $ppUsers = User::whereHas('Role', fn ($q) => $q->where('nama', 'PP'))->pluck('id');
+                    foreach ($ppUsers as $ppId) {
+                        $this->notificationService->send(
+                            user: (int) $ppId,
+                            judul: 'Dokumen Pengadaan Telah Direvisi',
+                            pesan: "Dokumen pengadaan paket #{$pengadaan->id} ('{$pengadaan->Permohonan?->judul}') telah direvisi oleh PPBJ dan dikirim kembali untuk diverifikasi.",
+                            refType: 'pengadaan',
+                            refId: $pengadaan->id,
+                        );
+                    }
+                } elseif ($pengadaan->ppk_id) {
+                    $this->notificationService->send(
+                        user: (int) $pengadaan->ppk_id,
+                        judul: 'Dokumen Pengadaan Telah Direvisi',
+                        pesan: "Dokumen pengadaan paket #{$pengadaan->id} ('{$pengadaan->Permohonan?->judul}') telah direvisi oleh PPBJ dan dikirim kembali untuk diotorisasi.",
+                        refType: 'pengadaan',
+                        refId: $pengadaan->id,
+                    );
+                }
+            }
 
             return $pengadaan->fresh(['Permohonan', 'PermohonanMak.Mak', 'Jenis', 'Metode', 'Level', 'Ppk']);
         });
@@ -990,18 +981,23 @@ class PengadaanService
             // Upload dokumen kontrak jika ada
             if ($fileDokumen) {
                 $namaHash = $fileDokumen->hashName();
-                $path = $fileDokumen->storeAs('dokumen/kontrak', $namaHash, 'private');
+                $path = $fileDokumen->storeAs('dokumen/kontrak', $namaHash, 'local');
+
+                $versiBaru = ((int) Dokumen::where('ref_type', 'kontrak')
+                    ->where('ref_id', $kontrak->id)
+                    ->where('tipe_dokumen', 'dokumen_kontrak')
+                    ->max('versi')) + 1;
 
                 Dokumen::create([
                     'ref_type' => 'kontrak',
                     'ref_id' => $kontrak->id,
                     'tipe_dokumen' => 'dokumen_kontrak',
+                    'versi' => $versiBaru > 0 ? $versiBaru : 1,
                     'nama_asli' => $fileDokumen->getClientOriginalName(),
                     'nama_hash' => $namaHash,
-                    'path' => $path,
                     'ukuran_bytes' => $fileDokumen->getSize(),
                     'mime_type' => $fileDokumen->getClientMimeType() ?: 'application/pdf',
-                    'dibuat_oleh' => $user->id,
+                    'uploaded_by' => $user->id,
                 ]);
             }
 

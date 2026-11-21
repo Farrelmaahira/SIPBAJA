@@ -50,7 +50,7 @@ export interface PpbjPengadaanItem {
   metode?: string;
   level?: string;
   permohonan?: PpbjPermohonanItem;
-  nominal: number;
+  nominal?: number | null;
   revisiKe?: number;
   permohonanMak?: permohonanMak;
   reviewPp?: boolean;
@@ -112,7 +112,7 @@ export interface PpbjReferenceData {
 export interface PpbjPaketDraftItem {
   id: number;
   makKode: string;
-  nominal: number;
+  nominal?: number | null;
   status: string;
   dokumenList?: Array<{
     id: number | string;
@@ -156,8 +156,7 @@ export interface PpbjStoreDraftItemPayload {
   permohonan_mak_id: number | string;
   jenis_id: number | string;
   metode_id: number | string;
-  nominal: number | string;
-  level_id?: number | string;
+  level_id: number | string;
   dokumen?: File | null;
 }
 
@@ -167,11 +166,23 @@ export interface PpbjStoreDraftPayload {
 
 export interface PpbjPengadaanDetail {
   id: number;
+  permohonan_mak_id?: number;
   nominal: number;
   status: string;
   revisi_ke: number;
   bisa_edit_draft: boolean;
   bisa_edit_kontrak: boolean;
+  available_mak?: Array<{
+    id: number;
+    mak_id?: number;
+    nama: string;
+    kode?: string;
+  }>;
+  reference_data?: {
+    jenis?: PpbjReferenceOption[];
+    metode?: PpbjReferenceOption[];
+    level?: PpbjReferenceOption[];
+  };
   permohonan: {
     id: number;
     nomor_surat: string;
@@ -226,7 +237,12 @@ export interface PpbjPengadaanDetail {
     tahap: string;
     keputusan: string;
     catatan?: string | null;
-    actor_nama: string;
+    alasan?: string | null;
+    actor_nama?: string;
+    actor?: {
+      id?: number;
+      nama?: string;
+    };
     created_at?: string | null;
   }>;
 }
@@ -246,7 +262,6 @@ export interface PpbjUpdateKlasifikasiPayload {
   permohonan_mak_id: number | string;
   jenis_id: number | string;
   metode_id: number | string;
-  level_id?: number | string;
-  nominal: number | string;
+  level_id: number | string;
   dokumen?: File | null;
 }

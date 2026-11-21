@@ -36,6 +36,7 @@ export interface PpbjPengadaanShowTemplateProps {
     error?: string;
   };
   isEditKlasifikasiOpen?: boolean;
+  isSubmittingKlasifikasi?: boolean;
   isKontrakModalOpen?: boolean;
   onOpenEditKlasifikasi?: () => void;
   onCloseEditKlasifikasi?: () => void;
@@ -58,6 +59,7 @@ export const PpbjPengadaanShowTemplate: FC<PpbjPengadaanShowTemplateProps> = ({
   isLoading = false,
   flash = {},
   isEditKlasifikasiOpen = false,
+  isSubmittingKlasifikasi = false,
   isKontrakModalOpen = false,
   onOpenEditKlasifikasi,
   onCloseEditKlasifikasi,
@@ -145,8 +147,8 @@ export const PpbjPengadaanShowTemplate: FC<PpbjPengadaanShowTemplateProps> = ({
             {isDitolak && latestRejection && (
               <CatatanPenolakanCard
                 catatan={{
-                  alasan: latestRejection.catatan || 'Dokumen pengadaan memerlukan perbaikan.',
-                  pemeriksa_nama: latestRejection.actor_nama,
+                  alasan: latestRejection.alasan || latestRejection.catatan || 'Dokumen pengadaan memerlukan perbaikan.',
+                  pemeriksa_nama: latestRejection.actor?.nama || latestRejection.actor_nama || '-',
                   pemeriksa_peran: latestRejection.tahap,
                   diperiksa_at: latestRejection.created_at || null,
                 }}
@@ -172,7 +174,7 @@ export const PpbjPengadaanShowTemplate: FC<PpbjPengadaanShowTemplateProps> = ({
                     className="self-start sm:self-auto px-4 py-2 rounded-xl border border-[#0E7C5A] text-[#0E7C5A] hover:bg-[#F7FBF9] text-xs font-semibold transition-colors cursor-pointer inline-flex items-center gap-1.5"
                   >
                     <Edit className="w-3.5 h-3.5" />
-                    <span>Perbarui Klasifikasi</span>
+                    <span>{isDitolak ? 'Revisi Dokumen Pengadaan' : 'Perbarui Klasifikasi'}</span>
                   </button>
                 )}
               </div>
@@ -345,25 +347,31 @@ export const PpbjPengadaanShowTemplate: FC<PpbjPengadaanShowTemplateProps> = ({
             {isEditKlasifikasiOpen && (
               <EditPengadaanModal
                 isOpen={isEditKlasifikasiOpen}
+                isDitolak={isDitolak}
+                isSubmitting={isSubmittingKlasifikasi}
                 onClose={onCloseEditKlasifikasi || (() => {})}
                 onSubmit={onSubmitEditKlasifikasi || (() => {})}
                 initialData={{
-                  permohonan_mak_id: pengadaan.mak?.id,
+                  permohonan_mak_id: pengadaan.permohonan_mak_id || pengadaan.mak?.id,
                   jenis_id: pengadaan.jenis?.id,
                   metode_id: pengadaan.metode?.id,
                   level_id: pengadaan.level?.id,
                   nominal: pengadaan.nominal,
                 }}
                 availableMak={
-                  pengadaan.mak?.id
-                    ? [{ id: pengadaan.mak.id, nama: pengadaan.mak.nama, kode: pengadaan.mak.kode }]
-                    : []
+                  pengadaan.available_mak && pengadaan.available_mak.length > 0
+                    ? pengadaan.available_mak
+                    : (pengadaan.mak?.id
+                        ? [{ id: pengadaan.permohonan_mak_id || pengadaan.mak.id, nama: pengadaan.mak.nama, kode: pengadaan.mak.kode }]
+                        : [])
                 }
-                referenceData={{
-                  jenis: [pengadaan.jenis],
-                  metode: [pengadaan.metode],
-                  level: [pengadaan.level],
-                }}
+                referenceData={
+                  pengadaan.reference_data || {
+                    jenis: [pengadaan.jenis],
+                    metode: [pengadaan.metode],
+                    level: [pengadaan.level],
+                  }
+                }
               />
             )}
 
