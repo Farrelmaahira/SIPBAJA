@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\ApprovalPengadaan;
 use App\Models\Dokumen;
 use App\Models\JenisPengadaan;
 use App\Models\Kontrak;
@@ -14,6 +15,7 @@ use App\Models\Pengadaan;
 use App\Models\Permohonan;
 use App\Models\PermohonanMak;
 use App\Models\RencanaPembayaran;
+use App\Models\StatusHistory;
 use App\Models\Unit;
 use App\Models\User;
 use Carbon\Carbon;
@@ -29,6 +31,9 @@ class KeuanganSeeder extends Seeder
         $keuanganUser = User::whereHas('role', fn ($q) => $q->where('nama', 'Keuangan'))->first();
         $ppkUser = User::whereHas('role', fn ($q) => $q->where('nama', 'PPK'))->first()
             ?? User::where('email', 'admin@pnj.ac.id')->first();
+        $ppbjUser = User::whereHas('role', fn ($q) => $q->where('nama', 'PPBJ'))->first();
+        $ppUser = User::whereHas('role', fn ($q) => $q->where('nama', 'PP'))->first();
+        $bidang2User = User::whereHas('role', fn ($q) => $q->where('nama', 'Bidang 2'))->first();
         $pemohonUser = User::whereHas('role', fn ($q) => $q->where('nama', 'Pemohon'))->first()
             ?? User::where('email', 'jurusan@pnj.ac.id')->first()
             ?? User::first();
@@ -211,6 +216,233 @@ class KeuanganSeeder extends Seeder
                 ]
             );
 
+            // Approval Pengadaan: PP dan PPK
+            ApprovalPengadaan::firstOrCreate(
+                [
+                    'pengadaan_id' => $pengadaan->id,
+                    'tahap' => 'PP',
+                ],
+                [
+                    'revisi_ke' => 0,
+                    'keputusan' => 'disetujui',
+                    'alasan' => 'Dokumen pengadaan telah diverifikasi oleh Pejabat Pengadaan',
+                    'actor_id' => $ppUser?->id,
+                    'created_at' => Carbon::now()->subDays(17 - $index),
+                ]
+            );
+
+            ApprovalPengadaan::firstOrCreate(
+                [
+                    'pengadaan_id' => $pengadaan->id,
+                    'tahap' => 'PPK',
+                ],
+                [
+                    'revisi_ke' => 0,
+                    'keputusan' => 'disetujui',
+                    'alasan' => 'Paket pengadaan telah disetujui oleh PPK',
+                    'actor_id' => $ppkUser?->id,
+                    'created_at' => Carbon::now()->subDays(16 - $index),
+                ]
+            );
+
+            // Status History (Audit Trail)
+            StatusHistory::firstOrCreate(
+                [
+                    'ref_type' => 'pengadaan',
+                    'ref_id' => $pengadaan->id,
+                    'status_baru' => 'berjalan',
+                ],
+                [
+                    'status_lama' => 'draft',
+                    'actor_id' => $ppbjUser?->id ?? 1,
+                    'created_at' => Carbon::now()->subDays(18 - $index),
+                ]
+            );
+
+            if ($isSelesai) {
+                StatusHistory::firstOrCreate(
+                    [
+                        'ref_type' => 'pengadaan',
+                        'ref_id' => $pengadaan->id,
+                        'status_baru' => 'selesai',
+                    ],
+                    [
+                        'status_lama' => 'berjalan',
+                        'actor_id' => $keuanganUser?->id ?? 1,
+                        'created_at' => Carbon::now()->subDays(5),
+                    ]
+                );
+            }
+
+            // 1. Dokumen Permohonan
+            Dokumen::firstOrCreate(
+                [
+                    'ref_type' => 'permohonan',
+                    'ref_id' => $permohonan->id,
+                    'tipe_dokumen' => 'surat_permohonan',
+                ],
+                [
+                    'versi' => 1,
+                    'nama_asli' => "Surat_Permohonan_{$item['nomor_permohonan']}.pdf",
+                    'nama_hash' => "docs/dummy_surat_{$item['nomor_permohonan']}.pdf",
+                    'mime_type' => 'application/pdf',
+                    'ukuran_bytes' => 2097152,
+                    'uploaded_by' => $pemohonUser?->id ?? 1,
+                    'created_at' => Carbon::now()->subDays(20 - $index),
+                ]
+            );
+
+            Dokumen::firstOrCreate(
+                [
+                    'ref_type' => 'permohonan',
+                    'ref_id' => $permohonan->id,
+                    'tipe_dokumen' => 'memo_permohonan_bidang2',
+                ],
+                [
+                    'versi' => 1,
+                    'nama_asli' => "Memo_Permohonan_Bidang_2_{$item['nomor_permohonan']}.pdf",
+                    'nama_hash' => "docs/dummy_memo_b2_{$item['nomor_permohonan']}.pdf",
+                    'mime_type' => 'application/pdf',
+                    'ukuran_bytes' => 1048576,
+                    'uploaded_by' => $bidang2User?->id ?? 1,
+                    'created_at' => Carbon::now()->subDays(19 - $index),
+                ]
+            );
+
+            Dokumen::firstOrCreate(
+                [
+                    'ref_type' => 'permohonan',
+                    'ref_id' => $permohonan->id,
+                    'tipe_dokumen' => 'memo_permohonan_ppk',
+                ],
+                [
+                    'versi' => 1,
+                    'nama_asli' => "Memo_Permohonan_PPK_{$item['nomor_permohonan']}.pdf",
+                    'nama_hash' => "docs/dummy_memo_ppk_{$item['nomor_permohonan']}.pdf",
+                    'mime_type' => 'application/pdf',
+                    'ukuran_bytes' => 1048576,
+                    'uploaded_by' => $ppkUser?->id ?? 1,
+                    'created_at' => Carbon::now()->subDays(19 - $index),
+                ]
+            );
+
+            // 2. Dokumen Pengadaan
+            Dokumen::firstOrCreate(
+                [
+                    'ref_type' => 'pengadaan',
+                    'ref_id' => $pengadaan->id,
+                    'tipe_dokumen' => 'dokumen_pengadaan',
+                ],
+                [
+                    'versi' => 1,
+                    'nama_asli' => "Dokumen_Pengadaan_{$item['nomor_permohonan']}.pdf",
+                    'nama_hash' => "docs/dummy_pengadaan_{$item['nomor_permohonan']}.pdf",
+                    'mime_type' => 'application/pdf',
+                    'ukuran_bytes' => 5242880,
+                    'uploaded_by' => $ppUser?->id ?? 1,
+                    'created_at' => Carbon::now()->subDays(17 - $index),
+                ]
+            );
+
+            // 3. Dokumen Pembelian (diunggah oleh PPBJ)
+            $pembelianDocsToSeed = [
+                ['tipe' => 'surat_kontrak', 'nama' => "Surat_Kontrak_{$item['nomor_permohonan']}.pdf", 'size' => 3145728],
+                ['tipe' => 'spk', 'nama' => "SPK_{$item['nomor_permohonan']}.pdf", 'size' => 2097152],
+                ['tipe' => 'kwitansi', 'nama' => "Kwitansi_{$item['nomor_permohonan']}.pdf", 'size' => 1048576],
+                ['tipe' => 'invoice', 'nama' => "Invoice_{$item['nomor_permohonan']}.pdf", 'size' => 1048576],
+                ['tipe' => 'surat_pembelian', 'nama' => "Surat_Pembelian_{$item['nomor_permohonan']}.pdf", 'size' => 2097152],
+            ];
+
+            foreach ($pembelianDocsToSeed as $pDoc) {
+                Dokumen::firstOrCreate(
+                    [
+                        'ref_type' => 'kontrak',
+                        'ref_id' => $kontrak->id,
+                        'tipe_dokumen' => $pDoc['tipe'],
+                    ],
+                    [
+                        'versi' => 1,
+                        'nama_asli' => $pDoc['nama'],
+                        'nama_hash' => "docs/{$pDoc['nama']}",
+                        'mime_type' => 'application/pdf',
+                        'ukuran_bytes' => $pDoc['size'],
+                        'uploaded_by' => $ppbjUser?->id ?? 1,
+                        'created_at' => Carbon::now()->subDays(15 - $index),
+                    ]
+                );
+            }
+
+            // 4. Dokumen Pembayaran & Memo Persetujuan
+            Dokumen::firstOrCreate(
+                [
+                    'ref_type' => 'pembayaran',
+                    'ref_id' => $pembayaran->id,
+                    'tipe_dokumen' => 'dokumen_pembayaran',
+                ],
+                [
+                    'versi' => 1,
+                    'nama_asli' => "Dokumen_Pembayaran_{$item['nomor_permohonan']}.pdf",
+                    'nama_hash' => "docs/Dokumen_Pembayaran_{$item['nomor_permohonan']}.pdf",
+                    'mime_type' => 'application/pdf',
+                    'ukuran_bytes' => 3145728,
+                    'uploaded_by' => $ppbjUser?->id ?? 1,
+                    'created_at' => Carbon::now()->subDays(14 - $index),
+                ]
+            );
+
+            Dokumen::firstOrCreate(
+                [
+                    'ref_type' => 'pengadaan',
+                    'ref_id' => $pengadaan->id,
+                    'tipe_dokumen' => 'memo_persetujuan_bidang2',
+                ],
+                [
+                    'versi' => 1,
+                    'nama_asli' => "Memo_Persetujuan_Pembayaran_Bidang_2_{$item['nomor_permohonan']}.pdf",
+                    'nama_hash' => "docs/Memo_Persetujuan_Pembayaran_Bidang_2_{$item['nomor_permohonan']}.pdf",
+                    'mime_type' => 'application/pdf',
+                    'ukuran_bytes' => 1048576,
+                    'uploaded_by' => $bidang2User?->id ?? 1,
+                    'created_at' => Carbon::now()->subDays(13 - $index),
+                ]
+            );
+
+            Dokumen::firstOrCreate(
+                [
+                    'ref_type' => 'pengadaan',
+                    'ref_id' => $pengadaan->id,
+                    'tipe_dokumen' => 'memo_persetujuan_ppk',
+                ],
+                [
+                    'versi' => 1,
+                    'nama_asli' => "Memo_Persetujuan_Pembayaran_PPK_{$item['nomor_permohonan']}.pdf",
+                    'nama_hash' => "docs/Memo_Persetujuan_Pembayaran_PPK_{$item['nomor_permohonan']}.pdf",
+                    'mime_type' => 'application/pdf',
+                    'ukuran_bytes' => 1048576,
+                    'uploaded_by' => $ppkUser?->id ?? 1,
+                    'created_at' => Carbon::now()->subDays(13 - $index),
+                ]
+            );
+
+            // 5. Dokumen Vendor (Legalitas Vendor oleh PPBJ)
+            Dokumen::firstOrCreate(
+                [
+                    'ref_type' => 'kontrak',
+                    'ref_id' => $kontrak->id,
+                    'tipe_dokumen' => 'dokumen_legalitas_vendor',
+                ],
+                [
+                    'versi' => 1,
+                    'nama_asli' => "Legalitas_Vendor_{$item['nomor_permohonan']}.pdf",
+                    'nama_hash' => "docs/Legalitas_Vendor_{$item['nomor_permohonan']}.pdf",
+                    'mime_type' => 'application/pdf',
+                    'ukuran_bytes' => 3145728,
+                    'uploaded_by' => $ppbjUser?->id ?? 1,
+                    'created_at' => Carbon::now()->subDays(15 - $index),
+                ]
+            );
+
+            // Bukti Bayar jika sudah selesai
             if ($isSelesai && $keuanganUser) {
                 Dokumen::firstOrCreate(
                     [

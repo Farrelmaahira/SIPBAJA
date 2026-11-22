@@ -240,6 +240,7 @@ class KeuanganService
             'Permohonan.Unit',
             'Permohonan.Creator',
             'Permohonan.PermohonanMak.Mak.Ppk',
+            'PermohonanMak.Mak.Ppk',
             'Jenis',
             'Metode',
             'Level',
@@ -248,6 +249,7 @@ class KeuanganService
             'Kontrak.Dokumen',
             'Penerimaan.Dokumen',
             'Dokumen',
+            'Approvals.Actor.role',
         ])->find($id);
 
         $kontrak = $dbItem?->Kontrak;
@@ -263,7 +265,7 @@ class KeuanganService
         $vendorNama = $kontrak?->vendor_nama ?: 'PT PNJ PPBJ JAYA ABADI';
 
         $nominalEstimasi = (float) ($permohonan?->estimasi_anggaran ?: 100000000.0);
-        $biayaRiil = (float) ($pembayaran?->nominal ?: ($kontrak?->nominal_kontrak ?: ($dbItem?->nominal ?: 98500000.0)));
+        $biayaRiil = (float) ($kontrak?->nominal_kontrak ?: ($pembayaran?->nominal ?: ($dbItem?->nominal ?: 98500000.0)));
 
         $tglPengajuanFormatted = $permohonan?->created_at
             ? Carbon::parse($permohonan->created_at)->locale('id')->isoFormat('DD MMMM YYYY')
@@ -273,79 +275,132 @@ class KeuanganService
             ? Carbon::parse($rencana->tanggal_jatuh_tempo)->locale('id')->isoFormat('DD MMMM YYYY')
             : '18 Maret 2027';
 
-        // Dokumen Permohonan (Surat Permohonan, Memo Permohonan Bidang 2, Memo Permohonan PPK)
-        $dokumenPermohonan = [
-            [
-                'id' => 1,
-                'tipe' => 'Surat Permohonan',
-                'kategori' => 'permohonan',
-                'nama' => 'Surat_Permohonan_'.$nomorPermohonan.'.pdf',
-                'ukuran' => 'PDF · 2 MB',
-                'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/1?nama=Surat_Permohonan_{$nomorPermohonan}.pdf",
-                'is_image' => false,
-            ],
-            [
-                'id' => 2,
-                'tipe' => 'Memo Permohonan Bidang 2',
-                'kategori' => 'permohonan',
-                'nama' => 'Memo_Permohonan_Bidang_2_'.$nomorPermohonan.'.pdf',
-                'ukuran' => 'PDF · 1 MB',
-                'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/2?nama=Memo_Permohonan_Bidang_2_{$nomorPermohonan}.pdf",
-                'is_image' => false,
-            ],
-            [
-                'id' => 3,
-                'tipe' => 'Memo Permohonan PPK',
-                'kategori' => 'permohonan',
-                'nama' => 'Memo_Permohonan_PPK_'.$nomorPermohonan.'.pdf',
-                'ukuran' => 'PDF · 1 MB',
-                'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/3?nama=Memo_Permohonan_PPK_{$nomorPermohonan}.pdf",
-                'is_image' => false,
-            ],
-        ];
+        // 1. Dokumen Permohonan (Surat Permohonan, Memo Permohonan Bidang 2, Memo Permohonan PPK) dari Database
+        $dokumenPermohonan = [];
+        $dbPermohonanDocs = $permohonan
+            ? Dokumen::where('ref_type', 'permohonan')->where('ref_id', $permohonan->id)->orderBy('id', 'asc')->get()
+            : collect();
 
-        // Dokumen Pengadaan (Dokumen Pengadaan, status Verifikasi PP dan PPK)
-        $dokumenPengadaan = [
-            [
-                'id' => 4,
-                'tipe' => 'Dokumen Pengadaan',
-                'kategori' => 'pengadaan',
-                'nama' => 'Dokumen_Pengadaan_Komputer.pdf',
-                'ukuran' => 'PDF · 5 MB',
-                'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/4?nama=Dokumen_Pengadaan_Komputer.pdf",
-                'is_image' => false,
-            ],
-        ];
-
-        // Dokumen Pembelian (Surat Kontrak, SPK, Kwitansi, Invoice, dan Surat Pembelian) - hanya yg diupload PPBJ
-        $dokumenPembelian = [];
-        if ($kontrak && $kontrak->Dokumen && $kontrak->Dokumen->isNotEmpty()) {
-            foreach ($kontrak->Dokumen as $kDoc) {
-                $tipeLower = strtolower($kDoc->tipe_dokumen ?? '');
-                if (in_array($tipeLower, ['kontrak', 'surat_kontrak', 'spk', 'kwitansi', 'invoice', 'surat_pembelian', 'dokumen_kontrak', 'faktur'], true)) {
-                    $label = match ($tipeLower) {
-                        'kontrak', 'surat_kontrak', 'dokumen_kontrak' => 'Surat Kontrak',
-                        'spk' => 'SPK',
-                        'kwitansi' => 'Kwitansi',
-                        'invoice', 'faktur' => 'Invoice',
-                        'surat_pembelian' => 'Surat Pembelian',
-                        default => ucwords(str_replace('_', ' ', $tipeLower)),
-                    };
-                    $dokumenPembelian[] = [
-                        'id' => $kDoc->id,
-                        'tipe' => $label,
-                        'kategori' => 'pembelian',
-                        'nama' => $kDoc->nama_asli,
-                        'ukuran' => $this->formatBytes($kDoc->ukuran_bytes ?? 2097152),
-                        'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/{$kDoc->id}",
-                        'is_image' => false,
-                    ];
-                }
+        if ($dbPermohonanDocs->isNotEmpty()) {
+            foreach ($dbPermohonanDocs as $doc) {
+                $tipeLower = strtolower($doc->tipe_dokumen ?? '');
+                $label = match ($tipeLower) {
+                    'surat_permohonan', 'permohonan' => 'Surat Permohonan',
+                    'memo_permohonan_bidang2', 'memo_bidang2', 'memo_persetujuan_bidang2' => 'Memo Permohonan Bidang 2',
+                    'memo_permohonan_ppk', 'memo_ppk', 'memo_persetujuan_ppk' => 'Memo Permohonan PPK',
+                    default => ucwords(str_replace('_', ' ', $doc->tipe_dokumen ?? 'Dokumen Permohonan')),
+                };
+                $dokumenPermohonan[] = [
+                    'id' => $doc->id,
+                    'tipe' => $label,
+                    'kategori' => 'permohonan',
+                    'nama' => $doc->nama_asli,
+                    'ukuran' => $this->formatBytes($doc->ukuran_bytes ?? 2097152),
+                    'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/{$doc->id}",
+                    'is_image' => str_starts_with($doc->mime_type ?? '', 'image/'),
+                ];
             }
+        } else {
+            $dokumenPermohonan = [
+                [
+                    'id' => 1,
+                    'tipe' => 'Surat Permohonan',
+                    'kategori' => 'permohonan',
+                    'nama' => 'Surat_Permohonan_'.$nomorPermohonan.'.pdf',
+                    'ukuran' => 'PDF · 2 MB',
+                    'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/1?nama=Surat_Permohonan_{$nomorPermohonan}.pdf",
+                    'is_image' => false,
+                ],
+                [
+                    'id' => 2,
+                    'tipe' => 'Memo Permohonan Bidang 2',
+                    'kategori' => 'permohonan',
+                    'nama' => 'Memo_Permohonan_Bidang_2_'.$nomorPermohonan.'.pdf',
+                    'ukuran' => 'PDF · 1 MB',
+                    'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/2?nama=Memo_Permohonan_Bidang_2_{$nomorPermohonan}.pdf",
+                    'is_image' => false,
+                ],
+                [
+                    'id' => 3,
+                    'tipe' => 'Memo Permohonan PPK',
+                    'kategori' => 'permohonan',
+                    'nama' => 'Memo_Permohonan_PPK_'.$nomorPermohonan.'.pdf',
+                    'ukuran' => 'PDF · 1 MB',
+                    'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/3?nama=Memo_Permohonan_PPK_{$nomorPermohonan}.pdf",
+                    'is_image' => false,
+                ],
+            ];
         }
 
-        // Mock default untuk sample/demo jika belum ada dokumen DB
-        if (empty($dokumenPembelian)) {
+        // 2. Dokumen Pengadaan dari Database
+        $dokumenPengadaan = [];
+        $dbPengadaanDocs = $dbItem
+            ? Dokumen::where('ref_type', 'pengadaan')
+                ->where('ref_id', $dbItem->id)
+                ->whereIn('tipe_dokumen', ['dokumen_pengadaan', 'pengadaan'])
+                ->orderBy('id', 'asc')
+                ->get()
+            : collect();
+
+        if ($dbPengadaanDocs->isNotEmpty()) {
+            foreach ($dbPengadaanDocs as $doc) {
+                $dokumenPengadaan[] = [
+                    'id' => $doc->id,
+                    'tipe' => 'Dokumen Pengadaan',
+                    'kategori' => 'pengadaan',
+                    'nama' => $doc->nama_asli,
+                    'ukuran' => $this->formatBytes($doc->ukuran_bytes ?? 5242880),
+                    'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/{$doc->id}",
+                    'is_image' => str_starts_with($doc->mime_type ?? '', 'image/'),
+                ];
+            }
+        } else {
+            $dokumenPengadaan = [
+                [
+                    'id' => 4,
+                    'tipe' => 'Dokumen Pengadaan',
+                    'kategori' => 'pengadaan',
+                    'nama' => 'Dokumen_Pengadaan_'.$nomorPermohonan.'.pdf',
+                    'ukuran' => 'PDF · 5 MB',
+                    'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/4?nama=Dokumen_Pengadaan_{$nomorPermohonan}.pdf",
+                    'is_image' => false,
+                ],
+            ];
+        }
+
+        // 3. Dokumen Pembelian (Surat Kontrak, SPK, Kwitansi, Invoice, dan Surat Pembelian) dari Database (hanya yg diupload PPBJ)
+        $dokumenPembelian = [];
+        $dbPembelianDocs = $kontrak
+            ? Dokumen::where('ref_type', 'kontrak')
+                ->where('ref_id', $kontrak->id)
+                ->whereIn('tipe_dokumen', ['kontrak', 'surat_kontrak', 'spk', 'kwitansi', 'invoice', 'surat_pembelian', 'dokumen_kontrak', 'faktur'])
+                ->orderBy('id', 'asc')
+                ->get()
+            : collect();
+
+        if ($dbPembelianDocs->isNotEmpty()) {
+            foreach ($dbPembelianDocs as $kDoc) {
+                $tipeLower = strtolower($kDoc->tipe_dokumen ?? '');
+                $label = match ($tipeLower) {
+                    'kontrak', 'surat_kontrak', 'dokumen_kontrak' => 'Surat Kontrak',
+                    'spk' => 'SPK',
+                    'kwitansi' => 'Kwitansi',
+                    'invoice', 'faktur' => 'Invoice',
+                    'surat_pembelian' => 'Surat Pembelian',
+                    default => ucwords(str_replace('_', ' ', $tipeLower)),
+                };
+                $dokumenPembelian[] = [
+                    'id' => $kDoc->id,
+                    'tipe' => $label,
+                    'kategori' => 'pembelian',
+                    'nama' => $kDoc->nama_asli,
+                    'ukuran' => $this->formatBytes($kDoc->ukuran_bytes ?? 2097152),
+                    'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/{$kDoc->id}",
+                    'is_image' => str_starts_with($kDoc->mime_type ?? '', 'image/'),
+                ];
+            }
+        } elseif (empty($id) || $id == 1) {
+            // Mock sample untuk ID 1 jika belum di-seed
             $dokumenPembelian = [
                 [
                     'id' => 5,
@@ -395,58 +450,100 @@ class KeuanganService
             ];
         }
 
-        // Dokumen Pembayaran (Dokumen Pembayaran, Memo Persetujuan Bidang 2, dan Memo Persetujuan PPK)
-        $dokumenPembayaran = [
-            [
-                'id' => 10,
-                'tipe' => 'Dokumen Pembayaran',
-                'kategori' => 'pembayaran',
-                'nama' => 'Dokumen_Pembayaran_'.$nomorPermohonan.'.pdf',
-                'ukuran' => 'PDF · 3 MB',
-                'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/10?nama=Dokumen_Pembayaran_{$nomorPermohonan}.pdf",
-                'is_image' => false,
-            ],
-            [
-                'id' => 11,
-                'tipe' => 'Memo Persetujuan Bidang 2',
-                'kategori' => 'pembayaran',
-                'nama' => 'Memo_Persetujuan_Pembayaran_Bidang_2_'.$nomorPermohonan.'.pdf',
-                'ukuran' => 'PDF · 1 MB',
-                'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/11?nama=Memo_Persetujuan_Pembayaran_Bidang_2_{$nomorPermohonan}.pdf",
-                'is_image' => false,
-            ],
-            [
-                'id' => 12,
-                'tipe' => 'Memo Persetujuan PPK',
-                'kategori' => 'pembayaran',
-                'nama' => 'Memo_Persetujuan_Pembayaran_PPK_'.$nomorPermohonan.'.pdf',
-                'ukuran' => 'PDF · 1 MB',
-                'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/12?nama=Memo_Persetujuan_Pembayaran_PPK_{$nomorPermohonan}.pdf",
-                'is_image' => false,
-            ],
-        ];
+        // 4. Dokumen Pembayaran (Dokumen Pembayaran, Memo Persetujuan Bidang 2, dan Memo Persetujuan PPK) dari Database
+        $dokumenPembayaran = [];
+        $dbPembayaranDocs = collect();
+        if ($pembayaran) {
+            $dbPembayaranDocs = Dokumen::where('ref_type', 'pembayaran')
+                ->where('ref_id', $pembayaran->id)
+                ->where('tipe_dokumen', '!=', 'bukti_bayar')
+                ->orderBy('id', 'asc')
+                ->get();
+        }
+        $dbMemoPersetujuan = $dbItem
+            ? Dokumen::where('ref_type', 'pengadaan')
+                ->where('ref_id', $dbItem->id)
+                ->whereIn('tipe_dokumen', ['memo_persetujuan_pembayaran', 'memo_persetujuan_bidang2', 'memo_persetujuan_ppk'])
+                ->orderBy('id', 'asc')
+                ->get()
+            : collect();
 
-        // Dokumen Vendor (Dokumen Legalitas Vendor) - hanya yg diupload PPBJ
-        $dokumenVendor = [];
-        if ($kontrak && $kontrak->Dokumen && $kontrak->Dokumen->isNotEmpty()) {
-            foreach ($kontrak->Dokumen as $kDoc) {
-                $tipeLower = strtolower($kDoc->tipe_dokumen ?? '');
-                if (in_array($tipeLower, ['legalitas', 'legalitas_vendor', 'vendor', 'akta', 'nib', 'npwp', 'siup'], true)) {
-                    $dokumenVendor[] = [
-                        'id' => $kDoc->id,
-                        'tipe' => 'Dokumen Legalitas Vendor',
-                        'kategori' => 'vendor',
-                        'nama' => $kDoc->nama_asli,
-                        'ukuran' => $this->formatBytes($kDoc->ukuran_bytes ?? 3145728),
-                        'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/{$kDoc->id}",
-                        'is_image' => false,
-                    ];
-                }
+        $allPayDocs = $dbPembayaranDocs->concat($dbMemoPersetujuan);
+
+        if ($allPayDocs->isNotEmpty()) {
+            foreach ($allPayDocs as $doc) {
+                $label = match (strtolower($doc->tipe_dokumen ?? '')) {
+                    'dokumen_pembayaran', 'pembayaran' => 'Dokumen Pembayaran',
+                    'memo_persetujuan_bidang2', 'memo_pembayaran_bidang2' => 'Memo Persetujuan Bidang 2',
+                    'memo_persetujuan_ppk', 'memo_pembayaran_ppk', 'memo_persetujuan_pembayaran' => 'Memo Persetujuan PPK',
+                    default => ucwords(str_replace('_', ' ', $doc->tipe_dokumen ?? 'Dokumen Pembayaran')),
+                };
+                $dokumenPembayaran[] = [
+                    'id' => $doc->id,
+                    'tipe' => $label,
+                    'kategori' => 'pembayaran',
+                    'nama' => $doc->nama_asli,
+                    'ukuran' => $this->formatBytes($doc->ukuran_bytes ?? 2097152),
+                    'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/{$doc->id}",
+                    'is_image' => str_starts_with($doc->mime_type ?? '', 'image/'),
+                ];
             }
+        } else {
+            $dokumenPembayaran = [
+                [
+                    'id' => 10,
+                    'tipe' => 'Dokumen Pembayaran',
+                    'kategori' => 'pembayaran',
+                    'nama' => 'Dokumen_Pembayaran_'.$nomorPermohonan.'.pdf',
+                    'ukuran' => 'PDF · 3 MB',
+                    'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/10?nama=Dokumen_Pembayaran_{$nomorPermohonan}.pdf",
+                    'is_image' => false,
+                ],
+                [
+                    'id' => 11,
+                    'tipe' => 'Memo Persetujuan Bidang 2',
+                    'kategori' => 'pembayaran',
+                    'nama' => 'Memo_Persetujuan_Pembayaran_Bidang_2_'.$nomorPermohonan.'.pdf',
+                    'ukuran' => 'PDF · 1 MB',
+                    'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/11?nama=Memo_Persetujuan_Pembayaran_Bidang_2_{$nomorPermohonan}.pdf",
+                    'is_image' => false,
+                ],
+                [
+                    'id' => 12,
+                    'tipe' => 'Memo Persetujuan PPK',
+                    'kategori' => 'pembayaran',
+                    'nama' => 'Memo_Persetujuan_Pembayaran_PPK_'.$nomorPermohonan.'.pdf',
+                    'ukuran' => 'PDF · 1 MB',
+                    'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/12?nama=Memo_Persetujuan_Pembayaran_PPK_{$nomorPermohonan}.pdf",
+                    'is_image' => false,
+                ],
+            ];
         }
 
-        // Mock default vendor legalitas jika belum ada dokumen DB
-        if (empty($dokumenVendor)) {
+        // 5. Dokumen Vendor (Dokumen Legalitas Vendor dari Database - hanya yg diupload PPBJ)
+        $dokumenVendor = [];
+        $dbVendorDocs = $kontrak
+            ? Dokumen::where('ref_type', 'kontrak')
+                ->where('ref_id', $kontrak->id)
+                ->whereIn('tipe_dokumen', ['legalitas', 'legalitas_vendor', 'dokumen_legalitas_vendor', 'vendor', 'akta', 'nib', 'npwp', 'siup'])
+                ->orderBy('id', 'asc')
+                ->get()
+            : collect();
+
+        if ($dbVendorDocs->isNotEmpty()) {
+            foreach ($dbVendorDocs as $kDoc) {
+                $dokumenVendor[] = [
+                    'id' => $kDoc->id,
+                    'tipe' => 'Dokumen Legalitas Vendor',
+                    'kategori' => 'vendor',
+                    'nama' => $kDoc->nama_asli,
+                    'ukuran' => $this->formatBytes($kDoc->ukuran_bytes ?? 3145728),
+                    'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/{$kDoc->id}",
+                    'is_image' => str_starts_with($kDoc->mime_type ?? '', 'image/'),
+                ];
+            }
+        } elseif (empty($id) || $id == 1) {
+            // Mock sample untuk ID 1 jika belum di-seed
             $dokumenVendor = [
                 [
                     'id' => 13,
@@ -468,6 +565,22 @@ class KeuanganService
             $dokumenVendor
         );
 
+        // Verifikasi PP & Persetujuan PPK dari Database
+        $ppApproval = $dbItem?->Approvals?->firstWhere('tahap', 'PP');
+        $ppkApproval = $dbItem?->Approvals?->firstWhere('tahap', 'PPK');
+
+        $verifikasiPpText = 'Diverifikasi oleh PP';
+        if ($ppApproval && $ppApproval->Actor) {
+            $verifikasiPpText = 'Diverifikasi oleh PP ('.$ppApproval->Actor->nama.')';
+        }
+
+        $persetujuanPpkText = 'Disetujui oleh PPK';
+        if ($ppkApproval && $ppkApproval->Actor) {
+            $persetujuanPpkText = 'Disetujui oleh PPK ('.$ppkApproval->Actor->nama.')';
+        } elseif ($dbItem?->Ppk) {
+            $persetujuanPpkText = 'Disetujui oleh PPK ('.$dbItem->Ppk->nama.')';
+        }
+
         $dokumenKategori = [
             'permohonan' => [
                 'label' => 'Dokumen Permohonan',
@@ -478,8 +591,8 @@ class KeuanganService
                 'label' => 'Dokumen Pengadaan',
                 'deskripsi' => 'Dokumen Pengadaan beserta status verifikasi PP dan PPK',
                 'items' => $dokumenPengadaan,
-                'verifikasi_pp' => 'Diverifikasi oleh PP',
-                'persetujuan_ppk' => 'Disetujui oleh PPK',
+                'verifikasi_pp' => $verifikasiPpText,
+                'persetujuan_ppk' => $persetujuanPpkText,
             ],
             'pembelian' => [
                 'label' => 'Dokumen Pembelian',
@@ -498,77 +611,126 @@ class KeuanganService
             ],
         ];
 
-        // Kartu Jenis MAK (hanya 1 Jenis MAK yang digunakan pengadaan)
-        $firstMak = $permohonan?->PermohonanMak?->first()?->Mak;
+        // Kartu Jenis MAK dari Database (hanya 1 Jenis MAK yang digunakan pengadaan)
+        $mak = $dbItem?->PermohonanMak?->Mak ?? $permohonan?->PermohonanMak?->first()?->Mak;
+        $ppkMak = $mak?->Ppk ?? $dbItem?->Ppk;
         $jenisMakCards = [
             [
-                'kode' => $firstMak?->kode ?: '532111',
-                'nama' => $firstMak?->nama ?: 'Belanja Modal Peralatan dan Mesin',
-                'penanggung_jawab' => ($firstMak?->Ppk?->nama ? $firstMak->Ppk->nama.' · PPK' : 'Budi Santoso · PPK'),
+                'kode' => $mak?->kode ?: '532111',
+                'nama' => $mak?->nama ?: 'Belanja Modal Peralatan dan Mesin',
+                'penanggung_jawab' => ($ppkMak?->nama ? $ppkMak->nama.' · PPK' : 'Budi Santoso · PPK'),
             ],
         ];
 
-        // Tracking Stepper 5-tahap
+        // Tracking Stepper 5-tahap berdasarkan status database
+        $isPermohonanSelesai = $permohonan?->status === 'disetujui' || $dbItem !== null;
+        $isPengadaanSelesai = $dbItem && $dbItem->status !== 'draft';
+        $isPembelianSelesai = $kontrak !== null;
+        $isPenerimaanSelesai = $dbItem?->Penerimaan !== null || $isSelesai;
+
         $stepper = [
             [
                 'id' => 'permohonan',
                 'label' => 'Permohonan',
-                'status' => 'selesai',
+                'status' => $isPermohonanSelesai ? 'selesai' : 'current',
                 'icon' => 'check',
             ],
             [
                 'id' => 'pengadaan',
                 'label' => 'Pengadaan',
-                'status' => 'selesai',
+                'status' => $isPengadaanSelesai ? 'selesai' : ($isPermohonanSelesai ? 'current' : 'pending'),
                 'icon' => 'file',
             ],
             [
                 'id' => 'pembelian',
                 'label' => 'Pembelian Barang',
-                'status' => 'selesai',
+                'status' => $isPembelianSelesai ? 'selesai' : ($isPengadaanSelesai ? 'current' : 'pending'),
                 'icon' => 'cart',
             ],
             [
                 'id' => 'penerimaan',
                 'label' => 'Penerimaan Barang',
-                'status' => 'selesai',
+                'status' => $isPenerimaanSelesai ? 'selesai' : ($isPembelianSelesai ? 'current' : 'pending'),
                 'icon' => 'package',
             ],
             [
                 'id' => 'selesai',
                 'label' => 'Selesai',
-                'status' => $isSelesai ? 'selesai' : 'current',
+                'status' => $isSelesai ? 'selesai' : ($isPenerimaanSelesai ? 'current' : 'pending'),
                 'sublabel' => $isSelesai ? 'Pembayaran Selesai' : 'Menunggu bukti pembayaran',
                 'icon' => 'target',
             ],
         ];
 
-        // Timeline Log
-        $timeline = [
-            [
-                'waktu' => '17-05-2027 10:30',
-                'deskripsi' => 'Memo persetujuan pembayaran diterbitkan oleh Bidang 2 dan PPK',
-            ],
-            [
-                'waktu' => '14-05-2027 09:15',
-                'deskripsi' => 'Dokumen pembayaran dan legalitas vendor diunggah oleh PPBJ',
-            ],
-            [
-                'waktu' => '16-03-2027 13:45',
-                'deskripsi' => 'Dokumentasi dan berita acara penerimaan barang diunggah',
-            ],
-        ];
+        // Timeline Log dari StatusHistory di Database
+        $timeline = [];
+        $dbHistories = StatusHistory::where(function ($q) use ($dbItem, $permohonan) {
+            if ($dbItem) {
+                $q->where('ref_type', 'pengadaan')->where('ref_id', $dbItem->id);
+            }
+            if ($permohonan) {
+                $q->orWhere(fn ($sub) => $sub->where('ref_type', 'permohonan')->where('ref_id', $permohonan->id));
+            }
+        })->with('Actor.role')->orderBy('created_at', 'desc')->get();
+
+        if ($dbHistories->isNotEmpty()) {
+            foreach ($dbHistories as $h) {
+                $actorNama = $h->Actor?->nama ?? 'Sistem';
+                $roleNama = $h->Actor?->role?->nama ?? '';
+                $waktuFormatted = Carbon::parse($h->created_at)->locale('id')->isoFormat('DD-MM-YYYY HH:mm');
+
+                $statusLamaLabel = ucwords(str_replace('_', ' ', $h->status_lama ?? ''));
+                $statusBaruLabel = ucwords(str_replace('_', ' ', $h->status_baru ?? ''));
+
+                $deskripsi = "Status {$h->ref_type} diperbarui dari {$statusLamaLabel} menjadi {$statusBaruLabel} oleh {$actorNama}".($roleNama ? " ({$roleNama})" : '');
+
+                if ($h->status_baru === 'selesai') {
+                    $deskripsi = "Pencairan dana dan pembayaran telah diselesaikan oleh {$actorNama} (Keuangan)";
+                } elseif ($h->status_baru === 'berjalan') {
+                    $deskripsi = 'Paket pengadaan aktif diproses dan diverifikasi oleh Pejabat Pengadaan & PPK';
+                }
+
+                $timeline[] = [
+                    'waktu' => $waktuFormatted,
+                    'deskripsi' => $deskripsi,
+                ];
+            }
+        } else {
+            $tglSelesai = $pembayaran?->updated_at ?? now()->subDays(2);
+            $tglBeli = $kontrak?->created_at ?? now()->subDays(7);
+            $tglAjukan = $permohonan?->created_at ?? now()->subDays(14);
+
+            $timeline = [
+                [
+                    'waktu' => Carbon::parse($tglSelesai)->locale('id')->isoFormat('DD-MM-YYYY HH:mm'),
+                    'deskripsi' => 'Memo persetujuan pembayaran diterbitkan oleh Bidang 2 dan PPK',
+                ],
+                [
+                    'waktu' => Carbon::parse($tglBeli)->locale('id')->isoFormat('DD-MM-YYYY HH:mm'),
+                    'deskripsi' => 'Dokumen pembayaran dan legalitas vendor diunggah oleh PPBJ',
+                ],
+                [
+                    'waktu' => Carbon::parse($tglAjukan)->locale('id')->isoFormat('DD-MM-YYYY HH:mm'),
+                    'deskripsi' => 'Permohonan pengadaan diajukan dan diverifikasi oleh Perencanaan',
+                ],
+            ];
+        }
 
         // Data Bukti Bayar jika sudah selesai
         $existingBuktiDocs = [];
         if ($pembayaran) {
-            $buktiDocs = $pembayaran->Dokumen()->where('tipe_dokumen', 'bukti_bayar')->get();
+            $buktiDocs = $pembayaran->Dokumen()->where('tipe_dokumen', 'bukti_bayar')->orderBy('id', 'asc')->get();
+            $defaultTgl = $rencana?->tanggal_jatuh_tempo ? Carbon::parse($rencana->tanggal_jatuh_tempo) : now();
+
             foreach ($buktiDocs as $bDoc) {
+                $docDate = $bDoc->created_at ? Carbon::parse($bDoc->created_at) : $defaultTgl;
                 $existingBuktiDocs[] = [
                     'id' => $bDoc->id,
                     'nama' => $bDoc->nama_asli,
                     'ukuran' => $this->formatBytes($bDoc->ukuran_bytes ?? 1024000),
                     'url' => "/api/v1/keuangan/pengadaan/{$id}/dokumen/{$bDoc->id}",
+                    'tanggal_pembayaran' => $docDate->format('Y-m-d'),
+                    'tanggal_pembayaran_formatted' => $docDate->locale('id')->isoFormat('D MMMM YYYY'),
                 ];
             }
         }
@@ -587,11 +749,11 @@ class KeuanganService
                 'no_pengadaan' => $nomorPengadaan,
                 'jenis_pengadaan' => $dbItem?->Jenis?->nama ?? 'Barang',
                 'nominal_estimasi' => $nominalEstimasi,
-                'verifikasi_pp' => 'Diverifikasi oleh PP',
+                'verifikasi_pp' => $verifikasiPpText,
                 'nomor_permohonan' => $nomorPermohonan,
                 'metode_pengadaan' => $dbItem?->Metode?->nama ?? 'Non Tender',
                 'biaya_riil' => $biayaRiil,
-                'persetujuan_ppk' => 'Disetujui oleh PPK',
+                'persetujuan_ppk' => $persetujuanPpkText,
                 'tanggal_pengajuan' => $tglPengajuanFormatted,
                 'level_pengadaan' => $dbItem?->Level?->nama ?? '50-200 Juta',
                 'nama_vendor' => $vendorNama,
@@ -711,10 +873,53 @@ class KeuanganService
                 $pembayaran->save();
             }
 
-            // Simpan setiap berkas bukti bayar
+            // Tangani pembaruan jika dalam mode edit
+            $isEdit = ! empty($data['is_edit']);
+            $existingItems = $data['existing_items'] ?? [];
+            if (! is_array($existingItems)) {
+                $existingItems = json_decode($existingItems, true) ?: [];
+            }
+
+            $keptDocIds = [];
+            foreach ($existingItems as $eItem) {
+                if (! empty($eItem['id'])) {
+                    $docId = (int) $eItem['id'];
+                    $doc = Dokumen::where('ref_type', 'pembayaran')
+                        ->where('ref_id', $pembayaran->id)
+                        ->where('id', $docId)
+                        ->first();
+
+                    if ($doc) {
+                        $keptDocIds[] = $doc->id;
+                        if (! empty($eItem['tanggal_pembayaran'])) {
+                            $doc->created_at = Carbon::parse($eItem['tanggal_pembayaran'])
+                                ->setTime(now()->hour, now()->minute, now()->second);
+                            $doc->save();
+                        }
+                    }
+                }
+            }
+
+            if ($isEdit) {
+                Dokumen::where('ref_type', 'pembayaran')
+                    ->where('ref_id', $pembayaran->id)
+                    ->where('tipe_dokumen', 'bukti_bayar')
+                    ->whereNotIn('id', $keptDocIds)
+                    ->delete();
+            }
+
+            // Simpan setiap berkas bukti bayar baru
+            $tanggalList = $data['tanggal_pembayaran_list'] ?? [];
+            if (! is_array($tanggalList)) {
+                $tanggalList = [$tanggalList];
+            }
+
             $uploadedDocs = [];
-            foreach ($buktiBayarFiles as $file) {
+            foreach ($buktiBayarFiles as $idx => $file) {
                 if ($file instanceof UploadedFile) {
+                    $itemTanggal = $tanggalList[$idx] ?? ($data['tanggal_pembayaran'] ?? now()->toDateString());
+                    $createdAt = Carbon::parse($itemTanggal)->setTime(now()->hour, now()->minute, now()->second);
+
                     $originalName = $file->getClientOriginalName();
                     $storedPath = $file->store('dokumen/pembayaran', 'local');
                     $storedFileName = basename($storedPath);
@@ -729,13 +934,15 @@ class KeuanganService
                         'mime_type' => $file->getClientMimeType() ?: 'application/pdf',
                         'ukuran_bytes' => $file->getSize() ?: 1024000,
                         'uploaded_by' => $actor->id,
-                        'created_at' => now(),
+                        'created_at' => $createdAt,
                     ]);
 
                     $uploadedDocs[] = [
                         'id' => $dokumen->id,
                         'nama' => $dokumen->nama_asli,
                         'ukuran' => $this->formatBytes($dokumen->ukuran_bytes),
+                        'tanggal_pembayaran' => Carbon::parse($createdAt)->format('Y-m-d'),
+                        'tanggal_pembayaran_formatted' => Carbon::parse($createdAt)->locale('id')->isoFormat('D MMMM YYYY'),
                     ];
                 }
             }

@@ -1,5 +1,5 @@
 import { useEffect, useState, type FC } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../../hooks/useAuth';
 import keuanganService from '../../../services/keuanganService';
@@ -8,24 +8,67 @@ import api from '../../../services/api';
 import type {
   KeuanganPengadaanDetail,
   KeuanganDokumenItem,
+  BuktiBayarFormItem,
+  KeuanganBuktiBayarItem,
 } from '../../../types/keuangan';
 
 export const KeuanganPengadaanShow: FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
 
   const [detail, setDetail] = useState<KeuanganPengadaanDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
-  const [tanggalPembayaran, setTanggalPembayaran] = useState('');
-  const [buktiBayarFiles, setBuktiBayarFiles] = useState<File[]>([]);
+  const [buktiBayarItems, setBuktiBayarItems] = useState<BuktiBayarFormItem[]>([
+    { id: 'item-1', tanggal_pembayaran: '', file: null },
+  ]);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => {
+      setToast(null);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   // Preview Document Modal State
   const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
   const [previewDocName, setPreviewDocName] = useState<string | null>(null);
+
+  const handleStartEdit = () => {
+    if (detail?.pembayaran?.dokumen_bukti_bayar && detail.pembayaran.dokumen_bukti_bayar.length > 0) {
+      setBuktiBayarItems(
+        detail.pembayaran.dokumen_bukti_bayar.map((doc, idx) => ({
+          id: `existing-${doc.id || idx}`,
+          tanggal_pembayaran: doc.tanggal_pembayaran || detail.pembayaran?.tanggal_pembayaran || '',
+          file: null,
+          existing_file: doc,
+        }))
+      );
+    } else {
+      setBuktiBayarItems([
+        {
+          id: 'item-1',
+          tanggal_pembayaran: detail?.pembayaran?.tanggal_pembayaran || '',
+          file: null,
+        },
+      ]);
+    }
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    searchParams.delete('edit');
+    setSearchParams(searchParams, { replace: true });
+    setBuktiBayarItems([{ id: 'item-1', tanggal_pembayaran: detail?.pembayaran?.tanggal_pembayaran || '', file: null }]);
+  };
 
   const fetchDetail = async (signal?: AbortSignal) => {
     if (!id) return;
@@ -33,8 +76,26 @@ export const KeuanganPengadaanShow: FC = () => {
     try {
       const data = await keuanganService.getPengadaanDetail(id, signal);
       setDetail(data);
-      if (data.pembayaran?.tanggal_pembayaran) {
-        setTanggalPembayaran(data.pembayaran.tanggal_pembayaran);
+
+      if (searchParams.get('edit') === 'true') {
+        if (data.pembayaran?.dokumen_bukti_bayar && data.pembayaran.dokumen_bukti_bayar.length > 0) {
+          setBuktiBayarItems(
+            data.pembayaran.dokumen_bukti_bayar.map((doc, idx) => ({
+              id: `existing-${doc.id || idx}`,
+              tanggal_pembayaran: doc.tanggal_pembayaran || data.pembayaran?.tanggal_pembayaran || '',
+              file: null,
+              existing_file: doc,
+            }))
+          );
+        }
+        setIsEditing(true);
+      } else if (data.pembayaran?.tanggal_pembayaran) {
+        setBuktiBayarItems((prev) => {
+          if (prev.length === 1 && !prev[0].tanggal_pembayaran && !prev[0].file) {
+            return [{ ...prev[0], tanggal_pembayaran: data.pembayaran?.tanggal_pembayaran || '' }];
+          }
+          return prev;
+        });
       }
     } catch (err: unknown) {
       if (axios.isCancel(err) || signal?.aborted) return;
@@ -52,12 +113,34 @@ export const KeuanganPengadaanShow: FC = () => {
     return () => controller.abort();
   }, [id]);
 
-  const handleAddBuktiBayar = (newFiles: File[]) => {
-    setBuktiBayarFiles((prev) => [...prev, ...newFiles]);
+  const handleAddBuktiBayarItem = () => {
+    setBuktiBayarItems((prev) => [
+      ...prev,
+      {
+        id: `item-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        tanggal_pembayaran: prev[prev.length - 1]?.tanggal_pembayaran || '',
+        file: null,
+      },
+    ]);
   };
 
-  const handleRemoveBuktiBayar = (index: number) => {
-    setBuktiBayarFiles((prev) => prev.filter((_, i) => i !== index));
+  const handleRemoveBuktiBayarItem = (index: number) => {
+    if (buktiBayarItems.length <= 1) return;
+    setBuktiBayarItems((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUpdateBuktiBayarItem = (
+    index: number,
+    field: 'tanggal_pembayaran' | 'file' | 'existing_file',
+    value: string | File | KeuanganBuktiBayarItem | null
+  ) => {
+    setBuktiBayarItems((prev) => {
+      const next = [...prev];
+      if (next[index]) {
+        next[index] = { ...next[index], [field]: value };
+      }
+      return next;
+    });
   };
 
   const handleViewDokumen = async (doc: KeuanganDokumenItem) => {
@@ -120,28 +203,72 @@ export const KeuanganPengadaanShow: FC = () => {
   const handleSubmitBuktiBayar = async () => {
     if (!id || isSubmitting) return;
 
+    const validItems = buktiBayarItems.filter((item) => item.file !== null || item.existing_file);
+    if (validItems.length === 0) {
+      setToast({
+        type: 'error',
+        message: 'Silakan unggah atau sertakan minimal satu berkas bukti pembayaran.',
+      });
+      return;
+    }
+
+    const missingDate = validItems.some((item) => !item.tanggal_pembayaran);
+    if (missingDate) {
+      setToast({
+        type: 'error',
+        message: 'Silakan isi tanggal pembayaran untuk seluruh bukti pembayaran.',
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const formData = new FormData();
-      formData.append('tanggal_pembayaran', tanggalPembayaran);
+      const primaryDate =
+        validItems[validItems.length - 1].tanggal_pembayaran || validItems[0].tanggal_pembayaran;
+      formData.append('tanggal_pembayaran', primaryDate);
 
-      buktiBayarFiles.forEach((file) => {
-        formData.append('bukti_bayar[]', file);
+      if (isEditing) {
+        formData.append('is_edit', '1');
+      }
+
+      let existingIdx = 0;
+      validItems.forEach((item, index) => {
+        if (item.existing_file && !item.file) {
+          formData.append(`existing_items[${existingIdx}][id]`, String(item.existing_file.id));
+          formData.append(`existing_items[${existingIdx}][tanggal_pembayaran]`, item.tanggal_pembayaran);
+          existingIdx++;
+        } else if (item.file) {
+          formData.append('bukti_bayar[]', item.file);
+          formData.append('tanggal_pembayaran_list[]', item.tanggal_pembayaran);
+          formData.append(`items[${index}][tanggal_pembayaran]`, item.tanggal_pembayaran);
+        }
       });
 
       await keuanganService.storeBuktiBayar(id, formData);
 
-      // Bersihkan antrean berkas dan refresh data detail dari database
-      setBuktiBayarFiles([]);
+      setIsEditing(false);
+      searchParams.delete('edit');
+      setSearchParams(searchParams, { replace: true });
+
+      setBuktiBayarItems([{ id: 'item-1', tanggal_pembayaran: '', file: null }]);
       await fetchDetail();
-      alert('Bukti pembayaran berhasil diunggah! Status pengadaan kini telah selesai.');
+      setToast({
+        type: 'success',
+        message: isEditing
+          ? 'Bukti pembayaran berhasil diperbarui!'
+          : 'Bukti pembayaran berhasil diunggah! Status pengadaan kini telah selesai.',
+      });
     } catch (err: unknown) {
       console.error('Failed to submit bukti pembayaran:', err);
       const errorMsg =
         axios.isAxiosError(err) && err.response?.data?.message
           ? err.response.data.message
           : 'Gagal mengunggah bukti pembayaran. Silakan periksa berkas dan coba lagi.';
-      alert(errorMsg);
+      setToast({
+        type: 'error',
+        message: errorMsg,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -153,11 +280,13 @@ export const KeuanganPengadaanShow: FC = () => {
       detail={detail}
       isLoading={isLoading}
       isSubmitting={isSubmitting}
-      tanggalPembayaran={tanggalPembayaran}
-      onTanggalPembayaranChange={setTanggalPembayaran}
-      buktiBayarFiles={buktiBayarFiles}
-      onAddBuktiBayar={handleAddBuktiBayar}
-      onRemoveBuktiBayar={handleRemoveBuktiBayar}
+      isEditing={isEditing}
+      onStartEdit={handleStartEdit}
+      onCancelEdit={handleCancelEdit}
+      buktiBayarItems={buktiBayarItems}
+      onAddBuktiBayarItem={handleAddBuktiBayarItem}
+      onRemoveBuktiBayarItem={handleRemoveBuktiBayarItem}
+      onUpdateBuktiBayarItem={handleUpdateBuktiBayarItem}
       onSubmitBuktiBayar={handleSubmitBuktiBayar}
       onBack={() => navigate('/keuangan/pengadaan')}
       onViewDokumen={handleViewDokumen}
@@ -168,6 +297,8 @@ export const KeuanganPengadaanShow: FC = () => {
       isConfirmOpen={isConfirmModalOpen}
       onOpenConfirm={() => setIsConfirmModalOpen(true)}
       onCloseConfirm={() => setIsConfirmModalOpen(false)}
+      toast={toast}
+      onDismissToast={() => setToast(null)}
     />
   );
 };

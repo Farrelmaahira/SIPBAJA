@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo, type FC, type FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import keuanganService from '../../../services/keuanganService';
 import KeuanganPengadaanTemplate from '../../../components/templates/Keuangan/KeuanganPengadaanTemplate';
 import type { KeuanganPengadaanItem } from '../../../types/keuangan';
 
 export const KeuanganPengadaanIndex: FC = () => {
+  const navigate = useNavigate();
   const [items, setItems] = useState<KeuanganPengadaanItem[]>([]);
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -103,6 +105,7 @@ export const KeuanganPengadaanIndex: FC = () => {
       onOpenFilterModal={() => setFilterModalOpen(true)}
       onCloseFilterModal={() => setFilterModalOpen(false)}
       onApplyFilter={handleApplyFilter}
+      onEdit={(item) => navigate(`/keuangan/pengadaan/${item.id}?edit=true`)}
     />
   );
 };

@@ -43,6 +43,7 @@ export interface KeuanganPengadaanTemplateProps {
   onOpenFilterModal: () => void;
   onCloseFilterModal: () => void;
   onApplyFilter: (statuses: string[]) => void;
+  onEdit?: (item: KeuanganPengadaanItem) => void;
 }
 
 export const KeuanganPengadaanTemplate: FC<KeuanganPengadaanTemplateProps> = ({
@@ -63,6 +64,7 @@ export const KeuanganPengadaanTemplate: FC<KeuanganPengadaanTemplateProps> = ({
   onOpenFilterModal,
   onCloseFilterModal,
   onApplyFilter,
+  onEdit,
 }) => {
   return (
     <AppLayout
@@ -222,6 +224,11 @@ export const KeuanganPengadaanTemplate: FC<KeuanganPengadaanTemplateProps> = ({
                         <RowActionMenu
                           item={item}
                           viewHref={`/keuangan/pengadaan/${item.id}`}
+                          onEdit={
+                            String(item.status).toLowerCase() === 'selesai' && onEdit
+                              ? () => onEdit(item)
+                              : undefined
+                          }
                           showDelete={false}
                         />
                       </td>

@@ -1,4 +1,4 @@
-import { useRef, useState, type FC, type ChangeEvent, type DragEvent } from 'react';
+import { useState, type FC } from 'react';
 import {
   ArrowLeft,
   Calendar,
@@ -25,6 +25,10 @@ import {
   BarChart2,
   Bell,
   Image as ImageIcon,
+  Plus,
+  Trash2,
+  AlertTriangle,
+  Pencil,
 } from 'lucide-react';
 import AppLayout, { type AppTopbarUser } from '../General/AppLayout';
 import StatusPill from '../../atoms/StatusPill';
@@ -35,6 +39,8 @@ import { formatRupiah } from '../../../utils/formatters';
 import type {
   KeuanganPengadaanDetail,
   KeuanganDokumenItem,
+  BuktiBayarFormItem,
+  KeuanganBuktiBayarItem,
 } from '../../../types/keuangan';
 
 export interface KeuanganPengadaanShowTemplateProps {
@@ -42,11 +48,14 @@ export interface KeuanganPengadaanShowTemplateProps {
   detail: KeuanganPengadaanDetail | null;
   isLoading?: boolean;
   isSubmitting?: boolean;
-  tanggalPembayaran: string;
-  onTanggalPembayaranChange: (val: string) => void;
-  buktiBayarFiles: File[];
-  onAddBuktiBayar: (files: File[]) => void;
-  onRemoveBuktiBayar: (index: number) => void;
+  buktiBayarItems: BuktiBayarFormItem[];
+  onAddBuktiBayarItem: () => void;
+  onRemoveBuktiBayarItem: (index: number) => void;
+  onUpdateBuktiBayarItem: (
+    index: number,
+    field: 'tanggal_pembayaran' | 'file' | 'existing_file',
+    value: string | File | KeuanganBuktiBayarItem | null
+  ) => void;
   onSubmitBuktiBayar: () => void;
   onBack: () => void;
   onViewDokumen?: (doc: KeuanganDokumenItem) => void;
@@ -57,6 +66,11 @@ export interface KeuanganPengadaanShowTemplateProps {
   isConfirmOpen?: boolean;
   onOpenConfirm?: () => void;
   onCloseConfirm?: () => void;
+  toast?: { type: 'success' | 'error'; message: string } | null;
+  onDismissToast?: () => void;
+  isEditing?: boolean;
+  onStartEdit?: () => void;
+  onCancelEdit?: () => void;
 }
 
 export const KeuanganPengadaanShowTemplate: FC<KeuanganPengadaanShowTemplateProps> = ({
@@ -64,11 +78,10 @@ export const KeuanganPengadaanShowTemplate: FC<KeuanganPengadaanShowTemplateProp
   detail,
   isLoading = false,
   isSubmitting = false,
-  tanggalPembayaran,
-  onTanggalPembayaranChange,
-  buktiBayarFiles,
-  onAddBuktiBayar,
-  onRemoveBuktiBayar,
+  buktiBayarItems,
+  onAddBuktiBayarItem,
+  onRemoveBuktiBayarItem,
+  onUpdateBuktiBayarItem,
   onSubmitBuktiBayar,
   onBack,
   onViewDokumen,
@@ -79,42 +92,35 @@ export const KeuanganPengadaanShowTemplate: FC<KeuanganPengadaanShowTemplateProp
   isConfirmOpen,
   onOpenConfirm,
   onCloseConfirm,
+  toast = null,
+  onDismissToast,
+  isEditing = false,
+  onStartEdit,
+  onCancelEdit,
 }) => {
   const [internalConfirmOpen, setInternalConfirmOpen] = useState(false);
   const confirmOpen = isConfirmOpen !== undefined ? isConfirmOpen : internalConfirmOpen;
   const handleOpenConfirm = onOpenConfirm || (() => setInternalConfirmOpen(true));
   const handleCloseConfirm = onCloseConfirm || (() => setInternalConfirmOpen(false));
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const isSelesai = detail?.status === 'selesai' || detail?.pembayaran?.status === 'selesai';
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      onAddBuktiBayar(Array.from(e.target.files));
-      e.target.value = '';
-    }
-  };
-
-  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      onAddBuktiBayar(Array.from(e.dataTransfer.files));
-    }
-  };
-
   const handleFormSubmitClick = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!tanggalPembayaran) {
-      alert('Silakan pilih tanggal pembayaran terlebih dahulu.');
+    setFormError(null);
+    if (buktiBayarItems.length === 0) {
+      setFormError('Silakan tambahkan minimal satu bukti pembayaran.');
       return;
     }
-    if (buktiBayarFiles.length === 0) {
-      alert('Silakan unggah minimal satu berkas bukti pembayaran.');
+    const hasEmptyDate = buktiBayarItems.some((item) => !item.tanggal_pembayaran);
+    if (hasEmptyDate) {
+      setFormError('Silakan lengkapi tanggal pembayaran untuk semua bukti pembayaran.');
+      return;
+    }
+    const hasEmptyFile = buktiBayarItems.some((item) => !item.file && !item.existing_file);
+    if (hasEmptyFile) {
+      setFormError('Silakan unggah berkas bukti pembayaran untuk semua formulir yang ditambahkan.');
       return;
     }
     handleOpenConfirm();
@@ -186,14 +192,26 @@ export const KeuanganPengadaanShowTemplate: FC<KeuanganPengadaanShowTemplateProp
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={onBack}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold backdrop-blur-xs transition-colors self-start md:self-auto cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Kembali</span>
-          </button>
+          <div className="flex items-center gap-2.5 self-start md:self-auto">
+            {isSelesai && !isEditing && onStartEdit && (
+              <button
+                type="button"
+                onClick={onStartEdit}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white text-[#0E7C5A] hover:bg-[#F0FDF4] text-xs font-bold transition-all shadow-sm cursor-pointer"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+                <span>Edit</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onBack}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold backdrop-blur-xs transition-colors cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Kembali</span>
+            </button>
+          </div>
         </div>
 
         {/* Tanggal Pengingat Pengadaan */}
@@ -773,14 +791,34 @@ export const KeuanganPengadaanShowTemplate: FC<KeuanganPengadaanShowTemplateProp
 
         {/* Card 4: Form Bukti Pembayaran */}
         <div className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)] space-y-6">
-          <div>
-            <h2 className="text-base font-bold text-[#14201C]">Form Bukti Pembayaran</h2>
-            <p className="text-xs text-[#5F6F6A]">
-              Lengkapi tanggal pembayaran dan unggah bukti pembayaran
-            </p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 className="text-base font-bold text-[#14201C]">Form Bukti Pembayaran</h2>
+              <p className="text-xs text-[#5F6F6A]">
+                {isEditing
+                  ? 'Perbarui tanggal pembayaran atau ubah/tambahkan berkas bukti pembayaran'
+                  : 'Lengkapi tanggal pembayaran dan unggah bukti pembayaran'}
+              </p>
+            </div>
+            {isSelesai && !isEditing ? (
+              onStartEdit && (
+                <button
+                  type="button"
+                  onClick={onStartEdit}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white border border-[#CBD5E1] hover:border-[#0E7C5A] text-[#0E7C5A] hover:bg-[#EEF5F2] rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer self-start sm:self-auto"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                  <span>Edit Bukti Pembayaran</span>
+                </button>
+              )
+            ) : (
+              <span className="text-xs font-semibold px-2.5 py-1 bg-[#EEF5F2] text-[#0E7C5A] rounded-full self-start sm:self-auto">
+                {buktiBayarItems.length} Bukti Pembayaran
+              </span>
+            )}
           </div>
 
-          {isSelesai ? (
+          {isSelesai && !isEditing ? (
             <div className="space-y-4">
               <div className="bg-[#E4F6EC] border border-[#BDE8D1] rounded-2xl p-4 flex items-center gap-3">
                 <CheckCircle2 className="w-6 h-6 text-[#0E7C5A] shrink-0" />
@@ -793,169 +831,302 @@ export const KeuanganPengadaanShowTemplate: FC<KeuanganPengadaanShowTemplateProp
               </div>
 
               {detail?.pembayaran?.dokumen_bukti_bayar && detail.pembayaran.dokumen_bukti_bayar.length > 0 && (
-                <div className="space-y-2">
-                  <span className="text-xs font-bold text-[#14201C] block">Berkas Bukti Bayar Terlampir:</span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {detail.pembayaran.dokumen_bukti_bayar.map((doc) => (
-                      <div
-                        key={doc.id}
-                        className="bg-[#F9FBFA] border border-[#E4EBE8] rounded-xl p-3 flex items-center justify-between text-xs"
-                      >
-                        <div className="flex items-center gap-2 truncate">
-                          <FileCode className="w-4 h-4 text-[#0E7C5A] shrink-0" />
-                          <span className="font-semibold text-[#14201C] truncate">{doc.nama}</span>
-                          <span className="text-[#8A9A95] text-[11px] shrink-0">({doc.ukuran})</span>
+                <div className="space-y-3 pt-2">
+                  <span className="text-xs font-bold text-[#14201C] block">
+                    Daftar Bukti Pembayaran Terlampir ({detail.pembayaran.dokumen_bukti_bayar.length} Berkas):
+                  </span>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {detail.pembayaran.dokumen_bukti_bayar.map((doc, idx) => {
+                      const tglDisplay = doc.tanggal_pembayaran_formatted || doc.tanggal_pembayaran || detail?.pembayaran?.tanggal_pembayaran || '-';
+                      const ext = doc.nama.split('.').pop()?.toUpperCase() || 'PDF';
+
+                      return (
+                        <div
+                          key={doc.id}
+                          className="bg-[#F9FBFA] border border-[#E4EBE8] hover:border-[#CBD5E1] rounded-2xl p-4 sm:p-5 transition-all flex flex-col justify-between space-y-4"
+                        >
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-[#EEF3F0]">
+                              <div className="flex items-center gap-2">
+                                <span className="w-5 h-5 rounded-full bg-[#0E7C5A] text-white text-[11px] font-bold flex items-center justify-center shrink-0">
+                                  {idx + 1}
+                                </span>
+                                <h4 className="text-xs font-bold text-[#14201C]">
+                                  Bukti Pembayaran #{idx + 1}
+                                </h4>
+                              </div>
+
+                              <div className="flex items-center gap-1.5 text-[11px] text-[#0B7A4E] bg-[#E4F6EC] border border-[#BDE8D1] px-2.5 py-0.5 rounded-full font-medium shrink-0">
+                                <Calendar className="w-3 h-3 text-[#0E7C5A]" />
+                                <span>{tglDisplay}</span>
+                              </div>
+                            </div>
+
+                            <div className="bg-white p-3 rounded-xl border border-[#E2E8F0] flex items-center gap-2.5">
+                              <span className="px-2 py-1 rounded text-[10px] font-bold bg-[#E2E8F0] text-[#475569] shrink-0">
+                                {ext}
+                              </span>
+                              <div className="truncate flex-1">
+                                <span className="font-semibold text-xs text-[#14201C] block truncate" title={doc.nama}>
+                                  {doc.nama}
+                                </span>
+                                <span className="text-[11px] text-[#8A9A95]">
+                                  {doc.ukuran}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 pt-2 border-t border-[#EEF3F0]">
+                            {onViewDokumen && (
+                              <button
+                                type="button"
+                                onClick={() => onViewDokumen({ id: doc.id, tipe: 'Bukti Bayar', nama: doc.nama, ukuran: doc.ukuran, url: doc.url })}
+                                className="flex-1 py-1.5 text-xs font-semibold text-[#0E7C5A] bg-[#EEF5F2] hover:bg-[#E4F6EC] rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>Lihat</span>
+                              </button>
+                            )}
+                            {onDownloadDokumen && (
+                              <button
+                                type="button"
+                                onClick={() => onDownloadDokumen({ id: doc.id, tipe: 'Bukti Bayar', nama: doc.nama, ukuran: doc.ukuran, url: doc.url })}
+                                className="flex-1 py-1.5 text-xs font-semibold text-[#5F6F6A] bg-white border border-[#E2E8F0] hover:bg-[#F9FBFA] rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                                <span>Unduh</span>
+                              </button>
+                            )}
+                          </div>
                         </div>
-                        {onViewDokumen && (
-                          <button
-                            type="button"
-                            onClick={() => onViewDokumen({ id: doc.id, tipe: 'Bukti Bayar', nama: doc.nama, ukuran: doc.ukuran, url: doc.url })}
-                            className="px-2.5 py-1 text-xs font-semibold text-[#0E7C5A] hover:bg-[#EEF5F2] rounded-lg transition-colors"
-                          >
-                            Lihat
-                          </button>
-                        )}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
             </div>
           ) : (
             <form onSubmit={handleFormSubmitClick} className="space-y-5">
-              {/* Field Tanggal Pembayaran */}
-              <div className="space-y-1.5 max-w-md">
-                <label htmlFor="tanggal_pembayaran" className="block text-xs font-bold text-[#14201C]">
-                  Tanggal Pembayaran <span className="text-[#E5484D]">*</span>
-                </label>
-                <p className="text-[11px] text-[#8A9A95]">Tanggal pembayaran dilakukan kepada vendor</p>
-                <input
-                  id="tanggal_pembayaran"
-                  type="date"
-                  value={tanggalPembayaran}
-                  onChange={(e) => onTanggalPembayaranChange(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-xs text-[#14201C] focus:outline-none focus:border-[#0E7C5A] focus:ring-1 focus:ring-[#0E7C5A] transition-colors"
-                  required
-                />
-              </div>
-
-              {/* Field Upload Bukti Pembayaran */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <label className="block text-xs font-bold text-[#14201C]">
-                      Upload Bukti Pembayaran <span className="text-[#E5484D]">*</span>
-                    </label>
-                    <p className="text-[11px] text-[#8A9A95]">
-                      Bukti transfer atau kwitansi pembayaran, bisa lebih dari satu.
-                    </p>
-                  </div>
-                  {buktiBayarFiles.length > 0 && (
-                    <span className="text-xs font-semibold text-[#0E7C5A]">
-                      {buktiBayarFiles.length} file dipilih
+              {isEditing && (
+                <div className="p-3.5 bg-[#FEF6EE] border border-[#FDE68A] rounded-2xl flex items-center justify-between text-xs text-[#92400E]">
+                  <div className="flex items-center gap-2">
+                    <Pencil className="w-4 h-4 text-[#D97706] shrink-0" />
+                    <span>
+                      <strong>Mode Edit Aktif:</strong> Anda dapat memperbarui tanggal pembayaran atau mengganti/menambahkan berkas bukti pembayaran.
                     </span>
+                  </div>
+                  {onCancelEdit && (
+                    <button
+                      type="button"
+                      onClick={onCancelEdit}
+                      className="text-xs font-semibold text-[#B45309] hover:underline cursor-pointer shrink-0 ml-3"
+                    >
+                      Batal Edit
+                    </button>
                   )}
                 </div>
+              )}
 
-                {/* Dropzone */}
-                <div
-                  onDragOver={handleDragOver}
-                  onDrop={handleDrop}
-                  onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-[#CBD5E1] hover:border-[#0E7C5A] rounded-2xl p-6 text-center cursor-pointer bg-[#F8FAFC] hover:bg-[#F0FDF4]/30 transition-all"
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-                  <div className="flex flex-col items-center justify-center gap-2">
-                    <div className="w-10 h-10 rounded-full bg-[#EEF5F2] text-[#0E7C5A] flex items-center justify-center">
-                      <UploadCloud className="w-5 h-5" />
-                    </div>
-                    <p className="text-xs text-[#14201C]">
-                      <span className="font-bold text-[#0E7C5A] hover:underline">Klik untuk upload</span> atau drag & drop
-                    </p>
-                    <p className="text-[11px] text-[#8A9A95]">
-                      JPG, PNG, atau PDF &bull; maksimal 10 MB per file
-                    </p>
-                  </div>
+              {formError && (
+                <div className="p-3 bg-[#FEE2E2] border border-[#FCA5A5] rounded-xl text-xs text-[#DC2626] flex items-center justify-between">
+                  <span>{formError}</span>
+                  <button
+                    type="button"
+                    onClick={() => setFormError(null)}
+                    className="p-1 hover:text-black cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
                 </div>
+              )}
 
-                {/* Upload Queue */}
-                {buktiBayarFiles.length > 0 && (
-                  <div className="space-y-2 pt-2">
-                    <span className="text-[11px] font-bold text-[#5F6F6A] uppercase tracking-wider block">
-                      Antrean Upload ({buktiBayarFiles.length} Siap)
-                    </span>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      {buktiBayarFiles.map((file, idx) => {
-                        const ext = file.name.split('.').pop()?.toUpperCase() || 'FILE';
-                        return (
-                          <div
-                            key={idx}
-                            className="bg-[#F9FBFA] border border-[#E4EBE8] rounded-xl p-3 flex items-center justify-between text-xs"
-                          >
+              {/* Dynamic List Bukti Pembayaran */}
+              <div className="space-y-4">
+                {buktiBayarItems.map((item, idx) => (
+                  <div
+                    key={item.id}
+                    className="p-4 sm:p-5 rounded-2xl border border-[#E4EBE8] bg-[#F9FBFA] hover:border-[#CBD5E1] transition-all space-y-4"
+                  >
+                    <div className="flex items-center justify-between pb-3 border-b border-[#EEF3F0]">
+                      <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full bg-[#0E7C5A] text-white text-xs font-bold flex items-center justify-center shrink-0">
+                          {idx + 1}
+                        </span>
+                        <h3 className="text-xs font-bold text-[#14201C]">
+                          Bukti Pembayaran #{idx + 1}
+                        </h3>
+                      </div>
+                      {buktiBayarItems.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => onRemoveBuktiBayarItem(idx)}
+                          className="text-[#E5484D] hover:text-[#C53030] hover:bg-[#FFEBEB] px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                          title={`Hapus Bukti Pembayaran #${idx + 1}`}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Hapus</span>
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Tanggal Pembayaran */}
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-bold text-[#14201C]">
+                          Tanggal Pembayaran <span className="text-[#E5484D]">*</span>
+                        </label>
+                        <p className="text-[11px] text-[#8A9A95]">
+                          Tanggal pembayaran dilakukan kepada vendor
+                        </p>
+                        <input
+                          type="date"
+                          value={item.tanggal_pembayaran}
+                          onChange={(e) => onUpdateBuktiBayarItem(idx, 'tanggal_pembayaran', e.target.value)}
+                          className="w-full px-3.5 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-xs text-[#14201C] focus:outline-none focus:border-[#0E7C5A] focus:ring-1 focus:ring-[#0E7C5A] transition-colors"
+                          required
+                        />
+                      </div>
+
+                      {/* Bukti Pembayaran (File Upload) */}
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-bold text-[#14201C]">
+                          Bukti Pembayaran <span className="text-[#E5484D]">*</span>
+                        </label>
+                        <p className="text-[11px] text-[#8A9A95]">
+                          Unggah bukti transfer atau kwitansi (PDF, JPG, PNG &bull; maks 10 MB)
+                        </p>
+
+                        {item.existing_file && !item.file ? (
+                          <div className="bg-white border border-[#BDE8D1] rounded-xl p-2.5 flex items-center justify-between min-h-[42px]">
                             <div className="flex items-center gap-2.5 truncate">
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#E2E8F0] text-[#475569]">
-                                {ext}
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#E4F6EC] text-[#0E7C5A] shrink-0">
+                                {item.existing_file.nama.split('.').pop()?.toUpperCase() || 'FILE'}
                               </span>
                               <div className="truncate">
-                                <span className="font-semibold text-[#14201C] block truncate">
-                                  {file.name}
+                                <span className="font-semibold text-xs text-[#14201C] block truncate" title={item.existing_file.nama}>
+                                  {item.existing_file.nama}
                                 </span>
                                 <span className="text-[10px] text-[#8A9A95]">
-                                  {formatFileSize(file.size)}
+                                  {item.existing_file.ukuran} (Tersimpan)
                                 </span>
                               </div>
                             </div>
                             <button
                               type="button"
-                              onClick={() => onRemoveBuktiBayar(idx)}
-                              className="text-[#8A9A95] hover:text-[#E5484D] p-1 transition-colors cursor-pointer"
-                              title="Hapus file"
+                              onClick={() => onUpdateBuktiBayarItem(idx, 'existing_file', null)}
+                              className="text-[#8A9A95] hover:text-[#E5484D] hover:bg-[#FEE2E2]/50 p-1.5 rounded-lg transition-colors cursor-pointer shrink-0 ml-2"
+                              title="Ganti Berkas Ini"
                             >
                               <X className="w-4 h-4" />
                             </button>
                           </div>
-                        );
-                      })}
+                        ) : item.file ? (
+                          <div className="bg-white border border-[#BDE8D1] rounded-xl p-2.5 flex items-center justify-between min-h-[42px]">
+                            <div className="flex items-center gap-2.5 truncate">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#E4F6EC] text-[#0E7C5A] shrink-0">
+                                {item.file.name.split('.').pop()?.toUpperCase() || 'FILE'}
+                              </span>
+                              <div className="truncate">
+                                <span className="font-semibold text-xs text-[#14201C] block truncate" title={item.file.name}>
+                                  {item.file.name}
+                                </span>
+                                <span className="text-[10px] text-[#8A9A95]">
+                                  {formatFileSize(item.file.size)} (Baru)
+                                </span>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => onUpdateBuktiBayarItem(idx, 'file', null)}
+                              className="text-[#8A9A95] hover:text-[#E5484D] hover:bg-[#FEE2E2]/50 p-1.5 rounded-lg transition-colors cursor-pointer shrink-0 ml-2"
+                              title="Hapus / Ganti Berkas"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <label
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                            }}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const dropped = e.dataTransfer.files?.[0];
+                              if (dropped) onUpdateBuktiBayarItem(idx, 'file', dropped);
+                            }}
+                            className="border-2 border-dashed border-[#CBD5E1] hover:border-[#0E7C5A] bg-white hover:bg-[#F0FDF4]/30 rounded-xl p-3 text-center cursor-pointer transition-all flex items-center justify-center gap-2 min-h-[42px]"
+                          >
+                            <input
+                              type="file"
+                              accept=".pdf,.jpg,.jpeg,.png"
+                              onChange={(e) => {
+                                const selected = e.target.files?.[0];
+                                if (selected) onUpdateBuktiBayarItem(idx, 'file', selected);
+                              }}
+                              className="hidden"
+                            />
+                            <UploadCloud className="w-4 h-4 text-[#0E7C5A] shrink-0" />
+                            <span className="text-xs font-semibold text-[#0E7C5A]">
+                              Pilih Berkas Bukti Bayar
+                            </span>
+                            <span className="text-[11px] text-[#8A9A95] hidden sm:inline">
+                              atau drag & drop
+                            </span>
+                          </label>
+                        )}
+                      </div>
                     </div>
                   </div>
-                )}
+                ))}
               </div>
+
+              {/* Tombol Tambah Bukti Pembayaran */}
+              <button
+                type="button"
+                onClick={onAddBuktiBayarItem}
+                className="w-full py-3.5 border-2 border-dashed border-[#BDE8D1] hover:border-[#0E7C5A] bg-[#F9FBFA] hover:bg-[#E4F6EC]/40 rounded-2xl text-xs font-bold text-[#0E7C5A] flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Tambah Bukti Pembayaran</span>
+              </button>
 
               {/* Bottom Notice & Actions */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-[#F0F4F2]">
                 <div className="flex items-center gap-2 text-[11px] text-[#5F6F6A]">
                   <Info className="w-4 h-4 text-[#8A9A95] shrink-0" />
-                  <span>Pastikan bukti pembayaran sudah benar dan terbaca jelas sebelum dikirim.</span>
+                  <span>
+                    Pastikan seluruh bukti pembayaran ({buktiBayarItems.length} data) sudah benar sebelum {isEditing ? 'disimpan' : 'dikirim'}.
+                  </span>
                 </div>
 
                 <div className="flex items-center gap-2.5 self-end sm:self-auto">
                   <button
                     type="button"
-                    onClick={onBack}
+                    onClick={isEditing ? onCancelEdit : onBack}
                     disabled={isSubmitting}
                     className="px-4 py-2 text-xs font-semibold text-[#5F6F6A] bg-white border border-[#E2E8F0] hover:bg-[#F9FBFA] rounded-xl transition-colors cursor-pointer"
                   >
-                    Batal
+                    {isEditing ? 'Batal Edit' : 'Batal'}
                   </button>
                   <button
                     type="submit"
-                    disabled={isSubmitting || buktiBayarFiles.length === 0 || !tanggalPembayaran}
+                    disabled={
+                      isSubmitting ||
+                      buktiBayarItems.length === 0 ||
+                      buktiBayarItems.some((item) => !item.tanggal_pembayaran || (!item.file && !item.existing_file))
+                    }
                     className="px-6 py-2 text-xs font-semibold text-white bg-[#0E7C5A] hover:bg-[#0A5C43] disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-colors shadow-sm cursor-pointer inline-flex items-center gap-1.5"
                   >
                     {isSubmitting ? (
                       <>
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        <span>Mengirim...</span>
+                        <span>{isEditing ? 'Menyimpan...' : 'Mengirim...'}</span>
                       </>
                     ) : (
-                      <span>Kirim</span>
+                      <span>{isEditing ? 'Simpan Perubahan' : 'Kirim'}</span>
                     )}
                   </button>
                 </div>
@@ -974,9 +1145,49 @@ export const KeuanganPengadaanShowTemplate: FC<KeuanganPengadaanShowTemplateProp
           onSubmitBuktiBayar();
         }}
         isSubmitting={isSubmitting}
-        tanggalPembayaran={tanggalPembayaran}
-        totalFiles={buktiBayarFiles.length}
+        tanggalPembayaran={
+          buktiBayarItems
+            .map((item) => item.tanggal_pembayaran)
+            .filter(Boolean)
+            .join(', ') || '-'
+        }
+        totalFiles={buktiBayarItems.filter((item) => item.file !== null).length}
       />
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed top-6 right-6 z-50 animate-in fade-in slide-in-from-top-4 duration-200 max-w-md">
+          <div
+            className={`flex items-start gap-3 p-4 rounded-2xl shadow-xl border text-xs font-semibold ${
+              toast.type === 'success'
+                ? 'bg-[#E4F6EC] border-[#BDE8D1] text-[#0B7A4E]'
+                : 'bg-[#FEE2E2] border-[#FCA5A5] text-[#DC2626]'
+            }`}
+          >
+            {toast.type === 'success' ? (
+              <CheckCircle2 className="w-5 h-5 shrink-0 text-[#0E7C5A] mt-0.5" />
+            ) : (
+              <AlertTriangle className="w-5 h-5 shrink-0 text-[#DC2626] mt-0.5" />
+            )}
+            <div className="flex-1 leading-relaxed">
+              <span className="block font-bold mb-0.5">
+                {toast.type === 'success' ? 'Berhasil' : 'Perhatian'}
+              </span>
+              <span>{toast.message}</span>
+            </div>
+            {onDismissToast && (
+              <button
+                type="button"
+                onClick={onDismissToast}
+                className="p-1 rounded-md hover:bg-black/5 transition-colors cursor-pointer text-inherit"
+                title="Tutup Notifikasi"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Document Preview Modal */}
       {previewBlobUrl && (

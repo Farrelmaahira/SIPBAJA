@@ -50,20 +50,49 @@ class PengadaanKeuanganController extends Controller
      */
     public function storeBuktiBayar(Request $request, int|string $pengadaan): JsonResponse
     {
-        $request->validate([
-            'tanggal_pembayaran' => ['required', 'date'],
-            'bukti_bayar' => ['required', 'array', 'min:1'],
-            'bukti_bayar.*' => ['file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'],
-        ]);
+        $tanggalInput = $request->input('tanggal_pembayaran');
+        if (is_array($tanggalInput)) {
+            $tanggal = end($tanggalInput) ?: reset($tanggalInput);
+            $request->merge(['tanggal_pembayaran' => $tanggal]);
+        }
+
+        $isEdit = $request->boolean('is_edit');
+        $hasExisting = $request->has('existing_items') && ! empty($request->input('existing_items'));
+
+        $rules = [
+            'tanggal_pembayaran' => ['required'],
+        ];
+
+        if ($isEdit && $hasExisting) {
+            $rules['bukti_bayar'] = ['nullable', 'array'];
+            $rules['bukti_bayar.*'] = ['file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'];
+        } else {
+            $rules['bukti_bayar'] = ['required', 'array', 'min:1'];
+            $rules['bukti_bayar.*'] = ['file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'];
+        }
+
+        $request->validate($rules);
 
         $buktiFiles = $request->file('bukti_bayar') ?: [];
         if (! is_array($buktiFiles)) {
             $buktiFiles = [$buktiFiles];
         }
 
+        $tanggalList = $request->input('tanggal_pembayaran_list');
+        if (! is_array($tanggalList)) {
+            $tanggalList = $tanggalList ? [$tanggalList] : [];
+        }
+
+        $existingItems = $request->input('existing_items', []);
+
         $result = $this->keuanganService->simpanBuktiPembayaran(
             $pengadaan,
-            ['tanggal_pembayaran' => $request->input('tanggal_pembayaran')],
+            [
+                'tanggal_pembayaran' => $request->input('tanggal_pembayaran'),
+                'tanggal_pembayaran_list' => $tanggalList,
+                'is_edit' => $isEdit,
+                'existing_items' => $existingItems,
+            ],
             $buktiFiles,
             $request->user()
         );
@@ -77,11 +106,14 @@ class PengadaanKeuanganController extends Controller
     public function downloadDokumen(Request $request, int|string $pengadaan, int|string $dokumenId): StreamedResponse|BinaryFileResponse|JsonResponse
     {
         $disposition = $request->query('disposition') === 'inline' ? 'inline' : 'attachment';
+        $dokumen = null;
 
         if (is_numeric($dokumenId)) {
             $dokumen = Dokumen::find((int) $dokumenId);
             if ($dokumen) {
                 $possiblePaths = [
+                    $dokumen->nama_hash,
+                    "docs/{$dokumen->nama_hash}",
                     "dokumen/pembayaran/{$dokumen->nama_hash}",
                     "dokumen/kontrak/{$dokumen->nama_hash}",
                     "dokumen/pengadaan/{$dokumen->nama_hash}",
@@ -115,8 +147,8 @@ class PengadaanKeuanganController extends Controller
             }
         }
 
-        // Fallback untuk mock sample document
-        $namaFile = $request->query('nama', 'dokumen_pembayaran.pdf');
+        // Fallback untuk mock sample document atau berkas demo yang belum tersimpan di disk
+        $namaFile = $dokumen?->nama_asli ?: $request->query('nama', 'dokumen_pembayaran.pdf');
         $pdfContent = "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Parent 2 0 R/Resources<<>>>>endobj\nxref\n0 4\n0000000000 65535 f \n0000000009 00000 n \n0000000052 00000 n \n0000000102 00000 n \ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n178\n%%EOF\n";
 
         return response()->streamDownload(

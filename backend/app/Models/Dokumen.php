@@ -21,6 +21,11 @@ class Dokumen extends Model
         'mime_type',
         'ukuran_bytes',
         'uploaded_by',
+        'created_at',
+    ];
+
+    protected $casts = [
+        'created_at' => 'datetime',
     ];
 
     public function Pengunggah(): BelongsTo

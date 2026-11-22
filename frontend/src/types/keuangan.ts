@@ -95,6 +95,15 @@ export interface KeuanganBuktiBayarItem {
   nama: string;
   ukuran: string;
   url: string;
+  tanggal_pembayaran?: string;
+  tanggal_pembayaran_formatted?: string;
+}
+
+export interface BuktiBayarFormItem {
+  id: string;
+  tanggal_pembayaran: string;
+  file: File | null;
+  existing_file?: KeuanganBuktiBayarItem | null;
 }
 
 export interface KeuanganPembayaranDetail {
