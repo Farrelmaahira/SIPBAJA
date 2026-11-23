@@ -268,4 +268,204 @@ class PpbjPembayaranApiTest extends TestCase
                 'success' => false,
             ]);
     }
+
+    public function test_ppbj_cannot_upload_legalitas_vendor_before_memos_complete(): void
+    {
+        Storage::fake('local');
+        $pengadaan = $this->createPengadaanSiapBayar();
+
+        $file = UploadedFile::fake()->create('legalitas.pdf', 500, 'application/pdf');
+
+        $response = $this->actingAs($this->ppbjUser)
+            ->postJson("/api/v1/ppbj/pengadaan/{$pengadaan->id}/legalitas-vendor", [
+                'dokumen_legalitas' => $file,
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJson([
+                'success' => false,
+            ]);
+    }
+
+    public function test_ppbj_can_upload_legalitas_vendor_after_both_memos_approved(): void
+    {
+        Storage::fake('local');
+        $pengadaan = $this->createPengadaanSiapBayar();
+        $rencana = $pengadaan->Kontrak->RencanaPembayaran->first();
+
+        $pembayaran = Pembayaran::create([
+            'rencana_pembayaran_id' => $rencana->id,
+            'nominal' => 50000000,
+            'status' => 'disetujui',
+        ]);
+
+        $memoPpk = Dokumen::create([
+            'ref_type' => 'approval_pembayaran',
+            'ref_id' => 1,
+            'tipe_dokumen' => 'memo_persetujuan_pembayaran',
+            'nama_asli' => 'memo_ppk.pdf',
+            'nama_hash' => 'memo_ppk.pdf',
+            'mime_type' => 'application/pdf',
+            'ukuran_bytes' => 1024,
+            'versi' => 1,
+            'uploaded_by' => $this->ppkUser->id,
+        ]);
+
+        $memoWd2 = Dokumen::create([
+            'ref_type' => 'approval_pembayaran',
+            'ref_id' => 2,
+            'tipe_dokumen' => 'memo_persetujuan_pembayaran',
+            'nama_asli' => 'memo_wd2.pdf',
+            'nama_hash' => 'memo_wd2.pdf',
+            'mime_type' => 'application/pdf',
+            'ukuran_bytes' => 1024,
+            'versi' => 1,
+            'uploaded_by' => $this->bidang2User->id,
+        ]);
+
+        ApprovalPembayaran::create([
+            'pembayaran_id' => $pembayaran->id,
+            'tahap' => 'PPK',
+            'keputusan' => 'disetujui',
+            'revisi_ke' => 0,
+            'memo_dokumen_id' => $memoPpk->id,
+            'actor_id' => $this->ppkUser->id,
+        ]);
+
+        ApprovalPembayaran::create([
+            'pembayaran_id' => $pembayaran->id,
+            'tahap' => 'BIDANG2',
+            'keputusan' => 'disetujui',
+            'revisi_ke' => 0,
+            'memo_dokumen_id' => $memoWd2->id,
+            'actor_id' => $this->bidang2User->id,
+        ]);
+
+        $file = UploadedFile::fake()->create('dokumen_legalitas_vendor.pdf', 800, 'application/pdf');
+
+        $response = $this->actingAs($this->ppbjUser)
+            ->postJson("/api/v1/ppbj/pengadaan/{$pengadaan->id}/legalitas-vendor", [
+                'dokumen_legalitas' => $file,
+            ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'success' => true,
+                'message' => 'Dokumen legalitas vendor berhasil diunggah.',
+            ]);
+
+        $this->assertDatabaseHas('dokumen', [
+            'ref_type' => 'pembayaran',
+            'tipe_dokumen' => 'dokumen_legalitas_vendor',
+            'nama_asli' => 'dokumen_legalitas_vendor.pdf',
+        ]);
+
+        $this->assertEquals('siap_bayar', $pembayaran->fresh()->status);
+    }
+
+    public function test_ppbj_can_reupload_legalitas_vendor_before_keuangan_processes(): void
+    {
+        Storage::fake('local');
+        $pengadaan = $this->createPengadaanSiapBayar();
+        $rencana = $pengadaan->Kontrak->RencanaPembayaran->first();
+
+        $pembayaran = Pembayaran::create([
+            'rencana_pembayaran_id' => $rencana->id,
+            'nominal' => 50000000,
+            'status' => 'siap_bayar',
+        ]);
+
+        $memoPpk = Dokumen::create([
+            'ref_type' => 'approval_pembayaran',
+            'ref_id' => 1,
+            'tipe_dokumen' => 'memo_persetujuan_pembayaran',
+            'nama_asli' => 'memo_ppk.pdf',
+            'nama_hash' => 'memo_ppk.pdf',
+            'mime_type' => 'application/pdf',
+            'ukuran_bytes' => 1024,
+            'versi' => 1,
+            'uploaded_by' => $this->ppkUser->id,
+        ]);
+
+        $memoWd2 = Dokumen::create([
+            'ref_type' => 'approval_pembayaran',
+            'ref_id' => 2,
+            'tipe_dokumen' => 'memo_persetujuan_pembayaran',
+            'nama_asli' => 'memo_wd2.pdf',
+            'nama_hash' => 'memo_wd2.pdf',
+            'mime_type' => 'application/pdf',
+            'ukuran_bytes' => 1024,
+            'versi' => 1,
+            'uploaded_by' => $this->bidang2User->id,
+        ]);
+
+        ApprovalPembayaran::create([
+            'pembayaran_id' => $pembayaran->id,
+            'tahap' => 'PPK',
+            'keputusan' => 'disetujui',
+            'revisi_ke' => 0,
+            'memo_dokumen_id' => $memoPpk->id,
+            'actor_id' => $this->ppkUser->id,
+        ]);
+
+        ApprovalPembayaran::create([
+            'pembayaran_id' => $pembayaran->id,
+            'tahap' => 'BIDANG2',
+            'keputusan' => 'disetujui',
+            'revisi_ke' => 0,
+            'memo_dokumen_id' => $memoWd2->id,
+            'actor_id' => $this->bidang2User->id,
+        ]);
+
+        Dokumen::create([
+            'ref_type' => 'pembayaran',
+            'ref_id' => $pembayaran->id,
+            'tipe_dokumen' => 'dokumen_legalitas_vendor',
+            'nama_asli' => 'old_legalitas.pdf',
+            'nama_hash' => 'old_legalitas.pdf',
+            'mime_type' => 'application/pdf',
+            'ukuran_bytes' => 1024,
+            'versi' => 1,
+            'uploaded_by' => $this->ppbjUser->id,
+        ]);
+
+        $fileRev = UploadedFile::fake()->create('rev_legalitas.pdf', 900, 'application/pdf');
+
+        $response = $this->actingAs($this->ppbjUser)
+            ->postJson("/api/v1/ppbj/pengadaan/{$pengadaan->id}/legalitas-vendor", [
+                'dokumen_legalitas' => $fileRev,
+            ]);
+
+        $response->assertOk();
+        $this->assertDatabaseHas('dokumen', [
+            'ref_type' => 'pembayaran',
+            'tipe_dokumen' => 'dokumen_legalitas_vendor',
+            'nama_asli' => 'rev_legalitas.pdf',
+        ]);
+    }
+
+    public function test_ppbj_cannot_reupload_legalitas_vendor_after_keuangan_completed(): void
+    {
+        Storage::fake('local');
+        $pengadaan = $this->createPengadaanSiapBayar();
+        $rencana = $pengadaan->Kontrak->RencanaPembayaran->first();
+
+        $pembayaran = Pembayaran::create([
+            'rencana_pembayaran_id' => $rencana->id,
+            'nominal' => 50000000,
+            'status' => 'selesai',
+        ]);
+
+        $fileRev = UploadedFile::fake()->create('rev_legalitas.pdf', 900, 'application/pdf');
+
+        $response = $this->actingAs($this->ppbjUser)
+            ->postJson("/api/v1/ppbj/pengadaan/{$pengadaan->id}/legalitas-vendor", [
+                'dokumen_legalitas' => $fileRev,
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJson([
+                'success' => false,
+            ]);
+    }
 }

@@ -252,4 +252,27 @@ class PengadaanController extends Controller
             'data' => $result,
         ]);
     }
+
+    /**
+     * Mengunggah atau mengunggah ulang dokumen legalitas vendor (FR-43, FR-44, FR-45).
+     */
+    public function uploadLegalitasVendor(Request $request, string $id): JsonResponse
+    {
+        $request->validate([
+            'dokumen_legalitas' => 'required|file|mimes:pdf|max:10240',
+        ]);
+
+        $pengadaan = Pengadaan::findOrFail((int) $id);
+        $result = $this->pengadaanService->uploadLegalitasVendor(
+            pengadaan: $pengadaan,
+            file: $request->file('dokumen_legalitas'),
+            actor: $request->user()
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Dokumen legalitas vendor berhasil diunggah.',
+            'data' => $result,
+        ]);
+    }
 }

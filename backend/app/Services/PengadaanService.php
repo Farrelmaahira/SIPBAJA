@@ -1445,4 +1445,69 @@ class PengadaanService
             ];
         });
     }
+
+    /**
+     * Upload / Re-upload dokumen legalitas vendor oleh PPBJ (FR-43, FR-44, FR-45).
+     */
+    public function uploadLegalitasVendor(Pengadaan $pengadaan, \Illuminate\Http\UploadedFile $file, User $actor): array
+    {
+        $context = $this->getPembayaranContext($pengadaan);
+
+        if (! $context['can_upload_legalitas']) {
+            $msg = $context['is_locked']
+                ? 'Dokumen legalitas vendor sudah dikunci karena proses pencairan dana telah diselesaikan oleh pihak Keuangan.'
+                : 'Dokumen legalitas vendor hanya dapat diunggah setelah memo persetujuan pembayaran dari PPK dan Bidang 2 disetujui secara lengkap.';
+
+            throw new \Illuminate\Validation\ValidationException(
+                validator([], []),
+                response()->json([
+                    'success' => false,
+                    'message' => $msg,
+                ], 422)
+            );
+        }
+
+        return DB::transaction(function () use ($pengadaan, $file, $actor) {
+            $kontrak = $pengadaan->Kontrak;
+            $rencana = $kontrak?->RencanaPembayaran?->first();
+            $pembayaran = $rencana?->Pembayaran;
+
+            if (! $pembayaran) {
+                throw new \RuntimeException('Data pembayaran tidak ditemukan.');
+            }
+
+            // Simpan / update dokumen legalitas vendor
+            $doc = $this->dokumenService->simpanDokumen(
+                file: $file,
+                actor: $actor,
+                refType: 'pembayaran',
+                refId: $pembayaran->id,
+                tipeDokumen: 'dokumen_legalitas_vendor',
+                folder: 'dokumen/pembayaran/legalitas',
+                field: 'legalitas'
+            );
+
+            // Jika status pembayaran belum siap bayar atau selesai, set ke siap_bayar
+            if ($pembayaran->status !== 'selesai') {
+                $pembayaran->status = 'siap_bayar';
+                $pembayaran->save();
+            }
+
+            // Catat history
+            StatusHistory::create([
+                'ref_type' => 'pengadaan',
+                'ref_id' => $pengadaan->id,
+                'status_lama' => $pengadaan->status,
+                'status_baru' => $pengadaan->status,
+                'actor_id' => $actor->id,
+                'catatan' => 'PPBJ mengunggah dokumen legalitas vendor untuk verifikasi pencairan dana',
+                'created_at' => now(),
+            ]);
+
+            return [
+                'pembayaran' => $pembayaran->fresh(['Dokumen', 'Approvals']),
+                'dokumen' => $doc,
+            ];
+        });
+    }
 }
