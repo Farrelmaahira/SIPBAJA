@@ -1031,6 +1031,75 @@ Catatan: endpoint RKAKL untuk PPK (`/api/v1/ppk/rkakl`, `/api/v1/ppk/rkakl/dokum
 #### 2. Modul Keuangan (`role:Keuangan`)
 - **Dashboard Keuangan:** `GET /api/v1/keuangan/dashboard` (`role:Keuangan`)
   - Success Response: `200 OK`
+    ```json
+    {
+      "summary": {
+        "total_menunggu_pembayaran": 6
+      },
+      "pengadaan_menunggu_pembayaran": [
+        {
+          "id": 1,
+          "nomor_pengadaan": "01010-FF-11",
+          "nomor_permohonan": "Permohonan 111-FFF-111",
+          "judul": "Pengadaan Laptop Asus Vivobook",
+          "diajukan_oleh": "Unit Keuangan",
+          "nilai_pengajuan": 45000000.0,
+          "status": "menunggu_input",
+          "status_label": "Menunggu Input"
+        }
+      ]
+    }
+    ```
+- **List Pengadaan:** `GET /api/v1/keuangan/pengadaan?search={keyword}&status={status}&page={page}&per_page={per_page}` (`role:Keuangan`)
+  - Success Response: `200 OK`
+    ```json
+    {
+      "data": [
+        {
+          "id": 1,
+          "nomor_pengadaan": "01010-FF-11",
+          "nomor_permohonan": "Permohonan 111-FFF-111",
+          "judul": "Pengadaan Komputer Lab",
+          "diajukan_oleh": "Jurusan Teknik Informatika",
+          "nilai_pengajuan": 185000000.0,
+          "status": "menunggu_input",
+          "status_label": "Menunggu Input"
+        }
+      ],
+      "current_page": 1,
+      "last_page": 1,
+      "per_page": 10,
+      "total": 10,
+      "from": 1,
+      "to": 10
+    }
+    ```
+- **Detail Pengadaan:** `GET /api/v1/keuangan/pengadaan/{id}` (`role:Keuangan`)
+  - Success Response: `200 OK` (Memuat informasi 12 grid data, 5-tahap tracking stepper, riwayat timeline, 12 berkas dokumen pendukung, kartu MAK, dan data bukti pembayaran)
+- **Simpan Bukti Pembayaran:** `POST /api/v1/keuangan/pengadaan/{id}/bukti-bayar` (`role:Keuangan`)
+  - Content-Type: `multipart/form-data`
+  - Payload:
+    - `tanggal_pembayaran` (string, required, YYYY-MM-DD)
+    - `bukti_bayar[]` (file, required, format PDF/JPG/PNG max 10MB)
+  - Success Response: `201 Created`
+    ```json
+    {
+      "message": "Bukti pembayaran berhasil diunggah dan status pengadaan telah selesai.",
+      "pengadaan_id": 1,
+      "status": "selesai",
+      "uploaded_files": [
+        {
+          "id": 15,
+          "nama": "Bukti_Transfer_001.jpg",
+          "ukuran": "2.4 MB"
+        }
+      ]
+    }
+    ```
+- **Unduh/Pratinjau Dokumen:** `GET /api/v1/keuangan/pengadaan/{id}/dokumen/{dokumenId}?disposition={inline|attachment}&nama={namaFile}` (`role:Keuangan`)
+  - Success Response: `200 OK` (Stream file blob)
+- **Profil Keuangan:** `GET /api/v1/keuangan/profil` (`role:Keuangan`)
+  - Success Response: `200 OK` (Profil akun Keuangan yang sedang login)
 
 ---
 

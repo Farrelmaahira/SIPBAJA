@@ -61,10 +61,13 @@ export const FilterStatusPopover: FC<FilterStatusPopoverProps> = ({
       }
     }
 
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('keydown', handleKeyDown);
+    const timer = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+    }, 10);
 
     return () => {
+      clearTimeout(timer);
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleKeyDown);
     };
@@ -96,7 +99,7 @@ export const FilterStatusPopover: FC<FilterStatusPopoverProps> = ({
   return (
     <div
       ref={popoverRef}
-      className={`absolute ${alignmentClass} top-full mt-2 w-72 sm:w-80 max-w-[calc(100vw-2.5rem)] rounded-2xl bg-white border border-[#E4EBE8] shadow-[0_14px_36px_rgba(13,51,38,0.14)] p-4 z-40 ${className}`}
+      className={`absolute ${alignmentClass} top-full mt-2 w-72 sm:w-80 max-w-[calc(100vw-2.5rem)] rounded-2xl bg-white border border-[#E4EBE8] shadow-[0_14px_36px_rgba(13,51,38,0.14)] p-4 z-40 animate-scale-up ${className}`}
       role="dialog"
       aria-label={title}
     >
@@ -108,16 +111,19 @@ export const FilterStatusPopover: FC<FilterStatusPopoverProps> = ({
           onClick={onClose}
           className="p-1 rounded-lg text-[#8A9A95] hover:bg-[#F4F7F5] hover:text-[#14201C] transition-colors cursor-pointer"
           aria-label="Tutup filter"
+          title="Tutup Filter"
         >
           <X className="w-4 h-4" />
         </button>
       </div>
 
       {/* Pilihan Status */}
-      <div className="py-3">
-        <p className="text-[10px] font-bold text-[#8A9A95] uppercase tracking-wider mb-2.5">
-          {statusSectionTitle}
-        </p>
+      <div className="py-3 max-h-60 overflow-y-auto pr-1">
+        {statusSectionTitle && (
+          <p className="text-[10px] font-bold text-[#8A9A95] uppercase tracking-wider mb-2.5">
+            {statusSectionTitle}
+          </p>
+        )}
         <div className="space-y-2.5">
           {options.map((opt) => {
             const optKey = opt.key || opt.value || '';
@@ -125,7 +131,7 @@ export const FilterStatusPopover: FC<FilterStatusPopoverProps> = ({
             return (
               <label
                 key={optKey}
-                className="flex items-center gap-2.5 cursor-pointer select-none group"
+                className="flex items-center gap-2.5 p-1 rounded-xl hover:bg-[#F9FBFA] cursor-pointer select-none transition-colors group"
               >
                 <input
                   type="checkbox"
@@ -154,14 +160,14 @@ export const FilterStatusPopover: FC<FilterStatusPopoverProps> = ({
         <button
           type="button"
           onClick={handleReset}
-          className="flex-1 py-2 px-3 rounded-xl border border-[#E4EBE8] text-xs font-bold text-[#5F6F6A] hover:bg-[#F4F7F5] transition-colors cursor-pointer"
+          className="flex-1 py-2 px-3 rounded-xl border border-[#E4EBE8] text-xs font-bold text-[#5F6F6A] hover:bg-[#F4F7F5] transition-colors cursor-pointer text-center"
         >
           Reset
         </button>
         <button
           type="button"
           onClick={handleApply}
-          className="flex-1 py-2 px-3 rounded-xl bg-[#0E7C5A] hover:bg-[#0B6549] text-xs font-bold text-white transition-colors cursor-pointer shadow-xs"
+          className="flex-1 py-2 px-3 rounded-xl bg-[#0E7C5A] hover:bg-[#0B6549] text-xs font-bold text-white transition-colors cursor-pointer shadow-xs text-center"
         >
           Terapkan
         </button>

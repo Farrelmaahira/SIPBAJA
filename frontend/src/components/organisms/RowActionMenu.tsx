@@ -160,7 +160,10 @@ export const RowActionMenu: FC<RowActionMenuProps> = ({
                 <span>Edit</span>
               </button>
             ) : (
-              <div className="flex items-center gap-3 px-3.5 py-2 text-xs font-medium text-[#C5D2CD] cursor-not-allowed select-none">
+              <div
+                className="flex items-center gap-3 px-3.5 py-2 text-xs font-medium text-[#C5D2CD] cursor-not-allowed select-none"
+                title="Hanya dapat diedit jika pengadaan telah selesai"
+              >
                 <Pencil className="w-4 h-4 text-[#C5D2CD]" />
                 <span>Edit</span>
               </div>
