@@ -97,6 +97,20 @@ export const bidang2Service = {
   },
 
   /**
+   * Mendapatkan detail pengadaan untuk Bidang 2.
+   */
+  async getPengadaanDetail(
+    id: number | string,
+    signal?: AbortSignal
+  ): Promise<any> {
+    const response = await api.get<{ detail: any }>(
+      `/v1/bidang-2/pengadaan/${id}`,
+      { signal }
+    );
+    return response.data.detail;
+  },
+
+  /**
    * Mendapatkan endpoint URL untuk download memo persetujuan Bidang 2.
    */
   downloadMemoUrl(id: number | string): string {
