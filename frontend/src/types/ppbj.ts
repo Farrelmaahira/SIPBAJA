@@ -189,7 +189,10 @@ export interface PpbjPengadaanDetail {
     judul: string;
     estimasi_anggaran: number;
     unit_nama: string;
+    tanggal_pengajuan?: string;
+    created_at?: string;
   };
+  created_at?: string;
   mak: {
     id?: number;
     nama: string;
@@ -209,6 +212,20 @@ export interface PpbjPengadaanDetail {
     nama: string;
     perlu_review_pp: boolean;
   };
+  tracking?: {
+    stepper: Array<{
+      key: string;
+      label: string;
+      status: 'selesai' | 'sedang_berlangsung' | 'belum_dimulai';
+    }>;
+    timeline: Array<{
+      id: number | string;
+      tanggal: string;
+      keterangan: string;
+      actor_nama?: string;
+      aktif?: boolean;
+    }>;
+  };
   kontrak?: {
     id: number;
     tipe: string;
@@ -222,7 +239,16 @@ export interface PpbjPengadaanDetail {
       id: number;
       nama_asli: string;
       download_url: string;
+      tipe_dokumen?: string;
     } | null;
+    dokumen_items?: Array<{
+      id: number;
+      nama_asli: string;
+      tipe_dokumen: string;
+      ukuran_bytes: number;
+      mime_type: string;
+      download_url: string;
+    }>;
   } | null;
   dokumen_list: Array<{
     id: number;
@@ -248,14 +274,19 @@ export interface PpbjPengadaanDetail {
 }
 
 export interface PpbjSimpanKontrakPayload {
-  tipe: 'Kontrak' | 'SPK' | 'Surat Pesanan' | 'Kwitansi';
-  nomor: string;
-  tanggal: string;
+  tipe?: 'Kontrak' | 'SPK' | 'Surat Pesanan' | 'Kwitansi' | 'Invoice' | string;
+  nomor?: string;
+  tanggal?: string;
   vendor_nama: string;
   nominal_kontrak: number | string;
-  tanggal_jatuh_tempo: string;
-  tanggal_reminder: string;
+  tanggal_jatuh_tempo?: string;
+  tanggal_reminder?: string;
   dokumen?: File | null;
+  dokumen_surat_kontrak?: File | null;
+  dokumen_spk?: File | null;
+  dokumen_surat_pemesanan?: File | null;
+  dokumen_kwitansi?: File | null;
+  dokumen_invoice?: File | null;
 }
 
 export interface PpbjUpdateKlasifikasiPayload {

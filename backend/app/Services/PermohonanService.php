@@ -554,7 +554,13 @@ class PermohonanService
             'Dokumen',
             'Approvals',
             'PermohonanMak.Mak',
-            'Pengadaan.PermohonanMak.Mak',
+            'Pengadaan.PermohonanMak.Mak.Ppk',
+            'Pengadaan.Ppk',
+            'Pengadaan.Jenis',
+            'Pengadaan.Metode',
+            'Pengadaan.Level',
+            'Pengadaan.Dokumen',
+            'Pengadaan.Kontrak',
         ])->findOrFail($id);
 
         $dokumenList = $permohonan->Dokumen
@@ -582,9 +588,22 @@ class PermohonanService
         $paketList = $permohonan->Pengadaan
             ->map(fn ($p) => [
                 'id' => (int) $p->id,
-                'makKode' => (string) ($p->PermohonanMak?->Mak?->nama ?? $p->PermohonanMak?->Mak?->kode ?? '-'),
+                'makNama' => (string) ($p->PermohonanMak?->Mak?->nama ?? '-'),
+                'makKode' => (string) ($p->PermohonanMak?->Mak?->kode ?? $p->PermohonanMak?->Mak?->nama ?? '-'),
+                'ppkNama' => (string) ($p->PermohonanMak?->Mak?->Ppk?->nama ?? $p->Ppk?->nama ?? '-'),
+                'jenisNama' => (string) ($p->Jenis?->nama ?? '-'),
+                'metodeNama' => (string) ($p->Metode?->nama ?? '-'),
+                'levelNama' => (string) ($p->Level?->nama ?? '-'),
                 'nominal' => $p->Kontrak?->nominal_kontrak ? (float) $p->Kontrak->nominal_kontrak : null,
-                'status' => (string) ($p->status ?? '-'),
+                'status' => (string) ($p->status ?? 'draft'),
+                'revisiKe' => (int) ($p->revisi_ke ?? 0),
+                'dokumenList' => $p->Dokumen->map(fn ($d) => [
+                    'id' => (int) $d->id,
+                    'namaAsli' => (string) $d->nama_asli,
+                    'nama_asli' => (string) $d->nama_asli,
+                    'tipe_dokumen' => (string) ($d->tipe_dokumen ?? 'dokumen_pengadaan'),
+                    'download_url' => "/api/v1/ppbj/pengadaan/{$p->id}/dokumen/{$d->id}",
+                ])->values()->all(),
             ])
             ->values()
             ->all();

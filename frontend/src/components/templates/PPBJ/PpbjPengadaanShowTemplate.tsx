@@ -5,20 +5,21 @@ import {
   CheckCircle2,
   AlertCircle,
   Edit,
-  FileCheck2,
   Lock,
 } from 'lucide-react';
 import AppLayout, { type AppTopbarUser } from '../General/AppLayout';
 import HeroBanner from '../../organisms/HeroBanner';
 import StatusPill from '../../atoms/StatusPill';
+import InformasiPengadaanCard from '../../organisms/PP/InformasiPengadaanCard';
+import TrackingPengadaanCard from '../../organisms/TrackingPengadaanCard';
 import DokumenListCard from '../../organisms/DokumenListCard';
 import DocumentPreviewModal from '../../organisms/DocumentPreviewModal';
 import CatatanPenolakanCard from '../../molecules/CatatanPenolakanCard';
 import KontrakVendorCard from '../../molecules/KontrakVendorCard';
-import KontrakVendorFormModal from '../../organisms/KontrakVendorFormModal';
+import PelengkapPengadaanInlineForm from '../../organisms/PPBJ/PelengkapPengadaanInlineForm';
 import EditPengadaanModal from '../../organisms/EditPengadaanModal';
 import { PPBJ_NAV_ITEMS } from '../../../constants/ppbjNav';
-import { formatRupiah } from '../../../utils/formatters';
+import { formatRupiah, formatTanggalIndo } from '../../../utils/formatters';
 import type {
   PpbjPengadaanDetail,
   PpbjSimpanKontrakPayload,
@@ -38,6 +39,7 @@ export interface PpbjPengadaanShowTemplateProps {
   isEditKlasifikasiOpen?: boolean;
   isSubmittingKlasifikasi?: boolean;
   isKontrakModalOpen?: boolean;
+  isSubmittingKontrak?: boolean;
   onOpenEditKlasifikasi?: () => void;
   onCloseEditKlasifikasi?: () => void;
   onOpenKontrakModal?: () => void;
@@ -60,11 +62,9 @@ export const PpbjPengadaanShowTemplate: FC<PpbjPengadaanShowTemplateProps> = ({
   flash = {},
   isEditKlasifikasiOpen = false,
   isSubmittingKlasifikasi = false,
-  isKontrakModalOpen = false,
+  isSubmittingKontrak = false,
   onOpenEditKlasifikasi,
   onCloseEditKlasifikasi,
-  onOpenKontrakModal,
-  onCloseKontrakModal,
   onSubmitEditKlasifikasi,
   onSubmitKontrak,
   onViewDokumen,
@@ -155,159 +155,75 @@ export const PpbjPengadaanShowTemplate: FC<PpbjPengadaanShowTemplateProps> = ({
               />
             )}
 
-            {/* Card 1: Informasi Paket & Klasifikasi */}
-            <section className="bg-white rounded-[22px] border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.05)] p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 mb-5 border-b border-[#F0F4F2] gap-3">
-                <div>
-                  <h2 className="text-base font-bold text-[#14201C]">
-                    Klasifikasi Paket Pengadaan
-                  </h2>
-                  <p className="text-xs text-[#5F6F6A] mt-0.5">
-                    Detail alokasi anggaran, metode, jenis, dan level pengadaan
-                  </p>
+            {/* Banner Paket Draft */}
+            {pengadaan.status === 'draft' && (
+              <div className="p-4 rounded-2xl bg-[#F0F4F2] border border-[#CFDAD6] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-[#0E7C5A] shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="block text-sm font-bold text-[#14201C] mb-0.5">
+                      Paket Pengadaan Berstatus Draft
+                    </strong>
+                    <span className="text-[#5F6F6A]">
+                      Paket pengadaan ini belum diajukan ke reviewer. Anda dapat memperbarui klasifikasi atau membuka permohonan induk untuk mengirim seluruh draft ke reviewer.
+                    </span>
+                  </div>
                 </div>
+                {Boolean(pengadaan.permohonan?.id) && (
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/ppbj/permohonan/${pengadaan.permohonan.id}`)}
+                    className="self-start sm:self-auto px-4 py-2 rounded-xl bg-[#0E7C5A] hover:bg-[#0A5C43] text-white text-xs font-bold transition-colors inline-flex items-center gap-1.5 shadow-xs shrink-0 cursor-pointer"
+                  >
+                    <span>Buka Permohonan Induk</span>
+                  </button>
+                )}
+              </div>
+            )}
 
-                {pengadaan.bisa_edit_draft && onOpenEditKlasifikasi && (
+            {/* Card 1: Informasi Paket & Klasifikasi */}
+            <div className="relative">
+              {pengadaan.bisa_edit_draft && onOpenEditKlasifikasi && (
+                <div className="flex justify-end mb-3">
                   <button
                     type="button"
                     onClick={onOpenEditKlasifikasi}
-                    className="self-start sm:self-auto px-4 py-2 rounded-xl border border-[#0E7C5A] text-[#0E7C5A] hover:bg-[#F7FBF9] text-xs font-semibold transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                    className="px-4 py-2 rounded-xl border border-[#0E7C5A] text-[#0E7C5A] hover:bg-[#F7FBF9] text-xs font-semibold transition-colors cursor-pointer inline-flex items-center gap-1.5 shadow-xs"
                   >
                     <Edit className="w-3.5 h-3.5" />
                     <span>{isDitolak ? 'Revisi Dokumen Pengadaan' : 'Perbarui Klasifikasi'}</span>
                   </button>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-5 gap-x-8 text-xs">
-                <div>
-                  <span className="block text-[11px] font-bold text-[#5F6F6A] uppercase tracking-wider mb-1">
-                    Nomor & Asal Permohonan
-                  </span>
-                  <p className="text-sm font-bold text-[#14201C]">
-                    {pengadaan.permohonan?.nomor_surat || '-'}
-                  </p>
-                  <p className="text-xs text-[#5F6F6A] mt-0.5">
-                    {pengadaan.permohonan?.unit_nama || '-'}
-                  </p>
                 </div>
-
-                <div>
-                  <span className="block text-[11px] font-bold text-[#5F6F6A] uppercase tracking-wider mb-1">
-                    Nilai Alokasi Pengadaan
-                  </span>
-                  <p className="text-base font-extrabold text-[#0E7C5A] tabular-nums">
-                    {formatRupiah(pengadaan.nominal)}
-                  </p>
-                </div>
-
-                <div>
-                  <span className="block text-[11px] font-bold text-[#5F6F6A] uppercase tracking-wider mb-1">
-                    Mata Anggaran (MAK)
-                  </span>
-                  <p className="text-sm font-semibold text-[#14201C]">
-                    {pengadaan.mak?.nama || '-'}
-                  </p>
-                  <p className="text-xs text-[#5F6F6A] mt-0.5">
-                    PPK: {pengadaan.mak?.ppk_nama || '-'}
-                  </p>
-                </div>
-
-                <div>
-                  <span className="block text-[11px] font-bold text-[#5F6F6A] uppercase tracking-wider mb-1">
-                    Jenis Pengadaan
-                  </span>
-                  <p className="text-sm font-medium text-[#14201C]">{pengadaan.jenis?.nama || '-'}</p>
-                </div>
-
-                <div>
-                  <span className="block text-[11px] font-bold text-[#5F6F6A] uppercase tracking-wider mb-1">
-                    Metode Pengadaan
-                  </span>
-                  <p className="text-sm font-medium text-[#14201C]">{pengadaan.metode?.nama || '-'}</p>
-                </div>
-
-                <div>
-                  <span className="block text-[11px] font-bold text-[#5F6F6A] uppercase tracking-wider mb-1">
-                    Level & Batas Kewenangan
-                  </span>
-                  <p className="text-sm font-semibold text-[#14201C]">{pengadaan.level?.nama || '-'}</p>
-                  <span className="text-[11px] text-[#5F6F6A]">
-                    {pengadaan.level?.perlu_review_pp ? 'Memerlukan Verifikasi Pejabat Pengadaan (PP)' : 'Bypass PP'}
-                  </span>
-                </div>
-              </div>
-            </section>
-
-            {/* Card 2: Rekanan Vendor & Instrumen Pembelian (FR-37, FR-38, FR-39) */}
-            {pengadaan.kontrak ? (
-              <KontrakVendorCard
-                tipe={pengadaan.kontrak.tipe}
-                nomor={pengadaan.kontrak.nomor}
-                tanggal={pengadaan.kontrak.tanggal}
-                vendorNama={pengadaan.kontrak.vendor_nama}
-                nominalKontrak={pengadaan.kontrak.nominal_kontrak}
-                tanggalJatuhTempo={pengadaan.kontrak.tanggal_jatuh_tempo}
-                tanggalReminder={pengadaan.kontrak.tanggal_reminder}
-                dokumenNama={pengadaan.kontrak.dokumen?.nama_asli}
-                bisaEdit={pengadaan.bisa_edit_kontrak}
-                onEdit={onOpenKontrakModal}
-                onPreviewDokumen={() => {
-                  if (pengadaan.kontrak?.dokumen) {
-                    onViewDokumen?.({
-                      id: pengadaan.kontrak.dokumen.id,
-                      nama_asli: pengadaan.kontrak.dokumen.nama_asli,
-                      tipe_dokumen: 'dokumen_kontrak',
-                      ukuran_bytes: 0,
-                      mime_type: 'application/pdf',
-                      download_url: pengadaan.kontrak.dokumen.download_url,
-                    });
-                  }
-                }}
+              )}
+              <InformasiPengadaanCard
+                judul={pengadaan.permohonan?.judul || 'Pengadaan Barang & Jasa'}
+                unitNama={pengadaan.permohonan?.unit_nama || 'Unit Kerja'}
+                nomorPengadaan={`#${pengadaan.id}`}
+                nomorPermohonan={pengadaan.permohonan?.nomor_surat || '-'}
+                tanggalPengajuan={
+                  pengadaan.permohonan?.tanggal_pengajuan
+                    ? formatTanggalIndo(pengadaan.permohonan.tanggal_pengajuan, true)
+                    : pengadaan.created_at
+                      ? formatTanggalIndo(pengadaan.created_at, true)
+                      : '-'
+                }
+                jenisPengadaan={pengadaan.jenis?.nama || '-'}
+                metodePengadaan={pengadaan.metode?.nama || '-'}
+                levelPengadaan={pengadaan.level?.nama || '-'}
+                nominal={formatRupiah(pengadaan.nominal)}
+                statusPpLabel={pengadaan.level?.perlu_review_pp ? 'Memerlukan Verifikasi PP' : 'Bypass PP'}
+                statusPengadaanPill={<StatusPill status={pengadaan.status} label={pengadaan.status === 'disetujui' ? 'Review PPBJ' : undefined} />}
               />
-            ) : (
-              <section className="bg-white rounded-[22px] border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.05)] p-6">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 mb-4 border-b border-[#F0F4F2] gap-3">
-                  <div>
-                    <h2 className="text-base font-bold text-[#14201C]">
-                      Dokumen Pembelian & Rekanan Vendor
-                    </h2>
-                    <p className="text-xs text-[#5F6F6A] mt-0.5">
-                      Penerbitan Kontrak, SPK, Surat Pesanan, atau Kwitansi untuk rekanan penyedia
-                    </p>
-                  </div>
+            </div>
 
-                  {pengadaan.bisa_edit_kontrak && onOpenKontrakModal && (
-                    <button
-                      type="button"
-                      onClick={onOpenKontrakModal}
-                      className="px-5 py-2.5 rounded-xl bg-[#0E7C5A] text-white hover:bg-[#0B664A] text-xs font-semibold transition-colors cursor-pointer shadow-xs inline-flex items-center gap-2"
-                    >
-                      <FileCheck2 className="w-4 h-4" />
-                      <span>Input Kontrak & Vendor</span>
-                    </button>
-                  )}
-                </div>
+            {/* Tracking Pengadaan (FR-05) */}
+            <TrackingPengadaanCard
+              statusPengadaan={pengadaan.status}
+              stepper={pengadaan.tracking?.stepper}
+              timeline={pengadaan.tracking?.timeline}
+            />
 
-                {!pengadaan.bisa_edit_kontrak ? (
-                  <div className="p-4 rounded-2xl bg-[#F8FAF9] border border-[#E4EBE8] flex items-center gap-3 text-xs text-[#5F6F6A]">
-                    <Lock className="w-4 h-4 text-[#8A9A95] shrink-0" />
-                    <span>
-                      Data kontrak dan rekanan vendor belum dapat diinput karena dokumen pengadaan belum disetujui penuh oleh peninjau (PP/PPK).
-                    </span>
-                  </div>
-                ) : (
-                  <div className="p-4 rounded-2xl bg-[#EBF7F2] border border-[#D0EAE0] flex items-center gap-3 text-xs text-[#0E7C5A]">
-                    <CheckCircle2 className="w-4 h-4 shrink-0" />
-                    <span>
-                      Dokumen pengadaan telah disetujui! Silakan input data rekanan vendor, biaya riil, dan instrumen pembelian.
-                    </span>
-                  </div>
-                )}
-              </section>
-            )}
-
-            {/* Card 3: Dokumen Lampiran Pengadaan */}
+            {/* Card 2: Dokumen Lampiran Pengadaan */}
             <DokumenListCard
               title="Berkas & Lampiran Pengadaan"
               dokumenList={dokumenList}
@@ -318,29 +234,63 @@ export const PpbjPengadaanShowTemplate: FC<PpbjPengadaanShowTemplateProps> = ({
               onDownload={onDownloadDokumen}
             />
 
-            {/* Modal Input/Edit Kontrak & Vendor (FR-38, FR-39) */}
-            {isKontrakModalOpen && (
-              <KontrakVendorFormModal
-                isOpen={isKontrakModalOpen}
-                onClose={onCloseKontrakModal || (() => {})}
+            {/* Card 3: Form Pelengkap Informasi Pengadaan & Rekanan Vendor (FR-37) */}
+            {!pengadaan.bisa_edit_kontrak && !pengadaan.kontrak ? (
+              <section className="bg-white rounded-[22px] border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.05)] p-6">
+                <div className="pb-4 mb-4 border-b border-[#F0F4F2]">
+                  <h2 className="text-base font-bold text-[#14201C]">
+                    Dokumen Pembelian & Rekanan Vendor
+                  </h2>
+                  <p className="text-xs text-[#5F6F6A] mt-0.5">
+                    Informasi penyedia barang/jasa, pengingat masa berlaku, dan instrumen pembelian
+                  </p>
+                </div>
+                <div className="p-4 rounded-2xl bg-[#F8FAF9] border border-[#E4EBE8] flex items-center gap-3 text-xs text-[#5F6F6A]">
+                  <Lock className="w-4 h-4 text-[#8A9A95] shrink-0" />
+                  <span>
+                    Data rekanan vendor dan instrumen pembelian belum dapat diisi karena dokumen pengadaan belum disetujui penuh oleh peninjau (PP/PPK).
+                  </span>
+                </div>
+              </section>
+            ) : pengadaan.bisa_edit_kontrak ? (
+              <PelengkapPengadaanInlineForm
+                initialVendorNama={pengadaan.kontrak?.vendor_nama || ''}
+                initialBiayaRiil={pengadaan.kontrak?.nominal_kontrak || pengadaan.nominal || ''}
+                initialTanggalPengingat={pengadaan.kontrak?.tanggal_reminder || ''}
+                initialDokumenList={pengadaan.kontrak?.dokumen_items || []}
+                existingSingleDokumen={pengadaan.kontrak?.dokumen || null}
+                isSubmitting={isSubmittingKontrak}
                 onSubmit={onSubmitKontrak || (() => {})}
+                onPreviewDokumen={onViewDokumen}
                 isUpdate={Boolean(pengadaan.kontrak)}
-                initialData={
-                  pengadaan.kontrak
-                    ? {
-                        tipe: pengadaan.kontrak.tipe as any,
-                        nomor: pengadaan.kontrak.nomor,
-                        tanggal: pengadaan.kontrak.tanggal || '',
-                        vendor_nama: pengadaan.kontrak.vendor_nama,
-                        nominal_kontrak: pengadaan.kontrak.nominal_kontrak,
-                        tanggal_jatuh_tempo: pengadaan.kontrak.tanggal_jatuh_tempo || '',
-                        tanggal_reminder: pengadaan.kontrak.tanggal_reminder || '',
-                      }
-                    : {
-                        nominal_kontrak: pengadaan.nominal,
-                      }
-                }
               />
+            ) : (
+              /* Ketika barang sudah diterima perlengkapan / read-only */
+              pengadaan.kontrak && (
+                <KontrakVendorCard
+                  tipe={pengadaan.kontrak.tipe}
+                  nomor={pengadaan.kontrak.nomor}
+                  tanggal={pengadaan.kontrak.tanggal}
+                  vendorNama={pengadaan.kontrak.vendor_nama}
+                  nominalKontrak={pengadaan.kontrak.nominal_kontrak}
+                  tanggalJatuhTempo={pengadaan.kontrak.tanggal_jatuh_tempo}
+                  tanggalReminder={pengadaan.kontrak.tanggal_reminder}
+                  dokumenNama={pengadaan.kontrak.dokumen?.nama_asli}
+                  bisaEdit={false}
+                  onPreviewDokumen={() => {
+                    if (pengadaan.kontrak?.dokumen) {
+                      onViewDokumen?.({
+                        id: pengadaan.kontrak.dokumen.id,
+                        nama_asli: pengadaan.kontrak.dokumen.nama_asli,
+                        tipe_dokumen: 'dokumen_kontrak',
+                        ukuran_bytes: 0,
+                        mime_type: 'application/pdf',
+                        download_url: pengadaan.kontrak.dokumen.download_url,
+                      });
+                    }
+                  }}
+                />
+              )
             )}
 
             {/* Modal Edit Klasifikasi Pengadaan (FR-36) */}

@@ -74,7 +74,7 @@ class PermohonanController extends Controller
         );
 
         return response()->json([
-            'message' => 'Paket pengadaan berhasil disimpan sebagai draft.',
+            'message' => 'Paket pengadaan berhasil dibuat dan dikirim ke reviewer.',
         ], 201);
     }
 

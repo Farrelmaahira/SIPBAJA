@@ -190,7 +190,7 @@ class PermohonanApiTest extends TestCase
         ]);
         $draftRes->assertStatus(201)->assertJsonStructure(['message']);
 
-        $createdPengadaan = Pengadaan::where('permohonan_id', $permohonan->id)->where('status', 'draft')->latest()->firstOrFail();
+        $createdPengadaan = Pengadaan::where('permohonan_id', $permohonan->id)->where('status', 'menunggu_review')->latest()->firstOrFail();
 
         $deleteRes = $this->actingAs($ppbj, 'sanctum')->deleteJson("/api/v1/ppbj/pengadaan/{$createdPengadaan->id}");
         $deleteRes->assertStatus(204);

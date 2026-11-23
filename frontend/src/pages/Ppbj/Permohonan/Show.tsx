@@ -127,11 +127,11 @@ export const PpbjPermohonanShow: FC = () => {
       }
 
       await ppbjService.storeDraftPengadaan(id, requestData);
-      setFlash({ success: 'Paket pengadaan berhasil disimpan sebagai draft.' });
+      setFlash({ success: 'Paket pengadaan berhasil dibuat dan dikirim ke reviewer.' });
       await fetchDetail();
     } catch (err: any) {
       console.error('Failed to save draft pengadaan:', err);
-      const message = err.response?.data?.message || 'Gagal menyimpan draft paket pengadaan.';
+      const message = err.response?.data?.message || 'Gagal menyimpan dan mengirim paket pengadaan.';
       setFlash({ error: message });
       throw err;
     }

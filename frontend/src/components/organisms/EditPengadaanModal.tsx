@@ -1,4 +1,4 @@
-import { useState, type FC, type FormEvent, type ChangeEvent } from 'react';
+import { useState, useEffect, type FC, type FormEvent, type ChangeEvent } from 'react';
 import { Upload, X, FileText, AlertCircle } from 'lucide-react';
 import Modal from './Modal';
 import FormField from '../molecules/FormField';
@@ -49,6 +49,17 @@ export const EditPengadaanModal: FC<EditPengadaanModalProps> = ({
   );
   const [fileDokumen, setFileDokumen] = useState<File | null>(null);
   const [errorLocal, setErrorLocal] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setPermohonanMakId(String(initialData?.permohonan_mak_id || availableMak[0]?.id || ''));
+      setJenisId(String(initialData?.jenis_id || referenceData.jenis?.[0]?.id || ''));
+      setMetodeId(String(initialData?.metode_id || referenceData.metode?.[0]?.id || ''));
+      setLevelId(String(initialData?.level_id || referenceData.level?.[0]?.id || ''));
+      setFileDokumen(null);
+      setErrorLocal(null);
+    }
+  }, [isOpen, initialData, availableMak, referenceData]);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

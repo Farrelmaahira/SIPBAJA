@@ -114,7 +114,7 @@ class PengadaanServiceTest extends TestCase
         $this->assertDatabaseHas('pengadaan', [
             'id' => $result[0]->id,
             'permohonan_id' => $permohonan->id,
-            'status' => 'draft',
+            'status' => 'menunggu_review',
             'level_id' => $levelLow->id,
             'ppk_id' => $pm->Mak->ppk_user_id,
         ]);
@@ -190,7 +190,7 @@ class PengadaanServiceTest extends TestCase
     {
         $this->expectException(ValidationException::class);
 
-        $pengadaanNonDraft = Pengadaan::where('status', '!=', 'draft')->firstOrFail();
+        $pengadaanNonDraft = Pengadaan::whereNotIn('status', ['draft', 'menunggu_review'])->firstOrFail();
         $ppbj = User::where('email', 'ppbj@pnj.ac.id')->firstOrFail();
 
         $this->pengadaanService->hapusDraftPengadaan($pengadaanNonDraft->id, $ppbj);

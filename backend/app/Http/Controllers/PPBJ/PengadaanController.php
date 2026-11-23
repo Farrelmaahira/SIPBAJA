@@ -90,12 +90,20 @@ class PengadaanController extends Controller
     {
         $pengadaan = Pengadaan::findOrFail((int) $id);
         $fileDokumen = $request->file('dokumen');
+        $multiDokumen = [
+            'dokumen_surat_kontrak' => $request->file('dokumen_surat_kontrak'),
+            'dokumen_spk' => $request->file('dokumen_spk'),
+            'dokumen_surat_pemesanan' => $request->file('dokumen_surat_pemesanan'),
+            'dokumen_kwitansi' => $request->file('dokumen_kwitansi'),
+            'dokumen_invoice' => $request->file('dokumen_invoice'),
+        ];
 
         $kontrak = $this->pengadaanService->simpanAtauPerbaruiKontrak(
             $pengadaan,
             $request->validated(),
             $fileDokumen,
-            $request->user()
+            $request->user(),
+            $multiDokumen
         );
 
         return response()->json([
@@ -111,12 +119,20 @@ class PengadaanController extends Controller
     {
         $pengadaan = Pengadaan::findOrFail((int) $id);
         $fileDokumen = $request->file('dokumen');
+        $multiDokumen = [
+            'dokumen_surat_kontrak' => $request->file('dokumen_surat_kontrak'),
+            'dokumen_spk' => $request->file('dokumen_spk'),
+            'dokumen_surat_pemesanan' => $request->file('dokumen_surat_pemesanan'),
+            'dokumen_kwitansi' => $request->file('dokumen_kwitansi'),
+            'dokumen_invoice' => $request->file('dokumen_invoice'),
+        ];
 
         $kontrak = $this->pengadaanService->simpanAtauPerbaruiKontrak(
             $pengadaan,
             $request->validated(),
             $fileDokumen,
-            $request->user()
+            $request->user(),
+            $multiDokumen
         );
 
         return response()->json([
