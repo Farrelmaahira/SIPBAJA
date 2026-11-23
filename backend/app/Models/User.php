@@ -14,7 +14,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['role_id', 'unit_id', 'nama', 'email', 'password'])]
+#[Fillable(['role_id', 'unit_id', 'nama', 'email', 'password', 'isActive'])]
 #[Hidden(['password'])]
 class User extends Authenticatable
 {
@@ -30,6 +30,7 @@ class User extends Authenticatable
     {
         return [
             'password' => 'hashed',
+            'isActive' => 'boolean',
         ];
     }
 

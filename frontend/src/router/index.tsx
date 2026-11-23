@@ -15,6 +15,7 @@ import UnitKerjaIndex from '../pages/Admin/UnitKerja/Index';
 import MakIndex from '../pages/Admin/Mak/Index';
 import RoleIndex from '../pages/Admin/Role/Index';
 import RolePermissionIndex from '../pages/Admin/RolePermission/Index';
+import AdminMetodePengadaanIndex from '../pages/Admin/MetodePengadaan/Index';
 
 // Pemohon Pages
 import PemohonDashboard from '../pages/Pemohon/Dashboard';
@@ -35,6 +36,9 @@ import PerencanaanProfilIndex from '../pages/Perencanaan/Profil/Index';
 // Bidang 2 Pages
 import Bidang2Dashboard from '../pages/Bidang2/Dashboard';
 import Bidang2PengajuanIndex from '../pages/Bidang2/Pengajuan/Index';
+import Bidang2PengajuanShow from '../pages/Bidang2/Pengajuan/Show';
+import Bidang2PengadaanIndex from '../pages/Bidang2/Pengadaan/Index';
+import Bidang2PengadaanShow from '../pages/Bidang2/Pengadaan/Show';
 import Bidang2RkaklIndex from '../pages/Bidang2/Rkakl/Index';
 
 // PPBJ Pages
@@ -46,26 +50,36 @@ import PpbjPermohonanShow from '../pages/Ppbj/Permohonan/Show';
 import PpDashboard from '../pages/Pp/Dashboard';
 import PpPengajuanIndex from '../pages/Pp/Pengajuan/Index';
 import PpPengajuanShow from '../pages/Pp/Pengajuan/Show';
-import PpPengajuanReview from '../pages/Pp/Pengajuan/Review';
 import PpNotifikasiIndex from '../pages/Pp/Notifikasi/Index';
 import PpProfilIndex from '../pages/Pp/Profil/Index';
 
 // PPK Pages
 import PpkDashboard from '../pages/Ppk/Dashboard';
-import PpkPengajuanIndex from '../pages/Ppk/Pengajuan/Index';
-import PpkPengajuanShow from '../pages/Ppk/Pengajuan/Show';
-import PpkPengajuanReview from '../pages/Ppk/Pengajuan/Review';
+import PpkPermohonanIndex from '../pages/Ppk/Pengajuan/Index';
+import PpkPermohonanReview from '../pages/Ppk/Pengajuan/Review';
+import PpkPengadaanIndex from '../pages/Ppk/Pengadaan/Index';
+import PpkPengadaanDetail from '../pages/Ppk/Pengadaan/Detail';
 import PpkPengajuanPembayaran from '../pages/Ppk/Pengajuan/Pembayaran';
 import PpkNotifikasiIndex from '../pages/Ppk/Notifikasi/Index';
 import PpkProfilIndex from '../pages/Ppk/Profil/Index';
 
 // Perlengkapan & Keuangan Pages
 import PerlengkapanDashboard from '../pages/Perlengkapan/Dashboard';
+import PerlengkapanPengadaanIndex from '../pages/Perlengkapan/Pengadaan/Index';
+import PerlengkapanPengadaanShow from '../pages/Perlengkapan/Pengadaan/Show';
+import PerlengkapanPengadaanEdit from '../pages/Perlengkapan/Pengadaan/Edit';
+import PerlengkapanNotifikasiIndex from '../pages/Perlengkapan/Notifikasi/Index';
+import PerlengkapanProfilIndex from '../pages/Perlengkapan/Profil/Index';
 import KeuanganDashboard from '../pages/Keuangan/Dashboard';
+import KeuanganPengadaanIndex from '../pages/Keuangan/Pengadaan/Index';
+import KeuanganPengadaanShow from '../pages/Keuangan/Pengadaan/Show';
+import KeuanganNotifikasiIndex from '../pages/Keuangan/Notifikasi/Index';
+import KeuanganProfilIndex from '../pages/Keuangan/Profil/Index';
 
 // Shared Pages
 import SharedNotifikasiPage from '../pages/Shared/SharedNotifikasiPage';
 import SharedProfilPage from '../pages/Shared/SharedProfilPage';
+import DocumentPreviewPage from '../pages/Shared/DocumentPreviewPage';
 
 // Error Pages
 import Error403 from '../pages/Errors/403';
@@ -74,6 +88,8 @@ import Error419 from '../pages/Errors/419';
 import Error429 from '../pages/Errors/429';
 import Error500 from '../pages/Errors/500';
 import Error503 from '../pages/Errors/503';
+import { PpbjPengadaanIndex } from '@/pages/Ppbj/Pengadaan/Index';
+import PpbjPengadaanShow from '@/pages/Ppbj/Pengadaan/Show';
 
 export { ProtectedRoute } from './ProtectedRoute';
 export { RoleRoute } from './RoleRoute';
@@ -179,6 +195,7 @@ export const AppRoutes: FC = () => {
         {/* Centralized Notifications & Profile Routes */}
         <Route path="/notifikasi" element={<SharedNotifikasiPage />} />
         <Route path="/profil" element={<SharedProfilPage />} />
+        <Route path="/preview/dokumen" element={<DocumentPreviewPage />} />
 
         {/* Admin Routes */}
         <Route element={<RoleRoute allowedRoles={['Admin']} />}>
@@ -186,6 +203,7 @@ export const AppRoutes: FC = () => {
           <Route path="/admin/pengguna" element={<PenggunaIndex />} />
           <Route path="/admin/unit-kerja" element={<UnitKerjaIndex />} />
           <Route path="/admin/mak" element={<MakIndex />} />
+          <Route path="/admin/metode-pengadaan" element={<AdminMetodePengadaanIndex />} />
           <Route path="/admin/role" element={<RoleIndex />} />
           <Route path="/admin/role-permission" element={<RolePermissionIndex />} />
         </Route>
@@ -202,8 +220,8 @@ export const AppRoutes: FC = () => {
         {/* Perencanaan Routes */}
         <Route element={<RoleRoute allowedRoles={['Perencanaan']} />}>
           <Route path="/perencanaan/dashboard" element={<PerencanaanDashboard />} />
-          <Route path="/perencanaan/pengajuan" element={<PerencanaanPengajuanIndex />} />
-          <Route path="/perencanaan/pengajuan/:id" element={<PerencanaanPengajuanShow />} />
+          <Route path="/perencanaan/permohonan" element={<PerencanaanPengajuanIndex />} />
+          <Route path="/perencanaan/permohonan/:id" element={<PerencanaanPengajuanShow />} />
           <Route path="/perencanaan/jenis-mak" element={<PerencanaanJenisMakIndex />} />
           <Route path="/perencanaan/rkakl" element={<PerencanaanRkaklIndex />} />
           <Route path="/perencanaan/notifikasi" element={<PerencanaanNotifikasiIndex />} />
@@ -211,10 +229,19 @@ export const AppRoutes: FC = () => {
         </Route>
 
         {/* Bidang 2 Routes */}
-        <Route element={<RoleRoute allowedRoles={['Bidang 2', 'bidang-2']} />}>
+        <Route element={<RoleRoute allowedRoles={['Bidang 2', 'bidang-2', 'bidang 2', 'bidang2', 'Wakil Direktur II', 'wakil-direktur-ii', 'Wadir 2', 'wadir-2']} />}>
           <Route path="/bidang-2/dashboard" element={<Bidang2Dashboard />} />
-          <Route path="/bidang-2/pengajuan" element={<Bidang2PengajuanIndex />} />
+          <Route path="/bidang-2/permohonan" element={<Bidang2PengajuanIndex />} />
+          <Route path="/bidang-2/permohonan/:id" element={<Bidang2PengajuanShow />} />
+          <Route path="/bidang-2/pengadaan" element={<Bidang2PengadaanIndex />} />
+          <Route path="/bidang-2/pengadaan/:id" element={<Bidang2PengadaanShow />} />
           <Route path="/bidang-2/rkakl" element={<Bidang2RkaklIndex />} />
+          <Route path="/bidang-2/notifikasi" element={<SharedNotifikasiPage />} />
+          <Route path="/bidang-2/profil" element={<SharedProfilPage />} />
+
+          {/* Redirect legacy non-hyphenated routes */}
+          <Route path="/bidang2/*" element={<Navigate to="/bidang-2/dashboard" replace />} />
+          <Route path="/bidang2" element={<Navigate to="/bidang-2/dashboard" replace />} />
         </Route>
 
         {/* PPBJ Routes */}
@@ -222,14 +249,15 @@ export const AppRoutes: FC = () => {
           <Route path="/ppbj/dashboard" element={<PpbjDashboard />} />
           <Route path="/ppbj/permohonan" element={<PpbjPermohonanIndex />} />
           <Route path="/ppbj/permohonan/:id" element={<PpbjPermohonanShow />} />
+          <Route path='/ppbj/pengadaan' element={<PpbjPengadaanIndex />} />
+          <Route path='/ppbj/pengadaan/:id' element={<PpbjPengadaanShow />} />
         </Route>
 
         {/* PP Routes */}
         <Route element={<RoleRoute allowedRoles={['PP']} />}>
           <Route path="/pp/dashboard" element={<PpDashboard />} />
-          <Route path="/pp/pengajuan" element={<PpPengajuanIndex />} />
-          <Route path="/pp/pengajuan/:id" element={<PpPengajuanShow />} />
-          <Route path="/pp/pengajuan/:id/review" element={<PpPengajuanReview />} />
+          <Route path="/pp/pengadaan" element={<PpPengajuanIndex />} />
+          <Route path="/pp/pengadaan/:id" element={<PpPengajuanShow />} />
           <Route path="/pp/notifikasi" element={<PpNotifikasiIndex />} />
           <Route path="/pp/profil" element={<PpProfilIndex />} />
         </Route>
@@ -237,10 +265,12 @@ export const AppRoutes: FC = () => {
         {/* PPK Routes */}
         <Route element={<RoleRoute allowedRoles={['PPK']} />}>
           <Route path="/ppk/dashboard" element={<PpkDashboard />} />
-          <Route path="/ppk/pengajuan" element={<PpkPengajuanIndex />} />
-          <Route path="/ppk/pengajuan/:id" element={<PpkPengajuanShow />} />
-          <Route path="/ppk/pengajuan/:id/review" element={<PpkPengajuanReview />} />
-          <Route path="/ppk/pengajuan/:id/pembayaran" element={<PpkPengajuanPembayaran />} />
+          <Route path="/ppk/permohonan" element={<PpkPermohonanIndex />} />
+          <Route path="/ppk/permohonan/:id/review" element={<PpkPermohonanReview />} />
+          <Route path="/ppk/pengadaan" element={<PpkPengadaanIndex />} />
+          <Route path="/ppk/pengadaan/:id" element={<PpkPengadaanDetail />} />
+          <Route path="/ppk/pengadaan/:id/review" element={<PpkPengadaanDetail />} />
+          <Route path="/ppk/pengadaan/:id/pembayaran" element={<PpkPengajuanPembayaran />} />
           <Route path="/ppk/notifikasi" element={<PpkNotifikasiIndex />} />
           <Route path="/ppk/profil" element={<PpkProfilIndex />} />
         </Route>
@@ -248,11 +278,20 @@ export const AppRoutes: FC = () => {
         {/* Perlengkapan Routes */}
         <Route element={<RoleRoute allowedRoles={['Perlengkapan']} />}>
           <Route path="/perlengkapan/dashboard" element={<PerlengkapanDashboard />} />
+          <Route path="/perlengkapan/pengadaan" element={<PerlengkapanPengadaanIndex />} />
+          <Route path="/perlengkapan/pengadaan/:id" element={<PerlengkapanPengadaanShow />} />
+          <Route path="/perlengkapan/pengadaan/:id/edit" element={<PerlengkapanPengadaanEdit />} />
+          <Route path="/perlengkapan/notifikasi" element={<PerlengkapanNotifikasiIndex />} />
+          <Route path="/perlengkapan/profil" element={<PerlengkapanProfilIndex />} />
         </Route>
 
         {/* Keuangan Routes */}
         <Route element={<RoleRoute allowedRoles={['Keuangan']} />}>
           <Route path="/keuangan/dashboard" element={<KeuanganDashboard />} />
+          <Route path="/keuangan/pengadaan" element={<KeuanganPengadaanIndex />} />
+          <Route path="/keuangan/pengadaan/:id" element={<KeuanganPengadaanShow />} />
+          <Route path="/keuangan/notifikasi" element={<KeuanganNotifikasiIndex />} />
+          <Route path="/keuangan/profil" element={<KeuanganProfilIndex />} />
         </Route>
       </Route>
 

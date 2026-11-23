@@ -20,6 +20,7 @@ export interface PermohonanEditFormCardProps {
   errors: PermohonanRevisiFormErrors;
   processing?: boolean;
   onSubmit: (e: FormEvent) => void;
+  submitLabel?: string;
 }
 
 export const PermohonanEditFormCard: FC<PermohonanEditFormCardProps> = ({
@@ -30,6 +31,7 @@ export const PermohonanEditFormCard: FC<PermohonanEditFormCardProps> = ({
   errors,
   processing = false,
   onSubmit,
+  submitLabel,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -306,12 +308,12 @@ export const PermohonanEditFormCard: FC<PermohonanEditFormCardProps> = ({
             {processing ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Mengajukan Ulang...</span>
+                <span>{submitLabel ? 'Menyimpan...' : 'Mengajukan Ulang...'}</span>
               </>
             ) : (
               <>
                 <RotateCcw className="w-4 h-4 stroke-[2.2]" />
-                <span>Ajukan Ulang</span>
+                <span>{submitLabel || 'Ajukan Ulang'}</span>
               </>
             )}
           </button>

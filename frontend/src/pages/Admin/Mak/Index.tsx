@@ -1,11 +1,8 @@
 import { useEffect, useState, type FC, type ChangeEvent } from 'react';
 import axios from 'axios';
 import { adminService } from '../../../services/adminService';
-import MakTemplate, {
-  type MakRowItem,
-  type PpkOptionUser,
-  type MakFormData,
-} from '../../../components/templates/MakTemplate';
+import AdminMakTemplate, { type MakFormData } from '../../../components/templates/Admin/AdminMakTemplate';
+import type { MakRowItem, PpkOptionUser } from '../../../types/admin';
 import Pagination, { type PaginationMeta } from '../../../components/molecules/Pagination';
 
 const EMPTY_FORM: MakFormData = {
@@ -22,7 +19,8 @@ export const MakIndex: FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   const [modalMode, setModalMode] = useState<'create' | 'edit' | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<MakRowItem | null>(null);
+  const [toggleTarget, setToggleTarget] = useState<MakRowItem | null>(null);
+  const [isToggling, setIsToggling] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
 
   const [formData, setFormData] = useState<MakFormData>({ ...EMPTY_FORM });
@@ -119,28 +117,31 @@ export const MakIndex: FC = () => {
     }
   };
 
-  const askDelete = (row: MakRowItem) => {
-    setDeleteTarget(row);
+  const askToggle = (row: MakRowItem) => {
+    setToggleTarget(row);
   };
 
-  const cancelDelete = () => {
-    setDeleteTarget(null);
+  const cancelToggle = () => {
+    setToggleTarget(null);
   };
 
-  const confirmDelete = async () => {
-    if (!deleteTarget) return;
+  const confirmToggle = async () => {
+    if (!toggleTarget) return;
 
+    setIsToggling(true);
     try {
-      await adminService.deleteMak(deleteTarget.id);
-      setDeleteTarget(null);
+      await adminService.toggleStatusMak(toggleTarget.id);
+      setToggleTarget(null);
       fetchMaks();
     } catch (err) {
-      console.error('Failed to delete MAK:', err);
+      console.error('Failed to toggle status MAK:', err);
+    } finally {
+      setIsToggling(false);
     }
   };
 
   return (
-    <MakTemplate
+    <AdminMakTemplate
       rows={maks}
       pagination={
         <Pagination
@@ -165,10 +166,11 @@ export const MakIndex: FC = () => {
       onOpenEdit={openEdit}
       onCloseModal={closeModal}
       onSubmitForm={submitForm}
-      deleteTarget={deleteTarget}
-      onAskDelete={askDelete}
-      onCancelDelete={cancelDelete}
-      onConfirmDelete={confirmDelete}
+      toggleTarget={toggleTarget}
+      onAskToggle={askToggle}
+      onCancelToggle={cancelToggle}
+      onConfirmToggle={confirmToggle}
+      isToggling={isToggling}
       isLoading={isLoading}
     />
   );

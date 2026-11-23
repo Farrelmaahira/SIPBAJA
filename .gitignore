@@ -33,7 +33,8 @@ Thumbs.db
 # Graphify
 graphify-out/
 .graphify*
-
+.cache/
+*.tmp
 # Cache
 .cache/
 *.cache

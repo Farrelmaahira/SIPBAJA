@@ -91,7 +91,7 @@ export const PerencanaanPermohonanTerbaruTable: FC<PerencanaanPermohonanTerbaruT
                   <td className="py-4 px-4 text-center">
                     <RowActionMenu
                       item={item}
-                      viewHref={`/perencanaan/pengajuan/${item.id}`}
+                      viewHref={`/perencanaan/permohonan/${item.id}`}
                     />
                   </td>
                 </tr>

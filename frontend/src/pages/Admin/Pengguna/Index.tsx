@@ -1,11 +1,11 @@
 import { useEffect, useState, type FC, type ChangeEvent } from 'react';
 import axios from 'axios';
 import { adminService } from '../../../services/adminService';
-import PenggunaTemplate, {
+import AdminPenggunaTemplate, {
   type UserRowItem,
-  type PenggunaFormData,
-} from '../../../components/templates/PenggunaTemplate';
-import Pagination, { type PaginationMeta } from '../../../components/molecules/Pagination';
+} from '../../../components/templates/Admin/AdminPenggunaTemplate';
+import { type PaginationMeta } from '../../../components/molecules/Pagination';
+import { PenggunaFormData } from '@/types/admin';
 
 const EMPTY_FORM: PenggunaFormData = {
   nama: '',
@@ -17,7 +17,14 @@ const EMPTY_FORM: PenggunaFormData = {
 
 export const PenggunaIndex: FC = () => {
   const [users, setUsers] = useState<UserRowItem[]>([]);
-  const [paginationMeta, setPaginationMeta] = useState<PaginationMeta | null>(null);
+  const [paginationMeta, setPaginationMeta] = useState<PaginationMeta>({
+    current_page: 1,
+    last_page: 1,
+    total: 0,
+    from: 1,
+    to: 1,
+    per_page: 5
+  });
   const [roles, setRoles] = useState<Array<{ id: number; nama: string }>>([]);
   const [units, setUnits] = useState<Array<{ id: number; nama: string }>>([]);
   const [query, setQuery] = useState('');
@@ -25,7 +32,8 @@ export const PenggunaIndex: FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   const [modalMode, setModalMode] = useState<'create' | 'edit' | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<UserRowItem | null>(null);
+  const [toggleTarget, setToggleTarget] = useState<UserRowItem | null>(null);
+  const [isToggling, setIsToggling] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
 
   const [formData, setFormData] = useState<PenggunaFormData>({ ...EMPTY_FORM });
@@ -128,35 +136,34 @@ export const PenggunaIndex: FC = () => {
     }
   };
 
-  const askDelete = (row: UserRowItem) => {
-    setDeleteTarget(row);
+  const askToggle = (row: UserRowItem) => {
+    setToggleTarget(row);
   };
 
-  const cancelDelete = () => {
-    setDeleteTarget(null);
+  const cancelToggle = () => {
+    setToggleTarget(null);
   };
 
-  const confirmDelete = async () => {
-    if (!deleteTarget) return;
+  const confirmToggle = async () => {
+    if (!toggleTarget) return;
 
+    setIsToggling(true);
     try {
-      await adminService.deleteUser(deleteTarget.id);
-      setDeleteTarget(null);
-      fetchUsers();
+      await adminService.toggleStatusUser(toggleTarget.id);
+      setToggleTarget(null);
+      void fetchUsers();
     } catch (err) {
-      console.error('Failed to delete pengguna:', err);
+      console.error('Failed to toggle status pengguna:', err);
+    } finally {
+      setIsToggling(false);
     }
   };
 
   return (
-    <PenggunaTemplate
+    <AdminPenggunaTemplate
       rows={users}
-      pagination={
-        <Pagination
-          meta={paginationMeta}
-          onPageChange={(page) => setCurrentPage(page)}
-        />
-      }
+      paginationMeta={paginationMeta}
+      onPageChange={setCurrentPage}
       roles={roles}
       units={units}
       query={query}
@@ -175,10 +182,11 @@ export const PenggunaIndex: FC = () => {
       onOpenEdit={openEdit}
       onCloseModal={closeModal}
       onSubmitForm={submitForm}
-      deleteTarget={deleteTarget}
-      onAskDelete={askDelete}
-      onCancelDelete={cancelDelete}
-      onConfirmDelete={confirmDelete}
+      toggleTarget={toggleTarget}
+      onAskToggle={askToggle}
+      onCancelToggle={cancelToggle}
+      onConfirmToggle={confirmToggle}
+      isToggling={isToggling}
       isLoading={isLoading}
     />
   );

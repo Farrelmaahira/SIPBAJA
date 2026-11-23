@@ -1,7 +1,7 @@
 import { useEffect, type FC } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import AppLayout, { type AppNavItem } from '../../components/templates/AppLayout';
+import AppLayout, { type AppNavItem } from '../../components/templates/General/AppLayout';
 import NotificationListCard from '../../components/organisms/NotificationListCard';
 import { useNotifications } from '../../hooks/useNotifications';
 import type { NotificationItem } from '../../types/notification';

@@ -10,6 +10,8 @@ export interface JenisMakFormModalProps {
   ppkUserId: number;
   ppkOptions?: PpkOption[];
   processing?: boolean;
+  fieldErrors?: Record<string, string>;
+  formError?: string;
   onClose: () => void;
   onKodeChange: (val: string) => void;
   onNamaChange: (val: string) => void;
@@ -25,6 +27,8 @@ export const JenisMakFormModal: FC<JenisMakFormModalProps> = ({
   ppkUserId,
   ppkOptions = [],
   processing = false,
+  fieldErrors = {},
+  formError = '',
   onClose,
   onKodeChange,
   onNamaChange,
@@ -32,6 +36,8 @@ export const JenisMakFormModal: FC<JenisMakFormModalProps> = ({
   onSubmit,
 }) => {
   if (!isOpen) return null;
+
+  const isSubmitDisabled = processing || !kode.trim() || !nama.trim() || !ppkUserId;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-xs p-4">
@@ -57,8 +63,16 @@ export const JenisMakFormModal: FC<JenisMakFormModalProps> = ({
           </button>
         </div>
 
+        {formError && (
+          <div className="p-3 rounded-xl bg-[#FEE4E2]/70 border border-[#FECDCA] text-xs font-medium text-[#D92D20]">
+            {formError}
+          </div>
+        )}
+
         <div>
-          <label className="block text-xs font-bold text-[#14201C] mb-1">Kode MAK</label>
+          <label className="block text-xs font-bold text-[#14201C] mb-1">
+            Kode MAK <span className="text-red-500">*</span>
+          </label>
           <input
             type="text"
             required
@@ -67,10 +81,15 @@ export const JenisMakFormModal: FC<JenisMakFormModalProps> = ({
             placeholder="Contoh: 532111"
             className="w-full px-3 py-2 border border-[#E4EBE8] rounded-xl text-xs bg-[#FAFCFB] focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#0E7C5A] text-[#14201C]"
           />
+          {fieldErrors.kode && (
+            <p className="text-[11px] font-medium text-[#D92D20] mt-1">{fieldErrors.kode}</p>
+          )}
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-[#14201C] mb-1">Nama MAK</label>
+          <label className="block text-xs font-bold text-[#14201C] mb-1">
+            Nama MAK <span className="text-red-500">*</span>
+          </label>
           <input
             type="text"
             required
@@ -79,12 +98,15 @@ export const JenisMakFormModal: FC<JenisMakFormModalProps> = ({
             placeholder="Contoh: Belanja Modal Peralatan dan Mesin"
             className="w-full px-3 py-2 border border-[#E4EBE8] rounded-xl text-xs bg-[#FAFCFB] focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#0E7C5A] text-[#14201C]"
           />
+          {fieldErrors.nama && (
+            <p className="text-[11px] font-medium text-[#D92D20] mt-1">{fieldErrors.nama}</p>
+          )}
         </div>
 
         {ppkOptions.length > 0 && (
           <div>
             <label className="block text-xs font-bold text-[#14201C] mb-1">
-              PPK Penanggung Jawab
+              PPK Penanggung Jawab <span className="text-red-500">*</span>
             </label>
             <select
               value={ppkUserId}
@@ -97,6 +119,11 @@ export const JenisMakFormModal: FC<JenisMakFormModalProps> = ({
                 </option>
               ))}
             </select>
+            {fieldErrors.ppk_user_id && (
+              <p className="text-[11px] font-medium text-[#D92D20] mt-1">
+                {fieldErrors.ppk_user_id}
+              </p>
+            )}
           </div>
         )}
 
@@ -104,14 +131,15 @@ export const JenisMakFormModal: FC<JenisMakFormModalProps> = ({
           <button
             type="button"
             onClick={onClose}
+            disabled={processing}
             className="px-4 py-2 rounded-xl border border-[#E4EBE8] text-xs font-semibold text-[#5F6F6A] hover:bg-[#F4F7F5] transition-colors cursor-pointer"
           >
             Batal
           </button>
           <button
             type="submit"
-            disabled={processing}
-            className="px-5 py-2 rounded-xl bg-[#0E7C5A] hover:bg-[#0A5C43] text-xs font-bold text-white disabled:opacity-50 transition-colors shadow-2xs cursor-pointer"
+            disabled={isSubmitDisabled}
+            className="px-5 py-2 rounded-xl bg-[#0E7C5A] hover:bg-[#0A5C43] text-xs font-bold text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-2xs cursor-pointer"
           >
             {processing ? 'Menyimpan...' : 'Simpan'}
           </button>
@@ -122,4 +150,3 @@ export const JenisMakFormModal: FC<JenisMakFormModalProps> = ({
 };
 
 export default JenisMakFormModal;
-

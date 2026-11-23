@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../../hooks/useAuth';
 import pemohonService from '../../../services/pemohonService';
-import PemohonPermohonanEditTemplate from '../../../components/templates/PemohonPermohonanEditTemplate';
+import PemohonPermohonanEditTemplate from '../../../components/templates/Pemohon/PemohonPermohonanEditTemplate';
 import type {
   PermohonanDetailInfo,
   PermohonanRevisiFormData,
@@ -124,8 +124,12 @@ export const PermohonPermohonanEdit: FC = () => {
 
       await pemohonService.revisiPermohonan(id, payload);
 
+      const successMsg = permohonan?.status === 'ditolak'
+        ? 'Permohonan berhasil diperbaiki dan diajukan ulang.'
+        : 'Permohonan berhasil diperbarui.';
+
       navigate(`/pemohon/permohonan/${id}`, {
-        state: { flashMessage: 'Permohonan berhasil diperbaiki dan diajukan ulang.' },
+        state: { flashMessage: successMsg },
       });
     } catch (err: unknown) {
       if (axios.isAxiosError(err) && err.response?.status === 422 && err.response?.data?.errors) {

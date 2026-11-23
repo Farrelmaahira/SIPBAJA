@@ -4,42 +4,41 @@ namespace App\Http\Controllers\Ppk;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ReviewPengadaanRequest;
+use App\Http\Requests\SetujuiPembayaranPpkRequest;
 use App\Http\Requests\TolakPermohonanRequest;
+use App\Models\Dokumen;
 use App\Models\Pengadaan;
+use App\Services\ApprovalService;
 use App\Services\NotificationService;
-use App\Services\PpkService;
+use App\Services\PengadaanService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PpkController extends Controller
 {
     public function __construct(
-        private PpkService $ppkService,
+        private PengadaanService $pengadaanService,
+        private ApprovalService $approvalService,
         private NotificationService $notificationService
     ) {}
-
-    public function dashboard(): JsonResponse
-    {
-        $data = $this->ppkService->getDashboardData();
-        $notifData = $this->notificationService->getRecentAndUnreadCount(auth()->id());
-
-        return response()->json([
-            'stats' => $data['stats'],
-            'pengajuanTerbaru' => $data['pengajuan_terbaru'],
-            'recentNotifications' => $notifData['recentNotifications'],
-            'unreadNotificationsCount' => $notifData['unreadNotificationsCount'],
-        ]);
-    }
 
     public function index(Request $request): JsonResponse
     {
         $filters = [
-            'q' => $request->query('q', ''),
+            'q' => $request->query('q', $request->query('search', '')),
+            'search' => $request->query('search', $request->query('q', '')),
             'statuses' => $request->query('statuses', []),
+            'status' => $request->query('status'),
+            'bulan' => $request->query('bulan'),
+            'tahun' => $request->query('tahun'),
+            'unit_id' => $request->query('unit_id'),
         ];
 
-        $pengajuan = $this->ppkService->paginatePengadaan($filters, 10);
-        $notifData = $this->notificationService->getRecentAndUnreadCount(auth()->id());
+        $perPage = (int) $request->query('per_page', 10);
+        $pengajuan = $this->pengadaanService->paginatePengadaanPpk(auth()->user(), $filters, $perPage);
+        $notifData = $this->notificationService->getRecentAndUnreadCount((int) auth()->id());
 
         return response()->json([
             'pengajuan' => $pengajuan,
@@ -51,8 +50,8 @@ class PpkController extends Controller
 
     public function review(Pengadaan $pengadaan): JsonResponse
     {
-        $detail = $this->ppkService->getDetailPengadaan($pengadaan);
-        $notifData = $this->notificationService->getRecentAndUnreadCount(auth()->id());
+        $detail = $this->pengadaanService->getDetailPengadaanLengkap($pengadaan, auth()->user());
+        $notifData = $this->notificationService->getRecentAndUnreadCount((int) auth()->id());
 
         return response()->json([
             'detail' => $detail,
@@ -63,26 +62,32 @@ class PpkController extends Controller
 
     public function approve(Pengadaan $pengadaan): JsonResponse
     {
-        $this->ppkService->approvePengadaan($pengadaan, auth()->user());
+        $updated = $this->approvalService->approvePengadaanPpk($pengadaan, auth()->user());
 
         return response()->json([
-            'message' => 'Dokumen pengadaan berhasil disetujui oleh PPK.',
+            'message' => 'Dokumen pengadaan berhasil disetujui oleh PPK dan diteruskan ke PPBJ.',
+            'data' => $updated,
         ]);
     }
 
     public function reject(ReviewPengadaanRequest $request, Pengadaan $pengadaan): JsonResponse
     {
-        $this->ppkService->rejectPengadaan($pengadaan, auth()->user(), $request->validated('alasan'));
+        $updated = $this->approvalService->rejectPengadaanPpk(
+            $pengadaan,
+            auth()->user(),
+            $request->alasanPenolakan()
+        );
 
         return response()->json([
             'message' => 'Dokumen pengadaan ditolak dan dikembalikan ke PPBJ.',
+            'data' => $updated,
         ]);
     }
 
     public function pembayaran(Pengadaan $pengadaan): JsonResponse
     {
-        $detail = $this->ppkService->getDetailPengadaan($pengadaan);
-        $notifData = $this->notificationService->getRecentAndUnreadCount(auth()->id());
+        $detail = $this->pengadaanService->getDetailPengadaanLengkap($pengadaan, auth()->user());
+        $notifData = $this->notificationService->getRecentAndUnreadCount((int) auth()->id());
 
         return response()->json([
             'detail' => $detail,
@@ -91,31 +96,51 @@ class PpkController extends Controller
         ]);
     }
 
-    public function approvePembayaran(Request $request, Pengadaan $pengadaan): JsonResponse
+    public function approvePembayaran(SetujuiPembayaranPpkRequest $request, Pengadaan $pengadaan): JsonResponse
     {
-        $filename = $request->input('filename', "Memo_Persetujuan_{$pengadaan->Permohonan?->nomor_surat}.pdf");
-        $catatan = $request->input('catatan');
-
-        $this->ppkService->approvePembayaran($pengadaan, auth()->user(), $filename, $catatan);
+        $updated = $this->approvalService->approvePembayaranPpk(
+            $pengadaan,
+            auth()->user(),
+            $request->file('memo'),
+            $request->validated('catatan')
+        );
 
         return response()->json([
             'message' => 'Dokumen pembayaran beserta Memo Persetujuan berhasil disetujui.',
+            'data' => $updated,
         ]);
     }
 
     public function rejectPembayaran(TolakPermohonanRequest $request, Pengadaan $pengadaan): JsonResponse
     {
-        $this->ppkService->rejectPembayaran($pengadaan, auth()->user(), $request->validated('alasan'));
+        $updated = $this->approvalService->rejectPembayaranPpk(
+            $pengadaan,
+            auth()->user(),
+            (string) $request->validated('alasan')
+        );
 
         return response()->json([
             'message' => 'Dokumen pembayaran telah ditolak beserta catatan revisi.',
+            'data' => $updated,
+        ]);
+    }
+
+    public function pembayaranReview(Pengadaan $pengadaan): JsonResponse
+    {
+        $this->approvalService->pastikanPpkBerhakAtasPengadaan($pengadaan, auth()->user());
+        $context = $this->pengadaanService->getPembayaranContext($pengadaan);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Konteks peninjauan pembayaran berhasil diambil.',
+            'data' => $context,
         ]);
     }
 
     public function show(Pengadaan $pengadaan): JsonResponse
     {
-        $detail = $this->ppkService->getDetailPengadaan($pengadaan);
-        $notifData = $this->notificationService->getRecentAndUnreadCount(auth()->id());
+        $detail = $this->pengadaanService->getDetailPengadaanLengkap($pengadaan, auth()->user());
+        $notifData = $this->notificationService->getRecentAndUnreadCount((int) auth()->id());
 
         return response()->json([
             'detail' => $detail,
@@ -126,13 +151,83 @@ class PpkController extends Controller
 
     public function profil(): JsonResponse
     {
-        $user = auth()->user()->load(['Role', 'Unit']);
-        $notifData = $this->notificationService->getRecentAndUnreadCount(auth()->id());
+        $user = $this->pengadaanService->getProfilPengguna(auth()->user());
+        $notifData = $this->notificationService->getRecentAndUnreadCount((int) auth()->id());
 
         return response()->json([
             'user' => $user,
             'recentNotifications' => $notifData['recentNotifications'],
             'unreadNotificationsCount' => $notifData['unreadNotificationsCount'],
         ]);
+    }
+
+    /**
+     * Mengunduh atau melihat dokumen pengadaan/permohonan oleh PPK.
+     */
+    public function downloadDokumen(Request $request, Pengadaan $pengadaan, Dokumen $dokumen): StreamedResponse|JsonResponse
+    {
+        // Validasi kepemilikan MAK oleh PPK
+        $makPpkId = $pengadaan->PermohonanMak?->Mak?->ppk_user_id;
+        if ($pengadaan->ppk_id !== null || $makPpkId !== null) {
+            $cocok = ((int) $pengadaan->ppk_id === (int) auth()->id())
+                || ((int) $makPpkId === (int) auth()->id());
+            if (! $cocok) {
+                abort(403, 'Anda tidak memiliki akses pada dokumen pengadaan milik PPK lain.');
+            }
+        }
+
+        // Validasi keterkaitan dokumen dengan pengadaan / permohonan ini
+        $isPengadaanDoc = ($dokumen->ref_type === 'pengadaan' && (int) $dokumen->ref_id === (int) $pengadaan->id);
+        $isPermohonanDoc = ($dokumen->ref_type === 'permohonan' && (int) $dokumen->ref_id === (int) $pengadaan->permohonan_id);
+        $isPermohonanMemo = ($dokumen->ref_type === 'approval_permohonan' && (int) $dokumen->ref_id === (int) $pengadaan->permohonan_id);
+
+        if (! $isPengadaanDoc && ! $isPermohonanDoc && ! $isPermohonanMemo) {
+            abort(404, 'Dokumen tidak berkaitan dengan pengadaan ini.');
+        }
+
+        $disk = 'local';
+        $path = $dokumen->path;
+
+        if (! $path) {
+            if ($dokumen->ref_type === 'permohonan') {
+                $path = 'dokumen/permohonan/'.$dokumen->nama_hash;
+            } elseif ($dokumen->ref_type === 'pengadaan') {
+                $path = 'dokumen/pengadaan/'.$dokumen->nama_hash;
+            } elseif ($dokumen->ref_type === 'approval_permohonan') {
+                $path = $this->memoPath($dokumen);
+            }
+        }
+
+        if (! $path || ! Storage::disk('local')->exists($path)) {
+            return response()->json(['message' => 'Berkas fisik dokumen tidak ditemukan di server.'], 404);
+        }
+
+        $disposition = $request->query('disposition') === 'inline' ? 'inline' : 'attachment';
+
+        return Storage::disk($disk)->download(
+            $path,
+            $dokumen->nama_asli ?: 'dokumen.pdf',
+            [
+                'Content-Type' => $dokumen->mime_type ?: 'application/pdf',
+                'Content-Disposition' => "{$disposition}; filename=\"".($dokumen->nama_asli ?: 'dokumen.pdf').'"',
+            ]
+        );
+    }
+
+    private function memoPath(Dokumen $dokumen): ?string
+    {
+        $candidates = [
+            'dokumen/memo/'.$dokumen->nama_hash,
+            'dokumen/permohonan/memo/'.$dokumen->nama_hash,
+            'dokumen/permohonan/'.$dokumen->nama_hash,
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (Storage::disk('local')->exists($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return null;
     }
 }

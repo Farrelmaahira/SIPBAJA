@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use Database\Seeders\MasterReferenceSeeder;
 use Database\Seeders\RoleSeeder;
 use Database\Seeders\UserSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -15,7 +16,7 @@ class DashboardApiTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed([RoleSeeder::class, UserSeeder::class]);
+        $this->seed([RoleSeeder::class, UserSeeder::class, MasterReferenceSeeder::class]);
     }
 
     public function test_unauthenticated_user_cannot_access_dashboard_endpoints(): void
@@ -136,7 +137,7 @@ class DashboardApiTest extends TestCase
 
     public function test_ppk_can_access_ppk_dashboard(): void
     {
-        $ppk = User::where('email', 'ppk@pnj.ac.id')->firstOrFail();
+        $ppk = User::where('email', 'ppk.blufisik@pnj.ac.id')->firstOrFail();
 
         $response = $this->actingAs($ppk, 'sanctum')->getJson('/api/v1/ppk/dashboard');
 

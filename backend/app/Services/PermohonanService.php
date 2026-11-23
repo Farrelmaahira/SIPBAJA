@@ -3,10 +3,13 @@
 namespace App\Services;
 
 use App\Models\Dokumen;
+use App\Models\Mak;
 use App\Models\Permohonan;
+use App\Models\PermohonanMak;
 use App\Models\StatusHistory;
 use App\Models\Unit;
 use App\Models\User;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +18,8 @@ use Illuminate\Support\Str;
 
 class PermohonanService
 {
+    public function __construct(private ApprovalService $approvalService) {}
+
     /**
      * Menyimpan permohonan baru, dokumen PDF pendukung, dan riwayat status pertama.
      * Menggunakan transaksi database agar seluruh pencatatan atomik.
@@ -92,22 +97,43 @@ class PermohonanService
     }
 
     /**
-     * Memperbarui data permohonan yang ditolak dan mengajukan ulang ke antrean verifikasi.
+     * Memperbarui data permohonan yang ditolak atau masih dalam status pengajuan awal (belum disetujui/diproses).
      * Menggunakan transaksi database agar update data, dokumen baru (jika ada), dan riwayat status bersifat atomik.
      */
     public function revisiPermohonan(User $user, Permohonan $permohonan, array $data, ?UploadedFile $file = null): Permohonan
     {
         $user->loadMissing('Role');
-        abort_unless($user->unit_id && $user->unit_id === $permohonan->unit_id, 403, 'Anda tidak memiliki hak akses untuk merevisi permohonan unit lain.');
-        abort_unless($permohonan->status === 'ditolak', 422, 'Hanya permohonan dengan status ditolak yang dapat diajukan ulang.');
+        abort_unless($user->unit_id && (int) $user->unit_id === (int) $permohonan->unit_id, 403, 'Anda tidak memiliki hak akses untuk merevisi permohonan unit lain.');
+
+        // Syarat: Belum diproses atau disetujui pada tahapan selanjutnya
+        $sudahDisetujuiLanjutan = $permohonan->Approvals()->where('keputusan', 'disetujui')->exists();
+        $adaPengadaan = $permohonan->Pengadaan()->exists();
+        $statusTidakBoleh = in_array($permohonan->status, [
+            'menunggu_persetujuan',
+            'disetujui',
+            'diproses_ppbj',
+            'pengadaan',
+            'siap_spk',
+            'kontrak_terbit',
+            'berjalan',
+            'barang_diterima',
+            'selesai',
+        ], true);
+
+        if ($sudahDisetujuiLanjutan || $adaPengadaan || $statusTidakBoleh) {
+            abort(422, 'Permohonan tidak dapat diubah karena sudah diproses atau disetujui pada tahapan selanjutnya.');
+        }
 
         return DB::transaction(function () use ($user, $permohonan, $data, $file) {
+            $statusLama = $permohonan->status;
             $permohonan->judul = trim($data['judul']);
             $permohonan->estimasi_anggaran = (float) $data['estimasi_anggaran'];
-            if (! empty($data['ringkasan_tujuan'])) {
-                $permohonan->ringkasan_tujuan = trim($data['ringkasan_tujuan']);
+            if (array_key_exists('ringkasan_tujuan', $data)) {
+                $permohonan->ringkasan_tujuan = ! empty($data['ringkasan_tujuan']) ? trim($data['ringkasan_tujuan']) : null;
             }
-            $permohonan->revisi_ke = ($permohonan->revisi_ke ?? 0) + 1;
+            if ($statusLama === 'ditolak') {
+                $permohonan->revisi_ke = ($permohonan->revisi_ke ?? 0) + 1;
+            }
             $permohonan->status = 'diajukan';
             $permohonan->save();
 
@@ -215,18 +241,44 @@ class PermohonanService
         abort_unless($isReviewer || ($user->unit_id && $user->unit_id === $permohonan->unit_id), 403, 'Akses tidak diizinkan untuk unit lain.');
 
         if ($dokumenId) {
-            $dokumen = $permohonan->Dokumen()->where('id', $dokumenId)->firstOrFail();
+            $dokumen = $permohonan->Dokumen()->where('id', $dokumenId)->first()
+                ?? Dokumen::where('ref_type', 'approval_permohonan')
+                    ->where('ref_id', $permohonan->id)
+                    ->where('id', $dokumenId)
+                    ->firstOrFail();
         } else {
             $dokumen = $permohonan->Dokumen()->where('tipe_dokumen', 'surat_permohonan')->latest('versi')->firstOrFail();
         }
-        $path = 'dokumen/permohonan/'.$dokumen->nama_hash;
+        $path = $dokumen->ref_type === 'approval_permohonan'
+            ? $this->memoPath($dokumen)
+            : 'dokumen/permohonan/'.$dokumen->nama_hash;
 
-        abort_unless(Storage::disk('local')->exists($path), 404, 'Berkas dokumen tidak ditemukan di server.');
+        abort_unless($path && Storage::disk('local')->exists($path), 404, 'Berkas dokumen tidak ditemukan di server.');
 
         return [
             'path' => $path,
             'nama_asli' => $dokumen->nama_asli,
         ];
+    }
+
+    /**
+     * Menentukan lokasi penyimpanan berkas memo persetujuan permohonan.
+     */
+    private function memoPath(Dokumen $dokumen): ?string
+    {
+        $candidates = [
+            'dokumen/memo/'.$dokumen->nama_hash,
+            'dokumen/permohonan/memo/'.$dokumen->nama_hash,
+            'dokumen/permohonan/'.$dokumen->nama_hash,
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (Storage::disk('local')->exists($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -387,28 +439,55 @@ class PermohonanService
      */
     public function hapusPermohonan(User $user, Permohonan $permohonan): void
     {
-        if ($user->unit_id && $permohonan->unit_id !== $user->unit_id) {
+        if ($user->unit_id && (int) $permohonan->unit_id !== (int) $user->unit_id) {
             abort(403, 'Anda tidak berhak menghapus permohonan milik unit lain.');
         }
 
-        $allowedStatuses = ['diajukan', 'menunggu_verifikasi', 'menunggu_persetujuan', 'ditolak', 'draft'];
-        if (! in_array($permohonan->status, $allowedStatuses, true)) {
-            abort(422, 'Permohonan yang sedang dalam proses pengadaan atau sudah selesai tidak dapat dihapus.');
+        // Syarat FR-24: Belum diproses atau disetujui pada tahapan selanjutnya
+        $sudahDisetujuiLanjutan = $permohonan->Approvals()->where('keputusan', 'disetujui')->exists();
+        $adaPengadaan = $permohonan->Pengadaan()->exists();
+        $statusTidakBoleh = in_array($permohonan->status, [
+            'menunggu_persetujuan',
+            'disetujui',
+            'diproses_ppbj',
+            'pengadaan',
+            'siap_spk',
+            'kontrak_terbit',
+            'berjalan',
+            'barang_diterima',
+            'selesai',
+        ], true);
+
+        if ($sudahDisetujuiLanjutan || $adaPengadaan || $statusTidakBoleh) {
+            abort(422, 'Permohonan tidak dapat dibatalkan atau dihapus karena sudah diproses atau disetujui pada tahapan selanjutnya.');
         }
 
         DB::transaction(function () use ($permohonan) {
-            $dokumens = Dokumen::where('ref_type', 'permohonan')
+            $dokumens = Dokumen::whereIn('ref_type', ['permohonan', 'approval_permohonan'])
                 ->where('ref_id', $permohonan->id)
                 ->get();
 
             foreach ($dokumens as $dokumen) {
-                if ($dokumen->file_path && Storage::disk('local')->exists($dokumen->file_path)) {
-                    Storage::disk('local')->delete($dokumen->file_path);
+                if ($dokumen->nama_hash) {
+                    $candidates = [
+                        'dokumen/permohonan/'.$dokumen->nama_hash,
+                        'dokumen/permohonan/memo/'.$dokumen->nama_hash,
+                        'dokumen/memo/'.$dokumen->nama_hash,
+                    ];
+                    foreach ($candidates as $cand) {
+                        if (Storage::disk('local')->exists($cand)) {
+                            Storage::disk('local')->delete($cand);
+                        }
+                    }
                 }
                 $dokumen->delete();
             }
 
-            StatusHistory::where('permohonan_id', $permohonan->id)->delete();
+            StatusHistory::where('ref_type', 'permohonan')
+                ->where('ref_id', $permohonan->id)
+                ->delete();
+
+            $permohonan->Approvals()->delete();
             $permohonan->PermohonanMak()->delete();
             $permohonan->delete();
         });
@@ -472,9 +551,30 @@ class PermohonanService
         $permohonan = Permohonan::with([
             'Unit',
             'Creator',
+            'Dokumen',
+            'Approvals',
             'PermohonanMak.Mak',
-            'Pengadaan.PermohonanMak.Mak',
+            'Pengadaan.PermohonanMak.Mak.Ppk',
+            'Pengadaan.Ppk',
+            'Pengadaan.Jenis',
+            'Pengadaan.Metode',
+            'Pengadaan.Level',
+            'Pengadaan.Dokumen',
+            'Pengadaan.Kontrak',
         ])->findOrFail($id);
+
+        $dokumenList = $permohonan->Dokumen
+            ->map(fn ($doc) => [
+                'id' => (int) $doc->id,
+                'nama_asli' => (string) $doc->nama_asli,
+                'tipe_dokumen' => (string) ($doc->tipe_dokumen ?? 'surat_permohonan'),
+                'ukuran_bytes' => (int) ($doc->ukuran_bytes ?? 0),
+                'mime_type' => (string) ($doc->mime_type ?? 'application/pdf'),
+                'versi' => (int) ($doc->versi ?? 1),
+                'download_url' => "/api/v1/ppbj/permohonan/{$permohonan->id}/dokumen?dokumen_id={$doc->id}",
+            ])
+            ->values()
+            ->all();
 
         $makList = $permohonan->PermohonanMak
             ->filter(fn ($pm) => $pm->Mak !== null)
@@ -488,9 +588,22 @@ class PermohonanService
         $paketList = $permohonan->Pengadaan
             ->map(fn ($p) => [
                 'id' => (int) $p->id,
-                'makKode' => (string) ($p->PermohonanMak?->Mak?->nama ?? $p->PermohonanMak?->Mak?->kode ?? '-'),
-                'nominal' => (float) ($p->nominal ?? 0),
-                'status' => (string) ($p->status ?? '-'),
+                'makNama' => (string) ($p->PermohonanMak?->Mak?->nama ?? '-'),
+                'makKode' => (string) ($p->PermohonanMak?->Mak?->kode ?? $p->PermohonanMak?->Mak?->nama ?? '-'),
+                'ppkNama' => (string) ($p->PermohonanMak?->Mak?->Ppk?->nama ?? $p->Ppk?->nama ?? '-'),
+                'jenisNama' => (string) ($p->Jenis?->nama ?? '-'),
+                'metodeNama' => (string) ($p->Metode?->nama ?? '-'),
+                'levelNama' => (string) ($p->Level?->nama ?? '-'),
+                'nominal' => $p->Kontrak?->nominal_kontrak ? (float) $p->Kontrak->nominal_kontrak : null,
+                'status' => (string) ($p->status ?? 'draft'),
+                'revisiKe' => (int) ($p->revisi_ke ?? 0),
+                'dokumenList' => $p->Dokumen->map(fn ($d) => [
+                    'id' => (int) $d->id,
+                    'namaAsli' => (string) $d->nama_asli,
+                    'nama_asli' => (string) $d->nama_asli,
+                    'tipe_dokumen' => (string) ($d->tipe_dokumen ?? 'dokumen_pengadaan'),
+                    'download_url' => "/api/v1/ppbj/pengadaan/{$p->id}/dokumen/{$d->id}",
+                ])->values()->all(),
             ])
             ->values()
             ->all();
@@ -498,6 +611,18 @@ class PermohonanService
         $tanggalPengajuan = $permohonan->created_at
             ? Carbon::parse($permohonan->created_at)->format('Y-m-d')
             : '';
+
+        $approvalPerencanaan = $permohonan->Approvals
+            ->first(function ($app) use ($permohonan) {
+                return strtoupper($app->tahap) === 'PERENCANAAN'
+                    && (int) $app->revisi_ke === (int) ($permohonan->revisi_ke ?? 0)
+                    && $app->keputusan === 'disetujui';
+            });
+
+        $catatan = $approvalPerencanaan?->alasan;
+        $catatanPerencanaan = (! empty($catatan) && trim($catatan) !== '')
+            ? trim($catatan)
+            : 'Tidak ada catatan dari pihak perencanaan';
 
         return [
             'id' => (int) $permohonan->id,
@@ -512,6 +637,310 @@ class PermohonanService
             'pembuatNama' => (string) ($permohonan->Creator?->nama ?? $permohonan->Creator?->name ?? '-'),
             'makList' => $makList,
             'paketList' => $paketList,
+            'dokumenList' => $dokumenList,
+            'catatanPerencanaan' => $catatanPerencanaan,
+        ];
+    }
+
+    // [BARU - Perencanaan: ringkasan statistik dan permohonan masuk terbaru] ditambahkan untuk kebutuhan fitur Dashboard Perencanaan.
+    /**
+     * @return array<string, mixed>
+     */
+    public function getDashboardPerencanaan(): array
+    {
+        $total = Permohonan::count();
+        $diajukan = Permohonan::whereIn('status', ['diajukan', 'menunggu_verifikasi'])->count();
+        $selesai = Permohonan::whereIn('status', ['selesai', 'disetujui', 'diteruskan'])->count();
+        $ditolak = Permohonan::where('status', 'ditolak')->count();
+
+        $permohonanTerbaru = Permohonan::with(['Unit', 'Creator'])
+            ->orderByDesc('id')
+            ->limit(4)
+            ->get();
+
+        return [
+            'stats' => [
+                'total' => $total,
+                'diajukan' => $diajukan,
+                'selesai' => $selesai,
+                'ditolak' => $ditolak,
+            ],
+            'permohonan_terbaru' => $permohonanTerbaru,
+        ];
+    }
+
+    // [BARU - Perencanaan: paginasi daftar permohonan dengan filter lengkap] ditambahkan untuk kebutuhan fitur List Pengajuan Perencanaan.
+    /**
+     * @param  array<string, mixed>  $filters
+     */
+    public function paginatePermohonanPerencanaan(array $filters, int $perPage = 10): LengthAwarePaginator
+    {
+        $query = Permohonan::with(['Unit', 'Creator', 'PermohonanMak.Mak']);
+
+        $keyword = trim((string) ($filters['search'] ?? $filters['q'] ?? ''));
+        if ($keyword !== '') {
+            $query->where(function ($q) use ($keyword) {
+                $q->where('nomor_surat', 'like', "%{$keyword}%")
+                    ->orWhere('judul', 'like', "%{$keyword}%");
+            });
+        }
+
+        $rawStatuses = [];
+        if (! empty($filters['statuses']) && is_array($filters['statuses'])) {
+            $rawStatuses = $filters['statuses'];
+        } elseif (! empty($filters['status']) && $filters['status'] !== 'semua') {
+            $rawStatuses = is_array($filters['status'])
+                ? $filters['status']
+                : array_filter(array_map('trim', explode(',', (string) $filters['status'])));
+        }
+
+        if (! empty($rawStatuses)) {
+            $mappedStatuses = [];
+            foreach ($rawStatuses as $st) {
+                if ($st === 'semua') {
+                    continue;
+                }
+                if ($st === 'diajukan') {
+                    $mappedStatuses[] = 'diajukan';
+                    $mappedStatuses[] = 'menunggu_verifikasi';
+                } elseif ($st === 'pengadaan') {
+                    $mappedStatuses[] = 'pengadaan';
+                    $mappedStatuses[] = 'disetujui';
+                } else {
+                    $mappedStatuses[] = $st;
+                }
+            }
+            if (! empty($mappedStatuses)) {
+                $query->whereIn('status', array_unique($mappedStatuses));
+            }
+        }
+
+        if (! empty($filters['bulan']) && is_numeric($filters['bulan'])) {
+            $query->whereMonth('created_at', (int) $filters['bulan']);
+        }
+
+        if (! empty($filters['tahun']) && is_numeric($filters['tahun'])) {
+            $query->whereYear('created_at', (int) $filters['tahun']);
+        }
+
+        if (! empty($filters['unit_id']) && is_numeric($filters['unit_id'])) {
+            $query->where('unit_id', (int) $filters['unit_id']);
+        }
+
+        return $query
+            ->orderByDesc('id')
+            ->paginate($perPage)
+            ->withQueryString();
+    }
+
+    // [BARU - Perencanaan: detail permohonan beserta pratinjau RKAKL dan opsi MAK] ditambahkan untuk kebutuhan fitur Detail Permohonan Perencanaan.
+    /**
+     * @return array<string, mixed>
+     */
+    public function getDetailPermohonanPerencanaan(Permohonan $permohonan): array
+    {
+        $permohonan->load([
+            'Creator:id,nama,email',
+            'Creator.Unit:id,nama',
+            'PermohonanMak.Mak.Ppk:id,nama',
+        ]);
+
+        $selectedMakIds = $permohonan->PermohonanMak->pluck('mak_id')->toArray();
+        $maks = Mak::with('Ppk')
+            ->where(function ($q) use ($selectedMakIds) {
+                $q->where('isActive', true)
+                    ->when(! empty($selectedMakIds), fn ($sub) => $sub->orWhereIn('id', $selectedMakIds));
+            })
+            ->orderBy('id')
+            ->get();
+        $approvalPerencanaan = $permohonan->Approvals()
+            ->where('tahap', 'PERENCANAAN')
+            ->latest('id')
+            ->first();
+
+        $dokumenPermohonan = Dokumen::where('ref_type', 'permohonan')->where('ref_id', $permohonan->id)
+            ->orderBy('id')
+            ->get()
+            ->map(function ($doc) use ($permohonan) {
+                return [
+                    'id' => $doc->id,
+                    'nama_asli' => $doc->nama_asli,
+                    'tipe_dokumen' => $doc->tipe_dokumen,
+                    'ukuran_bytes' => (int) ($doc->ukuran_bytes ?? 0),
+                    'mime_type' => $doc->mime_type ?? 'application/pdf',
+                    'versi' => $doc->versi,
+                    'created_at' => is_string($doc->created_at) ? $doc->created_at : $doc->created_at?->toISOString(),
+                    'download_url' => "/api/v1/perencanaan/pengajuan/{$permohonan->id}/dokumen?dokumen_id={$doc->id}",
+                ];
+            });
+
+        $dokumen = $permohonan->Dokumen()->where('tipe_dokumen', 'surat_permohonan')->latest('versi')->first();
+
+        $dokumenInfo = $dokumen ? [
+            'id' => $dokumen->id,
+            'nama_asli' => $dokumen->nama_asli,
+            'ukuran_bytes' => (int) ($dokumen->ukuran_bytes ?? 0),
+            'mime_type' => $dokumen->mime_type ?? 'application/pdf',
+            'download_url' => "/api/v1/perencanaan/pengajuan/{$permohonan->id}/dokumen",
+        ] : null;
+
+        $rkaklDoc = Dokumen::where('ref_type', 'rkakl')->orderByDesc('versi')->orderByDesc('id')->first();
+        $rkaklInfo = $rkaklDoc ? [
+            'id' => $rkaklDoc->id,
+            'nama_asli' => $rkaklDoc->nama_asli,
+            'versi' => $rkaklDoc->versi,
+            'ukuran_bytes' => (int) ($rkaklDoc->ukuran_bytes ?? 0),
+            'mime_type' => $rkaklDoc->mime_type ?? 'application/pdf',
+            'download_url' => "/api/v1/perencanaan/rkakl/dokumen/{$rkaklDoc->id}",
+        ] : null;
+
+        $data = [
+            'permohonan' => $permohonan,
+            'maks' => $maks,
+            'selected_mak_ids' => $selectedMakIds,
+            'approval_perencanaan' => $approvalPerencanaan ? [
+                'alasan' => $approvalPerencanaan->alasan,
+            ] : null,
+            'dokumen_permohonan' => $dokumenPermohonan,
+            'dokumen' => $dokumenInfo,
+            'rkakl_active' => $rkaklInfo,
+        ];
+
+        return $data;
+    }
+
+    // [BARU - Perencanaan: kompatibilitas endpoint deprecated kirim-pengadaan] ditambahkan untuk menjaga kompatibilitas endpoint lama.
+    /**
+     * @deprecated Penerusan ke PPBJ kini berjalan otomatis setelah Bidang 2 dan PPK menyetujui secara paralel.
+     */
+    public function kirimPengadaanDeprecated(Permohonan $permohonan, User $actor, int $makId): Permohonan
+    {
+        return DB::transaction(function () use ($permohonan, $actor, $makId) {
+            $statusLama = $permohonan->status;
+            $statusBaru = 'selesai';
+
+            PermohonanMak::updateOrCreate(
+                [
+                    'permohonan_id' => $permohonan->id,
+                    'mak_id' => $makId,
+                ],
+                [
+                    'ditentukan_oleh' => $actor->id,
+                ]
+            );
+
+            $permohonan->update(['status' => $statusBaru]);
+
+            StatusHistory::create([
+                'ref_type' => 'permohonan',
+                'ref_id' => $permohonan->id,
+                'status_lama' => $statusLama,
+                'status_baru' => $statusBaru,
+                'actor_id' => $actor->id,
+            ]);
+
+            return $permohonan;
+        });
+    }
+
+    // [BARU - PPK: daftar Dokumen Turunan / permohonan yang terikat Jenis MAK milik PPK] ditambahkan untuk kebutuhan fitur persetujuan awal permohonan oleh PPK.
+    /**
+     * @param  array<string, mixed>  $filters
+     */
+    public function paginatePermohonanUntukPpk(User $ppk, array $filters = [], int $perPage = 10): LengthAwarePaginator
+    {
+        $query = Permohonan::with(['Unit', 'Creator', 'PermohonanMak.Mak', 'Approvals.Actor'])
+            ->whereHas('PermohonanMak.Mak', fn ($q) => $q->where('ppk_user_id', $ppk->id));
+
+        $keyword = trim((string) ($filters['search'] ?? $filters['q'] ?? ''));
+        if ($keyword !== '') {
+            $query->where(function ($q) use ($keyword) {
+                $q->where('nomor_surat', 'like', "%{$keyword}%")
+                    ->orWhere('judul', 'like', "%{$keyword}%");
+            });
+        }
+
+        $statuses = array_values(array_filter((array) ($filters['statuses'] ?? [])));
+        if ($statuses !== []) {
+            $query->whereIn('status', $statuses);
+        } elseif (! empty($filters['status']) && $filters['status'] !== 'semua') {
+            $query->where('status', $filters['status']);
+        }
+
+        if (! empty($filters['bulan']) && is_numeric($filters['bulan'])) {
+            $query->whereMonth('created_at', (int) $filters['bulan']);
+        }
+
+        if (! empty($filters['tahun']) && is_numeric($filters['tahun'])) {
+            $query->whereYear('created_at', (int) $filters['tahun']);
+        }
+
+        $perPage = max(1, min($perPage, 100));
+
+        return $query
+            ->orderByDesc('id')
+            ->paginate($perPage)
+            ->withQueryString();
+    }
+
+    // [BARU - PPK: detail permohonan yang terikat Jenis MAK milik PPK] ditambahkan untuk kebutuhan fitur detail persetujuan awal permohonan oleh PPK.
+    /**
+     * @return array<string, mixed>
+     */
+    public function getDetailPermohonanUntukPpk(Permohonan $permohonan, User $ppk): array
+    {
+        $this->approvalService->pastikanPpkBerhakAtasPermohonan($permohonan, $ppk);
+
+        $permohonan->load([
+            'Unit',
+            'Creator',
+            'PermohonanMak.Mak.Ppk',
+            'Approvals.Actor',
+            'Approvals.Memo',
+            'Dokumen',
+        ]);
+
+        $dokumenPermohonan = $permohonan->Dokumen
+            ->sortByDesc('versi')
+            ->values()
+            ->each(function (Dokumen $doc) use ($permohonan) {
+                $doc->setAttribute('download_url', "/api/v1/ppk/permohonan/{$permohonan->id}/dokumen?dokumen_id={$doc->id}");
+            });
+
+        // Ambil catatan masukan dari Tim Perencanaan
+        $approvalPerencanaan = $permohonan->Approvals
+            ->filter(fn ($a) => in_array(strtoupper((string) $a->tahap), ['PERENCANAAN', 'PERENCANAAN']))
+            ->sortByDesc('id')
+            ->first();
+
+        $catatanPerencanaan = [
+            'pemeriksa_nama' => $approvalPerencanaan?->Actor?->nama ?? $approvalPerencanaan?->Actor?->name ?? null,
+            'pemeriksa_peran' => $approvalPerencanaan ? 'Tim Perencanaan' : null,
+            'tanggal' => $approvalPerencanaan?->created_at
+                ? Carbon::parse($approvalPerencanaan->created_at)->translatedFormat('d F Y, H:i')
+                : null,
+            'catatan' => $approvalPerencanaan?->alasan ?? null,
+        ];
+
+        $makList = $permohonan->PermohonanMak
+            ->filter(fn ($pm) => $pm->Mak !== null)
+            ->map(fn ($pm) => [
+                'id' => $pm->Mak->id,
+                'kode' => (string) ($pm->Mak->kode ?? $pm->Mak->nama),
+                'nama' => (string) $pm->Mak->nama,
+                'ppk_nama' => $pm->Mak->Ppk?->nama,
+            ])
+            ->values()
+            ->all();
+
+        return [
+            'permohonan' => $permohonan,
+            'dokumen_permohonan' => $dokumenPermohonan,
+            'catatan_perencanaan' => $catatanPerencanaan,
+            'mak_list' => $makList,
+            'permohonan_mak_ppk' => $permohonan->PermohonanMak
+                ->filter(fn ($pm) => (int) ($pm->Mak?->ppk_user_id ?? 0) === (int) $ppk->id)
+                ->values(),
         ];
     }
 }

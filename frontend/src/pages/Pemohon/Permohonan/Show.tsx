@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, type FC } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import pemohonService from '../../../services/pemohonService';
-import PemohonPermohonanShowTemplate from '../../../components/templates/PemohonPermohonanShowTemplate';
+import PemohonPermohonanShowTemplate from '../../../components/templates/Pemohon/PemohonPermohonanShowTemplate';
 import type { PermohonanDetailInfo } from '../../../types/permohonan';
 
 export const PermohonanShow: FC = () => {
@@ -53,9 +53,29 @@ export const PermohonanShow: FC = () => {
     };
   }, [fetchDetail]);
 
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const handleRevisi = () => {
     if (!permohonan?.id) return;
     navigate(`/pemohon/permohonan/${permohonan.id}/edit`);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!permohonan?.id) return;
+    setIsDeleting(true);
+    try {
+      await pemohonService.deletePermohonan(permohonan.id);
+      navigate('/pemohon/permohonan', {
+        state: { flashMessage: 'Permohonan pengadaan berhasil dibatalkan.' },
+      });
+    } catch (err: unknown) {
+      console.error('Failed to delete permohonan:', err);
+      setDeleteModalOpen(false);
+      setFlashMessage('Gagal menghapus permohonan. Permohonan mungkin sudah diproses.');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -70,6 +90,11 @@ export const PermohonanShow: FC = () => {
       onRetry={() => void fetchDetail()}
       onBack={() => navigate('/pemohon/permohonan')}
       onRevisi={handleRevisi}
+      onDelete={() => setDeleteModalOpen(true)}
+      isDeleting={isDeleting}
+      deleteModalOpen={deleteModalOpen}
+      onConfirmDelete={handleConfirmDelete}
+      onCancelDelete={() => setDeleteModalOpen(false)}
     />
   );
 };

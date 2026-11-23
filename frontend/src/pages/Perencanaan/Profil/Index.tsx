@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import SharedProfilPage, { type SharedProfilPageProps } from '../../Shared/SharedProfilPage';
-import { PERENCANAAN_NAV_ITEMS } from '../Dashboard';
+import { PERENCANAAN_NAV_ITEMS } from '@/constants/perencanaanNav';
 
 export type PerencanaanProfilProps = SharedProfilPageProps;
 

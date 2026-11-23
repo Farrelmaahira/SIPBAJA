@@ -365,6 +365,7 @@ Prefix Rute: `/api/v1/admin`
 - **List Role:** `GET /api/v1/admin/role`
 - **Tambah Role:** `POST /api/v1/admin/role` -> `{ "nama": "Auditor" }`
 - **Hapus Role:** `DELETE /api/v1/admin/role/{id}`
+- **Toggle Status Role:** `POST /api/v1/admin/role/{id}/toggle-status` (atau `/deactivate` / `/activate`)
 - **Matrix Role Permission:** `GET /api/v1/admin/role-permission`
   - **Success Response (200 OK):**
     ```json
@@ -382,6 +383,35 @@ Prefix Rute: `/api/v1/admin`
 - **Update Role Permissions:** `PUT /api/v1/admin/role-permission/{roleId}`
   - **Request Body:** `{ "permission_ids": [1, 2, 5, 8] }`
   - **Success Response (200 OK):** `{ "message": "Hak akses berhasil disimpan." }`
+
+---
+
+#### 6. Manajemen Metode Pengadaan (CRUD tanpa Delete)
+
+- **List Metode Pengadaan:** `GET /api/v1/admin/metode-pengadaan?q={keyword}&page={page}`
+  - **Success Response (200 OK):**
+    ```json
+    {
+      "metode_pengadaan": {
+        "current_page": 1,
+        "data": [
+          { "id": 1, "nama": "E-Purchasing", "isActive": true, "pengadaan_count": 5 }
+        ],
+        "total": 6
+      },
+      "filters": { "q": "" }
+    }
+    ```
+- **Tambah Metode Pengadaan:** `POST /api/v1/admin/metode-pengadaan`
+  - **Request Body:** `{ "nama": "Tender Cepat" }`
+  - **Success Response (201 Created):** `{ "message": "Metode pengadaan berhasil ditambahkan.", "metode_pengadaan": { ... } }`
+- **Ubah Metode Pengadaan:** `PUT /api/v1/admin/metode-pengadaan/{id}`
+  - **Request Body:** `{ "nama": "Tender Cepat Terbuka" }`
+  - **Success Response (200 OK):** `{ "message": "Metode pengadaan berhasil diubah.", "metode_pengadaan": { ... } }`
+- **Toggle Status:** `POST /api/v1/admin/metode-pengadaan/{id}/toggle-status`
+  - **Success Response (200 OK):** `{ "message": "Metode pengadaan berhasil dinonaktifkan.", "metode_pengadaan": { "id": 1, "isActive": false } }`
+- **Nonaktifkan:** `POST /api/v1/admin/metode-pengadaan/{id}/deactivate`
+- **Aktifkan:** `POST /api/v1/admin/metode-pengadaan/{id}/activate`
 
 ---
 
@@ -588,22 +618,25 @@ Prefix Rute: `/api/v1/perencanaan`
 - **Success Response (200 OK):** Mengembalikan data statistik ringkasan pengajuan masuk, verifikasi, dan RKAKL.
 
 #### 2. Daftar & Detail Pengajuan
-- **List Pengajuan:** `GET /api/v1/perencanaan/pengajuan?status={status}&search={search}`
+- **List Pengajuan:** `GET /api/v1/perencanaan/pengajuan?status={status}&search={search}&bulan={bulan}&tahun={tahun}&unit_id={unitId}&page={page}`
 - **Detail Pengajuan:** `GET /api/v1/perencanaan/pengajuan/{permohonanId}`
   - **Success Response (200 OK):**
     ```json
     {
       "detail": {
-        "id": 1,
-        "nomor_surat": "042/TI/PNJ/2026",
-        "judul": "Pengadaan Laptop",
-        "estimasi_anggaran": 45000000,
-        "status": "menunggu_verifikasi",
-        "unit": { "nama": "Teknik Informatika" },
-        "dokumen": [{ "id": 1, "nama_asli": "Surat_042.pdf" }]
-      },
-      "recentNotifications": [],
-      "unreadNotificationsCount": 0
+        "permohonan": {
+          "id": 1,
+          "nomor_surat": "042/TI/PNJ/2026",
+          "judul": "Pengadaan Laptop",
+          "estimasi_anggaran": 45000000,
+          "status": "menunggu_verifikasi",
+          "Unit": { "id": 1, "nama": "Teknik Informatika" }
+        },
+        "maks": [{ "id": 1, "nama": "521111 - Belanja Operasional", "ppk_user_id": 6 }],
+        "selected_mak_ids": [1],
+        "dokumen_permohonan": [{ "id": 1, "nama_asli": "Surat_042.pdf", "download_url": "/api/v1/perencanaan/pengajuan/1/dokumen?dokumen_id=1" }],
+        "rkakl_active": { "id": 10, "nama_asli": "RKAKL_2026.pdf", "download_url": "/api/v1/perencanaan/rkakl/dokumen/10" }
+      }
     }
     ```
 
@@ -612,16 +645,18 @@ Prefix Rute: `/api/v1/perencanaan`
 - **Request Body (JSON):**
   ```json
   {
-    "mak_ids": [1]
+    "mak_ids": [1, 2],
+    "catatan": "Anggaran tersedia pada RKAKL TA 2026."
   }
   ```
 - **Success Response (200 OK):**
   ```json
   {
-    "message": "Permohonan berhasil diverifikasi dan diteruskan ke tahap berikutnya."
+    "message": "Permohonan berhasil diverifikasi dan diteruskan ke tahap berikutnya.",
+    "data": { "id": 1, "status": "diteruskan" }
   }
   ```
-- **Error Response (422):** `{ "errors": { "mak_ids": ["Mata Anggaran Kegiatan wajib dipilih."] } }`
+- **Error Response (422):** `{ "message": "Pilih minimal satu Jenis MAK sebelum menyetujui permohonan.", "errors": { "mak_ids": ["Pilih minimal satu Jenis MAK sebelum menyetujui permohonan."] } }`
 
 #### 4. Penolakan / Reject Permohonan
 - **Method & URL:** `POST /api/v1/perencanaan/pengajuan/{permohonanId}/reject`
@@ -638,19 +673,63 @@ Prefix Rute: `/api/v1/perencanaan`
   }
   ```
 
-#### 5. Kirim ke Pengadaan (PPBJ)
+#### 5. Kirim ke Pengadaan (PPBJ) — **@deprecated**
 - **Method & URL:** `POST /api/v1/perencanaan/pengajuan/{permohonanId}/kirim-pengadaan`
+- **Keterangan:** **Deprecated.** Penerusan ke PPBJ kini berjalan otomatis setelah Bidang 2 dan PPK menyetujui secara paralel.
 - **Request Body (JSON):** `{ "mak_id": 1 }`
 - **Success Response (200 OK):** `{ "message": "Jenis MAK pengadaan berhasil ditetapkan dan dikirim." }`
 
-#### 6. Manajemen Jenis MAK & RKAKL
+#### 6. Lihat & Perbaiki Jenis MAK pada Dokumen Pengadaan
+- **Detail Dokumen Pengadaan (Read-Only + Konteks MAK):** `GET /api/v1/perencanaan/pengadaan/{pengadaanId}`
+  - **Success Response (200 OK):**
+    ```json
+    {
+      "data": {
+        "pengadaan": { "id": 1, "permohonan_id": 1, "permohonan_mak_id": 1, "ppk_id": 6, "nominal": 45000000, "status": "menunggu_review" },
+        "dokumen_pengadaan": [],
+        "bisa_ubah_mak": true,
+        "opsi_permohonan_mak": [
+          { "permohonan_mak_id": 1, "mak_id": 1, "kode": "521111", "nama": "521111 - Belanja Operasional", "ppk_user_id": 6, "ppk_nama": "PPK BLU Fisik" }
+        ]
+      }
+    }
+    ```
+- **Perbaiki Jenis MAK Dokumen Pengadaan:** `PUT /api/v1/perencanaan/pengadaan/{pengadaanId}/jenis-mak`
+  - **Request Body (JSON):**
+    ```json
+    {
+      "permohonan_mak_id": 2
+    }
+    ```
+  - **Success Response (200 OK):**
+    ```json
+    {
+      "message": "Jenis MAK pada dokumen pengadaan berhasil diperbaiki.",
+      "data": { "id": 1, "permohonan_mak_id": 2, "ppk_id": 7 }
+    }
+    ```
+  - **Error Response (422):** Jika PPK sudah menyetujui dokumen pengadaan atau `permohonan_mak_id` tidak berasal dari permohonan tersebut.
+
+#### 7. Manajemen Jenis MAK & RKAKL
 - **List Jenis MAK:** `GET /api/v1/perencanaan/jenis-mak?q={keyword}`
 - **Tambah Jenis MAK:** `POST /api/v1/perencanaan/jenis-mak`
-  - Body: `{ "kode": "MAK-01", "nama": "Belanja Komputer", "ppk_user_id": 6, "penanggung_jawab": "PPK Kampus" }`
+  - Body: `{ "kode": "521111", "nama": "Belanja Komputer", "ppk_user_id": 6 }`
   - Response (201 Created): `{ "message": "Jenis MAK baru berhasil ditambahkan.", "mak": { ... } }`
-- **Update Dokumen RKAKL:** `POST /api/v1/perencanaan/rkakl`
-  - Body: `{ "filename": "RKAKL_2026_v5.pdf" }`
-  - Response (200 OK): `{ "message": "Dokumen RKAKL berhasil diperbarui dengan versi terbaru." }`
+- **Ubah Jenis MAK:** `PUT /api/v1/perencanaan/jenis-mak/{makId}`
+  - Body: `{ "kode": "521111", "nama": "Belanja Komputer", "ppk_user_id": 6 }`
+  - Response (200 OK): `{ "message": "Jenis MAK berhasil diperbarui.", "mak": { ... } }`
+- **Hapus Jenis MAK (Soft Delete):** `DELETE /api/v1/perencanaan/jenis-mak/{makId}`
+  - Response (204 No Content)
+  - Error Response (422): `{ "message": "Jenis MAK tidak dapat dihapus karena masih terikat pada Dokumen Turunan yang sedang berjalan." }`
+- **List Dokumen RKAKL per Tahun Anggaran:** `GET /api/v1/perencanaan/rkakl?tahun={tahun}`
+- **Unggah Dokumen RKAKL Baru (Multipart):** `POST /api/v1/perencanaan/rkakl`
+  - Form Data (`multipart/form-data`): `tahun_anggaran` (`2026`), `berkas` (PDF/JPG/PNG, maks 10 MB)
+  - Response (200 OK): `{ "message": "Dokumen RKAKL berhasil diperbarui dengan versi terbaru.", "data": { ... } }`
+- **Ganti Dokumen RKAKL (Multipart):** `POST /api/v1/perencanaan/rkakl/{dokumenId}/ganti`
+  - Form Data (`multipart/form-data`): `berkas` (PDF/JPG/PNG, maks 10 MB)
+  - Response (200 OK): `{ "message": "Dokumen RKAKL berhasil diganti dengan versi terbaru.", "data": { ... } }`
+- **Hapus Dokumen RKAKL:** `DELETE /api/v1/perencanaan/rkakl/{dokumenId}`
+  - Response (204 No Content)
 
 #### 7. Notifikasi
 - **List Notifikasi:** `GET /api/v1/perencanaan/notifikasi?tab=semua`
@@ -676,6 +755,74 @@ Prefix Rute: `/api/v1/bidang-2`
     }
     ```
 - **List Pengajuan:** `GET /api/v1/bidang-2/pengajuan?status=semua&search=`
+- **Detail Pengajuan:** `GET /api/v1/bidang-2/pengajuan/{id}`
+  - **Success Response (200 OK):**
+    ```json
+    {
+      "permohonan": {
+        "id": 1,
+        "nomor_surat": "111-FFF-111",
+        "judul": "Pengadaan Komputer",
+        "ringkasan_tujuan": "Kebutuhan praktikum mahasiswa di laboratorium",
+        "unit_nama": "Jurusan Teknik Informatika & Komputer",
+        "estimasi_anggaran": 100000000,
+        "revisi_ke": 0,
+        "status": "menunggu_bidang2",
+        "tanggal_pengajuan": "04 Maret 2027",
+        "created_at": "2027-03-04T08:00:00Z",
+        "mak_list": [
+          { "id": 1, "kode": "532111", "nama": "Belanja Modal Peralatan dan Mesin" }
+        ],
+        "dokumen": {
+          "id": 10,
+          "nama_asli": "Surat_Permohonan_Pengadaan_Komputer.pdf",
+          "ukuran_bytes": 8388608,
+          "mime_type": "application/pdf",
+          "download_url": "/api/v1/bidang-2/permohonan/1/dokumen"
+        },
+        "catatan_perencanaan": {
+          "pemeriksa_nama": "Tim Perencanaan",
+          "pemeriksa_peran": "Tim Perencanaan",
+          "tanggal": "05 Maret 2027, 09:30",
+          "catatan": "Jenis MAK 532111 telah diverifikasi. Mohon periksa kesesuaian nominal dengan Dokumen RKAKL terbaru sebelum memberi keputusan."
+        },
+        "rkakl_aktif": {
+          "versi": 3,
+          "nama_asli": "RKAKL_TA_2026_Satker_Politeknik_v3.pdf",
+          "updated_at": "12 Okt 2026",
+          "download_url": "/api/v1/bidang-2/rkakl"
+        },
+        "keputusan_bidang2": null
+      }
+    }
+    ```
+- **Persetujuan Permohonan (Approval dengan Memo):** `POST /api/v1/bidang-2/pengajuan/{id}/approve`
+  - **Content-Type:** `multipart/form-data`
+  - **Form Data:**
+    - `file_memo`: file (PDF), required, max 20480 KB (20 MB).
+  - **Success Response (200 OK):**
+    ```json
+    {
+      "message": "Permohonan berhasil disetujui dan memo persetujuan telah tersimpan.",
+      "permohonan": { "id": 1, "status": "disetujui" }
+    }
+    ```
+- **Penolakan Permohonan (Rejection dengan Alasan):** `POST /api/v1/bidang-2/pengajuan/{id}/reject`
+  - **Content-Type:** `application/json`
+  - **Request Body:**
+    ```json
+    {
+      "alasan": "Estimasi anggaran melebihi alokasi MAK semester ini. Harap disesuaikan."
+    }
+    ```
+  - **Success Response (200 OK):**
+    ```json
+    {
+      "message": "Permohonan berhasil ditolak dan catatan telah diteruskan ke pemohon serta Perencanaan.",
+      "permohonan": { "id": 1, "status": "ditolak", "revisi_ke": 1 }
+    }
+    ```
+- **Unduh Memo Persetujuan:** `GET /api/v1/bidang-2/pengajuan/{id}/memo`
 - **List Dokumen RKAKL:** `GET /api/v1/bidang-2/rkakl`
 - **Unduh Dokumen:** `GET /api/v1/bidang-2/permohonan/{permohonanId}/dokumen`
 
@@ -773,40 +920,186 @@ Prefix Rute: `/api/v1/pp`
 
 Prefix Rute: `/api/v1/ppk`
 
-#### 1. Dashboard, List & Review Pengadaan
+#### 1. Dashboard & List Pengadaan
 - **Dashboard:** `GET /api/v1/ppk/dashboard`
-- **List Pengajuan:** `GET /api/v1/ppk/pengajuan?q={keyword}&statuses[]={status}`
-- **Review Form:** `GET /api/v1/ppk/pengajuan/{pengadaanId}/review`
+- **List Pengajuan (Pengadaan):** `GET /api/v1/ppk/pengajuan?q={keyword}&statuses[]={status}&bulan={bulan}&tahun={tahun}&unit_id={unitId}`
+- **Detail Pengajuan:** `GET /api/v1/ppk/pengajuan/{pengadaanId}`
 
-#### 2. Approve & Reject Dokumen Pengadaan
+#### 2. Persetujuan Awal Permohonan (Dokumen Turunan milik PPK)
+- **List Permohonan untuk PPK:** `GET /api/v1/ppk/permohonan?q={keyword}&status={status}&statuses[]={status}&bulan={bulan}&tahun={tahun}&page={page}&per_page={per_page}`
+  - Mengembalikan daftar permohonan yang terikat dengan Jenis MAK milik akun PPK yang login (`mak.ppk_user_id`).
+  - Response (200 OK): `{ "message": "...", "data": [ ... ], "meta": { "current_page": 1, "last_page": 1, "per_page": 10, "total": 0 }, "filters": { ... } }`
+  - `per_page` dibatasi 1–100 (default 10).
+- **Detail Permohonan untuk PPK:** `GET /api/v1/ppk/permohonan/{permohonanId}`
+  - Response (200 OK): `{ "message": "Detail permohonan untuk PPK berhasil diambil.", "data": { "permohonan": { ... }, "dokumen_permohonan": [...], "permohonan_mak_ppk": [...] } }`
+  - Tidak memuat relasi pengadaan maupun RKAKL.
+  - Error Response (403 Forbidden): jika permohonan tidak terikat Jenis MAK milik PPK yang login.
+- **Unduh / Preview Dokumen Permohonan:** `GET /api/v1/ppk/permohonan/{permohonanId}/dokumen?dokumen_id={dokumenId}&disposition={inline|attachment}`
+  - Response (200 OK): Stream berkas (`inline` untuk pratinjau, `attachment` untuk unduhan).
+  - Error Response (403 Forbidden): jika permohonan tidak terikat Jenis MAK milik PPK yang login.
+- **Approve Permohonan oleh PPK:** `POST /api/v1/ppk/permohonan/{permohonanId}/approve`
+  - **Request Body (`multipart/form-data`):**
+    - `memo`: Berkas wajib (`pdf`, `jpg`, `jpeg`, `png`, maks. `10 MB`).
+    - `catatan`: String opsional (maks. `1000` karakter).
+  - **Success Response (200 OK):**
+    ```json
+    {
+      "message": "Permohonan beserta Memo Persetujuan Surat Permohonan berhasil disetujui oleh PPK.",
+      "data": { "id": 1, "status": "disetujui" }
+    }
+    ```
+  - **Error Response (422):** `{ "errors": { "memo": ["Berkas Memo Persetujuan Surat Permohonan wajib diunggah."] } }`
+- **Reject Permohonan oleh PPK:** `POST /api/v1/ppk/permohonan/{permohonanId}/reject`
+  - **Request Body (JSON):** `{ "alasan": "Rincian kebutuhan belum sesuai anggaran MAK." }`
+  - **Success Response (200 OK):** `{ "message": "Permohonan telah ditolak oleh PPK beserta catatan alasan." }`
+
+#### 3. Approve & Reject Dokumen Pengadaan
+- **Review Form Pengadaan:** `GET /api/v1/ppk/pengajuan/{pengadaanId}/review`
 - **Approve:** `POST /api/v1/ppk/pengajuan/{pengadaanId}/approve`
-  - Response (200 OK): `{ "message": "Dokumen pengadaan berhasil disetujui oleh PPK." }`
+  - Response (200 OK): `{ "message": "Dokumen pengadaan berhasil disetujui oleh PPK dan diteruskan ke PPBJ." }`
 - **Reject:** `POST /api/v1/ppk/pengajuan/{pengadaanId}/reject`
   - Body: `{ "alasan": "Spesifikasi perlu verifikasi teknis ulang." }`
   - Response (200 OK): `{ "message": "Dokumen pengadaan ditolak dan dikembalikan ke PPBJ." }`
 
-#### 3. Review & Persetujuan Dokumen Pembayaran
+#### 4. Review & Persetujuan Dokumen Pembayaran
 - **Detail Form Pembayaran:** `GET /api/v1/ppk/pengajuan/{pengadaanId}/pembayaran`
-- **Approve Pembayaran:** `POST /api/v1/ppk/pengajuan/{pengadaanId}/pembayaran/approve`
-  - Body (JSON):
-    ```json
-    {
-      "filename": "Memo_Persetujuan_042_TI_PNJ_2026.pdf",
-      "catatan": "Disetujui untuk termin pertama 100% barang diterima."
-    }
-    ```
-  - Response (200 OK): `{ "message": "Dokumen pembayaran beserta Memo Persetujuan berhasil disetujui." }`
+- **Approve Pembayaran (Diperketat):** `POST /api/v1/ppk/pengajuan/{pengadaanId}/pembayaran/approve`
+  - **Request Body (`multipart/form-data`):**
+    - `memo`: Berkas wajib Memo Persetujuan Pembayaran (`pdf`, `jpg`, `jpeg`, `png`, maks. `10 MB`).
+    - `catatan`: String opsional (maks. `1000` karakter).
+  - **Success Response (200 OK):** `{ "message": "Dokumen pembayaran beserta Memo Persetujuan berhasil disetujui." }`
+  - **Error Response (422):** `{ "errors": { "memo": ["Berkas Memo Persetujuan Pembayaran wajib diunggah."] } }`
 - **Reject Pembayaran:** `POST /api/v1/ppk/pengajuan/{pengadaanId}/pembayaran/reject`
   - Body: `{ "alasan": "Faktur pajak belum valid." }`
   - Response (200 OK): `{ "message": "Dokumen pembayaran telah ditolak beserta catatan revisi." }`
+
+#### 5. Notifikasi PPK
+
+- **Daftar Notifikasi:** `GET /api/v1/ppk/notifikasi`
+- **Tandai Dibaca:** `POST /api/v1/ppk/notifikasi/{notificationId}/read`
+- **Tandai Semua Dibaca:** `POST /api/v1/ppk/notifikasi/read-all`
+
+Catatan: endpoint RKAKL untuk PPK (`/api/v1/ppk/rkakl`, `/api/v1/ppk/rkakl/dokumen`) sudah dihapus dari modul PPK.
 
 ---
 
 ### 3.9 Modul Perlengkapan & Keuangan
 
-- **Dashboard Perlengkapan:** `GET /api/v1/perlengkapan/dashboard` (`role:Perlengkapan`)
+#### 1. Modul Perlengkapan (`role:Perlengkapan`)
+- **Dashboard Perlengkapan:** `GET /api/v1/perlengkapan/dashboard`
+  - Success Response: `200 OK`
+- **List Pengadaan:** `GET /api/v1/perlengkapan/pengadaan?search={keyword}&status={status}&page={page}&per_page={per_page}`
+  - Success Response: `200 OK` (Paginasi daftar pengadaan masuk yang ditangani Perlengkapan)
+- **Detail Pengadaan:** `GET /api/v1/perlengkapan/pengadaan/{id}`
+  - Success Response: `200 OK` (Memuat informasi pengadaan, tracking 5-tahap, data vendor, berkas Kontrak/SPK, dan status penerimaan barang)
+- **Simpan Penerimaan Barang (BAST & Foto):** `POST /api/v1/perlengkapan/pengadaan/{id}/penerimaan`
+  - Content-Type: `multipart/form-data`
+  - Body:
+    - `tanggal_terima`: string date (opsional, default hari ini)
+    - `dokumen_barang[]`: array of file berkas BAST/pendukung bertanda tangan (wajib, max 10MB per file)
+    - `dokumentasi_foto[]`: array of file foto fisik kondisi barang (opsional, max 20MB per file)
+  - Success Response: `201 Created`
+    ```json
+    {
+      "message": "Dokumen barang/jasa dan dokumentasi fisik serah terima berhasil disimpan.",
+      "penerimaan_id": 1,
+      "dokumen_barang": [],
+      "dokumentasi_foto": []
+    }
+    ```
+- **Unduh/Lihat Dokumen Pengadaan/Penerimaan:** `GET /api/v1/perlengkapan/pengadaan/{id}/dokumen/{dokumenId}?disposition={inline|attachment}`
+- **Profil Pengguna Perlengkapan:** `GET /api/v1/perlengkapan/profil`
+  - Success Response: `200 OK`
+    ```json
+    {
+      "user": {
+        "id": 1,
+        "nama": "Staf Perlengkapan",
+        "email": "perlengkapan@pnj.ac.id",
+        "role": {
+          "id": 7,
+          "nama": "Perlengkapan"
+        },
+        "unit": {
+          "id": 1,
+          "nama": "Unit Perlengkapan"
+        }
+      }
+    }
+    ```
+
+#### 2. Modul Keuangan (`role:Keuangan`)
 - **Dashboard Keuangan:** `GET /api/v1/keuangan/dashboard` (`role:Keuangan`)
   - Success Response: `200 OK`
+    ```json
+    {
+      "summary": {
+        "total_menunggu_pembayaran": 6
+      },
+      "pengadaan_menunggu_pembayaran": [
+        {
+          "id": 1,
+          "nomor_pengadaan": "01010-FF-11",
+          "nomor_permohonan": "Permohonan 111-FFF-111",
+          "judul": "Pengadaan Laptop Asus Vivobook",
+          "diajukan_oleh": "Unit Keuangan",
+          "nilai_pengajuan": 45000000.0,
+          "status": "menunggu_input",
+          "status_label": "Menunggu Input"
+        }
+      ]
+    }
+    ```
+- **List Pengadaan:** `GET /api/v1/keuangan/pengadaan?search={keyword}&status={status}&page={page}&per_page={per_page}` (`role:Keuangan`)
+  - Success Response: `200 OK`
+    ```json
+    {
+      "data": [
+        {
+          "id": 1,
+          "nomor_pengadaan": "01010-FF-11",
+          "nomor_permohonan": "Permohonan 111-FFF-111",
+          "judul": "Pengadaan Komputer Lab",
+          "diajukan_oleh": "Jurusan Teknik Informatika",
+          "nilai_pengajuan": 185000000.0,
+          "status": "menunggu_input",
+          "status_label": "Menunggu Input"
+        }
+      ],
+      "current_page": 1,
+      "last_page": 1,
+      "per_page": 10,
+      "total": 10,
+      "from": 1,
+      "to": 10
+    }
+    ```
+- **Detail Pengadaan:** `GET /api/v1/keuangan/pengadaan/{id}` (`role:Keuangan`)
+  - Success Response: `200 OK` (Memuat informasi 12 grid data, 5-tahap tracking stepper, riwayat timeline, 12 berkas dokumen pendukung, kartu MAK, dan data bukti pembayaran)
+- **Simpan Bukti Pembayaran:** `POST /api/v1/keuangan/pengadaan/{id}/bukti-bayar` (`role:Keuangan`)
+  - Content-Type: `multipart/form-data`
+  - Payload:
+    - `tanggal_pembayaran` (string, required, YYYY-MM-DD)
+    - `bukti_bayar[]` (file, required, format PDF/JPG/PNG max 10MB)
+  - Success Response: `201 Created`
+    ```json
+    {
+      "message": "Bukti pembayaran berhasil diunggah dan status pengadaan telah selesai.",
+      "pengadaan_id": 1,
+      "status": "selesai",
+      "uploaded_files": [
+        {
+          "id": 15,
+          "nama": "Bukti_Transfer_001.jpg",
+          "ukuran": "2.4 MB"
+        }
+      ]
+    }
+    ```
+- **Unduh/Pratinjau Dokumen:** `GET /api/v1/keuangan/pengadaan/{id}/dokumen/{dokumenId}?disposition={inline|attachment}&nama={namaFile}` (`role:Keuangan`)
+  - Success Response: `200 OK` (Stream file blob)
+- **Profil Keuangan:** `GET /api/v1/keuangan/profil` (`role:Keuangan`)
+  - Success Response: `200 OK` (Profil akun Keuangan yang sedang login)
 
 ---
 

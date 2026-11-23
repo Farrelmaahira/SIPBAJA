@@ -18,8 +18,9 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             UserSeeder::class,
             RbacSeeder::class,
-            MasterReferenceSeeder::class,
             MasterSeeder::class,
+            PermohonanDiajukanSeeder::class,
+            KeuanganSeeder::class,
             // PengadaanPpSeeder::class,
         ]);
     }

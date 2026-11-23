@@ -100,4 +100,44 @@ class UserService
             ->get(['id', 'nama', 'email'])
             ->toArray();
     }
+
+    public function deactivate($userId): bool
+    {
+        $user = User::find($userId);
+
+        if (! $user) {
+            return false;
+        }
+
+        if ($user->isActive) {
+            $user->update([
+                'isActive' => false,
+            ]);
+
+            $user->tokens()->delete();
+
+            if (DB::getSchemaBuilder()->hasTable('sessions')) {
+                DB::table('sessions')->where('user_id', $user->id)->delete();
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    public function activate($userId): bool
+    {
+        $user = User::find($userId);
+
+        if (! $user->isActive) {
+            $user->update([
+                'isActive' => ! $user->isActive,
+            ]);
+
+            return true;
+        }
+
+        return false;
+    }
 }

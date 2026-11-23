@@ -2,7 +2,7 @@ import { useState, useEffect, type FC } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { adminService } from '../../../services/adminService';
-import RolePermissionTemplate from '../../../components/templates/RolePermissionTemplate';
+import RolePermissionTemplate from '../../../components/templates/Admin/RolePermissionTemplate';
 import PermissionMatrix, {
   type GroupedPermissions,
 } from '../../../components/organisms/PermissionMatrix';

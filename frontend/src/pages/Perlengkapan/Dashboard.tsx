@@ -1,37 +1,67 @@
 import { useEffect, useState, type FC } from 'react';
-import api from '../../services/api';
-import { useAuth } from '../../hooks/useAuth';
-import RoleDashboardTemplate from '../../components/templates/RoleDashboardTemplate';
+import perlengkapanService from '../../services/perlengkapanService';
+import AppLayout from '../../components/templates/General/AppLayout';
+import HeroBanner from '../../components/organisms/HeroBanner';
+import PerlengkapanPengadaanMasukTable from '../../components/organisms/Perlengkapan/PerlengkapanPengadaanMasukTable';
+import { PERLENGKAPAN_NAV_ITEMS } from '../../constants/perlengkapanNav';
+import type { PerlengkapanDashboardData } from '../../types/perlengkapan';
 
 export const PerlengkapanDashboard: FC = () => {
-  const { user } = useAuth();
+  const [data, setData] = useState<PerlengkapanDashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
+    const controller = new AbortController();
+
     setIsLoading(true);
 
-    api
-      .get('/v1/perlengkapan/dashboard')
-      .catch((err) => {
+    perlengkapanService
+      .getDashboard(controller.signal)
+      .then((res) => {
+        if (!isMounted) return;
+        setData(res);
+      })
+      .catch((err: unknown) => {
+        if (!isMounted || controller.signal.aborted) return;
         console.error('Failed to fetch Perlengkapan dashboard:', err);
       })
       .finally(() => {
-        if (isMounted) setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       });
 
     return () => {
       isMounted = false;
+      controller.abort();
     };
   }, []);
 
   return (
-    <RoleDashboardTemplate
-      roleTitle="Dashboard Perlengkapan"
-      roleDescription="Pencatatan penerimaan barang, dokumentasi fisik, dan berita acara penerimaan."
-      user={user}
-      isLoading={isLoading}
-    />
+    <AppLayout
+      activeRoute="dashboard"
+      navItems={PERLENGKAPAN_NAV_ITEMS}
+      roleInitials="PL"
+      roleTitle="Perlengkapan"
+      roleSubtitle="Unit Perlengkapan"
+      basePath="/perlengkapan"
+      profileHref="/perlengkapan/profil"
+      notifikasiHref="/perlengkapan/notifikasi"
+    >
+      <div className="space-y-7">
+        <HeroBanner
+          eyebrow="DASHBOARD"
+          title="Selamat datang, Perlengkapan"
+          description="Pantau pengadaan yang masuk dan tindak lanjuti dari satu tempat."
+        />
+
+        <PerlengkapanPengadaanMasukTable
+          items={data?.pengadaan_masuk || []}
+          isLoading={isLoading}
+        />
+      </div>
+    </AppLayout>
   );
 };
 

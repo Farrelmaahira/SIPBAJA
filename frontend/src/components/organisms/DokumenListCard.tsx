@@ -1,4 +1,4 @@
-import { useState, useMemo, type FC } from 'react';
+import { useState, useMemo, useEffect, useRef, type FC } from 'react';
 import {
   FileText,
   Eye,
@@ -37,9 +37,6 @@ export const DokumenListCard: FC<DokumenListCardProps> = ({
   title = 'Dokumen Permohonan',
   dokumenList = [],
   nomorSurat,
-  judul,
-  unitNama,
-  tanggal,
   onViewNewTab,
   onDownload,
   isViewingId = null,
@@ -67,6 +64,14 @@ export const DokumenListCard: FC<DokumenListCardProps> = ({
   }, [safeList]);
 
   const [expandedId, setExpandedId] = useState<number | string | null>(initialExpandedId);
+  const hasAutoExpandedRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    if (!hasAutoExpandedRef.current && initialExpandedId !== null) {
+      hasAutoExpandedRef.current = true;
+      setExpandedId(initialExpandedId);
+    }
+  }, [initialExpandedId]);
 
   const toggleExpand = (id: number | string) => {
     setExpandedId((prev) => (prev === id ? null : id));
@@ -156,13 +161,19 @@ export const DokumenListCard: FC<DokumenListCardProps> = ({
             const isDownloadingThis = isDownloadingId === doc.id;
 
             // Preview URL priority: blob URL if matches current doc, or direct download_url with inline disposition
-            const rawUrl = doc.download_url || '';
-            const normalizedUrl = rawUrl.startsWith('/api') ? rawUrl : `/api${rawUrl.startsWith('/') ? '' : '/'}${rawUrl}`;
+            const directUrl = doc.download_url
+              ? doc.download_url.startsWith('http')
+                ? doc.download_url
+                : doc.download_url.startsWith('/api')
+                  ? doc.download_url
+                  : `/api${doc.download_url.startsWith('/') ? doc.download_url : `/${doc.download_url}`}`
+              : null;
+
             const activePreviewSrc =
               previewBlobUrl && previewDocId === doc.id
                 ? previewBlobUrl
-                : doc.download_url
-                  ? `${normalizedUrl}${normalizedUrl.includes('?') ? '&' : '?'}disposition=inline`
+                : directUrl
+                  ? `${directUrl}${directUrl.includes('?') ? '&' : '?'}disposition=inline`
                   : null;
 
             return (
@@ -286,83 +297,20 @@ export const DokumenListCard: FC<DokumenListCardProps> = ({
                             title={`Pratinjau isi ${doc.nama_asli}`}
                             className="w-full h-[520px] rounded-xl border border-[#E4EBE8] bg-white shadow-xs"
                           />
-                        ) : isRkaklDoc ? (
-                          /* Fallback Mockup Dokumen RKAKL */
-                          <div className="bg-white rounded-xl border border-[#E4EBE8] shadow-2xs p-6 sm:p-8 max-w-xl mx-auto space-y-5">
-                            <div className="flex items-center gap-3 pb-4 border-b-2 border-[#0E7C5A]">
-                              <div className="w-10 h-10 rounded-lg bg-[#0E7C5A] text-white flex items-center justify-center shrink-0">
-                                <FileText className="w-5 h-5" />
-                              </div>
-                              <div>
-                                <p className="text-xs font-bold text-[#14201C] uppercase tracking-wide">
-                                  RKA-K/L TAHUN ANGGARAN 2026
-                                </p>
-                                <p className="text-[11px] text-[#5F6F6A]">
-                                  Pengadaan Barang &amp; Jasa Politeknik Negeri Jakarta
-                                </p>
-                              </div>
-                            </div>
-                            <div className="text-xs space-y-1.5 text-[#14201C]">
-                              <div className="flex gap-2">
-                                <span className="w-24 text-[#5F6F6A]">Nama Berkas</span>
-                                <span className="font-semibold">: {doc.nama_asli}</span>
-                              </div>
-                              <div className="flex gap-2">
-                                <span className="w-24 text-[#5F6F6A]">Versi Dokumen</span>
-                                <span>: Versi {doc.versi ?? 1}</span>
-                              </div>
-                              <div className="flex gap-2">
-                                <span className="w-24 text-[#5F6F6A]">Status</span>
-                                <span className="font-bold text-[#0E7C5A]">: Aktif Digunakan</span>
-                              </div>
-                            </div>
-                            <p className="text-xs text-[#5F6F6A] leading-relaxed">
-                              Dokumen acuan pagu anggaran yang telah disahkan untuk proses verifikasi mata anggaran kegiatan (MAK) di lingkungan kampus.
-                            </p>
-                          </div>
                         ) : (
-                          /* Fallback Mockup Dokumen Berkop Resmi */
-                          <div className="bg-white rounded-xl border border-[#E4EBE8] shadow-2xs p-6 sm:p-8 max-w-xl mx-auto space-y-5">
-                            <div className="flex items-center gap-3 pb-4 border-b-2 border-[#14201C]">
-                              <div className="w-10 h-10 rounded-lg bg-[#0E7C5A] text-white flex items-center justify-center shrink-0">
-                                <FileText className="w-5 h-5" />
-                              </div>
-                              <div>
-                                <p className="text-xs font-bold text-[#14201C] uppercase tracking-wide">
-                                  {unitNama || 'JURUSAN TEKNIK INFORMATIKA & KOMPUTER'}
-                                </p>
-                                <p className="text-[11px] text-[#5F6F6A]">
-                                  Pengadaan Barang &amp; Jasa
-                                </p>
-                              </div>
+                          <div className="h-[220px] flex flex-col items-center justify-center gap-3 bg-white rounded-xl border border-dashed border-[#E4EBE8] px-6 text-center">
+                            <div className="w-12 h-12 rounded-xl bg-[#F4F7F5] text-[#8A9A95] flex items-center justify-center">
+                              <FileText className="w-6 h-6" />
                             </div>
-
-                            <div className="text-xs space-y-1.5 text-[#14201C]">
-                              <div className="flex gap-2">
-                                <span className="w-16 text-[#5F6F6A]">Nomor</span>
-                                <span>: {nomorSurat || '-'}</span>
-                              </div>
-                              <div className="flex gap-2">
-                                <span className="w-16 text-[#5F6F6A]">Perihal</span>
-                                <span className="font-semibold">: Permohonan {judul || 'Pengadaan'}</span>
-                              </div>
-                              <div className="flex gap-2">
-                                <span className="w-16 text-[#5F6F6A]">Tanggal</span>
-                                <span>: {tanggal || '-'}</span>
-                              </div>
-                            </div>
-
-                            <div className="text-center pt-2">
-                              <p className="text-xs font-bold uppercase tracking-wider text-[#14201C] underline">
-                                SURAT PERMOHONAN PENGADAAN
+                            <div>
+                              <p className="text-xs font-bold text-[#14201C]">
+                                Pratinjau tidak tersedia
+                              </p>
+                              <p className="text-[11px] text-[#8A9A95] mt-1 max-w-xs">
+                                Berkas ini belum memiliki tautan pratinjau. Gunakan tombol Unduh
+                                untuk membuka dokumen.
                               </p>
                             </div>
-
-                            <p className="text-xs text-[#14201C] leading-relaxed">
-                              Dengan hormat, bersama surat ini kami mengajukan permohonan pengadaan{' '}
-                              {judul || 'barang'} untuk menunjang kelancaran operasional dan kegiatan akademik
-                              unit kami.
-                            </p>
                           </div>
                         )}
                       </div>

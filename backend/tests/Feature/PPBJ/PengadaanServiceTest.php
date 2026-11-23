@@ -90,19 +90,21 @@ class PengadaanServiceTest extends TestCase
         $pm = $permohonan->PermohonanMak->firstOrFail();
         $jenis = JenisPengadaan::firstOrFail();
         $metode = MetodePengadaan::firstOrFail();
+        $levelLow = LevelPengadaan::where('nama', '<50jt')->firstOrFail();
+        $levelMid = LevelPengadaan::where('nama', '50-200jt')->firstOrFail();
 
         $items = [
             [
                 'permohonan_mak_id' => $pm->id,
                 'jenis_id' => $jenis->id,
                 'metode_id' => $metode->id,
-                'nominal' => 45000000.0, // <50jt, level_id null => auto calculate
+                'level_id' => $levelLow->id,
             ],
             [
                 'permohonan_mak_id' => $pm->id,
                 'jenis_id' => $jenis->id,
                 'metode_id' => $metode->id,
-                'nominal' => 120000000.0, // 50-200jt, level_id null => auto calculate
+                'level_id' => $levelMid->id,
             ],
         ];
 
@@ -112,58 +114,12 @@ class PengadaanServiceTest extends TestCase
         $this->assertDatabaseHas('pengadaan', [
             'id' => $result[0]->id,
             'permohonan_id' => $permohonan->id,
-            'status' => 'draft',
-            'nominal' => 45000000.0,
+            'status' => 'menunggu_review',
+            'level_id' => $levelLow->id,
             'ppk_id' => $pm->Mak->ppk_user_id,
         ]);
         $this->assertEquals('<50jt', $result[0]->fresh()->Level->nama);
         $this->assertEquals('50-200jt', $result[1]->fresh()->Level->nama);
-    }
-
-    public function test_simpan_draft_pengadaan_menolak_jika_total_nominal_melebihi_estimasi_anggaran(): void
-    {
-        $this->expectException(ValidationException::class);
-
-        $permohonan = Permohonan::where('nomor_surat', 'PRM-PPBJ-001')->firstOrFail(); // estimasi: 180jt
-        $ppbj = User::where('email', 'ppbj@pnj.ac.id')->firstOrFail();
-        $pm = $permohonan->PermohonanMak->firstOrFail();
-        $jenis = JenisPengadaan::firstOrFail();
-        $metode = MetodePengadaan::firstOrFail();
-
-        $items = [
-            [
-                'permohonan_mak_id' => $pm->id,
-                'jenis_id' => $jenis->id,
-                'metode_id' => $metode->id,
-                'nominal' => 200000000.0, // 200jt > 180jt
-            ],
-        ];
-
-        $this->pengadaanService->simpanDraftPengadaan((int) $permohonan->id, $items, $ppbj);
-    }
-
-    public function test_simpan_draft_pengadaan_mengizinkan_override_level_pengadaan(): void
-    {
-        $permohonan = Permohonan::where('nomor_surat', 'PRM-PPBJ-001')->firstOrFail();
-        $ppbj = User::where('email', 'ppbj@pnj.ac.id')->firstOrFail();
-        $pm = $permohonan->PermohonanMak->firstOrFail();
-        $jenis = JenisPengadaan::firstOrFail();
-        $metode = MetodePengadaan::firstOrFail();
-        $levelHigh = LevelPengadaan::where('nama', '>200jt')->firstOrFail();
-
-        $items = [
-            [
-                'permohonan_mak_id' => $pm->id,
-                'jenis_id' => $jenis->id,
-                'metode_id' => $metode->id,
-                'nominal' => 40000000.0, // secara normal <50jt
-                'level_id' => $levelHigh->id, // override jadi >200jt
-            ],
-        ];
-
-        $result = $this->pengadaanService->simpanDraftPengadaan((int) $permohonan->id, $items, $ppbj);
-
-        $this->assertEquals($levelHigh->id, $result[0]->fresh()->level_id);
     }
 
     public function test_simpan_draft_pengadaan_menyimpan_file_dokumen_ke_tabel_dokumen(): void
@@ -175,6 +131,7 @@ class PengadaanServiceTest extends TestCase
         $pm = $permohonan->PermohonanMak->firstOrFail();
         $jenis = JenisPengadaan::firstOrFail();
         $metode = MetodePengadaan::firstOrFail();
+        $level = LevelPengadaan::firstOrFail();
 
         $dummyFile = UploadedFile::fake()->create('surat_pengadaan.pdf', 500, 'application/pdf');
 
@@ -183,7 +140,7 @@ class PengadaanServiceTest extends TestCase
                 'permohonan_mak_id' => $pm->id,
                 'jenis_id' => $jenis->id,
                 'metode_id' => $metode->id,
-                'nominal' => 50000000.0,
+                'level_id' => $level->id,
                 'dokumen' => $dummyFile,
             ],
         ];
@@ -208,6 +165,7 @@ class PengadaanServiceTest extends TestCase
         $pm = $permohonan->PermohonanMak->firstOrFail();
         $jenis = JenisPengadaan::firstOrFail();
         $metode = MetodePengadaan::firstOrFail();
+        $level = LevelPengadaan::firstOrFail();
         $dummyFile = UploadedFile::fake()->create('surat.pdf', 100, 'application/pdf');
 
         $result = $this->pengadaanService->simpanDraftPengadaan((int) $permohonan->id, [
@@ -215,7 +173,7 @@ class PengadaanServiceTest extends TestCase
                 'permohonan_mak_id' => $pm->id,
                 'jenis_id' => $jenis->id,
                 'metode_id' => $metode->id,
-                'nominal' => 30000000.0,
+                'level_id' => $level->id,
                 'dokumen' => $dummyFile,
             ],
         ], $ppbj);
@@ -232,7 +190,7 @@ class PengadaanServiceTest extends TestCase
     {
         $this->expectException(ValidationException::class);
 
-        $pengadaanNonDraft = Pengadaan::where('status', '!=', 'draft')->firstOrFail();
+        $pengadaanNonDraft = Pengadaan::whereNotIn('status', ['draft', 'menunggu_review'])->firstOrFail();
         $ppbj = User::where('email', 'ppbj@pnj.ac.id')->firstOrFail();
 
         $this->pengadaanService->hapusDraftPengadaan($pengadaanNonDraft->id, $ppbj);
@@ -247,6 +205,7 @@ class PengadaanServiceTest extends TestCase
         $pm = $permohonan->PermohonanMak->firstOrFail();
         $jenis = JenisPengadaan::firstOrFail();
         $metode = MetodePengadaan::firstOrFail();
+        $level = LevelPengadaan::firstOrFail();
 
         // Buat paket draft tanpa dokumen
         $this->pengadaanService->simpanDraftPengadaan((int) $permohonan->id, [
@@ -254,7 +213,7 @@ class PengadaanServiceTest extends TestCase
                 'permohonan_mak_id' => $pm->id,
                 'jenis_id' => $jenis->id,
                 'metode_id' => $metode->id,
-                'nominal' => 30000000.0,
+                'level_id' => $level->id,
             ],
         ], $ppbj);
 
@@ -270,6 +229,7 @@ class PengadaanServiceTest extends TestCase
         $pm = $permohonan->PermohonanMak->firstOrFail();
         $jenis = JenisPengadaan::firstOrFail();
         $metode = MetodePengadaan::firstOrFail();
+        $level = LevelPengadaan::firstOrFail();
 
         // Buat paket draft dengan dokumen lengkap
         $result = $this->pengadaanService->simpanDraftPengadaan((int) $permohonan->id, [
@@ -277,7 +237,7 @@ class PengadaanServiceTest extends TestCase
                 'permohonan_mak_id' => $pm->id,
                 'jenis_id' => $jenis->id,
                 'metode_id' => $metode->id,
-                'nominal' => 50000000.0,
+                'level_id' => $level->id,
                 'dokumen' => UploadedFile::fake()->create('dokumen1.pdf', 200, 'application/pdf'),
             ],
         ], $ppbj);
@@ -298,7 +258,7 @@ class PengadaanServiceTest extends TestCase
                 'permohonan_mak_id' => $pm->id,
                 'jenis_id' => $jenis->id,
                 'metode_id' => $metode->id,
-                'nominal' => 10000000.0,
+                'level_id' => $level->id,
             ],
         ], $ppbj);
     }

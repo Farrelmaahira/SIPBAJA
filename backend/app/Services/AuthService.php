@@ -24,9 +24,20 @@ class AuthService
             ]);
         }
 
+        /** @var User $user */
+        $user = Auth::user();
+
+        if (! ($user->isActive ?? true)) {
+            Auth::logout();
+
+            throw ValidationException::withMessages([
+                'login' => 'Akun Anda telah dinonaktifkan. Silakan hubungi administrator.',
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey($login, $ip));
 
-        return Auth::user();
+        return $user;
     }
 
     protected function ensureNotRateLimited(string $login, string $ip): void

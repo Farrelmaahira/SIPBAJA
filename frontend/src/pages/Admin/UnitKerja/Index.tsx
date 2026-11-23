@@ -1,10 +1,8 @@
 import { useEffect, useState, type FC, type ChangeEvent } from 'react';
 import axios from 'axios';
 import { adminService } from '../../../services/adminService';
-import UnitKerjaTemplate, {
-  type UnitKerjaItem,
-  type UnitKerjaFormData,
-} from '../../../components/templates/UnitKerjaTemplate';
+import UnitKerjaTemplate from '../../../components/templates/Admin/UnitKerjaTemplate';
+import type { UnitKerjaFormData, UnitKerjaItem } from '../../../types/admin';
 import Pagination, { type PaginationMeta } from '../../../components/molecules/Pagination';
 
 const EMPTY_FORM: UnitKerjaFormData = {
@@ -19,7 +17,8 @@ export const UnitKerjaIndex: FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   const [modalMode, setModalMode] = useState<'create' | 'edit' | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<UnitKerjaItem | null>(null);
+  const [toggleTarget, setToggleTarget] = useState<UnitKerjaItem | null>(null);
+  const [isToggling, setIsToggling] = useState(false);
   const [editId, setEditId] = useState<string | number | null>(null);
 
   const [formData, setFormData] = useState<UnitKerjaFormData>({ ...EMPTY_FORM });
@@ -113,23 +112,26 @@ export const UnitKerjaIndex: FC = () => {
     }
   };
 
-  const askDelete = (row: UnitKerjaItem) => {
-    setDeleteTarget(row);
+  const askToggle = (row: UnitKerjaItem) => {
+    setToggleTarget(row);
   };
 
-  const cancelDelete = () => {
-    setDeleteTarget(null);
+  const cancelToggle = () => {
+    setToggleTarget(null);
   };
 
-  const confirmDelete = async () => {
-    if (!deleteTarget || !deleteTarget.id) return;
+  const confirmToggle = async () => {
+    if (!toggleTarget || !toggleTarget.id) return;
 
+    setIsToggling(true);
     try {
-      await adminService.deleteUnit(deleteTarget.id);
-      setDeleteTarget(null);
+      await adminService.toggleStatusUnit(toggleTarget.id);
+      setToggleTarget(null);
       fetchUnits();
     } catch (err) {
-      console.error('Failed to delete unit kerja:', err);
+      console.error('Failed to toggle status unit kerja:', err);
+    } finally {
+      setIsToggling(false);
     }
   };
 
@@ -158,10 +160,11 @@ export const UnitKerjaIndex: FC = () => {
       onOpenEdit={openEdit}
       onCloseModal={closeModal}
       onSubmitForm={submitForm}
-      deleteTarget={deleteTarget}
-      onAskDelete={askDelete}
-      onCancelDelete={cancelDelete}
-      onConfirmDelete={confirmDelete}
+      toggleTarget={toggleTarget}
+      onAskToggle={askToggle}
+      onCancelToggle={cancelToggle}
+      onConfirmToggle={confirmToggle}
+      isToggling={isToggling}
       isLoading={isLoading}
     />
   );

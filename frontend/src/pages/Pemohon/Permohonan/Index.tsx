@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import usePemohonPermohonan from '../../../hooks/usePemohonPermohonan';
 import pemohonService from '../../../services/pemohonService';
-import PemohonPermohonanIndexTemplate from '../../../components/templates/PemohonPermohonanIndexTemplate';
+import PemohonPermohonanIndexTemplate from '../../../components/templates/Pemohon/PemohonPermohonanIndexTemplate';
 import type { PermohonanItem } from '../../../types/permohonan';
 
 export const PermohonanIndex: FC = () => {
