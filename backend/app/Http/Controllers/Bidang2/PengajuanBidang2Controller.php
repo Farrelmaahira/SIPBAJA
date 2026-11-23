@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Bidang2;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Bidang2\SetujuPermohonanBidang2Request;
 use App\Http\Requests\Bidang2\TolakPermohonanBidang2Request;
+use App\Models\Pengadaan;
 use App\Models\Permohonan;
 use App\Services\Bidang2Service;
+use App\Services\PengadaanService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -16,6 +18,7 @@ class PengajuanBidang2Controller extends Controller
 {
     public function __construct(
         private Bidang2Service $bidang2Service,
+        private PengadaanService $pengadaanService,
     ) {}
 
     /**
@@ -78,6 +81,18 @@ class PengajuanBidang2Controller extends Controller
         return response()->json([
             'message' => 'Permohonan berhasil ditolak dan catatan telah diteruskan ke pemohon serta Perencanaan.',
             'permohonan' => $updatedPermohonan,
+        ]);
+    }
+
+    /**
+     * Menampilkan detail lengkap pengadaan untuk Bidang 2 (termasuk status & tracking FR-05).
+     */
+    public function showPengadaan(Request $request, Pengadaan $pengadaan): JsonResponse
+    {
+        $detail = $this->pengadaanService->getDetailPengadaanLengkap($pengadaan, $request->user());
+
+        return response()->json([
+            'detail' => $detail,
         ]);
     }
 
