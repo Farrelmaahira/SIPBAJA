@@ -77,7 +77,7 @@ export const PpbjPengadaanShowTemplate: FC<PpbjPengadaanShowTemplateProps> = ({
   onDownloadDokumen,
   previewBlobUrl = null,
   previewDocId = null,
-  isLoadingPreview: _isLoadingPreview = false,
+  isLoadingPreview = false,
   onClosePreview,
   pembayaranContext = null,
   isLoadingPembayaran = false,
@@ -321,6 +321,19 @@ export const PpbjPengadaanShowTemplate: FC<PpbjPengadaanShowTemplateProps> = ({
                     download_url: doc.url,
                   });
                 }}
+                onDownloadDokumen={(doc) => {
+                  onDownloadDokumen?.({
+                    id: doc.id,
+                    nama_asli: doc.nama_asli,
+                    tipe_dokumen: doc.tipe_dokumen,
+                    ukuran_bytes: doc.ukuran_bytes,
+                    mime_type: doc.mime_type,
+                    download_url: doc.url,
+                  });
+                }}
+                previewBlobUrl={previewBlobUrl}
+                previewDocId={previewDocId}
+                isLoadingPreview={isLoadingPreview}
               />
             )}
 

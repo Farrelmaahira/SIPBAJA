@@ -146,21 +146,28 @@ class PengadaanController extends Controller
      */
     public function downloadDokumen(Request $request, string $pengadaanId, string $dokumenId): StreamedResponse|JsonResponse
     {
-        $pengadaan = Pengadaan::with('Kontrak')->findOrFail((int) $pengadaanId);
+        $pengadaan = Pengadaan::with(['Kontrak', 'Penerimaan'])->findOrFail((int) $pengadaanId);
         $dokumen = Dokumen::findOrFail((int) $dokumenId);
 
         $isPengadaanDoc = ($dokumen->ref_type === 'pengadaan' && (int) $dokumen->ref_id === (int) $pengadaan->id);
         $isPermohonanDoc = ($dokumen->ref_type === 'permohonan' && (int) $dokumen->ref_id === (int) $pengadaan->permohonan_id);
         $isPermohonanMemo = ($dokumen->ref_type === 'approval_permohonan' && (int) $dokumen->ref_id === (int) $pengadaan->permohonan_id);
         $isKontrakDoc = ($dokumen->ref_type === 'kontrak' && (int) $dokumen->ref_id === (int) ($pengadaan->Kontrak?->id ?? 0));
+        $isPenerimaanDoc = ($dokumen->ref_type === 'penerimaan_barang' && (int) $dokumen->ref_id === (int) ($pengadaan->Penerimaan?->id ?? 0));
+        $isPembayaranDoc = ($dokumen->ref_type === 'pembayaran');
+        $isApprovalMemo = ($dokumen->ref_type === 'approval_pembayaran');
 
-        if (! $isPengadaanDoc && ! $isPermohonanDoc && ! $isPermohonanMemo && ! $isKontrakDoc) {
+        if (! $isPengadaanDoc && ! $isPermohonanDoc && ! $isPermohonanMemo && ! $isKontrakDoc && ! $isPenerimaanDoc && ! $isPembayaranDoc && ! $isApprovalMemo) {
             abort(404, 'Dokumen tidak berkaitan dengan pengadaan ini.');
         }
 
         $namaHash = basename($dokumen->nama_hash);
         $candidates = array_unique(array_filter([
             $dokumen->nama_hash,
+            'dokumen/penerimaan/'.$namaHash,
+            'dokumen/pembayaran/tagihan/'.$namaHash,
+            'dokumen/pembayaran/legalitas/'.$namaHash,
+            'dokumen/pembayaran/memo/'.$namaHash,
             'dokumen/pengadaan/'.$namaHash,
             'dokumen_pengadaan/'.$namaHash,
             'dokumen/kontrak/'.$namaHash,

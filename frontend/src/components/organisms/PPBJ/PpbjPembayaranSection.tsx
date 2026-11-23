@@ -9,8 +9,12 @@ import {
   Image as ImageIcon,
   Loader2,
   RefreshCw,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import type { PpbjPembayaranContext, PpbjDokumenItem } from '@/types/ppbj';
+import type { DokumenItem } from '@/types/dokumen';
+import { DokumenListCard } from '@/components/organisms/DokumenListCard';
 import { formatRupiah, formatTanggalIndo } from '@/utils/formatters';
 
 export interface PpbjPembayaranSectionProps {
@@ -20,6 +24,10 @@ export interface PpbjPembayaranSectionProps {
   onUploadTagihan: (file: File, nominal?: number, catatan?: string) => Promise<void>;
   onUploadLegalitas: (file: File) => Promise<void>;
   onViewDokumen: (doc: PpbjDokumenItem) => void;
+  onDownloadDokumen?: (doc: PpbjDokumenItem) => void;
+  previewBlobUrl?: string | null;
+  previewDocId?: number | string | null;
+  isLoadingPreview?: boolean;
 }
 
 export const PpbjPembayaranSection: FC<PpbjPembayaranSectionProps> = ({
@@ -28,6 +36,10 @@ export const PpbjPembayaranSection: FC<PpbjPembayaranSectionProps> = ({
   onUploadTagihan,
   onUploadLegalitas,
   onViewDokumen,
+  onDownloadDokumen,
+  previewBlobUrl,
+  previewDocId,
+  isLoadingPreview,
 }) => {
   const [tagihanFile, setTagihanFile] = useState<File | null>(null);
   const [nominalTagihan, setNominalTagihan] = useState<string>('');
@@ -38,6 +50,7 @@ export const PpbjPembayaranSection: FC<PpbjPembayaranSectionProps> = ({
   const [isUploadingLegalitas, setIsUploadingLegalitas] = useState<boolean>(false);
 
   const [selectedImage, setSelectedImage] = useState<PpbjDokumenItem | null>(null);
+  const [isFotoDrawerOpen, setIsFotoDrawerOpen] = useState<boolean>(false);
 
   if (isLoading) {
     return (
@@ -87,6 +100,19 @@ export const PpbjPembayaranSection: FC<PpbjPembayaranSectionProps> = ({
     }
   };
 
+  const bastDokumenList: DokumenItem[] = penerimaan?.bast_dokumen
+    ? [
+        {
+          id: penerimaan.bast_dokumen.id,
+          nama_asli: penerimaan.bast_dokumen.nama_asli,
+          tipe_dokumen: 'bast',
+          ukuran_bytes: penerimaan.bast_dokumen.ukuran_bytes,
+          mime_type: penerimaan.bast_dokumen.mime_type,
+          download_url: penerimaan.bast_dokumen.url,
+        },
+      ]
+    : [];
+
   return (
     <div className="space-y-6">
       {/* 1. KARTU BUKTI PENERIMAAN BARANG PERLENGKAPAN (FR-40) */}
@@ -115,65 +141,114 @@ export const PpbjPembayaranSection: FC<PpbjPembayaranSectionProps> = ({
 
         {penerimaan ? (
           <div className="space-y-5">
-            {/* Surat Tanda Terima / BAST */}
-            <div className="p-4 rounded-2xl bg-[#F8FAF9] border border-[#E4EBE8]">
-              <p className="text-xs font-bold text-[#14201C] mb-2">Dokumen Surat Tanda Terima / BAST:</p>
-              {penerimaan.bast_dokumen ? (
-                <div className="flex items-center justify-between p-3 rounded-xl bg-white border border-[#E4EBE8]">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-[#EBF7F2] text-[#0E7C5A] flex items-center justify-center">
-                      <FileText className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-[#14201C]">{penerimaan.bast_dokumen.nama_asli}</p>
-                      <p className="text-[11px] text-[#8A9A95]">
-                        {(penerimaan.bast_dokumen.ukuran_bytes / 1024).toFixed(0)} KB · PDF
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => onViewDokumen(penerimaan.bast_dokumen!)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-[#0E7C5A] hover:bg-[#EBF7F2] transition-colors cursor-pointer"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    Pratinjau BAST
-                  </button>
-                </div>
-              ) : (
-                <p className="text-xs text-[#8A9A95] italic">Belum ada berkas PDF BAST yang dilampirkan.</p>
-              )}
+            {/* Surat Tanda Terima / BAST menggunakan DokumenListCard */}
+            <div>
+              <DokumenListCard
+                title="Dokumen Berita Acara Serah Terima (BAST)"
+                dokumenList={bastDokumenList}
+                emptyTitle="Belum ada berkas BAST"
+                emptyDescription="Bagian Perlengkapan belum mengunggah dokumen BAST untuk paket pengadaan ini."
+                onViewNewTab={() => {
+                  if (penerimaan.bast_dokumen) {
+                    onViewDokumen(penerimaan.bast_dokumen);
+                  }
+                }}
+                onDownload={() => {
+                  if (onDownloadDokumen && penerimaan.bast_dokumen) {
+                    onDownloadDokumen(penerimaan.bast_dokumen);
+                  }
+                }}
+                previewBlobUrl={previewBlobUrl}
+                previewDocId={previewDocId}
+                isLoadingPreview={isLoadingPreview}
+              />
             </div>
 
-            {/* Galeri Foto Fisik Barang */}
-            <div>
-              <p className="text-xs font-bold text-[#14201C] mb-2.5">
-                Dokumentasi Foto Fisik Barang ({penerimaan.foto_barang.length} foto):
-              </p>
-              {penerimaan.foto_barang.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                  {penerimaan.foto_barang.map((foto) => (
-                    <button
-                      key={foto.id}
-                      type="button"
-                      onClick={() => setSelectedImage(foto)}
-                      className="group relative aspect-square rounded-2xl overflow-hidden border border-[#E4EBE8] bg-[#F4F7F5] focus:outline-none focus:ring-2 focus:ring-[#0E7C5A] cursor-pointer"
-                    >
-                      <img
-                        src={foto.url}
-                        alt={foto.nama_asli}
-                        className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                        loading="lazy"
-                      />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-semibold">
-                        <ImageIcon className="w-4 h-4 mr-1" />
-                        Perbesar
-                      </div>
-                    </button>
-                  ))}
+            {/* Dokumentasi Foto Fisik Barang dengan Horizontal Collapsible Drawer */}
+            <div className="rounded-2xl border border-[#E4EBE8] bg-[#F9FBFA] overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setIsFotoDrawerOpen((prev) => !prev)}
+                className="w-full p-4 flex items-center justify-between bg-white hover:bg-[#F8FAF9] transition-colors cursor-pointer text-left select-none"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#EAF6F1] text-[#0E7C5A] flex items-center justify-center shrink-0">
+                    <ImageIcon className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-bold text-[#14201C]">
+                        Dokumentasi Foto Fisik Barang
+                      </p>
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#F4F7F5] text-[#5F6F6A]">
+                        {penerimaan.foto_barang.length} Foto
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-[#8A9A95] mt-0.5">
+                      Klik untuk {isFotoDrawerOpen ? 'menutup' : 'melihat'} galeri foto dokumentasi fisik dari Perlengkapan
+                    </p>
+                  </div>
                 </div>
-              ) : (
-                <p className="text-xs text-[#8A9A95] italic">Tidak ada foto dokumentasi fisik yang diunggah.</p>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-[#0E7C5A] hidden sm:inline">
+                    {isFotoDrawerOpen ? 'Sembunyikan' : 'Buka Galeri'}
+                  </span>
+                  <div className="w-8 h-8 rounded-lg bg-[#F4F7F5] flex items-center justify-center text-[#5F6F6A]">
+                    {isFotoDrawerOpen ? (
+                      <ChevronUp className="w-4 h-4 text-[#0E7C5A]" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4" />
+                    )}
+                  </div>
+                </div>
+              </button>
+
+              {/* Horizontal Drawer Content */}
+              {isFotoDrawerOpen && (
+                <div className="p-4 border-t border-[#E4EBE8] bg-[#F9FBFA] transition-all">
+                  {penerimaan.foto_barang.length > 0 ? (
+                    <div className="flex gap-4 overflow-x-auto pb-2 pt-1 scrollbar-thin scrollbar-thumb-[#D0DCD7] scrollbar-track-transparent">
+                      {penerimaan.foto_barang.map((foto) => (
+                        <div
+                          key={foto.id}
+                          className="group relative shrink-0 w-44 sm:w-52 rounded-2xl overflow-hidden border border-[#E4EBE8] bg-white shadow-xs"
+                        >
+                          <div className="relative aspect-4/3 w-full bg-[#F4F7F5] overflow-hidden">
+                            <img
+                              src={foto.url}
+                              alt={foto.nama_asli}
+                              className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
+                              loading="lazy"
+                            />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setSelectedImage(foto)}
+                                className="px-3 py-1.5 rounded-lg bg-white/90 hover:bg-white text-xs font-bold text-[#14201C] shadow-sm cursor-pointer flex items-center gap-1"
+                              >
+                                <ImageIcon className="w-3.5 h-3.5 text-[#0E7C5A]" />
+                                Perbesar
+                              </button>
+                            </div>
+                          </div>
+                          <div className="p-2.5 bg-white">
+                            <p className="text-xs font-semibold text-[#14201C] truncate" title={foto.nama_asli}>
+                              {foto.nama_asli}
+                            </p>
+                            <p className="text-[10px] text-[#8A9A95] mt-0.5">
+                              {(foto.ukuran_bytes / 1024).toFixed(0)} KB &bull; Foto Barang
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-6 text-center text-xs text-[#8A9A95] italic">
+                      Tidak ada foto dokumentasi fisik yang diunggah oleh bagian Perlengkapan.
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>
