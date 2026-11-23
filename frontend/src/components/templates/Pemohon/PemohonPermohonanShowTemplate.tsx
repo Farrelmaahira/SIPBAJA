@@ -14,6 +14,7 @@ import StatusPill from '../../atoms/StatusPill';
 import Modal from '../../organisms/Modal';
 import CatatanPenolakanCard from '../../molecules/CatatanPenolakanCard';
 import DokumenListCard from '../../organisms/DokumenListCard';
+import TrackingPengadaanCard from '../../organisms/TrackingPengadaanCard';
 import { PermohonanInfoSection } from '../../organisms/PermohonanInfoSection';
 import pemohonService from '../../../services/pemohonService';
 import { PEMOHON_NAV_ITEMS } from '../../../constants/pemohonNav';
@@ -309,49 +310,48 @@ export const PemohonPermohonanShowTemplate: FC<
             {/* Informasi Permohonan */}
             <PermohonanInfoSection permohonan={permohonan} />
 
-            {/* Conditional Layouts based on Status */}
-            {isDitolak ? (
-              <div className="space-y-6">
-                <CatatanPenolakanCard
-                  catatan={permohonan.catatan_penolakan}
-                  onRevisi={onRevisi}
-                />
+            {/* Catatan Penolakan jika status ditolak */}
+            {isDitolak && (
+              <CatatanPenolakanCard
+                catatan={permohonan.catatan_penolakan}
+                onRevisi={onRevisi}
+              />
+            )}
 
-                <DokumenListCard
-                  title="Dokumen Surat Permohonan"
-                  dokumenList={dokumenList}
-                  nomorSurat={permohonan.nomor_surat}
-                  judul={permohonan.judul}
-                  unitNama={permohonan.unit_nama}
-                  tanggal={formatTanggal(permohonan.created_at)}
-                  onViewNewTab={handleViewNewTab}
-                  onDownload={handleDownload}
-                  isViewingId={isViewingDocId}
-                  isDownloadingId={isDownloadingDocId}
-                  previewBlobUrl={previewBlobUrl}
-                  previewDocId={previewDocId}
-                  isLoadingPreview={isLoadingPreview}
-                />
-              </div>
-            ) : (
-              <div className="w-full">
-                <DokumenListCard
-                  title="Dokumen Surat Permohonan"
-                  dokumenList={dokumenList}
-                  nomorSurat={permohonan.nomor_surat}
-                  judul={permohonan.judul}
-                  unitNama={permohonan.unit_nama}
-                  tanggal={formatTanggal(permohonan.created_at)}
-                  onViewNewTab={handleViewNewTab}
-                  onDownload={handleDownload}
-                  isViewingId={isViewingDocId}
-                  isDownloadingId={isDownloadingDocId}
-                  previewBlobUrl={previewBlobUrl}
-                  previewDocId={previewDocId}
-                  isLoadingPreview={isLoadingPreview}
-                />
+            {/* Tracking Pengadaan List - Sesuai dengan jumlah pengadaan pada permohonan tersebut */}
+            {permohonan.pengadaan && permohonan.pengadaan.length > 0 && (
+              <div className="space-y-6">
+                {permohonan.pengadaan.map((pgd, idx) => (
+                  <TrackingPengadaanCard
+                    key={pgd.id ?? idx}
+                    nomorPengadaan={pgd.nomor_pengadaan}
+                    judulPengadaan={pgd.judul || permohonan.judul || 'Pengadaan'}
+                    nominal={pgd.nominal ?? permohonan.estimasi_anggaran ?? undefined}
+                    statusPengadaan={pgd.status}
+                    statusLabel={pgd.status_label}
+                    stepper={pgd.stepper}
+                    timeline={pgd.timeline}
+                  />
+                ))}
               </div>
             )}
+
+            {/* Dokumen Surat Permohonan */}
+            <DokumenListCard
+              title="Surat Permohonan"
+              dokumenList={dokumenList}
+              nomorSurat={permohonan.nomor_surat}
+              judul={permohonan.judul}
+              unitNama={permohonan.unit_nama}
+              tanggal={formatTanggal(permohonan.created_at)}
+              onViewNewTab={handleViewNewTab}
+              onDownload={handleDownload}
+              isViewingId={isViewingDocId}
+              isDownloadingId={isDownloadingDocId}
+              previewBlobUrl={previewBlobUrl}
+              previewDocId={previewDocId}
+              isLoadingPreview={isLoadingPreview}
+            />
 
             {/* Aksi Pengelolaan Permohonan: Ubah & Batalkan / Hapus (Kondisi belum diproses/disetujui) */}
             {canModifyOrDelete && (

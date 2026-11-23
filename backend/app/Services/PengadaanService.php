@@ -1171,7 +1171,7 @@ class PengadaanService
                 'label' => 'Penerimaan Barang',
                 'status' => $isSelesai
                     ? 'selesai'
-                    : ($isKontrak ? 'sedang_berlangsung' : 'belum_dimulai'),
+                    : ($status === 'barang_diterima' ? 'sedang_berlangsung' : 'belum_dimulai'),
             ],
             [
                 'key' => 'selesai',
@@ -1180,37 +1180,94 @@ class PengadaanService
             ],
         ];
 
-        // 2. Ambil riwayat status_history pengadaan
-        $histories = StatusHistory::where('ref_type', 'pengadaan')
+        // 2. Ambil riwayat status_history pengadaan & permohonan terkait
+        $pengadaanHistories = StatusHistory::where('ref_type', 'pengadaan')
             ->where('ref_id', $pengadaan->id)
             ->with(['Actor.Role'])
             ->orderByDesc('id')
             ->get();
 
-        $timeline = [];
-        $total = $histories->count();
+        $permohonanHistories = StatusHistory::where('ref_type', 'permohonan')
+            ->where('ref_id', $pengadaan->permohonan_id)
+            ->with(['Actor.Role'])
+            ->orderByDesc('id')
+            ->get();
 
-        foreach ($histories as $idx => $h) {
+        $combinedEvents = collect();
+
+        foreach ($pengadaanHistories as $h) {
             $actorRole = $h->Actor?->Role?->nama ?? 'Pengguna';
             $actorNama = $h->Actor?->nama ?? $h->Actor?->name ?? 'Sistem';
 
             $keterangan = match ($h->status_baru) {
-                'menunggu_review' => "Paket pengadaan dibuat dan dikirim ke reviewer oleh {$actorRole} ({$actorNama})",
+                'berjalan' => 'Pembelian barang sedang berlangsung',
+                'kontrak_terbit' => 'Surat kontrak dan SPK diterbitkan oleh PPBJ',
+                'disetujui' => 'Pengadaan diteruskan ke PPBJ untuk penerbitan surat kontrak',
                 'diteruskan' => "Dokumen pengadaan diverifikasi oleh {$actorRole} ({$actorNama}) dan diteruskan ke PPK",
-                'disetujui' => "Dokumen pengadaan disetujui oleh {$actorRole} ({$actorNama})",
-                'ditolak' => "Dokumen pengadaan ditolak dan dikembalikan ke PPBJ oleh {$actorRole} ({$actorNama})",
-                'kontrak_terbit' => "Surat kontrak dan dokumen instrumen pembelian diterbitkan oleh {$actorRole} ({$actorNama})",
-                'barang_diterima' => "Barang telah diterima dan diverifikasi fisik oleh {$actorRole} ({$actorNama})",
-                'selesai' => "Proses pengadaan telah selesai secara tuntas oleh {$actorRole} ({$actorNama})",
-                default => 'Status pengadaan diperbarui menjadi '.ucwords(str_replace('_', ' ', (string) $h->status_baru))." oleh {$actorRole} ({$actorNama})",
+                'menunggu_review' => 'Paket pengadaan dibuat dan dikirim ke reviewer oleh PPBJ',
+                'barang_diterima' => 'Barang diterima dan dokumentasi penerimaan diunggah',
+                'pembayaran' => 'Dokumen pembayaran disetujui oleh PPK dan Bidang 2',
+                'selesai' => 'Pengadaan selesai dan seluruh dokumen disetujui',
+                'ditolak' => 'Dokumen pengadaan ditolak dan dikembalikan ke PPBJ',
+                default => 'Status pengadaan diperbarui menjadi '.ucwords(str_replace('_', ' ', (string) $h->status_baru)),
             };
 
-            $timeline[] = [
-                'id' => (int) $h->id,
+            $combinedEvents->push([
+                'id' => 'pgd-'.(int) $h->id,
+                'created_at' => $h->created_at,
                 'tanggal' => $h->created_at ? Carbon::parse($h->created_at)->format('d-m-Y H:i') : now()->format('d-m-Y H:i'),
                 'keterangan' => $keterangan,
                 'actor_nama' => "{$actorRole} - {$actorNama}",
-                'aktif' => $idx === 0, // Event paling baru
+                'raw_id' => (int) $h->id,
+                'is_pengadaan' => true,
+            ]);
+        }
+
+        foreach ($permohonanHistories as $h) {
+            $keterangan = match ($h->status_baru) {
+                'disetujui' => 'Permohonan diteruskan ke PPBJ untuk proses pengadaan',
+                'diteruskan', 'menunggu_bidang2' => 'Jenis MAK diverifikasi oleh Tim Perencanaan',
+                'diajukan' => 'Permohonan diajukan oleh Pemohon',
+                'ditolak' => 'Permohonan ditolak oleh Pemeriksa',
+                default => 'Permohonan diperbarui menjadi '.ucwords(str_replace('_', ' ', (string) $h->status_baru)),
+            };
+
+            $combinedEvents->push([
+                'id' => 'prm-'.(int) $h->id,
+                'created_at' => $h->created_at,
+                'tanggal' => $h->created_at ? Carbon::parse($h->created_at)->format('d-m-Y H:i') : now()->format('d-m-Y H:i'),
+                'keterangan' => $keterangan,
+                'actor_nama' => $h->Actor?->nama ?? 'Sistem',
+                'raw_id' => (int) $h->id,
+                'is_pengadaan' => false,
+            ]);
+        }
+
+        // Urutkan dari yang terbaru ke terlama
+        $sortedEvents = $combinedEvents->sortByDesc(function ($item) {
+            $ts = $item['created_at'] ? Carbon::parse($item['created_at'])->timestamp : 0;
+
+            return $ts * 100000 + ($item['is_pengadaan'] ? 1000 : 0) + $item['raw_id'];
+        })->values();
+
+        // Singkirkan duplikat keterangan berurutan jika ada
+        $filtered = collect();
+        $lastKet = null;
+        foreach ($sortedEvents as $ev) {
+            if ($ev['keterangan'] !== $lastKet) {
+                $filtered->push($ev);
+                $lastKet = $ev['keterangan'];
+            }
+        }
+
+        $timeline = [];
+        foreach ($filtered as $idx => $ev) {
+            $timeline[] = [
+                'id' => $ev['id'],
+                'tanggal' => $ev['tanggal'],
+                'keterangan' => $ev['keterangan'],
+                'actor_nama' => $ev['actor_nama'],
+                'aktif' => $idx === 0, // Event paling baru aktif
             ];
         }
 
