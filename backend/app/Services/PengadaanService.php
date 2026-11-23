@@ -28,8 +28,7 @@ class PengadaanService
     public function __construct(
         protected NotificationService $notificationService,
         protected DokumenService $dokumenService
-    ) {
-    }
+    ) {}
 
     /**
      * Mengambil konteks dan kelayakan pemecahan pengadaan untuk permohonan tertentu.
@@ -85,8 +84,8 @@ class PengadaanService
         $sisaAnggaran = $estimasi;
 
         $availableMak = $permohonan->PermohonanMak
-            ->filter(fn($pm) => $pm->Mak !== null)
-            ->map(fn($pm) => [
+            ->filter(fn ($pm) => $pm->Mak !== null)
+            ->map(fn ($pm) => [
                 'id' => (int) $pm->Mak->id,
                 'permohonan_mak_id' => (int) $pm->id,
                 'nama' => (string) $pm->Mak->nama,
@@ -135,7 +134,7 @@ class PengadaanService
     {
         $context = $this->getSplitContext($permohonanId);
 
-        if (!$context['bisaDipecah']) {
+        if (! $context['bisaDipecah']) {
             throw ValidationException::withMessages([
                 'permohonan' => 'Permohonan belum dapat dipecah menjadi pengadaan karena belum disetujui oleh Perencanaan dan Bidang 2.',
             ]);
@@ -158,7 +157,7 @@ class PengadaanService
                 $permohonanMakId = (int) $item['permohonan_mak_id'];
                 $pm = $makMap->get($permohonanMakId);
 
-                if (!$pm) {
+                if (! $pm) {
                     throw ValidationException::withMessages([
                         'permohonan_mak_id' => 'Mata Anggaran Kegiatan tidak valid untuk permohonan ini.',
                     ]);
@@ -191,7 +190,7 @@ class PengadaanService
                     $namaAsli = $file->getClientOriginalName();
                     $mimeType = $file->getMimeType() ?: 'application/octet-stream';
                     $ukuranBytes = $file->getSize();
-                    $namaHash = hash('sha256', uniqid('dokumen_', true)) . '.' . $file->getClientOriginalExtension();
+                    $namaHash = hash('sha256', uniqid('dokumen_', true)).'.'.$file->getClientOriginalExtension();
 
                     $file->storeAs('dokumen_pengadaan', $namaHash, 'public');
 
@@ -210,7 +209,7 @@ class PengadaanService
 
                 $level = LevelPengadaan::find($levelId);
                 if ($level?->perlu_review_pp) {
-                    $ppUsers = User::whereHas('Role', fn($q) => $q->where('nama', 'PP'))->pluck('id');
+                    $ppUsers = User::whereHas('Role', fn ($q) => $q->where('nama', 'PP'))->pluck('id');
                     foreach ($ppUsers as $ppId) {
                         $this->notificationService->send(
                             user: (int) $ppId,
@@ -246,7 +245,7 @@ class PengadaanService
     {
         $pengadaan = Pengadaan::with('Dokumen')->findOrFail($pengadaanId);
 
-        if (!in_array($pengadaan->status, ['draft', 'menunggu_review'], true)) {
+        if (! in_array($pengadaan->status, ['draft', 'menunggu_review'], true)) {
             throw ValidationException::withMessages([
                 'pengadaan' => 'Paket pengadaan tidak dapat dihapus karena sudah diproses lanjut.',
             ]);
@@ -255,7 +254,7 @@ class PengadaanService
         DB::transaction(function () use ($pengadaan) {
             foreach ($pengadaan->Dokumen as $dokumen) {
                 if ($dokumen->nama_hash) {
-                    Storage::disk('public')->delete('dokumen_pengadaan/' . $dokumen->nama_hash);
+                    Storage::disk('public')->delete('dokumen_pengadaan/'.$dokumen->nama_hash);
                 }
                 $dokumen->delete();
             }
@@ -279,7 +278,7 @@ class PengadaanService
             ]);
         }
 
-        $pendingPackages = $permohonan->Pengadaan->filter(fn($p) => in_array($p->status, ['draft', 'menunggu_review'], true));
+        $pendingPackages = $permohonan->Pengadaan->filter(fn ($p) => in_array($p->status, ['draft', 'menunggu_review'], true));
 
         if ($pendingPackages->isEmpty()) {
             throw ValidationException::withMessages([
@@ -289,14 +288,14 @@ class PengadaanService
 
         // Validasi setiap paket: harus ada dokumen pengadaan dan field wajib lengkap
         foreach ($pendingPackages as $paket) {
-            $hasDokumen = $paket->Dokumen->contains(fn($d) => $d->tipe_dokumen === 'dokumen_pengadaan');
-            if (!$hasDokumen) {
+            $hasDokumen = $paket->Dokumen->contains(fn ($d) => $d->tipe_dokumen === 'dokumen_pengadaan');
+            if (! $hasDokumen) {
                 throw ValidationException::withMessages([
                     'dokumen' => 'Setiap paket pengadaan wajib memiliki berkas dokumen pengadaan sebelum dikirim ke reviewer.',
                 ]);
             }
 
-            if (!$paket->permohonan_mak_id || !$paket->jenis_id || !$paket->metode_id || !$paket->level_id) {
+            if (! $paket->permohonan_mak_id || ! $paket->jenis_id || ! $paket->metode_id || ! $paket->level_id) {
                 throw ValidationException::withMessages([
                     'paket' => 'Seluruh informasi paket (MAK, Jenis, Metode, dan Level) wajib diisi lengkap.',
                 ]);
@@ -372,8 +371,8 @@ class PengadaanService
         }) || in_array($pengadaan->status, ['disetujui', 'selesai'], true);
 
         $opsiPermohonanMak = $pengadaan->Permohonan?->PermohonanMak
-                ?->filter(fn($pm) => $pm->Mak !== null)
-            ->map(fn($pm) => [
+            ?->filter(fn ($pm) => $pm->Mak !== null)
+            ->map(fn ($pm) => [
                 'permohonan_mak_id' => (int) $pm->id,
                 'mak_id' => (int) $pm->mak_id,
                 'kode' => (string) ($pm->Mak->kode ?? $pm->Mak->nama),
@@ -387,7 +386,7 @@ class PengadaanService
         return [
             'pengadaan' => $pengadaan,
             'dokumen_pengadaan' => $pengadaan->Dokumen,
-            'bisa_ubah_mak' => !$ppkSudahSetuju,
+            'bisa_ubah_mak' => ! $ppkSudahSetuju,
             'opsi_permohonan_mak' => $opsiPermohonanMak,
         ];
     }
@@ -417,7 +416,7 @@ class PengadaanService
             ->where('permohonan_id', $pengadaan->permohonan_id)
             ->first();
 
-        if (!$permohonanMakBaru || !$permohonanMakBaru->Mak) {
+        if (! $permohonanMakBaru || ! $permohonanMakBaru->Mak) {
             throw ValidationException::withMessages([
                 'permohonan_mak_id' => ['Jenis MAK harus dipilih dari daftar Jenis MAK yang sudah ditetapkan pada permohonan ini.'],
             ]);
@@ -446,7 +445,7 @@ class PengadaanService
             $namaMakBaru = $permohonanMakBaru->Mak?->nama ?? '-';
 
             // Notifikasi ke PPBJ
-            $ppbjUsers = User::whereHas('Role', fn($q) => $q->where('nama', 'PPBJ'))->pluck('id');
+            $ppbjUsers = User::whereHas('Role', fn ($q) => $q->where('nama', 'PPBJ'))->pluck('id');
             foreach ($ppbjUsers as $ppbjId) {
                 $notifService->send(
                     user: (int) $ppbjId,
@@ -493,7 +492,7 @@ class PengadaanService
     protected function baseQueryPp(): Builder
     {
         return Pengadaan::query()
-            ->whereHas('Level', fn($q) => $q->where('perlu_review_pp', true))
+            ->whereHas('Level', fn ($q) => $q->where('perlu_review_pp', true))
             ->with([
                 'Permohonan.Unit',
                 'Permohonan.Creator',
@@ -511,7 +510,7 @@ class PengadaanService
      */
     public function getDashboardPp(): array
     {
-        $base = Pengadaan::query()->whereHas('Level', fn($q) => $q->where('perlu_review_pp', true));
+        $base = Pengadaan::query()->whereHas('Level', fn ($q) => $q->where('perlu_review_pp', true));
         $total = (clone $base)->count();
         $menunggu = (clone $base)->whereIn('status', ['menunggu_persetujuan', 'menunggu_review'])->count();
         $disetujui = (clone $base)->whereIn('status', ['disetujui', 'diteruskan', 'selesai'])->count();
@@ -580,23 +579,23 @@ class PengadaanService
             });
         }
 
-        if (!empty($filters['statuses']) && is_array($filters['statuses'])) {
+        if (! empty($filters['statuses']) && is_array($filters['statuses'])) {
             $query->whereIn('status', $filters['statuses']);
-        } elseif (!empty($filters['status']) && $filters['status'] !== 'semua') {
+        } elseif (! empty($filters['status']) && $filters['status'] !== 'semua') {
             $query->where('status', $filters['status']);
         }
 
-        if (!empty($filters['bulan']) && is_numeric($filters['bulan'])) {
+        if (! empty($filters['bulan']) && is_numeric($filters['bulan'])) {
             $query->whereMonth('created_at', (int) $filters['bulan']);
         }
 
-        if (!empty($filters['tahun']) && is_numeric($filters['tahun'])) {
+        if (! empty($filters['tahun']) && is_numeric($filters['tahun'])) {
             $query->whereYear('created_at', (int) $filters['tahun']);
         }
 
-        if (!empty($filters['unit_id']) && is_numeric($filters['unit_id'])) {
+        if (! empty($filters['unit_id']) && is_numeric($filters['unit_id'])) {
             $unitId = (int) $filters['unit_id'];
-            $query->whereHas('Permohonan', fn($q) => $q->where('unit_id', $unitId));
+            $query->whereHas('Permohonan', fn ($q) => $q->where('unit_id', $unitId));
         }
 
         return $query
@@ -624,7 +623,7 @@ class PengadaanService
             'Penerimaan',
         ]);
 
-        if ($actor && $actor->hasRole('PP') && !$pengadaan->Level?->perlu_review_pp) {
+        if ($actor && $actor->hasRole('PP') && ! $pengadaan->Level?->perlu_review_pp) {
             abort(403, 'Dokumen pengadaan ini tidak berada dalam kewenangan review PP (Rp50.000.000 - Rp200.000.000).');
         }
 
@@ -633,7 +632,7 @@ class PengadaanService
             if ($pengadaan->ppk_id !== null || $makPpkId !== null) {
                 $cocok = ((int) $pengadaan->ppk_id === (int) $actor->id)
                     || ((int) $makPpkId === (int) $actor->id);
-                if (!$cocok) {
+                if (! $cocok) {
                     abort(403, 'Anda tidak memiliki akses pada dokumen pengadaan milik PPK lain.');
                 }
             }
@@ -641,7 +640,7 @@ class PengadaanService
             // FR-49: Khusus endpoint review (/review), dokumen 50-200jt harus telah berstatus 'diteruskan'.
             // Namun untuk endpoint detail (/pengajuan/{id}), PPK tetap diizinkan melihat data pratinjau.
             $isReviewRoute = request()->is('*/review*');
-            if ($isReviewRoute && $pengadaan->Level?->perlu_review_pp && !in_array($pengadaan->status, ['diteruskan', 'disetujui', 'selesai'])) {
+            if ($isReviewRoute && $pengadaan->Level?->perlu_review_pp && ! in_array($pengadaan->status, ['diteruskan', 'disetujui', 'selesai'])) {
                 abort(403, 'Dokumen pengadaan ini belum diverifikasi oleh Pejabat Pengadaan (PP).');
             }
         }
@@ -699,7 +698,7 @@ class PengadaanService
             ->with('Memo')
             ->orderBy('id')
             ->get()
-            ->filter(fn(ApprovalPermohonan $approval) => $approval->Memo !== null)
+            ->filter(fn (ApprovalPermohonan $approval) => $approval->Memo !== null)
             ->map(function (ApprovalPermohonan $approval) use ($pengadaan, $actor) {
                 $memo = $approval->Memo;
                 $tahap = strtoupper((string) $approval->tahap);
@@ -720,7 +719,7 @@ class PengadaanService
         return Pengadaan::query()
             ->where(function (Builder $q) use ($ppk) {
                 $q->where('ppk_id', $ppk->id)
-                    ->orWhereHas('PermohonanMak.Mak', fn($sub) => $sub->where('ppk_user_id', $ppk->id));
+                    ->orWhereHas('PermohonanMak.Mak', fn ($sub) => $sub->where('ppk_user_id', $ppk->id));
             })
             ->with([
                 'Permohonan.Unit',
@@ -777,7 +776,7 @@ class PengadaanService
             });
         }
 
-        if (!empty($filters['statuses']) && is_array($filters['statuses'])) {
+        if (! empty($filters['statuses']) && is_array($filters['statuses'])) {
             $mapped = [];
             foreach ($filters['statuses'] as $st) {
                 if ($st === 'review_pembayaran') {
@@ -788,21 +787,21 @@ class PengadaanService
                 }
             }
             $query->whereIn('status', array_unique($mapped));
-        } elseif (!empty($filters['status']) && $filters['status'] !== 'semua') {
+        } elseif (! empty($filters['status']) && $filters['status'] !== 'semua') {
             $query->where('status', $filters['status']);
         }
 
-        if (!empty($filters['bulan']) && is_numeric($filters['bulan'])) {
+        if (! empty($filters['bulan']) && is_numeric($filters['bulan'])) {
             $query->whereMonth('created_at', (int) $filters['bulan']);
         }
 
-        if (!empty($filters['tahun']) && is_numeric($filters['tahun'])) {
+        if (! empty($filters['tahun']) && is_numeric($filters['tahun'])) {
             $query->whereYear('created_at', (int) $filters['tahun']);
         }
 
-        if (!empty($filters['unit_id']) && is_numeric($filters['unit_id'])) {
+        if (! empty($filters['unit_id']) && is_numeric($filters['unit_id'])) {
             $unitId = (int) $filters['unit_id'];
-            $query->whereHas('Permohonan', fn($q) => $q->where('unit_id', $unitId));
+            $query->whereHas('Permohonan', fn ($q) => $q->where('unit_id', $unitId));
         }
 
         return $query
@@ -842,17 +841,17 @@ class PengadaanService
             });
         }
 
-        if (!empty($filters['statuses']) && is_array($filters['statuses'])) {
+        if (! empty($filters['statuses']) && is_array($filters['statuses'])) {
             $query->whereIn('status', $filters['statuses']);
-        } elseif (!empty($filters['status']) && $filters['status'] !== 'semua') {
+        } elseif (! empty($filters['status']) && $filters['status'] !== 'semua') {
             $query->where('status', $filters['status']);
         }
 
-        if (!empty($filters['bulan']) && is_numeric($filters['bulan'])) {
+        if (! empty($filters['bulan']) && is_numeric($filters['bulan'])) {
             $query->whereMonth('created_at', (int) $filters['bulan']);
         }
 
-        if (!empty($filters['tahun']) && is_numeric($filters['tahun'])) {
+        if (! empty($filters['tahun']) && is_numeric($filters['tahun'])) {
             $query->whereYear('created_at', (int) $filters['tahun']);
         }
 
@@ -877,12 +876,12 @@ class PengadaanService
             'Kontrak.Dokumen',
             'Penerimaan',
             'Approvals.Actor',
-            'Dokumen' => fn($query) => $query->latest('id'),
+            'Dokumen' => fn ($query) => $query->latest('id'),
         ])->findOrFail($pengadaanId);
 
         $isBarangDiterima = $pengadaan->Penerimaan !== null || in_array($pengadaan->status, ['barang_diterima', 'selesai'], true);
         $pengadaan->bisa_edit_draft = in_array($pengadaan->status, ['draft', 'ditolak'], true);
-        $pengadaan->bisa_edit_kontrak = in_array($pengadaan->status, ['disetujui', 'siap_spk', 'kontrak_terbit', 'berjalan'], true) && !$isBarangDiterima;
+        $pengadaan->bisa_edit_kontrak = in_array($pengadaan->status, ['disetujui', 'siap_spk', 'kontrak_terbit', 'berjalan'], true) && ! $isBarangDiterima;
 
         $kontrak = $pengadaan->Kontrak;
         $pengadaan->nominal = $kontrak?->nominal_kontrak ? (float) $kontrak->nominal_kontrak : null;
@@ -931,8 +930,8 @@ class PengadaanService
 
         // Available MAK & Reference data untuk form modal klasifikasi
         $pengadaan->available_mak = $pengadaan->Permohonan?->PermohonanMak
-                ?->filter(fn($pm) => $pm->Mak !== null)
-            ->map(fn($pm) => [
+            ?->filter(fn ($pm) => $pm->Mak !== null)
+            ->map(fn ($pm) => [
                 'id' => (int) $pm->id,
                 'mak_id' => (int) $pm->Mak->id,
                 'nama' => (string) $pm->Mak->nama,
@@ -943,7 +942,7 @@ class PengadaanService
             'jenis' => JenisPengadaan::select(['id', 'nama'])->orderBy('id')->get()->toArray(),
             'metode' => MetodePengadaan::where(function ($q) use ($pengadaan) {
                 $q->where('isActive', true)
-                    ->when($pengadaan->metode_id, fn($sub) => $sub->orWhere('id', $pengadaan->metode_id));
+                    ->when($pengadaan->metode_id, fn ($sub) => $sub->orWhere('id', $pengadaan->metode_id));
             })->select(['id', 'nama'])->orderBy('id')->get()->toArray(),
             'level' => LevelPengadaan::select(['id', 'nama', 'min_nominal', 'max_nominal', 'perlu_review_pp'])->orderBy('min_nominal')->get()->toArray(),
         ];
@@ -956,7 +955,7 @@ class PengadaanService
 
     public function updateKlasifikasiPengadaan(Pengadaan $pengadaan, array $data, ?UploadedFile $fileDokumen, User $user): Pengadaan
     {
-        if (!in_array($pengadaan->status, ['draft', 'ditolak'], true)) {
+        if (! in_array($pengadaan->status, ['draft', 'ditolak'], true)) {
             throw ValidationException::withMessages([
                 'status' => 'Klasifikasi pengadaan hanya dapat diperbarui jika berstatus draf atau revisi/ditolak.',
             ]);
@@ -1010,7 +1009,7 @@ class PengadaanService
             if ($statusSebelumnya === 'ditolak') {
                 $pengadaan->loadMissing('Level', 'Permohonan');
                 if ($pengadaan->Level?->perlu_review_pp) {
-                    $ppUsers = User::whereHas('Role', fn($q) => $q->where('nama', 'PP'))->pluck('id');
+                    $ppUsers = User::whereHas('Role', fn ($q) => $q->where('nama', 'PP'))->pluck('id');
                     foreach ($ppUsers as $ppId) {
                         $this->notificationService->send(
                             user: (int) $ppId,
@@ -1047,7 +1046,7 @@ class PengadaanService
         return DB::transaction(function () use ($pengadaan, $data, $fileDokumen, $user, $multiDokumen) {
             $kontrak = Kontrak::firstOrNew(['pengadaan_id' => $pengadaan->id]);
             $kontrak->tipe = $data['tipe'] ?? ($kontrak->tipe ?: 'SPK');
-            $kontrak->nomor = $data['nomor'] ?? ($kontrak->nomor ?: ('PENGADAAN-' . $pengadaan->id));
+            $kontrak->nomor = $data['nomor'] ?? ($kontrak->nomor ?: ('PENGADAAN-'.$pengadaan->id));
             $kontrak->tanggal = $data['tanggal'] ?? ($kontrak->tanggal ?: now()->toDateString());
             $kontrak->vendor_nama = $data['vendor_nama'];
             $kontrak->nominal_kontrak = $data['nominal_kontrak'];
@@ -1203,7 +1202,7 @@ class PengadaanService
                 'kontrak_terbit' => "Surat kontrak dan dokumen instrumen pembelian diterbitkan oleh {$actorRole} ({$actorNama})",
                 'barang_diterima' => "Barang telah diterima dan diverifikasi fisik oleh {$actorRole} ({$actorNama})",
                 'selesai' => "Proses pengadaan telah selesai secara tuntas oleh {$actorRole} ({$actorNama})",
-                default => 'Status pengadaan diperbarui menjadi ' . ucwords(str_replace('_', ' ', (string) $h->status_baru)) . " oleh {$actorRole} ({$actorNama})",
+                default => 'Status pengadaan diperbarui menjadi '.ucwords(str_replace('_', ' ', (string) $h->status_baru))." oleh {$actorRole} ({$actorNama})",
             };
 
             $timeline[] = [
@@ -1258,7 +1257,7 @@ class PengadaanService
                     'url' => route('api.ppbj.pengadaan.dokumen.download', [
                         'pengadaanId' => $pengadaan->id,
                         'dokumenId' => $doc->id,
-                    ]) . '?disposition=inline',
+                    ]).'?disposition=inline',
                 ];
 
                 if (in_array($doc->tipe_dokumen, ['berita_acara', 'surat_tanda_terima', 'bast'])) {
@@ -1286,7 +1285,7 @@ class PengadaanService
                     'url' => route('api.ppbj.pengadaan.dokumen.download', [
                         'pengadaanId' => $pengadaan->id,
                         'dokumenId' => $pDoc->id,
-                    ]) . '?disposition=inline',
+                    ]).'?disposition=inline',
                 ];
 
                 if ($pDoc->tipe_dokumen === 'dokumen_tagihan') {
@@ -1316,7 +1315,7 @@ class PengadaanService
                         'url' => route('api.ppbj.pengadaan.dokumen.download', [
                             'pengadaanId' => $pengadaan->id,
                             'dokumenId' => $appr->Memo->id,
-                        ]) . '?disposition=inline',
+                        ]).'?disposition=inline',
                     ] : null,
                 ];
 
@@ -1374,12 +1373,12 @@ class PengadaanService
     /**
      * Upload / Re-upload dokumen tagihan pembayaran oleh PPBJ (FR-41, FR-42).
      */
-    public function uploadDokumenTagihan(Pengadaan $pengadaan, \Illuminate\Http\UploadedFile $file, ?float $nominal, ?string $catatan, User $actor): array
+    public function uploadDokumenTagihan(Pengadaan $pengadaan, UploadedFile $file, ?float $nominal, ?string $catatan, User $actor): array
     {
         $context = $this->getPembayaranContext($pengadaan);
 
         if (! $context['can_upload_tagihan']) {
-            throw new \Illuminate\Validation\ValidationException(
+            throw new ValidationException(
                 validator([], []),
                 response()->json([
                     'success' => false,
@@ -1449,7 +1448,7 @@ class PengadaanService
     /**
      * Upload / Re-upload dokumen legalitas vendor oleh PPBJ (FR-43, FR-44, FR-45).
      */
-    public function uploadLegalitasVendor(Pengadaan $pengadaan, \Illuminate\Http\UploadedFile $file, User $actor): array
+    public function uploadLegalitasVendor(Pengadaan $pengadaan, UploadedFile $file, User $actor): array
     {
         $context = $this->getPembayaranContext($pengadaan);
 
@@ -1458,7 +1457,7 @@ class PengadaanService
                 ? 'Dokumen legalitas vendor sudah dikunci karena proses pencairan dana telah diselesaikan oleh pihak Keuangan.'
                 : 'Dokumen legalitas vendor hanya dapat diunggah setelah memo persetujuan pembayaran dari PPK dan Bidang 2 disetujui secara lengkap.';
 
-            throw new \Illuminate\Validation\ValidationException(
+            throw new ValidationException(
                 validator([], []),
                 response()->json([
                     'success' => false,

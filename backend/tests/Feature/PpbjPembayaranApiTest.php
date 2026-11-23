@@ -4,13 +4,17 @@ namespace Tests\Feature;
 
 use App\Models\ApprovalPembayaran;
 use App\Models\Dokumen;
+use App\Models\JenisPengadaan;
 use App\Models\Kontrak;
+use App\Models\LevelPengadaan;
+use App\Models\Mak;
+use App\Models\MetodePengadaan;
 use App\Models\Pembayaran;
 use App\Models\PenerimaanBarang;
 use App\Models\Pengadaan;
 use App\Models\Permohonan;
+use App\Models\PermohonanMak;
 use App\Models\RencanaPembayaran;
-use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -22,7 +26,9 @@ class PpbjPembayaranApiTest extends TestCase
     use RefreshDatabase;
 
     private User $ppbjUser;
+
     private User $ppkUser;
+
     private User $bidang2User;
 
     protected function setUp(): void
@@ -38,17 +44,17 @@ class PpbjPembayaranApiTest extends TestCase
     private function createPengadaanSiapBayar(): Pengadaan
     {
         $permohonan = Permohonan::firstOrFail();
-        $permohonanMak = \App\Models\PermohonanMak::firstOrCreate(
+        $permohonanMak = PermohonanMak::firstOrCreate(
             ['permohonan_id' => $permohonan->id],
-            ['mak_id' => \App\Models\Mak::firstOrFail()->id, 'ditentukan_oleh' => $this->ppkUser->id]
+            ['mak_id' => Mak::firstOrFail()->id, 'ditentukan_oleh' => $this->ppkUser->id]
         );
 
         $pengadaan = Pengadaan::create([
             'permohonan_id' => $permohonan->id,
             'permohonan_mak_id' => $permohonanMak->id,
-            'jenis_id' => \App\Models\JenisPengadaan::firstOrFail()->id,
-            'metode_id' => \App\Models\MetodePengadaan::firstOrFail()->id,
-            'level_id' => \App\Models\LevelPengadaan::firstOrFail()->id,
+            'jenis_id' => JenisPengadaan::firstOrFail()->id,
+            'metode_id' => MetodePengadaan::firstOrFail()->id,
+            'level_id' => LevelPengadaan::firstOrFail()->id,
             'ppk_id' => $this->ppkUser->id,
             'revisi_ke' => 0,
             'status' => 'berjalan',

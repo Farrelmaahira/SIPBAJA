@@ -6,6 +6,7 @@ import type {
   PpbjPengadaanDetail,
   PpbjSimpanKontrakPayload,
   PpbjUpdateKlasifikasiPayload,
+  PpbjPembayaranContext,
 } from '@/types/ppbj';
 import type { DokumenItem } from '@/types/dokumen';
 
@@ -20,6 +21,22 @@ export const PpbjPengadaanShow: FC = () => {
   const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
   const [previewDocId, setPreviewDocId] = useState<number | string | null>(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState<boolean>(false);
+  const [pembayaranContext, setPembayaranContext] = useState<PpbjPembayaranContext | null>(null);
+  const [isLoadingPembayaran, setIsLoadingPembayaran] = useState<boolean>(false);
+
+  const fetchPembayaranContext = (signal?: AbortSignal) => {
+    if (!id) return;
+    setIsLoadingPembayaran(true);
+    ppbjService
+      .getPembayaranContext(id, signal)
+      .then((data) => setPembayaranContext(data))
+      .catch((err) => {
+        if (err instanceof Error && err.name !== 'CanceledError') {
+          // ignore background fetch error
+        }
+      })
+      .finally(() => setIsLoadingPembayaran(false));
+  };
 
   const fetchDetail = (signal?: AbortSignal) => {
     if (!id) return;
@@ -42,6 +59,7 @@ export const PpbjPengadaanShow: FC = () => {
   useEffect(() => {
     const controller = new AbortController();
     fetchDetail(controller.signal);
+    fetchPembayaranContext(controller.signal);
     return () => controller.abort();
   }, [id]);
 
@@ -111,6 +129,33 @@ export const PpbjPengadaanShow: FC = () => {
     }
   };
 
+  const handleUploadTagihan = async (file: File, nominal?: number, catatan?: string) => {
+    if (!id) return;
+    try {
+      const res = await ppbjService.uploadDokumenTagihan(id, file, nominal, catatan);
+      setFlash({ success: res.message || 'Dokumen tagihan berhasil diunggah.' });
+      fetchPembayaranContext();
+      fetchDetail();
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || 'Gagal mengunggah dokumen tagihan.';
+      setFlash({ error: msg });
+      throw err;
+    }
+  };
+
+  const handleUploadLegalitas = async (file: File) => {
+    if (!id) return;
+    try {
+      const res = await ppbjService.uploadLegalitasVendor(id, file);
+      setFlash({ success: res.message || 'Dokumen legalitas vendor berhasil diunggah.' });
+      fetchPembayaranContext();
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || 'Gagal mengunggah dokumen legalitas vendor.';
+      setFlash({ error: msg });
+      throw err;
+    }
+  };
+
   const dokumenList: DokumenItem[] = (pengadaan?.dokumen_list || []).map((d) => ({
     id: d.id,
     nama_asli: d.nama_asli,
@@ -145,6 +190,10 @@ export const PpbjPengadaanShow: FC = () => {
         setPreviewBlobUrl(null);
         setPreviewDocId(null);
       }}
+      pembayaranContext={pembayaranContext}
+      isLoadingPembayaran={isLoadingPembayaran}
+      onUploadTagihan={handleUploadTagihan}
+      onUploadLegalitas={handleUploadLegalitas}
     />
   );
 };
