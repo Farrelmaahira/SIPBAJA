@@ -97,22 +97,43 @@ class PermohonanService
     }
 
     /**
-     * Memperbarui data permohonan yang ditolak dan mengajukan ulang ke antrean verifikasi.
+     * Memperbarui data permohonan yang ditolak atau masih dalam status pengajuan awal (belum disetujui/diproses).
      * Menggunakan transaksi database agar update data, dokumen baru (jika ada), dan riwayat status bersifat atomik.
      */
     public function revisiPermohonan(User $user, Permohonan $permohonan, array $data, ?UploadedFile $file = null): Permohonan
     {
         $user->loadMissing('Role');
-        abort_unless($user->unit_id && $user->unit_id === $permohonan->unit_id, 403, 'Anda tidak memiliki hak akses untuk merevisi permohonan unit lain.');
-        abort_unless($permohonan->status === 'ditolak', 422, 'Hanya permohonan dengan status ditolak yang dapat diajukan ulang.');
+        abort_unless($user->unit_id && (int) $user->unit_id === (int) $permohonan->unit_id, 403, 'Anda tidak memiliki hak akses untuk merevisi permohonan unit lain.');
+
+        // Syarat: Belum diproses atau disetujui pada tahapan selanjutnya
+        $sudahDisetujuiLanjutan = $permohonan->Approvals()->where('keputusan', 'disetujui')->exists();
+        $adaPengadaan = $permohonan->Pengadaan()->exists();
+        $statusTidakBoleh = in_array($permohonan->status, [
+            'menunggu_persetujuan',
+            'disetujui',
+            'diproses_ppbj',
+            'pengadaan',
+            'siap_spk',
+            'kontrak_terbit',
+            'berjalan',
+            'barang_diterima',
+            'selesai',
+        ], true);
+
+        if ($sudahDisetujuiLanjutan || $adaPengadaan || $statusTidakBoleh) {
+            abort(422, 'Permohonan tidak dapat diubah karena sudah diproses atau disetujui pada tahapan selanjutnya.');
+        }
 
         return DB::transaction(function () use ($user, $permohonan, $data, $file) {
+            $statusLama = $permohonan->status;
             $permohonan->judul = trim($data['judul']);
             $permohonan->estimasi_anggaran = (float) $data['estimasi_anggaran'];
-            if (! empty($data['ringkasan_tujuan'])) {
-                $permohonan->ringkasan_tujuan = trim($data['ringkasan_tujuan']);
+            if (array_key_exists('ringkasan_tujuan', $data)) {
+                $permohonan->ringkasan_tujuan = ! empty($data['ringkasan_tujuan']) ? trim($data['ringkasan_tujuan']) : null;
             }
-            $permohonan->revisi_ke = ($permohonan->revisi_ke ?? 0) + 1;
+            if ($statusLama === 'ditolak') {
+                $permohonan->revisi_ke = ($permohonan->revisi_ke ?? 0) + 1;
+            }
             $permohonan->status = 'diajukan';
             $permohonan->save();
 
@@ -220,18 +241,44 @@ class PermohonanService
         abort_unless($isReviewer || ($user->unit_id && $user->unit_id === $permohonan->unit_id), 403, 'Akses tidak diizinkan untuk unit lain.');
 
         if ($dokumenId) {
-            $dokumen = $permohonan->Dokumen()->where('id', $dokumenId)->firstOrFail();
+            $dokumen = $permohonan->Dokumen()->where('id', $dokumenId)->first()
+                ?? Dokumen::where('ref_type', 'approval_permohonan')
+                    ->where('ref_id', $permohonan->id)
+                    ->where('id', $dokumenId)
+                    ->firstOrFail();
         } else {
             $dokumen = $permohonan->Dokumen()->where('tipe_dokumen', 'surat_permohonan')->latest('versi')->firstOrFail();
         }
-        $path = 'dokumen/permohonan/'.$dokumen->nama_hash;
+        $path = $dokumen->ref_type === 'approval_permohonan'
+            ? $this->memoPath($dokumen)
+            : 'dokumen/permohonan/'.$dokumen->nama_hash;
 
-        abort_unless(Storage::disk('local')->exists($path), 404, 'Berkas dokumen tidak ditemukan di server.');
+        abort_unless($path && Storage::disk('local')->exists($path), 404, 'Berkas dokumen tidak ditemukan di server.');
 
         return [
             'path' => $path,
             'nama_asli' => $dokumen->nama_asli,
         ];
+    }
+
+    /**
+     * Menentukan lokasi penyimpanan berkas memo persetujuan permohonan.
+     */
+    private function memoPath(Dokumen $dokumen): ?string
+    {
+        $candidates = [
+            'dokumen/memo/'.$dokumen->nama_hash,
+            'dokumen/permohonan/memo/'.$dokumen->nama_hash,
+            'dokumen/permohonan/'.$dokumen->nama_hash,
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (Storage::disk('local')->exists($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -392,28 +439,55 @@ class PermohonanService
      */
     public function hapusPermohonan(User $user, Permohonan $permohonan): void
     {
-        if ($user->unit_id && $permohonan->unit_id !== $user->unit_id) {
+        if ($user->unit_id && (int) $permohonan->unit_id !== (int) $user->unit_id) {
             abort(403, 'Anda tidak berhak menghapus permohonan milik unit lain.');
         }
 
-        $allowedStatuses = ['diajukan', 'menunggu_verifikasi', 'menunggu_persetujuan', 'ditolak', 'draft'];
-        if (! in_array($permohonan->status, $allowedStatuses, true)) {
-            abort(422, 'Permohonan yang sedang dalam proses pengadaan atau sudah selesai tidak dapat dihapus.');
+        // Syarat FR-24: Belum diproses atau disetujui pada tahapan selanjutnya
+        $sudahDisetujuiLanjutan = $permohonan->Approvals()->where('keputusan', 'disetujui')->exists();
+        $adaPengadaan = $permohonan->Pengadaan()->exists();
+        $statusTidakBoleh = in_array($permohonan->status, [
+            'menunggu_persetujuan',
+            'disetujui',
+            'diproses_ppbj',
+            'pengadaan',
+            'siap_spk',
+            'kontrak_terbit',
+            'berjalan',
+            'barang_diterima',
+            'selesai',
+        ], true);
+
+        if ($sudahDisetujuiLanjutan || $adaPengadaan || $statusTidakBoleh) {
+            abort(422, 'Permohonan tidak dapat dibatalkan atau dihapus karena sudah diproses atau disetujui pada tahapan selanjutnya.');
         }
 
         DB::transaction(function () use ($permohonan) {
-            $dokumens = Dokumen::where('ref_type', 'permohonan')
+            $dokumens = Dokumen::whereIn('ref_type', ['permohonan', 'approval_permohonan'])
                 ->where('ref_id', $permohonan->id)
                 ->get();
 
             foreach ($dokumens as $dokumen) {
-                if ($dokumen->file_path && Storage::disk('local')->exists($dokumen->file_path)) {
-                    Storage::disk('local')->delete($dokumen->file_path);
+                if ($dokumen->nama_hash) {
+                    $candidates = [
+                        'dokumen/permohonan/'.$dokumen->nama_hash,
+                        'dokumen/permohonan/memo/'.$dokumen->nama_hash,
+                        'dokumen/memo/'.$dokumen->nama_hash,
+                    ];
+                    foreach ($candidates as $cand) {
+                        if (Storage::disk('local')->exists($cand)) {
+                            Storage::disk('local')->delete($cand);
+                        }
+                    }
                 }
                 $dokumen->delete();
             }
 
-            StatusHistory::where('permohonan_id', $permohonan->id)->delete();
+            StatusHistory::where('ref_type', 'permohonan')
+                ->where('ref_id', $permohonan->id)
+                ->delete();
+
+            $permohonan->Approvals()->delete();
             $permohonan->PermohonanMak()->delete();
             $permohonan->delete();
         });
@@ -480,7 +554,13 @@ class PermohonanService
             'Dokumen',
             'Approvals',
             'PermohonanMak.Mak',
-            'Pengadaan.PermohonanMak.Mak',
+            'Pengadaan.PermohonanMak.Mak.Ppk',
+            'Pengadaan.Ppk',
+            'Pengadaan.Jenis',
+            'Pengadaan.Metode',
+            'Pengadaan.Level',
+            'Pengadaan.Dokumen',
+            'Pengadaan.Kontrak',
         ])->findOrFail($id);
 
         $dokumenList = $permohonan->Dokumen
@@ -508,9 +588,22 @@ class PermohonanService
         $paketList = $permohonan->Pengadaan
             ->map(fn ($p) => [
                 'id' => (int) $p->id,
-                'makKode' => (string) ($p->PermohonanMak?->Mak?->nama ?? $p->PermohonanMak?->Mak?->kode ?? '-'),
+                'makNama' => (string) ($p->PermohonanMak?->Mak?->nama ?? '-'),
+                'makKode' => (string) ($p->PermohonanMak?->Mak?->kode ?? $p->PermohonanMak?->Mak?->nama ?? '-'),
+                'ppkNama' => (string) ($p->PermohonanMak?->Mak?->Ppk?->nama ?? $p->Ppk?->nama ?? '-'),
+                'jenisNama' => (string) ($p->Jenis?->nama ?? '-'),
+                'metodeNama' => (string) ($p->Metode?->nama ?? '-'),
+                'levelNama' => (string) ($p->Level?->nama ?? '-'),
                 'nominal' => $p->Kontrak?->nominal_kontrak ? (float) $p->Kontrak->nominal_kontrak : null,
-                'status' => (string) ($p->status ?? '-'),
+                'status' => (string) ($p->status ?? 'draft'),
+                'revisiKe' => (int) ($p->revisi_ke ?? 0),
+                'dokumenList' => $p->Dokumen->map(fn ($d) => [
+                    'id' => (int) $d->id,
+                    'namaAsli' => (string) $d->nama_asli,
+                    'nama_asli' => (string) $d->nama_asli,
+                    'tipe_dokumen' => (string) ($d->tipe_dokumen ?? 'dokumen_pengadaan'),
+                    'download_url' => "/api/v1/ppbj/pengadaan/{$p->id}/dokumen/{$d->id}",
+                ])->values()->all(),
             ])
             ->values()
             ->all();
@@ -647,16 +740,19 @@ class PermohonanService
     public function getDetailPermohonanPerencanaan(Permohonan $permohonan): array
     {
         $permohonan->load([
-            'Unit',
-            'Creator',
-            'PermohonanMak.Mak.Ppk',
-            'Pengadaan.Ppk',
-            'Pengadaan.PermohonanMak.Mak.Ppk',
-            'Approvals.Actor',
+            'Creator:id,nama,email',
+            'Creator.Unit:id,nama',
+            'PermohonanMak.Mak.Ppk:id,nama',
         ]);
 
-        $maks = Mak::with('Ppk')->orderBy('id')->get();
         $selectedMakIds = $permohonan->PermohonanMak->pluck('mak_id')->toArray();
+        $maks = Mak::with('Ppk')
+            ->where(function ($q) use ($selectedMakIds) {
+                $q->where('isActive', true)
+                    ->when(! empty($selectedMakIds), fn ($sub) => $sub->orWhereIn('id', $selectedMakIds));
+            })
+            ->orderBy('id')
+            ->get();
         $approvalPerencanaan = $permohonan->Approvals()
             ->where('tahap', 'PERENCANAAN')
             ->latest('id')
@@ -678,8 +774,7 @@ class PermohonanService
                 ];
             });
 
-        $dokumen = $permohonan->Dokumen()->where('tipe_dokumen', 'surat_permohonan')->latest('versi')->first()
-            ?? Dokumen::where('ref_type', 'permohonan')->where('ref_id', $permohonan->id)->latest('id')->first();
+        $dokumen = $permohonan->Dokumen()->where('tipe_dokumen', 'surat_permohonan')->latest('versi')->first();
 
         $dokumenInfo = $dokumen ? [
             'id' => $dokumen->id,
@@ -699,7 +794,7 @@ class PermohonanService
             'download_url' => "/api/v1/perencanaan/rkakl/dokumen/{$rkaklDoc->id}",
         ] : null;
 
-        return [
+        $data = [
             'permohonan' => $permohonan,
             'maks' => $maks,
             'selected_mak_ids' => $selectedMakIds,
@@ -710,6 +805,8 @@ class PermohonanService
             'dokumen' => $dokumenInfo,
             'rkakl_active' => $rkaklInfo,
         ];
+
+        return $data;
     }
 
     // [BARU - Perencanaan: kompatibilitas endpoint deprecated kirim-pengadaan] ditambahkan untuk menjaga kompatibilitas endpoint lama.
@@ -797,7 +894,7 @@ class PermohonanService
         $permohonan->load([
             'Unit',
             'Creator',
-            'PermohonanMak.Mak',
+            'PermohonanMak.Mak.Ppk',
             'Approvals.Actor',
             'Approvals.Memo',
             'Dokumen',
@@ -810,9 +907,37 @@ class PermohonanService
                 $doc->setAttribute('download_url', "/api/v1/ppk/permohonan/{$permohonan->id}/dokumen?dokumen_id={$doc->id}");
             });
 
+        // Ambil catatan masukan dari Tim Perencanaan
+        $approvalPerencanaan = $permohonan->Approvals
+            ->filter(fn ($a) => in_array(strtoupper((string) $a->tahap), ['PERENCANAAN', 'PERENCANAAN']))
+            ->sortByDesc('id')
+            ->first();
+
+        $catatanPerencanaan = [
+            'pemeriksa_nama' => $approvalPerencanaan?->Actor?->nama ?? $approvalPerencanaan?->Actor?->name ?? null,
+            'pemeriksa_peran' => $approvalPerencanaan ? 'Tim Perencanaan' : null,
+            'tanggal' => $approvalPerencanaan?->created_at
+                ? Carbon::parse($approvalPerencanaan->created_at)->translatedFormat('d F Y, H:i')
+                : null,
+            'catatan' => $approvalPerencanaan?->alasan ?? null,
+        ];
+
+        $makList = $permohonan->PermohonanMak
+            ->filter(fn ($pm) => $pm->Mak !== null)
+            ->map(fn ($pm) => [
+                'id' => $pm->Mak->id,
+                'kode' => (string) ($pm->Mak->kode ?? $pm->Mak->nama),
+                'nama' => (string) $pm->Mak->nama,
+                'ppk_nama' => $pm->Mak->Ppk?->nama,
+            ])
+            ->values()
+            ->all();
+
         return [
             'permohonan' => $permohonan,
             'dokumen_permohonan' => $dokumenPermohonan,
+            'catatan_perencanaan' => $catatanPerencanaan,
+            'mak_list' => $makList,
             'permohonan_mak_ppk' => $permohonan->PermohonanMak
                 ->filter(fn ($pm) => (int) ($pm->Mak?->ppk_user_id ?? 0) === (int) $ppk->id)
                 ->values(),

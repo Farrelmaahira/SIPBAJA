@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\PPBJ;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\PPBJ\HapusDraftPengadaanRequest;
 use App\Http\Requests\PPBJ\SimpanKontrakPengadaanRequest;
 use App\Http\Requests\PPBJ\UpdateKlasifikasiPengadaanRequest;
 use App\Models\Dokumen;
@@ -10,6 +11,7 @@ use App\Models\Pengadaan;
 use App\Services\PengadaanService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -88,12 +90,20 @@ class PengadaanController extends Controller
     {
         $pengadaan = Pengadaan::findOrFail((int) $id);
         $fileDokumen = $request->file('dokumen');
+        $multiDokumen = [
+            'dokumen_surat_kontrak' => $request->file('dokumen_surat_kontrak'),
+            'dokumen_spk' => $request->file('dokumen_spk'),
+            'dokumen_surat_pemesanan' => $request->file('dokumen_surat_pemesanan'),
+            'dokumen_kwitansi' => $request->file('dokumen_kwitansi'),
+            'dokumen_invoice' => $request->file('dokumen_invoice'),
+        ];
 
         $kontrak = $this->pengadaanService->simpanAtauPerbaruiKontrak(
             $pengadaan,
             $request->validated(),
             $fileDokumen,
-            $request->user()
+            $request->user(),
+            $multiDokumen
         );
 
         return response()->json([
@@ -109,12 +119,20 @@ class PengadaanController extends Controller
     {
         $pengadaan = Pengadaan::findOrFail((int) $id);
         $fileDokumen = $request->file('dokumen');
+        $multiDokumen = [
+            'dokumen_surat_kontrak' => $request->file('dokumen_surat_kontrak'),
+            'dokumen_spk' => $request->file('dokumen_spk'),
+            'dokumen_surat_pemesanan' => $request->file('dokumen_surat_pemesanan'),
+            'dokumen_kwitansi' => $request->file('dokumen_kwitansi'),
+            'dokumen_invoice' => $request->file('dokumen_invoice'),
+        ];
 
         $kontrak = $this->pengadaanService->simpanAtauPerbaruiKontrak(
             $pengadaan,
             $request->validated(),
             $fileDokumen,
-            $request->user()
+            $request->user(),
+            $multiDokumen
         );
 
         return response()->json([
@@ -181,5 +199,15 @@ class PengadaanController extends Controller
                 'Content-Disposition' => "{$disposition}; filename=\"".($dokumen->nama_asli ?: 'dokumen.pdf').'"',
             ]
         );
+    }
+
+    /**
+     * Menghapus paket pengadaan berstatus draft.
+     */
+    public function destroy(HapusDraftPengadaanRequest $request, string $id): Response
+    {
+        $this->pengadaanService->hapusDraftPengadaan((int) $id, $request->user());
+
+        return response()->noContent();
     }
 }

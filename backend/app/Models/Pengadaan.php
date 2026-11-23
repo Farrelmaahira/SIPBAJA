@@ -13,6 +13,10 @@ class Pengadaan extends Model
 
     public $timestamps = false;
 
+    protected $appends = [
+        'tracking',
+    ];
+
     protected $fillable = [
         'permohonan_id',
         'permohonan_mak_id',
@@ -79,5 +83,10 @@ class Pengadaan extends Model
     public function Dokumen(): HasMany
     {
         return $this->hasMany(Dokumen::class, 'ref_id')->where('ref_type', 'pengadaan');
+    }
+
+    public function getTrackingAttribute(): ?array
+    {
+        return $this->attributes['tracking'] ?? null;
     }
 }

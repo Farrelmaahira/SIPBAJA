@@ -13,6 +13,7 @@ import StatusPill from '../../atoms/StatusPill';
 import DokumenListCard from '../../organisms/DokumenListCard';
 import { PermohonanInfoSection } from '../../organisms/PermohonanInfoSection';
 import PermohonanShowMakList from '../../molecules/PermohonanShowMakList';
+import PermohonanShowPaketList from '../../molecules/PermohonanShowPaketList';
 import PengadaanSplitForm from '../../organisms/PengadaanSplitForm';
 import { PPBJ_NAV_ITEMS } from '../../../constants/ppbjNav';
 import { formatTanggalIndo } from '../../../utils/formatters';
@@ -49,6 +50,8 @@ export const PpbjPermohonanShowTemplate: FC<PpbjPermohonanShowTemplateProps> = (
   isLoading = false,
   flash = {},
   onSaveDraft,
+  onDeleteDraft,
+  onSubmitToReviewer: _onSubmitToReviewer,
   onViewDokumen,
   onDownloadDokumen,
   previewBlobUrl = null,
@@ -61,6 +64,8 @@ export const PpbjPermohonanShowTemplate: FC<PpbjPermohonanShowTemplateProps> = (
   const isRevised = (permohonan?.revisiKe ?? 0) > 0;
   const canSplit = Boolean(permohonan?.bisaDipecah);
   const isLocked = Boolean(permohonan?.sudahDikunci);
+  const hasPaket = Boolean(permohonan?.paketList && permohonan.paketList.length > 0);
+  const hasDitolak = Boolean(permohonan?.paketList?.some((p) => p.status === 'ditolak'));
 
   return (
     <AppLayout
@@ -197,16 +202,18 @@ export const PpbjPermohonanShowTemplate: FC<PpbjPermohonanShowTemplateProps> = (
 
             {/* Card 3: Dokumen Pengadaan */}
             <section
-              className="bg-white rounded-[22px] border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.05)] p-6"
+              className="bg-white rounded-[22px] border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.05)] p-6 space-y-6"
               aria-labelledby="heading-split"
             >
-              <div className="mb-5 pb-3 border-b border-[#F0F4F2]">
-                <h2 id="heading-split" className="text-base font-bold text-[#14201C]">
-                  Dokumen Pengadaan
-                </h2>
-                <p className="text-xs text-[#5F6F6A] mt-0.5">
-                  Unggah satu atau lebih dokumen pengadaan, lalu tentukan MAK dan penanggung jawabnya
-                </p>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-[#F0F4F2] gap-3">
+                <div>
+                  <h2 id="heading-split" className="text-base font-bold text-[#14201C]">
+                    Dokumen Pengadaan
+                  </h2>
+                  <p className="text-xs text-[#5F6F6A] mt-0.5">
+                    Unggah dokumen pengadaan, tentukan MAK, lalu submit langsung ke reviewer
+                  </p>
+                </div>
               </div>
 
               {!canSplit && (
@@ -220,27 +227,64 @@ export const PpbjPermohonanShowTemplate: FC<PpbjPermohonanShowTemplateProps> = (
                 </div>
               )}
 
-              {canSplit && isLocked && (
-                <div className="p-4 rounded-2xl bg-[#F0F4F2] border border-[#CFDAD6] flex items-start gap-3">
-                  <Lock className="w-5 h-5 text-[#0E7C5A] shrink-0 mt-0.5" />
-                  <div className="text-xs text-[#14201C] leading-relaxed">
-                    <strong className="block text-[#0E7C5A] mb-0.5">
-                      Paket Pengadaan Telah Terkunci
-                    </strong>
-                    Seluruh dokumen paket pengadaan telah disubmit ke reviewer. Permohonan ini telah dikunci untuk penambahan/perubahan paket baru.
-                  </div>
-                </div>
-              )}
+              {canSplit && (
+                <>
+                  {/* Alert jika ada paket yang ditolak */}
+                  {hasDitolak && (
+                    <div className="p-4 rounded-2xl bg-[#FEF3F2] border border-[#FECDCA] flex items-start gap-3 text-xs text-[#B42318]">
+                      <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-[#D92D20]" />
+                      <div className="leading-relaxed">
+                        <strong className="block text-sm font-bold text-[#B42318] mb-1">
+                          Terdapat Paket Pengadaan yang Ditolak oleh Reviewer
+                        </strong>
+                        <span>
+                          Reviewer mengembalikan paket dokumen pengadaan untuk diperbaiki. Silakan klik tombol{' '}
+                          <strong className="font-bold underline">Revisi</strong> pada tabel paket di bawah untuk melihat alasan penolakan dan memperbarui dokumen pengadaan.
+                        </span>
+                      </div>
+                    </div>
+                  )}
 
-              {canSplit && !isLocked && (
-                <PengadaanSplitForm
-                  permohonanId={permohonan.id}
-                  estimasiAnggaran={Number(permohonan.estimasiAnggaran) || 0}
-                  sisaAnggaran={permohonan.sisaAnggaran}
-                  availableMak={permohonan.availableMak || []}
-                  referenceData={permohonan.referenceData || { jenis: [], metode: [], level: [] }}
-                  onSubmit={onSaveDraft}
-                />
+                  {/* Daftar Paket Pengadaan yang Telah Dibuat */}
+                  {hasPaket && (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-bold text-[#14201C]">
+                          Daftar Paket Pengadaan ({permohonan.paketList?.length || 0})
+                        </h3>
+                      </div>
+                      <PermohonanShowPaketList
+                        paketList={permohonan.paketList || []}
+                        sudahDikunci={isLocked}
+                        onDelete={onDeleteDraft}
+                      />
+                    </div>
+                  )}
+
+                  {/* Form Pembuatan Pengadaan atau Status Terkunci */}
+                  {isLocked ? (
+                    <div className="p-4 rounded-2xl bg-[#F0F4F2] border border-[#CFDAD6] flex items-start gap-3">
+                      <Lock className="w-5 h-5 text-[#0E7C5A] shrink-0 mt-0.5" />
+                      <div className="text-xs text-[#14201C] leading-relaxed">
+                        <strong className="block text-[#0E7C5A] mb-0.5">
+                          Paket Pengadaan Telah Terkunci
+                        </strong>
+                        Dokumen paket pengadaan telah disubmit ke reviewer. Permohonan ini telah dikunci sehingga penambahan paket baru tidak diperbolehkan.
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <PengadaanSplitForm
+                        permohonanId={permohonan.id}
+                        estimasiAnggaran={Number(permohonan.estimasiAnggaran) || 0}
+                        sisaAnggaran={permohonan.sisaAnggaran}
+                        availableMak={permohonan.availableMak || []}
+                        referenceData={permohonan.referenceData || { jenis: [], metode: [], level: [] }}
+                        onSubmit={onSaveDraft}
+                      />
+                    </div>
+                  )}
+                </>
               )}
             </section>
           </>

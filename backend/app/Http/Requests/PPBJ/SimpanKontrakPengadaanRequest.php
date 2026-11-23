@@ -14,14 +14,20 @@ class SimpanKontrakPengadaanRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'tipe' => ['required', 'string', 'in:Kontrak,SPK,Surat Pesanan,Kwitansi'],
-            'nomor' => ['required', 'string', 'max:100'],
-            'tanggal' => ['required', 'date'],
+            'tipe' => ['nullable', 'string', 'in:Kontrak,SPK,Surat Pesanan,Kwitansi,Invoice'],
+            'nomor' => ['nullable', 'string', 'max:100'],
+            'tanggal' => ['nullable', 'date'],
             'vendor_nama' => ['required', 'string', 'max:255'],
             'nominal_kontrak' => ['required', 'numeric', 'min:1'],
-            'tanggal_jatuh_tempo' => ['required', 'date', 'after_or_equal:tanggal'],
-            'tanggal_reminder' => ['required', 'date', 'before_or_equal:tanggal_jatuh_tempo'],
-            'dokumen' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
+            'tanggal_jatuh_tempo' => ['nullable', 'date'],
+            'tanggal_reminder' => ['nullable', 'date'],
+            'dokumen' => ['nullable', 'file', 'mimes:pdf', 'max:20480'],
+            // Multi dokumen instrumen pembelian (FR-37)
+            'dokumen_surat_kontrak' => ['nullable', 'file', 'mimes:pdf', 'max:20480'],
+            'dokumen_spk' => ['nullable', 'file', 'mimes:pdf', 'max:20480'],
+            'dokumen_surat_pemesanan' => ['nullable', 'file', 'mimes:pdf', 'max:20480'],
+            'dokumen_kwitansi' => ['nullable', 'file', 'mimes:pdf', 'max:20480'],
+            'dokumen_invoice' => ['nullable', 'file', 'mimes:pdf', 'max:20480'],
         ];
     }
 

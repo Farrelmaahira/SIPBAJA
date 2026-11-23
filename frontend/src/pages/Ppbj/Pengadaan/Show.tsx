@@ -16,7 +16,7 @@ export const PpbjPengadaanShow: FC = () => {
   const [flash, setFlash] = useState<{ success?: string; error?: string }>({});
   const [isEditKlasifikasiOpen, setIsEditKlasifikasiOpen] = useState<boolean>(false);
   const [isSubmittingKlasifikasi, setIsSubmittingKlasifikasi] = useState<boolean>(false);
-  const [isKontrakModalOpen, setIsKontrakModalOpen] = useState<boolean>(false);
+  const [isSubmittingKontrak, setIsSubmittingKontrak] = useState<boolean>(false);
   const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
   const [previewDocId, setPreviewDocId] = useState<number | string | null>(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState<boolean>(false);
@@ -64,15 +64,17 @@ export const PpbjPengadaanShow: FC = () => {
 
   const handleSubmitKontrak = async (payload: PpbjSimpanKontrakPayload) => {
     if (!id) return;
+    setIsSubmittingKontrak(true);
     try {
       const isUpdate = Boolean(pengadaan?.kontrak);
       const res = await ppbjService.saveKontrakPengadaan(id, payload, isUpdate);
       setFlash({ success: res.message || 'Data kontrak dan vendor berhasil disimpan.' });
-      setIsKontrakModalOpen(false);
       fetchDetail();
     } catch (err: any) {
       const msg = err?.response?.data?.message || 'Gagal menyimpan data kontrak dan vendor.';
       setFlash({ error: msg });
+    } finally {
+      setIsSubmittingKontrak(false);
     }
   };
 
@@ -126,11 +128,9 @@ export const PpbjPengadaanShow: FC = () => {
       flash={flash}
       isEditKlasifikasiOpen={isEditKlasifikasiOpen}
       isSubmittingKlasifikasi={isSubmittingKlasifikasi}
-      isKontrakModalOpen={isKontrakModalOpen}
+      isSubmittingKontrak={isSubmittingKontrak}
       onOpenEditKlasifikasi={() => setIsEditKlasifikasiOpen(true)}
       onCloseEditKlasifikasi={() => setIsEditKlasifikasiOpen(false)}
-      onOpenKontrakModal={() => setIsKontrakModalOpen(true)}
-      onCloseKontrakModal={() => setIsKontrakModalOpen(false)}
       onSubmitEditKlasifikasi={handleSubmitEditKlasifikasi}
       onSubmitKontrak={handleSubmitKontrak}
       onViewDokumen={handleViewDokumen}

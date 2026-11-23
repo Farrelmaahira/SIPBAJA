@@ -189,15 +189,40 @@ export const ppbjService = {
     if (isUpdate) {
       formData.append('_method', 'PUT');
     }
-    formData.append('tipe', payload.tipe);
-    formData.append('nomor', payload.nomor);
-    formData.append('tanggal', payload.tanggal);
+    if (payload.tipe) {
+      formData.append('tipe', payload.tipe);
+    }
+    if (payload.nomor) {
+      formData.append('nomor', payload.nomor);
+    }
+    if (payload.tanggal) {
+      formData.append('tanggal', payload.tanggal);
+    }
     formData.append('vendor_nama', payload.vendor_nama);
     formData.append('nominal_kontrak', String(payload.nominal_kontrak));
-    formData.append('tanggal_jatuh_tempo', payload.tanggal_jatuh_tempo);
-    formData.append('tanggal_reminder', payload.tanggal_reminder);
+    if (payload.tanggal_jatuh_tempo) {
+      formData.append('tanggal_jatuh_tempo', payload.tanggal_jatuh_tempo);
+    }
+    if (payload.tanggal_reminder) {
+      formData.append('tanggal_reminder', payload.tanggal_reminder);
+    }
     if (payload.dokumen) {
       formData.append('dokumen', payload.dokumen);
+    }
+    if (payload.dokumen_surat_kontrak) {
+      formData.append('dokumen_surat_kontrak', payload.dokumen_surat_kontrak);
+    }
+    if (payload.dokumen_spk) {
+      formData.append('dokumen_spk', payload.dokumen_spk);
+    }
+    if (payload.dokumen_surat_pemesanan) {
+      formData.append('dokumen_surat_pemesanan', payload.dokumen_surat_pemesanan);
+    }
+    if (payload.dokumen_kwitansi) {
+      formData.append('dokumen_kwitansi', payload.dokumen_kwitansi);
+    }
+    if (payload.dokumen_invoice) {
+      formData.append('dokumen_invoice', payload.dokumen_invoice);
     }
 
     const url = `/v1/ppbj/pengadaan/${id}/kontrak`;

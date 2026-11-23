@@ -1,5 +1,4 @@
 import type { FC } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   FileText,
   Package,
@@ -41,7 +40,6 @@ export const PpbjDashboardTemplate: FC<PpbjDashboardTemplateProps> = ({
   counts = { permohonan: 0, pengadaan: 0, termin: 0 },
   isLoading = false,
 }) => {
-  const navigate = useNavigate();
   const displayName = user?.nama || user?.name || 'Petugas PPBJ';
 
   const statIcons = [FileText, Package, CheckCircle2, XCircle];
@@ -66,9 +64,6 @@ export const PpbjDashboardTemplate: FC<PpbjDashboardTemplateProps> = ({
           eyebrow="DASHBOARD"
           title={`Selamat datang, ${displayName}`}
           description="Pantau, verifikasi, dan kelola seluruh permohonan pengadaan yang masuk dalam satu tempat."
-          ctaLabel="Lihat Pengajuan"
-          ctaVariant="translucent"
-          onCta={() => navigate('/ppbj/permohonan')}
         />
 
         {/* Stat Cards Grid */}
