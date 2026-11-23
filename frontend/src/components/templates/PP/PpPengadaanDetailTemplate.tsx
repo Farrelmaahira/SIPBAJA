@@ -161,13 +161,14 @@ export const PpPengadaanDetailTemplate: FC<PpPengadaanDetailTemplateProps> = ({
 
   // Status Normalization
   const rawStatus = (pengadaan.status || 'menunggu_persetujuan').toLowerCase();
+  const isDraft = rawStatus === 'draft';
   const isDitolak = rawStatus === 'ditolak';
   const isTerverifikasi =
     rawStatus === 'diteruskan' ||
     rawStatus === 'disetujui' ||
     rawStatus === 'selesai' ||
     rawStatus === 'terverifikasi';
-  const isMenungguReview = !isDitolak && !isTerverifikasi;
+  const isMenungguReview = !isDraft && !isDitolak && !isTerverifikasi;
 
   // Catatan penolakan jika ditolak
   const rejectionInfo = useMemo(() => {
@@ -680,7 +681,25 @@ export const PpPengadaanDetailTemplate: FC<PpPengadaanDetailTemplateProps> = ({
                   </button>
                 </div>
               </div>
-            ) : (
+            ) : isDraft ? (
+              <div className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)]">
+                <div className="pb-3.5 mb-3 border-b border-[#F0F4F2]">
+                  <h3 className="text-base font-bold text-[#14201C]">Dokumen Masih Draft</h3>
+                  <p className="text-xs text-[#8A9A95] mt-0.5">
+                    Paket pengadaan belum diajukan ke reviewer
+                  </p>
+                </div>
+                <div className="p-4 rounded-xl bg-[#F0F4F2] text-[#5F6F6A] border border-[#CFDAD6] text-xs space-y-2">
+                  <div className="flex items-center gap-2 font-bold">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-[#5F6F6A]" />
+                    <span>Menunggu Pengajuan PPBJ</span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed">
+                    Paket pengadaan ini masih berupa draf pada PPBJ dan belum disubmit ke tahapan review.
+                  </p>
+                </div>
+              </div>
+            ) : isTerverifikasi ? (
               <div className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)]">
                 <div className="pb-3.5 mb-3 border-b border-[#F0F4F2]">
                   <h3 className="text-base font-bold text-[#14201C]">Keputusan Review Selesai</h3>
@@ -688,26 +707,25 @@ export const PpPengadaanDetailTemplate: FC<PpPengadaanDetailTemplateProps> = ({
                     Dokumen pengadaan ini telah diproses review oleh Pejabat Pengadaan.
                   </p>
                 </div>
-                <div
-                  className={`p-4 rounded-xl text-xs font-medium flex items-center gap-3 ${isTerverifikasi
-                    ? 'bg-[#E8F5EF] text-[#0E7C5A] border border-[#A3D9C3]'
-                    : 'bg-[#FEF3F2] text-[#B42318] border border-[#FECDCA]'
-                    }`}
-                >
-                  {isTerverifikasi ? (
-                    <>
-                      <CheckCircle2 className="w-5 h-5 shrink-0" />
-                      <span>Dokumen telah diverifikasi dan diteruskan ke PPK.</span>
-                    </>
-                  ) : (
-                    <>
-                      <XCircle className="w-5 h-5 shrink-0" />
-                      <span>Dokumen dikembalikan ke PPBJ untuk direvisi.</span>
-                    </>
-                  )}
+                <div className="p-4 rounded-xl text-xs font-medium flex items-center gap-3 bg-[#E8F5EF] text-[#0E7C5A] border border-[#A3D9C3]">
+                  <CheckCircle2 className="w-5 h-5 shrink-0" />
+                  <span>Dokumen telah diverifikasi dan diteruskan ke PPK.</span>
                 </div>
               </div>
-            )}
+            ) : isDitolak ? (
+              <div className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)]">
+                <div className="pb-3.5 mb-3 border-b border-[#F0F4F2]">
+                  <h3 className="text-base font-bold text-[#14201C]">Keputusan Review Selesai</h3>
+                  <p className="text-xs text-[#8A9A95] mt-0.5">
+                    Dokumen pengadaan ini telah diproses review oleh Pejabat Pengadaan.
+                  </p>
+                </div>
+                <div className="p-4 rounded-xl text-xs font-medium flex items-center gap-3 bg-[#FEF3F2] text-[#B42318] border border-[#FECDCA]">
+                  <XCircle className="w-5 h-5 shrink-0" />
+                  <span>Dokumen dikembalikan ke PPBJ untuk direvisi.</span>
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
 
