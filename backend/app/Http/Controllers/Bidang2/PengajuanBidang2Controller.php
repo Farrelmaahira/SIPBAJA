@@ -100,6 +100,20 @@ class PengajuanBidang2Controller extends Controller
     }
 
     /**
+     * Menampilkan konteks lengkap peninjauan pembayaran & riwayat pengadaan untuk Bidang 2 (FR-55).
+     */
+    public function pembayaranReview(Pengadaan $pengadaan): JsonResponse
+    {
+        $context = $this->pengadaanService->getPembayaranContext($pengadaan);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Konteks peninjauan pembayaran berhasil diambil.',
+            'data' => $context,
+        ]);
+    }
+
+    /**
      * Menyetujui dokumen pembayaran pengadaan oleh Bidang 2 dengan mengunggah memo (FR-56).
      */
     public function approvePembayaran(SetujuiPembayaranBidang2Request $request, Pengadaan $pengadaan): JsonResponse

@@ -219,4 +219,38 @@ class PimpinanPembayaranApiTest extends TestCase
 
         $response->assertStatus(422);
     }
+
+    public function test_bidang2_and_ppk_can_fetch_pembayaran_review_context(): void
+    {
+        $resBidang2 = $this->actingAs($this->bidang2User)->getJson(
+            route('api.bidang2.pengadaan.pembayaran.review', ['pengadaan' => $this->pengadaan->id])
+        );
+        $resBidang2->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonStructure([
+                'data' => [
+                    'pembayaran',
+                    'dokumen_tagihan',
+                    'approvals',
+                    'dokumen_riwayat' => [
+                        'permohonan',
+                        'kontrak',
+                    ],
+                ],
+            ]);
+
+        $resPpk = $this->actingAs($this->ppkUser)->getJson(
+            route('api.ppk.pengajuan.pembayaran.review', ['pengadaan' => $this->pengadaan->id])
+        );
+        $resPpk->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonStructure([
+                'data' => [
+                    'pembayaran',
+                    'dokumen_tagihan',
+                    'approvals',
+                    'dokumen_riwayat',
+                ],
+            ]);
+    }
 }

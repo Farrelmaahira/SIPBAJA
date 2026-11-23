@@ -1237,6 +1237,8 @@ class PengadaanService
     public function getPembayaranContext(Pengadaan $pengadaan): array
     {
         $pengadaan->loadMissing([
+            'Permohonan.Dokumen',
+            'Kontrak.Dokumen',
             'Penerimaan.Dokumen',
             'Kontrak.RencanaPembayaran.Pembayaran.Dokumen',
             'Kontrak.RencanaPembayaran.Pembayaran.Approvals.Memo',
@@ -1367,6 +1369,42 @@ class PengadaanService
             'can_upload_legalitas' => $canUploadLegalitas,
             'dokumen_legalitas' => $dokumenLegalitas,
             'is_locked' => $isLocked,
+            'dokumen_riwayat' => [
+                'permohonan' => $pengadaan->Permohonan ? [
+                    'id' => (int) $pengadaan->Permohonan->id,
+                    'nomor_surat' => $pengadaan->Permohonan->nomor_surat,
+                    'judul' => $pengadaan->Permohonan->judul,
+                    'dokumen' => $pengadaan->Permohonan->Dokumen->map(fn ($d) => [
+                        'id' => (int) $d->id,
+                        'nama_asli' => $d->nama_asli,
+                        'tipe_dokumen' => $d->tipe_dokumen,
+                        'mime_type' => $d->mime_type,
+                        'ukuran_bytes' => (int) $d->ukuran_bytes,
+                        'url' => route('api.ppbj.pengadaan.dokumen.download', [
+                            'pengadaanId' => $pengadaan->id,
+                            'dokumenId' => $d->id,
+                        ]).'?disposition=inline',
+                    ])->values()->all(),
+                ] : null,
+                'kontrak' => $pengadaan->Kontrak ? [
+                    'id' => (int) $pengadaan->Kontrak->id,
+                    'tipe' => $pengadaan->Kontrak->tipe,
+                    'nomor' => $pengadaan->Kontrak->nomor,
+                    'vendor_nama' => $pengadaan->Kontrak->vendor_nama,
+                    'nominal_kontrak' => (float) $pengadaan->Kontrak->nominal_kontrak,
+                    'dokumen' => $pengadaan->Kontrak->Dokumen->map(fn ($d) => [
+                        'id' => (int) $d->id,
+                        'nama_asli' => $d->nama_asli,
+                        'tipe_dokumen' => $d->tipe_dokumen,
+                        'mime_type' => $d->mime_type,
+                        'ukuran_bytes' => (int) $d->ukuran_bytes,
+                        'url' => route('api.ppbj.pengadaan.dokumen.download', [
+                            'pengadaanId' => $pengadaan->id,
+                            'dokumenId' => $d->id,
+                        ]).'?disposition=inline',
+                    ])->values()->all(),
+                ] : null,
+            ],
         ];
     }
 

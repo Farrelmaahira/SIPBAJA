@@ -145,6 +145,7 @@ Route::prefix('v1')->group(function () {
             Route::get('pengajuan', [PengajuanBidang2Controller::class, 'index'])->name('api.bidang2.pengajuan.index');
             Route::get('pengajuan/{permohonan}', [PengajuanBidang2Controller::class, 'show'])->name('api.bidang2.pengajuan.show');
             Route::get('pengadaan/{pengadaan}', [PengajuanBidang2Controller::class, 'showPengadaan'])->name('api.bidang2.pengadaan.show');
+            Route::get('pengadaan/{pengadaan}/pembayaran-review', [PengajuanBidang2Controller::class, 'pembayaranReview'])->name('api.bidang2.pengadaan.pembayaran.review');
             Route::post('pengadaan/{pengadaan}/pembayaran/approve', [PengajuanBidang2Controller::class, 'approvePembayaran'])->name('api.bidang2.pengadaan.pembayaran.approve');
             Route::post('pengadaan/{pengadaan}/pembayaran/reject', [PengajuanBidang2Controller::class, 'rejectPembayaran'])->name('api.bidang2.pengadaan.pembayaran.reject');
             Route::post('pengajuan/{permohonan}/approve', [PengajuanBidang2Controller::class, 'approve'])->name('api.bidang2.pengajuan.approve');
@@ -207,6 +208,7 @@ Route::prefix('v1')->group(function () {
             Route::post('pengajuan/{pengadaan}/approve', [PpkController::class, 'approve'])->name('api.ppk.pengajuan.approve');
             Route::post('pengajuan/{pengadaan}/reject', [PpkController::class, 'reject'])->name('api.ppk.pengajuan.reject');
             Route::get('pengajuan/{pengadaan}/pembayaran', [PpkController::class, 'pembayaran'])->name('api.ppk.pengajuan.pembayaran');
+            Route::get('pengajuan/{pengadaan}/pembayaran-review', [PpkController::class, 'pembayaranReview'])->name('api.ppk.pengajuan.pembayaran.review');
             Route::post('pengajuan/{pengadaan}/pembayaran/approve', [PpkController::class, 'approvePembayaran'])->name('api.ppk.pengajuan.pembayaran.approve');
             Route::post('pengajuan/{pengadaan}/pembayaran/reject', [PpkController::class, 'rejectPembayaran'])->name('api.ppk.pengajuan.pembayaran.reject');
             Route::get('pengajuan/{pengadaan}', [PpkController::class, 'show'])->name('api.ppk.pengajuan.show');

@@ -125,6 +125,18 @@ class PpkController extends Controller
         ]);
     }
 
+    public function pembayaranReview(Pengadaan $pengadaan): JsonResponse
+    {
+        $this->approvalService->pastikanPpkBerhakAtasPengadaan($pengadaan, auth()->user());
+        $context = $this->pengadaanService->getPembayaranContext($pengadaan);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Konteks peninjauan pembayaran berhasil diambil.',
+            'data' => $context,
+        ]);
+    }
+
     public function show(Pengadaan $pengadaan): JsonResponse
     {
         $detail = $this->pengadaanService->getDetailPengadaanLengkap($pengadaan, auth()->user());
