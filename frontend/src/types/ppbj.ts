@@ -296,3 +296,51 @@ export interface PpbjUpdateKlasifikasiPayload {
   level_id: number | string;
   dokumen?: File | null;
 }
+
+export interface PpbjDokumenItem {
+  id: number;
+  nama_asli: string;
+  tipe_dokumen: string;
+  mime_type: string;
+  ukuran_bytes: number;
+  url: string;
+}
+
+export interface PpbjPembayaranContext {
+  penerimaan: {
+    id: number;
+    tanggal_terima: string;
+    catatan?: string | null;
+    status_kondisi: string;
+    bast_dokumen: PpbjDokumenItem | null;
+    foto_barang: PpbjDokumenItem[];
+  } | null;
+  pembayaran: {
+    id: number;
+    status: string;
+    nominal: number;
+    tanggal_bayar?: string | null;
+    revisi_ke: number;
+  } | null;
+  dokumen_tagihan: PpbjDokumenItem | null;
+  approvals: {
+    ppk: {
+      id: number;
+      tahap: string;
+      keputusan: string;
+      alasan?: string | null;
+      memo: PpbjDokumenItem | null;
+    } | null;
+    bidang2: {
+      id: number;
+      tahap: string;
+      keputusan: string;
+      alasan?: string | null;
+      memo: PpbjDokumenItem | null;
+    } | null;
+  };
+  can_upload_tagihan: boolean;
+  can_upload_legalitas: boolean;
+  dokumen_legalitas: PpbjDokumenItem | null;
+  is_locked: boolean;
+}

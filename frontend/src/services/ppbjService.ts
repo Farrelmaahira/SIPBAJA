@@ -8,6 +8,7 @@ import type {
   PpbjPengadaanDetail,
   PpbjSimpanKontrakPayload,
   PpbjUpdateKlasifikasiPayload,
+  PpbjPembayaranContext,
 } from '../types/ppbj';
 
 /**
@@ -229,6 +230,64 @@ export const ppbjService = {
     const response = await api.post<ApiMessageResponse>(url, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
+    return response.data;
+  },
+
+  /**
+   * Mengambil data kontekstual pembayaran, BAST perlengkapan, dan status legalitas vendor (FR-40).
+   */
+  async getPembayaranContext(
+    id: number | string,
+    signal?: AbortSignal
+  ): Promise<PpbjPembayaranContext> {
+    const response = await api.get<{ success: boolean; data: PpbjPembayaranContext }>(
+      `/v1/ppbj/pengadaan/${id}/pembayaran-context`,
+      { signal }
+    );
+    return response.data.data;
+  },
+
+  /**
+   * Mengunggah atau memperbarui draf dokumen tagihan/pembayaran (FR-41, FR-42).
+   */
+  async uploadDokumenTagihan(
+    id: number | string,
+    file: File,
+    nominal?: number,
+    catatan?: string
+  ): Promise<{ success: boolean; message: string; data: any }> {
+    const formData = new FormData();
+    formData.append('dokumen_tagihan', file);
+    if (nominal !== undefined && nominal !== null) {
+      formData.append('nominal', String(nominal));
+    }
+    if (catatan) {
+      formData.append('catatan', catatan);
+    }
+
+    const response = await api.post<{ success: boolean; message: string; data: any }>(
+      `/v1/ppbj/pengadaan/${id}/dokumen-tagihan`,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    );
+    return response.data;
+  },
+
+  /**
+   * Mengunggah atau memperbarui dokumen legalitas vendor (FR-43, FR-44, FR-45).
+   */
+  async uploadLegalitasVendor(
+    id: number | string,
+    file: File
+  ): Promise<{ success: boolean; message: string; data: any }> {
+    const formData = new FormData();
+    formData.append('dokumen_legalitas', file);
+
+    const response = await api.post<{ success: boolean; message: string; data: any }>(
+      `/v1/ppbj/pengadaan/${id}/legalitas-vendor`,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    );
     return response.data;
   },
 };
