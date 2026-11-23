@@ -130,6 +130,40 @@ export interface PerencanaanPengajuanDetail {
   dokumen?: DokumenPermohonanDetail | null;
   dokumen_permohonan?: DokumenPermohonanDetail[];
   rkakl_active?: DokumenPermohonanDetail | null;
+  timeline_stages?: Array<{
+    tahap: string;
+    label: string;
+    status: 'completed' | 'active' | 'rejected' | 'pending';
+    keterangan: string;
+  }>;
+  history?: Array<{
+    id: number;
+    status_lama?: string | null;
+    status_baru: string;
+    deskripsi: string;
+    actor_nama?: string | null;
+    actor_role?: string | null;
+    waktu?: string | null;
+  }>;
+  tracking?: {
+    id: number;
+    nomor_pengadaan: string;
+    judul?: string;
+    status: string;
+    status_label?: string;
+    stepper: Array<{
+      key: string;
+      label: string;
+      status: 'selesai' | 'sedang_berlangsung' | 'belum_dimulai';
+    }>;
+    timeline: Array<{
+      id?: number | string;
+      tanggal: string;
+      keterangan: string;
+      actor_nama?: string;
+      aktif?: boolean;
+    }>;
+  } | null;
 }
 
 export interface PerencanaanPengajuanDetailResponse {
