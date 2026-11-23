@@ -572,15 +572,23 @@ class ApprovalService
     ): Pengadaan {
         $this->pastikanPpkBerhakAtasPengadaan($pengadaan, $actor);
 
-        return DB::transaction(function () use ($pengadaan, $actor, $memo, $catatan) {
+        $pengadaan->loadMissing('Kontrak.RencanaPembayaran.Pembayaran');
+        $pembayaran = $pengadaan->Kontrak?->RencanaPembayaran?->first()?->Pembayaran;
+        if ($pembayaran && in_array($pembayaran->status, ['perlu_revisi', 'ditolak'], true)) {
+            throw ValidationException::withMessages([
+                'memo' => ['Pembayaran saat ini berstatus revisi/ditolak oleh salah satu pihak, sehingga tidak dapat disetujui sampai PPBJ mengunggah dokumen baru.'],
+            ]);
+        }
+
+        return DB::transaction(function () use ($pengadaan, $actor, $memo, $catatan, $pembayaran) {
             $statusLama = $pengadaan->status;
 
             if ($memo instanceof UploadedFile) {
                 $memoDoc = $this->dokumenService->simpanDokumen(
                     file: $memo,
                     actor: $actor,
-                    refType: 'pengadaan',
-                    refId: $pengadaan->id,
+                    refType: 'approval_pembayaran',
+                    refId: $pembayaran?->id ?? $pengadaan->id,
                     tipeDokumen: 'memo_persetujuan_pembayaran',
                     folder: 'dokumen/pembayaran/memo',
                     field: 'memo'
@@ -588,15 +596,15 @@ class ApprovalService
             } else {
                 $filename = is_string($memo) && $memo !== ''
                     ? $memo
-                    : "Memo_Persetujuan_Pembayaran_{$pengadaan->id}.pdf";
+                    : "Memo_Persetujuan_Pembayaran_PPK_{$pengadaan->id}.pdf";
 
                 $memoDoc = Dokumen::create([
-                    'ref_type' => 'pengadaan',
-                    'ref_id' => $pengadaan->id,
+                    'ref_type' => 'approval_pembayaran',
+                    'ref_id' => $pembayaran?->id ?? $pengadaan->id,
                     'tipe_dokumen' => 'memo_persetujuan_pembayaran',
                     'versi' => 1,
                     'nama_asli' => $filename,
-                    'nama_hash' => "dokumen/pembayaran/{$filename}",
+                    'nama_hash' => "dokumen/pembayaran/memo/{$filename}",
                     'mime_type' => 'application/pdf',
                     'ukuran_bytes' => 1250000,
                     'uploaded_by' => $actor->id,
@@ -616,11 +624,6 @@ class ApprovalService
                     'actor_id' => $actor->id,
                 ]
             );
-
-            // Jika ada record pembayaran pada rencana kontrak, catat juga ke approval_pembayaran
-            $pengadaan->loadMissing('Kontrak.Rencana.Pembayaran');
-            $pembayaran = $pengadaan->Kontrak?->Rencana?->map(fn ($r) => $r->Pembayaran)->filter()->first();
-            $statusBaru = 'selesai';
 
             if ($pembayaran instanceof Pembayaran) {
                 $revPembayaran = (int) ($pembayaran->revisi_ke ?? 0);
@@ -642,6 +645,7 @@ class ApprovalService
                     ->where('tahap', 'BIDANG2')
                     ->where('revisi_ke', $revPembayaran)
                     ->where('keputusan', 'disetujui')
+                    ->whereNotNull('memo_dokumen_id')
                     ->exists();
 
                 $pembayaran->update([
@@ -649,6 +653,8 @@ class ApprovalService
                 ]);
             }
 
+            // Status pengadaan tetap pembayaran sampai proses pencairan/legalitas selesai
+            $statusBaru = 'pembayaran';
             $pengadaan->update(['status' => $statusBaru]);
 
             StatusHistory::create([
@@ -659,10 +665,10 @@ class ApprovalService
                 'actor_id' => $actor->id,
             ]);
 
-            $keuanganUsers = User::whereHas('Role', fn ($q) => $q->where('nama', 'Keuangan'))->pluck('id');
-            foreach ($keuanganUsers as $keuanganId) {
+            $ppbjUsers = User::whereHas('Role', fn ($q) => $q->where('nama', 'PPBJ'))->pluck('id');
+            foreach ($ppbjUsers as $ppbjId) {
                 $this->notificationService->send(
-                    user: (int) $keuanganId,
+                    user: (int) $ppbjId,
                     judul: 'Persetujuan Pembayaran dari PPK',
                     pesan: "Dokumen pembayaran pengadaan '{$pengadaan->Permohonan?->judul}' telah disetujui oleh PPK beserta Memo Persetujuan.",
                     refType: 'pengadaan',
@@ -675,7 +681,125 @@ class ApprovalService
     }
 
     /**
-     * Penolakan Dokumen Pembayaran oleh PPK -> wajib alasan dan mengembalikan ke PPBJ.
+     * Persetujuan Dokumen Pembayaran oleh Bidang 2 (Wadir II) dengan mengunggah Memo Persetujuan.
+     *
+     * @throws ValidationException
+     */
+    public function approvePembayaranBidang2(
+        Pengadaan $pengadaan,
+        User $actor,
+        UploadedFile|string|null $memo = null,
+        ?string $catatan = null
+    ): Pengadaan {
+        $pengadaan->loadMissing('Kontrak.RencanaPembayaran.Pembayaran');
+        $pembayaran = $pengadaan->Kontrak?->RencanaPembayaran?->first()?->Pembayaran;
+        if ($pembayaran && in_array($pembayaran->status, ['perlu_revisi', 'ditolak'], true)) {
+            throw ValidationException::withMessages([
+                'memo' => ['Pembayaran saat ini berstatus revisi/ditolak oleh salah satu pihak, sehingga tidak dapat disetujui sampai PPBJ mengunggah dokumen baru.'],
+            ]);
+        }
+
+        return DB::transaction(function () use ($pengadaan, $actor, $memo, $catatan, $pembayaran) {
+            $statusLama = $pengadaan->status;
+
+            if ($memo instanceof UploadedFile) {
+                $memoDoc = $this->dokumenService->simpanDokumen(
+                    file: $memo,
+                    actor: $actor,
+                    refType: 'approval_pembayaran',
+                    refId: $pembayaran?->id ?? $pengadaan->id,
+                    tipeDokumen: 'memo_persetujuan_pembayaran',
+                    folder: 'dokumen/pembayaran/memo',
+                    field: 'memo'
+                );
+            } else {
+                $filename = is_string($memo) && $memo !== ''
+                    ? $memo
+                    : "Memo_Persetujuan_Pembayaran_WD2_{$pengadaan->id}.pdf";
+
+                $memoDoc = Dokumen::create([
+                    'ref_type' => 'approval_pembayaran',
+                    'ref_id' => $pembayaran?->id ?? $pengadaan->id,
+                    'tipe_dokumen' => 'memo_persetujuan_pembayaran',
+                    'versi' => 1,
+                    'nama_asli' => $filename,
+                    'nama_hash' => "dokumen/pembayaran/memo/{$filename}",
+                    'mime_type' => 'application/pdf',
+                    'ukuran_bytes' => 1250000,
+                    'uploaded_by' => $actor->id,
+                ]);
+            }
+
+            ApprovalPengadaan::updateOrCreate(
+                [
+                    'pengadaan_id' => $pengadaan->id,
+                    'tahap' => 'BIDANG2_PEMBAYARAN',
+                    'revisi_ke' => (int) ($pengadaan->revisi_ke ?? 0),
+                ],
+                [
+                    'keputusan' => 'disetujui',
+                    'alasan' => $catatan,
+                    'bukti_tanda_tangan_id' => $memoDoc->id,
+                    'actor_id' => $actor->id,
+                ]
+            );
+
+            if ($pembayaran instanceof Pembayaran) {
+                $revPembayaran = (int) ($pembayaran->revisi_ke ?? 0);
+                ApprovalPembayaran::updateOrCreate(
+                    [
+                        'pembayaran_id' => $pembayaran->id,
+                        'tahap' => 'BIDANG2',
+                        'revisi_ke' => $revPembayaran,
+                    ],
+                    [
+                        'keputusan' => 'disetujui',
+                        'alasan' => $catatan,
+                        'memo_dokumen_id' => $memoDoc->id,
+                        'actor_id' => $actor->id,
+                    ]
+                );
+
+                $ppkSetuju = ApprovalPembayaran::where('pembayaran_id', $pembayaran->id)
+                    ->where('tahap', 'PPK')
+                    ->where('revisi_ke', $revPembayaran)
+                    ->where('keputusan', 'disetujui')
+                    ->whereNotNull('memo_dokumen_id')
+                    ->exists();
+
+                $pembayaran->update([
+                    'status' => $ppkSetuju ? 'disetujui' : 'menunggu_ppk',
+                ]);
+            }
+
+            $statusBaru = 'pembayaran';
+            $pengadaan->update(['status' => $statusBaru]);
+
+            StatusHistory::create([
+                'ref_type' => 'pengadaan',
+                'ref_id' => $pengadaan->id,
+                'status_lama' => $statusLama,
+                'status_baru' => $statusBaru,
+                'actor_id' => $actor->id,
+            ]);
+
+            $ppbjUsers = User::whereHas('Role', fn ($q) => $q->where('nama', 'PPBJ'))->pluck('id');
+            foreach ($ppbjUsers as $ppbjId) {
+                $this->notificationService->send(
+                    user: (int) $ppbjId,
+                    judul: 'Persetujuan Pembayaran dari Bidang 2',
+                    pesan: "Dokumen pembayaran pengadaan '{$pengadaan->Permohonan?->judul}' telah disetujui oleh Bidang 2 beserta Memo Persetujuan.",
+                    refType: 'pengadaan',
+                    refId: $pengadaan->id,
+                );
+            }
+
+            return $pengadaan;
+        });
+    }
+
+    /**
+     * Penolakan Dokumen Pembayaran oleh PPK -> wajib alasan dan mengembalikan status ke revisi PPBJ.
      *
      * @throws ValidationException
      */
@@ -690,9 +814,17 @@ class ApprovalService
             ]);
         }
 
-        return DB::transaction(function () use ($pengadaan, $actor, $alasanBersih) {
+        $pengadaan->loadMissing('Kontrak.RencanaPembayaran.Pembayaran');
+        $pembayaran = $pengadaan->Kontrak?->RencanaPembayaran?->first()?->Pembayaran;
+        if ($pembayaran && in_array($pembayaran->status, ['perlu_revisi', 'ditolak'], true)) {
+            throw ValidationException::withMessages([
+                'alasan' => ['Dokumen pembayaran sudah dalam status penolakan/revisi.'],
+            ]);
+        }
+
+        return DB::transaction(function () use ($pengadaan, $actor, $alasanBersih, $pembayaran) {
             $statusLama = $pengadaan->status;
-            $statusBaru = 'ditolak';
+            $statusBaru = 'pembayaran';
 
             ApprovalPengadaan::updateOrCreate(
                 [
@@ -707,8 +839,6 @@ class ApprovalService
                 ]
             );
 
-            $pengadaan->loadMissing('Kontrak.Rencana.Pembayaran');
-            $pembayaran = $pengadaan->Kontrak?->Rencana?->map(fn ($r) => $r->Pembayaran)->filter()->first();
             if ($pembayaran instanceof Pembayaran) {
                 $revPembayaran = (int) ($pembayaran->revisi_ke ?? 0);
                 ApprovalPembayaran::updateOrCreate(
@@ -725,14 +855,12 @@ class ApprovalService
                 );
 
                 $pembayaran->update([
-                    'status' => 'ditolak',
-                    'revisi_ke' => $revPembayaran + 1,
+                    'status' => 'perlu_revisi',
                 ]);
             }
 
             $pengadaan->update([
                 'status' => $statusBaru,
-                'revisi_ke' => ((int) ($pengadaan->revisi_ke ?? 0)) + 1,
             ]);
 
             StatusHistory::create([
@@ -741,6 +869,7 @@ class ApprovalService
                 'status_lama' => $statusLama,
                 'status_baru' => $statusBaru,
                 'actor_id' => $actor->id,
+                'catatan' => 'PPK menolak tagihan pembayaran: '.$alasanBersih,
             ]);
 
             $ppbjUsers = User::whereHas('Role', fn ($q) => $q->where('nama', 'PPBJ'))->pluck('id');
@@ -749,6 +878,93 @@ class ApprovalService
                     user: (int) $ppbjId,
                     judul: 'Dokumen Pembayaran Ditolak PPK',
                     pesan: "Dokumen pembayaran pengadaan '{$pengadaan->Permohonan?->judul}' ditolak oleh PPK: {$alasanBersih}",
+                    refType: 'pengadaan',
+                    refId: $pengadaan->id,
+                );
+            }
+
+            return $pengadaan;
+        });
+    }
+
+    /**
+     * Penolakan Dokumen Pembayaran oleh Bidang 2 -> wajib alasan dan mengembalikan status ke revisi PPBJ.
+     *
+     * @throws ValidationException
+     */
+    public function rejectPembayaranBidang2(Pengadaan $pengadaan, User $actor, string $alasan): Pengadaan
+    {
+        $alasanBersih = trim($alasan);
+        if ($alasanBersih === '') {
+            throw ValidationException::withMessages([
+                'alasan' => ['Alasan penolakan dokumen pembayaran wajib diisi.'],
+            ]);
+        }
+
+        $pengadaan->loadMissing('Kontrak.RencanaPembayaran.Pembayaran');
+        $pembayaran = $pengadaan->Kontrak?->RencanaPembayaran?->first()?->Pembayaran;
+        if ($pembayaran && in_array($pembayaran->status, ['perlu_revisi', 'ditolak'], true)) {
+            throw ValidationException::withMessages([
+                'alasan' => ['Dokumen pembayaran sudah dalam status penolakan/revisi.'],
+            ]);
+        }
+
+        return DB::transaction(function () use ($pengadaan, $actor, $alasanBersih, $pembayaran) {
+            $statusLama = $pengadaan->status;
+            $statusBaru = 'pembayaran';
+
+            ApprovalPengadaan::updateOrCreate(
+                [
+                    'pengadaan_id' => $pengadaan->id,
+                    'tahap' => 'BIDANG2_PEMBAYARAN',
+                    'revisi_ke' => (int) ($pengadaan->revisi_ke ?? 0),
+                ],
+                [
+                    'keputusan' => 'ditolak',
+                    'alasan' => $alasanBersih,
+                    'actor_id' => $actor->id,
+                ]
+            );
+
+            if ($pembayaran instanceof Pembayaran) {
+                $revPembayaran = (int) ($pembayaran->revisi_ke ?? 0);
+                ApprovalPembayaran::updateOrCreate(
+                    [
+                        'pembayaran_id' => $pembayaran->id,
+                        'tahap' => 'BIDANG2',
+                        'revisi_ke' => $revPembayaran,
+                    ],
+                    [
+                        'keputusan' => 'ditolak',
+                        'alasan' => $alasanBersih,
+                        'actor_id' => $actor->id,
+                    ]
+                );
+
+                $pembayaran->update([
+                    'status' => 'perlu_revisi',
+                ]);
+            }
+
+            $pengadaan->update([
+                'status' => $statusBaru,
+            ]);
+
+            StatusHistory::create([
+                'ref_type' => 'pengadaan',
+                'ref_id' => $pengadaan->id,
+                'status_lama' => $statusLama,
+                'status_baru' => $statusBaru,
+                'actor_id' => $actor->id,
+                'catatan' => 'Bidang 2 menolak tagihan pembayaran: '.$alasanBersih,
+            ]);
+
+            $ppbjUsers = User::whereHas('Role', fn ($q) => $q->where('nama', 'PPBJ'))->pluck('id');
+            foreach ($ppbjUsers as $ppbjId) {
+                $this->notificationService->send(
+                    user: (int) $ppbjId,
+                    judul: 'Dokumen Pembayaran Ditolak Bidang 2',
+                    pesan: "Dokumen pembayaran pengadaan '{$pengadaan->Permohonan?->judul}' ditolak oleh Bidang 2: {$alasanBersih}",
                     refType: 'pengadaan',
                     refId: $pengadaan->id,
                 );

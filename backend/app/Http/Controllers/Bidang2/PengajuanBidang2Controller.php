@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Bidang2;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Bidang2\SetujuPermohonanBidang2Request;
+use App\Http\Requests\Bidang2\SetujuiPembayaranBidang2Request;
 use App\Http\Requests\Bidang2\TolakPermohonanBidang2Request;
 use App\Models\Pengadaan;
 use App\Models\Permohonan;
+use App\Services\ApprovalService;
 use App\Services\Bidang2Service;
 use App\Services\PengadaanService;
 use Illuminate\Http\JsonResponse;
@@ -19,6 +21,7 @@ class PengajuanBidang2Controller extends Controller
     public function __construct(
         private Bidang2Service $bidang2Service,
         private PengadaanService $pengadaanService,
+        private ApprovalService $approvalService,
     ) {}
 
     /**
@@ -93,6 +96,48 @@ class PengajuanBidang2Controller extends Controller
 
         return response()->json([
             'detail' => $detail,
+        ]);
+    }
+
+    /**
+     * Menyetujui dokumen pembayaran pengadaan oleh Bidang 2 dengan mengunggah memo (FR-56).
+     */
+    public function approvePembayaran(SetujuiPembayaranBidang2Request $request, Pengadaan $pengadaan): JsonResponse
+    {
+        $updated = $this->approvalService->approvePembayaranBidang2(
+            $pengadaan,
+            $request->user(),
+            $request->file('memo'),
+            $request->validated('catatan')
+        );
+
+        return response()->json([
+            'message' => 'Dokumen pembayaran beserta Memo Persetujuan Bidang 2 berhasil disetujui.',
+            'data' => $updated,
+        ]);
+    }
+
+    /**
+     * Menolak dokumen pembayaran pengadaan oleh Bidang 2 dengan alasan spesifik (FR-57).
+     */
+    public function rejectPembayaran(Request $request, Pengadaan $pengadaan): JsonResponse
+    {
+        $request->validate([
+            'alasan' => 'required|string|min:5|max:1000',
+        ], [
+            'alasan.required' => 'Alasan penolakan dokumen pembayaran wajib diisi.',
+            'alasan.min' => 'Alasan penolakan minimal 5 karakter.',
+        ]);
+
+        $updated = $this->approvalService->rejectPembayaranBidang2(
+            $pengadaan,
+            $request->user(),
+            (string) $request->input('alasan')
+        );
+
+        return response()->json([
+            'message' => 'Dokumen pembayaran telah ditolak oleh Bidang 2 beserta catatan revisi.',
+            'data' => $updated,
         ]);
     }
 

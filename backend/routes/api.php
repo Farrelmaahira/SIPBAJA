@@ -145,6 +145,8 @@ Route::prefix('v1')->group(function () {
             Route::get('pengajuan', [PengajuanBidang2Controller::class, 'index'])->name('api.bidang2.pengajuan.index');
             Route::get('pengajuan/{permohonan}', [PengajuanBidang2Controller::class, 'show'])->name('api.bidang2.pengajuan.show');
             Route::get('pengadaan/{pengadaan}', [PengajuanBidang2Controller::class, 'showPengadaan'])->name('api.bidang2.pengadaan.show');
+            Route::post('pengadaan/{pengadaan}/pembayaran/approve', [PengajuanBidang2Controller::class, 'approvePembayaran'])->name('api.bidang2.pengadaan.pembayaran.approve');
+            Route::post('pengadaan/{pengadaan}/pembayaran/reject', [PengajuanBidang2Controller::class, 'rejectPembayaran'])->name('api.bidang2.pengadaan.pembayaran.reject');
             Route::post('pengajuan/{permohonan}/approve', [PengajuanBidang2Controller::class, 'approve'])->name('api.bidang2.pengajuan.approve');
             Route::post('pengajuan/{permohonan}/reject', [PengajuanBidang2Controller::class, 'reject'])->name('api.bidang2.pengajuan.reject');
             Route::get('pengajuan/{permohonan}/memo', [PengajuanBidang2Controller::class, 'downloadMemo'])->name('api.bidang2.pengajuan.memo.download');
