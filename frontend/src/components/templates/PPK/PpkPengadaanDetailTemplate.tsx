@@ -15,6 +15,7 @@ import {
 import AppLayout, { type AppNavItem } from '../General/AppLayout';
 import HeroBanner from '../../organisms/HeroBanner';
 import { InformasiPengadaanCard } from '../../organisms/PP/InformasiPengadaanCard';
+import TrackingPengadaanCard from '../../organisms/TrackingPengadaanCard';
 import { CatatanRevisiCard } from '../../organisms/PP/CatatanRevisiCard';
 import DocumentCard from '../../organisms/DocumentCard';
 import KonfirmasiApproveModal from '../../organisms/KonfirmasiApproveModal';
@@ -157,19 +158,30 @@ export const PpkPengadaanDetailTemplate: FC<PpkPengadaanDetailTemplateProps> = (
 
   // Status & Workflow Normalization
   const rawStatus = (pengadaan.status || 'menunggu_persetujuan').toLowerCase();
+  const isDraft = rawStatus === 'draft';
   const isDitolak = rawStatus === 'ditolak';
   const isDisetujui = rawStatus === 'disetujui' || rawStatus === 'selesai';
   const perluReviewPp = Boolean(level?.perlu_review_pp);
 
   // Aturan Otorisasi Komitmen PPK (FR-49):
   // 1. Level 50-200jt (perlu_review_pp = true): Hanya bisa diotorisasi jika sudah berstatus 'diteruskan' (lolos verifikasi PP).
-  //    Jika masih 'menunggu_persetujuan', PPK bisa melihat pratinjau dokumen namun tombol keputusan menunggu PP.
-  // 2. Level > 200jt (perlu_review_pp = false): Langsung bisa diotorisasi saat status 'menunggu_persetujuan'.
-  const isMenungguVerifikasiPp = perluReviewPp && (rawStatus === 'menunggu_persetujuan' || rawStatus === 'diajukan');
-  const canAuthorizePpk = !isDitolak && !isDisetujui && (
-    (!perluReviewPp && (rawStatus === 'menunggu_persetujuan' || rawStatus === 'diajukan')) ||
-    (perluReviewPp && rawStatus === 'diteruskan')
-  );
+  //    Jika masih 'menunggu_review' / 'menunggu_persetujuan', PPK bisa melihat pratinjau dokumen namun tombol keputusan menunggu PP.
+  // 2. Level < 50jt atau > 200jt (perlu_review_pp = false): Langsung bisa diotorisasi saat status 'menunggu_review' / 'menunggu_persetujuan'.
+  const isMenungguVerifikasiPp =
+    perluReviewPp &&
+    (rawStatus === 'menunggu_review' ||
+      rawStatus === 'menunggu_persetujuan' ||
+      rawStatus === 'diajukan');
+
+  const canAuthorizePpk =
+    !isDraft &&
+    !isDitolak &&
+    !isDisetujui &&
+    ((!perluReviewPp &&
+      (rawStatus === 'menunggu_review' ||
+        rawStatus === 'menunggu_persetujuan' ||
+        rawStatus === 'diajukan')) ||
+      (perluReviewPp && rawStatus === 'diteruskan'));
 
   // Catatan penolakan jika ditolak
   const rejectionInfo = useMemo(() => {
@@ -409,6 +421,13 @@ export const PpkPengadaanDetailTemplate: FC<PpkPengadaanDetailTemplateProps> = (
           nominal={nominalEstimasi}
           statusPpLabel={isDisetujui ? 'Telah Diotorisasi PPK' : isDitolak ? 'Ditolak oleh PPK' : isMenungguVerifikasiPp ? 'Menunggu Verifikasi PP' : 'Siap Otorisasi PPK'}
           statusPengadaanPill={renderHeroStatusBadge()}
+        />
+
+        {/* TRACKING PROSES (FR-05) */}
+        <TrackingPengadaanCard
+          statusPengadaan={rawStatus}
+          stepper={detail?.tracking?.stepper as any}
+          timeline={detail?.tracking?.timeline as any}
         />
 
         {/* CARD CATATAN REVISI */}
@@ -677,7 +696,25 @@ export const PpkPengadaanDetailTemplate: FC<PpkPengadaanDetailTemplateProps> = (
                   </p>
                 </div>
               </div>
-            ) : (
+            ) : isDraft ? (
+              <div className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)]">
+                <div className="pb-3.5 mb-3 border-b border-[#F0F4F2]">
+                  <h3 className="text-base font-bold text-[#14201C]">Dokumen Masih Draft</h3>
+                  <p className="text-xs text-[#8A9A95] mt-0.5">
+                    Paket pengadaan belum diajukan ke reviewer
+                  </p>
+                </div>
+                <div className="p-4 rounded-xl bg-[#F0F4F2] text-[#5F6F6A] border border-[#CFDAD6] text-xs space-y-2">
+                  <div className="flex items-center gap-2 font-bold">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-[#5F6F6A]" />
+                    <span>Menunggu Pengajuan PPBJ</span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed">
+                    Paket pengadaan ini masih berupa draf pada PPBJ dan belum disubmit ke tahapan review.
+                  </p>
+                </div>
+              </div>
+            ) : isDitolak ? (
               <div className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)]">
                 <div className="pb-3.5 mb-3 border-b border-[#F0F4F2]">
                   <h3 className="text-base font-bold text-[#14201C]">Keputusan Review Selesai</h3>
@@ -685,26 +722,25 @@ export const PpkPengadaanDetailTemplate: FC<PpkPengadaanDetailTemplateProps> = (
                     Dokumen pengadaan ini telah diproses otorisasi oleh PPK.
                   </p>
                 </div>
-                <div
-                  className={`p-4 rounded-xl text-xs font-medium flex items-center gap-3 ${isDisetujui
-                    ? 'bg-[#E8F5EF] text-[#0E7C5A] border border-[#A3D9C3]'
-                    : 'bg-[#FEF3F2] text-[#B42318] border border-[#FECDCA]'
-                    }`}
-                >
-                  {isDisetujui ? (
-                    <>
-                      <CheckCircle2 className="w-5 h-5 shrink-0" />
-                      <span>Dokumen telah diotorisasi dan diteruskan ke PPBJ untuk kontrak.</span>
-                    </>
-                  ) : (
-                    <>
-                      <XCircle className="w-5 h-5 shrink-0" />
-                      <span>Dokumen ditolak dan dikembalikan ke PPBJ untuk direvisi.</span>
-                    </>
-                  )}
+                <div className="p-4 rounded-xl text-xs font-medium flex items-center gap-3 bg-[#FEF3F2] text-[#B42318] border border-[#FECDCA]">
+                  <XCircle className="w-5 h-5 shrink-0" />
+                  <span>Dokumen ditolak dan dikembalikan ke PPBJ untuk direvisi.</span>
                 </div>
               </div>
-            )}
+            ) : isDisetujui ? (
+              <div className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)]">
+                <div className="pb-3.5 mb-3 border-b border-[#F0F4F2]">
+                  <h3 className="text-base font-bold text-[#14201C]">Keputusan Review Selesai</h3>
+                  <p className="text-xs text-[#8A9A95] mt-0.5">
+                    Dokumen pengadaan ini telah diproses otorisasi oleh PPK.
+                  </p>
+                </div>
+                <div className="p-4 rounded-xl text-xs font-medium flex items-center gap-3 bg-[#E8F5EF] text-[#0E7C5A] border border-[#A3D9C3]">
+                  <CheckCircle2 className="w-5 h-5 shrink-0" />
+                  <span>Dokumen telah diotorisasi dan diteruskan ke PPBJ untuk kontrak.</span>
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
 

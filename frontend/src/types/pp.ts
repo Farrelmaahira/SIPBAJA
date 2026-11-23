@@ -177,6 +177,20 @@ export interface PpPengadaanDetailPayload {
   dokumen_pengadaan?: DokumenItem[];
   memo_permohonan?: PpMemoPermohonanItem[];
   mak_list?: PpMakItem[];
+  tracking?: {
+    stepper?: Array<{
+      key: string;
+      label: string;
+      status: 'selesai' | 'sedang_berlangsung' | 'belum_dimulai';
+    }>;
+    timeline?: Array<{
+      id?: number | string;
+      tanggal: string;
+      keterangan: string;
+      actor_nama?: string;
+      aktif?: boolean;
+    }>;
+  };
 }
 
 export interface PpPengadaanDetailResponse {

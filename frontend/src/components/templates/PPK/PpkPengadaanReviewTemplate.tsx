@@ -15,6 +15,8 @@ import {
   Info,
   UserCheck,
   Hash,
+  AlertCircle,
+  Clock,
 } from 'lucide-react';
 import AppLayout, { type AppNavItem } from '../General/AppLayout';
 import KonfirmasiApproveModal from '../../organisms/KonfirmasiApproveModal';
@@ -128,9 +130,12 @@ export const PpkPengadaanReviewTemplate: FC<PpkPengadaanReviewTemplateProps> = (
     }
   };
 
-  const canReview = pengadaan.status === 'diteruskan' ||
-    pengadaan.status === 'menunggu_persetujuan' ||
-    pengadaan.status === 'menunggu_review';
+  const perluReviewPp = Boolean(pengadaan.level?.perlu_review_pp);
+  const canReview =
+    pengadaan.status === 'diteruskan' ||
+    (!perluReviewPp &&
+      (pengadaan.status === 'menunggu_persetujuan' ||
+        pengadaan.status === 'menunggu_review'));
 
   return (
     <AppLayout
@@ -542,7 +547,7 @@ export const PpkPengadaanReviewTemplate: FC<PpkPengadaanReviewTemplateProps> = (
         </div>
 
         {/* Action Bottom Card */}
-        {canReview && (
+        {canReview ? (
           <div className="bg-gradient-to-r from-indigo-900 to-slate-900 rounded-2xl p-6 text-white shadow-lg flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="space-y-1 text-center md:text-left">
               <h3 className="text-lg font-bold">Otorisasi Komitmen Pengadaan</h3>
@@ -571,7 +576,47 @@ export const PpkPengadaanReviewTemplate: FC<PpkPengadaanReviewTemplateProps> = (
               </button>
             </div>
           </div>
-        )}
+        ) : pengadaan.status === 'draft' ? (
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 text-slate-700 flex items-center gap-3 text-sm">
+            <AlertCircle className="w-5 h-5 text-slate-500 shrink-0" />
+            <div>
+              <strong className="block font-semibold text-slate-900">Dokumen Masih Berstatus Draft</strong>
+              <span className="text-xs text-slate-500">
+                Paket pengadaan ini belum diajukan oleh PPBJ ke reviewer. Otorisasi komitmen hanya dapat dilakukan setelah paket diajukan.
+              </span>
+            </div>
+          </div>
+        ) : perluReviewPp && (pengadaan.status === 'menunggu_persetujuan' || pengadaan.status === 'menunggu_review') ? (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-amber-800 flex items-center gap-3 text-sm">
+            <Clock className="w-5 h-5 text-amber-600 shrink-0" />
+            <div>
+              <strong className="block font-semibold text-amber-900">Menunggu Verifikasi Administratif PP</strong>
+              <span className="text-xs text-amber-700">
+                Dokumen pengadaan sedang dalam verifikasi oleh Pejabat Pengadaan (PP). Tombol otorisasi komitmen PPK akan aktif setelah PP menyetujui dokumen ini.
+              </span>
+            </div>
+          </div>
+        ) : pengadaan.status === 'ditolak' ? (
+          <div className="bg-rose-50 border border-rose-200 rounded-2xl p-5 text-rose-700 flex items-center gap-3 text-sm">
+            <XCircle className="w-5 h-5 text-rose-500 shrink-0" />
+            <div>
+              <strong className="block font-semibold text-rose-900">Dokumen Telah Ditolak</strong>
+              <span className="text-xs text-rose-600">
+                Dokumen pengadaan ini telah ditolak dan dikembalikan ke PPBJ untuk diperbaiki.
+              </span>
+            </div>
+          </div>
+        ) : pengadaan.status === 'disetujui' || pengadaan.status === 'selesai' ? (
+          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 text-emerald-800 flex items-center gap-3 text-sm">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+            <div>
+              <strong className="block font-semibold text-emerald-900">Dokumen Telah Diotorisasi</strong>
+              <span className="text-xs text-emerald-700">
+                Dokumen pengadaan ini telah diotorisasi komitmen oleh PPK dan diteruskan ke PPBJ untuk pembuatan kontrak.
+              </span>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {/* Modal Dialogs */}
