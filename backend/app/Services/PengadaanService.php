@@ -8,6 +8,7 @@ use App\Models\JenisPengadaan;
 use App\Models\Kontrak;
 use App\Models\LevelPengadaan;
 use App\Models\MetodePengadaan;
+use App\Models\Pembayaran;
 use App\Models\Pengadaan;
 use App\Models\Permohonan;
 use App\Models\PermohonanMak;
@@ -25,7 +26,8 @@ use Illuminate\Validation\ValidationException;
 class PengadaanService
 {
     public function __construct(
-        protected NotificationService $notificationService
+        protected NotificationService $notificationService,
+        protected DokumenService $dokumenService
     ) {
     }
 
@@ -1238,7 +1240,7 @@ class PengadaanService
         $pengadaan->loadMissing([
             'Penerimaan.Dokumen',
             'Kontrak.RencanaPembayaran.Pembayaran.Dokumen',
-            'Kontrak.RencanaPembayaran.Pembayaran.ApprovalPembayaran.DokumenMemo',
+            'Kontrak.RencanaPembayaran.Pembayaran.Approvals.Memo',
         ]);
 
         $penerimaan = $pengadaan->Penerimaan;
@@ -1302,30 +1304,30 @@ class PengadaanService
         $bidang2Approved = false;
 
         if ($pembayaran) {
-            foreach ($pembayaran->ApprovalPembayaran as $appr) {
+            foreach ($pembayaran->Approvals as $appr) {
                 $apprData = [
                     'id' => (int) $appr->id,
                     'tahap' => $appr->tahap,
                     'keputusan' => $appr->keputusan,
                     'alasan' => $appr->alasan,
-                    'memo' => $appr->DokumenMemo ? [
-                        'id' => (int) $appr->DokumenMemo->id,
-                        'nama_asli' => $appr->DokumenMemo->nama_asli,
+                    'memo' => $appr->Memo ? [
+                        'id' => (int) $appr->Memo->id,
+                        'nama_asli' => $appr->Memo->nama_asli,
                         'url' => route('api.ppbj.pengadaan.dokumen.download', [
                             'pengadaanId' => $pengadaan->id,
-                            'dokumenId' => $appr->DokumenMemo->id,
+                            'dokumenId' => $appr->Memo->id,
                         ]) . '?disposition=inline',
                     ] : null,
                 ];
 
                 if ($appr->tahap === 'PPK') {
                     $approvalPpk = $apprData;
-                    if ($appr->keputusan === 'disetujui' && $appr->DokumenMemo) {
+                    if ($appr->keputusan === 'disetujui' && $appr->Memo) {
                         $ppkApproved = true;
                     }
                 } elseif ($appr->tahap === 'BIDANG2') {
                     $approvalBidang2 = $apprData;
-                    if ($appr->keputusan === 'disetujui' && $appr->DokumenMemo) {
+                    if ($appr->keputusan === 'disetujui' && $appr->Memo) {
                         $bidang2Approved = true;
                     }
                 }
@@ -1367,5 +1369,80 @@ class PengadaanService
             'dokumen_legalitas' => $dokumenLegalitas,
             'is_locked' => $isLocked,
         ];
+    }
+
+    /**
+     * Upload / Re-upload dokumen tagihan pembayaran oleh PPBJ (FR-41, FR-42).
+     */
+    public function uploadDokumenTagihan(Pengadaan $pengadaan, \Illuminate\Http\UploadedFile $file, ?float $nominal, ?string $catatan, User $actor): array
+    {
+        $context = $this->getPembayaranContext($pengadaan);
+
+        if (! $context['can_upload_tagihan']) {
+            throw new \Illuminate\Validation\ValidationException(
+                validator([], []),
+                response()->json([
+                    'success' => false,
+                    'message' => 'Dokumen tagihan tidak dapat diunggah ulang karena telah mendapatkan persetujuan final (memo) dari PPK dan Bidang 2.',
+                ], 422)
+            );
+        }
+
+        return DB::transaction(function () use ($pengadaan, $file, $nominal, $catatan, $actor) {
+            // Pastikan kontrak & rencana pembayaran ada
+            $kontrak = $pengadaan->Kontrak;
+            if (! $kontrak) {
+                throw new \RuntimeException('Pengadaan belum memiliki kontrak/SPK aktif.');
+            }
+
+            $rencana = $kontrak->RencanaPembayaran()->firstOrCreate(
+                ['termin_ke' => 1],
+                [
+                    'nominal_rencana' => $nominal ?: ($kontrak->nominal_kontrak ?: 0),
+                    'tanggal_jatuh_tempo' => now()->addDays(14),
+                    'status' => 'belum_lunas',
+                ]
+            );
+
+            $pembayaran = Pembayaran::firstOrNew(['rencana_pembayaran_id' => $rencana->id]);
+            $isRevisi = $pembayaran->exists && $pembayaran->status === 'perlu_revisi';
+            $pembayaran->nominal = $nominal ?: ($pembayaran->nominal ?: ($kontrak->nominal_kontrak ?: 0));
+            $pembayaran->status = 'menunggu_persetujuan';
+            if ($isRevisi) {
+                $pembayaran->revisi_ke = ((int) $pembayaran->revisi_ke) + 1;
+            }
+            $pembayaran->save();
+
+            // Simpan berkas fisik ke DokumenService
+            $doc = $this->dokumenService->simpanDokumen(
+                file: $file,
+                actor: $actor,
+                refType: 'pembayaran',
+                refId: $pembayaran->id,
+                tipeDokumen: 'dokumen_tagihan',
+                folder: 'dokumen/pembayaran/tagihan',
+                field: 'tagihan'
+            );
+
+            $statusSebelumnya = $pengadaan->status;
+            $pengadaan->status = 'pembayaran';
+            $pengadaan->save();
+
+            // Catat history
+            StatusHistory::create([
+                'ref_type' => 'pengadaan',
+                'ref_id' => $pengadaan->id,
+                'status_lama' => $statusSebelumnya,
+                'status_baru' => 'pembayaran',
+                'actor_id' => $actor->id,
+                'catatan' => $catatan ?: 'PPBJ mengunggah dokumen tagihan/pembayaran termin',
+                'created_at' => now(),
+            ]);
+
+            return [
+                'pembayaran' => $pembayaran->fresh(['Dokumen', 'Approvals']),
+                'dokumen' => $doc,
+            ];
+        });
     }
 }

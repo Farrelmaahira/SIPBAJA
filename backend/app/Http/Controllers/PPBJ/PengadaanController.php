@@ -225,4 +225,31 @@ class PengadaanController extends Controller
             'data' => $context,
         ]);
     }
+
+    /**
+     * Mengunggah atau mengunggah ulang dokumen tagihan (FR-41, FR-42).
+     */
+    public function uploadDokumenTagihan(Request $request, string $id): JsonResponse
+    {
+        $request->validate([
+            'dokumen_tagihan' => 'required|file|mimes:pdf|max:10240',
+            'nominal' => 'nullable|numeric|min:0',
+            'catatan' => 'nullable|string|max:1000',
+        ]);
+
+        $pengadaan = Pengadaan::findOrFail((int) $id);
+        $result = $this->pengadaanService->uploadDokumenTagihan(
+            pengadaan: $pengadaan,
+            file: $request->file('dokumen_tagihan'),
+            nominal: $request->filled('nominal') ? (float) $request->input('nominal') : null,
+            catatan: $request->input('catatan'),
+            actor: $request->user()
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Dokumen tagihan berhasil diunggah.',
+            'data' => $result,
+        ]);
+    }
 }

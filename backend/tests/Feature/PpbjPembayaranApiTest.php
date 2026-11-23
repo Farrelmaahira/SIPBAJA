@@ -141,4 +141,131 @@ class PpbjPembayaranApiTest extends TestCase
         $this->assertTrue($data['can_upload_tagihan']);
         $this->assertFalse($data['can_upload_legalitas']);
     }
+
+    public function test_ppbj_can_upload_dokumen_tagihan_and_routes_to_dual_approval(): void
+    {
+        Storage::fake('local');
+        $pengadaan = $this->createPengadaanSiapBayar();
+
+        $file = UploadedFile::fake()->create('dokumen_tagihan.pdf', 500, 'application/pdf');
+
+        $response = $this->actingAs($this->ppbjUser)
+            ->postJson("/api/v1/ppbj/pengadaan/{$pengadaan->id}/dokumen-tagihan", [
+                'dokumen_tagihan' => $file,
+                'nominal' => 48500000,
+                'catatan' => 'Pengajuan termin pertama',
+            ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'success' => true,
+                'message' => 'Dokumen tagihan berhasil diunggah.',
+            ]);
+
+        $this->assertDatabaseHas('pembayaran', [
+            'nominal' => 48500000,
+            'status' => 'menunggu_persetujuan',
+        ]);
+
+        $this->assertDatabaseHas('dokumen', [
+            'ref_type' => 'pembayaran',
+            'tipe_dokumen' => 'dokumen_tagihan',
+            'nama_asli' => 'dokumen_tagihan.pdf',
+        ]);
+
+        $this->assertEquals('pembayaran', $pengadaan->fresh()->status);
+    }
+
+    public function test_ppbj_can_reupload_tagihan_when_status_needs_revision(): void
+    {
+        Storage::fake('local');
+        $pengadaan = $this->createPengadaanSiapBayar();
+        $rencana = $pengadaan->Kontrak->RencanaPembayaran->first();
+
+        $pembayaran = Pembayaran::create([
+            'rencana_pembayaran_id' => $rencana->id,
+            'nominal' => 50000000,
+            'status' => 'perlu_revisi',
+            'revisi_ke' => 1,
+        ]);
+
+        $file = UploadedFile::fake()->create('dokumen_tagihan_rev1.pdf', 600, 'application/pdf');
+
+        $response = $this->actingAs($this->ppbjUser)
+            ->postJson("/api/v1/ppbj/pengadaan/{$pengadaan->id}/dokumen-tagihan", [
+                'dokumen_tagihan' => $file,
+                'nominal' => 49000000,
+            ]);
+
+        $response->assertOk();
+        $this->assertEquals('menunggu_persetujuan', $pembayaran->fresh()->status);
+        $this->assertEquals(49000000, (float) $pembayaran->fresh()->nominal);
+    }
+
+    public function test_ppbj_cannot_reupload_tagihan_after_both_memos_approved(): void
+    {
+        Storage::fake('local');
+        $pengadaan = $this->createPengadaanSiapBayar();
+        $rencana = $pengadaan->Kontrak->RencanaPembayaran->first();
+
+        $pembayaran = Pembayaran::create([
+            'rencana_pembayaran_id' => $rencana->id,
+            'nominal' => 50000000,
+            'status' => 'disetujui',
+        ]);
+
+        $memoPpk = Dokumen::create([
+            'ref_type' => 'approval_pembayaran',
+            'ref_id' => 1,
+            'tipe_dokumen' => 'memo_persetujuan_pembayaran',
+            'nama_asli' => 'memo_ppk.pdf',
+            'nama_hash' => 'memo_ppk.pdf',
+            'mime_type' => 'application/pdf',
+            'ukuran_bytes' => 1024,
+            'versi' => 1,
+            'uploaded_by' => $this->ppkUser->id,
+        ]);
+
+        $memoWd2 = Dokumen::create([
+            'ref_type' => 'approval_pembayaran',
+            'ref_id' => 2,
+            'tipe_dokumen' => 'memo_persetujuan_pembayaran',
+            'nama_asli' => 'memo_wd2.pdf',
+            'nama_hash' => 'memo_wd2.pdf',
+            'mime_type' => 'application/pdf',
+            'ukuran_bytes' => 1024,
+            'versi' => 1,
+            'uploaded_by' => $this->bidang2User->id,
+        ]);
+
+        ApprovalPembayaran::create([
+            'pembayaran_id' => $pembayaran->id,
+            'tahap' => 'PPK',
+            'keputusan' => 'disetujui',
+            'revisi_ke' => 0,
+            'memo_dokumen_id' => $memoPpk->id,
+            'actor_id' => $this->ppkUser->id,
+        ]);
+
+        ApprovalPembayaran::create([
+            'pembayaran_id' => $pembayaran->id,
+            'tahap' => 'BIDANG2',
+            'keputusan' => 'disetujui',
+            'revisi_ke' => 0,
+            'memo_dokumen_id' => $memoWd2->id,
+            'actor_id' => $this->bidang2User->id,
+        ]);
+
+        $file = UploadedFile::fake()->create('coba_reupload.pdf', 500, 'application/pdf');
+
+        $response = $this->actingAs($this->ppbjUser)
+            ->postJson("/api/v1/ppbj/pengadaan/{$pengadaan->id}/dokumen-tagihan", [
+                'dokumen_tagihan' => $file,
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJson([
+                'success' => false,
+            ]);
+    }
 }
