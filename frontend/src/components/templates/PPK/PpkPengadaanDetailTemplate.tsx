@@ -28,6 +28,8 @@ import type {
 } from '../../../types/pp';
 import type { NotificationItem } from '../../../types/notification';
 import type { DokumenItem } from '../../../types/dokumen';
+import type { PpbjPembayaranContext } from '../../../types/ppbj';
+import PimpinanPembayaranReviewCard from '../../organisms/Pembayaran/PimpinanPembayaranReviewCard';
 import { PPK_NAV_ITEMS } from '@/constants/ppkNav';
 
 export interface PpkPengadaanDetailTemplateProps {
@@ -50,6 +52,11 @@ export interface PpkPengadaanDetailTemplateProps {
   onOpenReject: () => void;
   onCloseReject: () => void;
   onConfirmReject: (alasan: string) => void;
+  pembayaranContext?: PpbjPembayaranContext | null;
+  isLoadingPembayaran?: boolean;
+  onApprovePembayaran?: (memo: File, catatan?: string) => Promise<void>;
+  onRejectPembayaran?: (alasan: string) => Promise<void>;
+  flashSuccess?: string | null;
 }
 
 export const PpkPengadaanDetailTemplate: FC<PpkPengadaanDetailTemplateProps> = ({
@@ -72,6 +79,11 @@ export const PpkPengadaanDetailTemplate: FC<PpkPengadaanDetailTemplateProps> = (
   onOpenReject,
   onCloseReject,
   onConfirmReject,
+  pembayaranContext = null,
+  isLoadingPembayaran = false,
+  onApprovePembayaran,
+  onRejectPembayaran,
+  flashSuccess = null,
 }) => {
   const pengadaan = detail.pengadaan || { id: 0 };
   const permohonan = pengadaan.permohonan || pengadaan.Permohonan || {};
@@ -379,7 +391,28 @@ export const PpkPengadaanDetailTemplate: FC<PpkPengadaanDetailTemplateProps> = (
       ]}
     >
       <div className="space-y-6 pb-12">
-        {/* Flash Error Banner */}
+        {/* Flash Success Banner */}
+        {flashSuccess && (
+          <div className="bg-[#E4F6EC] border border-[#BDE8D1] rounded-2xl p-4 flex items-center justify-between shadow-xs text-xs font-bold text-[#0B7A4E]">
+            {flashSuccess}
+          </div>
+        )}
+
+        {/* CARD VERIFIKASI PEMBAYARAN & MEMO PPK (FR-55, FR-56, FR-57) */}
+        {pembayaranContext?.pembayaran && onApprovePembayaran && onRejectPembayaran && (
+          <PimpinanPembayaranReviewCard
+            role="PPK"
+            context={pembayaranContext}
+            isLoading={isLoadingPembayaran}
+            onApprove={onApprovePembayaran}
+            onReject={onRejectPembayaran}
+            onViewDokumen={(doc) => handleViewNewTab(doc)}
+            onDownloadDokumen={(doc) => handleDownload(doc)}
+            previewBlobUrl={pengadaanBlobUrl}
+            previewDocId={primaryDokumenPengadaan?.id}
+            isLoadingPreview={loadingPengadaanBlob}
+          />
+        )}
         {flashError && (
           <div className="bg-[#FEF3DC] border border-[#FDE4A0] rounded-2xl p-4 flex items-center justify-between shadow-xs">
             <div className="flex items-center gap-3">

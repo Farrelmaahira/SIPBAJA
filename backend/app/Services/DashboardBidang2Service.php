@@ -27,8 +27,8 @@ class DashboardBidang2Service
             ->count();
 
         $disetujuiBulanIni = Permohonan::where('status', 'disetujui')
-            ->whereYear('updated_at', $tahunIni)
-            ->whereMonth('updated_at', $bulanIni)
+            ->whereYear('created_at', $tahunIni)
+            ->whereMonth('created_at', $bulanIni)
             ->count();
 
         return [

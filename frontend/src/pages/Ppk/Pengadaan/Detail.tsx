@@ -31,6 +31,24 @@ export const PpkPengadaanDetail: FC<PpkPengadaanDetailProps> = ({
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [rejectError, setRejectError] = useState<string>('');
   const [flashError, setFlashError] = useState<string>('');
+  const [flashSuccess, setFlashSuccess] = useState<string | null>(null);
+
+  const [pembayaranContext, setPembayaranContext] = useState<any>(null);
+  const [isLoadingPembayaran, setIsLoadingPembayaran] = useState<boolean>(false);
+
+  const fetchPembayaran = (signal?: AbortSignal) => {
+    if (!id) return;
+    setIsLoadingPembayaran(true);
+    ppkService
+      .getPembayaranReview(id, signal)
+      .then((data) => setPembayaranContext(data))
+      .catch((err) => {
+        if (err?.name !== 'CanceledError') {
+          // ignore
+        }
+      })
+      .finally(() => setIsLoadingPembayaran(false));
+  };
 
   useEffect(() => {
     if (!id || initialDetail) {
@@ -59,10 +77,26 @@ export const PpkPengadaanDetail: FC<PpkPengadaanDetailProps> = ({
         }
       });
 
+    fetchPembayaran(controller.signal);
+
     return () => controller.abort();
   }, [id, initialDetail]);
 
   const targetId = detail.pengadaan?.id || id;
+
+  const handleApprovePembayaran = async (memo: File, catatan?: string) => {
+    if (!targetId) return;
+    const res = await ppkService.approvePembayaran(targetId, memo, catatan);
+    setFlashSuccess(res.message || 'Persetujuan pembayaran berhasil dikirim.');
+    fetchPembayaran();
+  };
+
+  const handleRejectPembayaran = async (alasan: string) => {
+    if (!targetId) return;
+    const res = await ppkService.rejectPembayaran(targetId, alasan);
+    setFlashSuccess(res.message || 'Penolakan pembayaran berhasil dikirim.');
+    fetchPembayaran();
+  };
 
   const handleConfirmApprovePengadaan = async () => {
     if (!targetId) {
@@ -130,6 +164,11 @@ export const PpkPengadaanDetail: FC<PpkPengadaanDetailProps> = ({
       }}
       onCloseReject={() => setRejectOpen(false)}
       onConfirmReject={handleConfirmRejectPengadaan}
+      pembayaranContext={pembayaranContext}
+      isLoadingPembayaran={isLoadingPembayaran}
+      onApprovePembayaran={handleApprovePembayaran}
+      onRejectPembayaran={handleRejectPembayaran}
+      flashSuccess={flashSuccess}
     />
   );
 };
