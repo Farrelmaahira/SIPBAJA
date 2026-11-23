@@ -17,6 +17,7 @@ import DocumentPreviewModal from '../../organisms/DocumentPreviewModal';
 import CatatanPenolakanCard from '../../molecules/CatatanPenolakanCard';
 import KontrakVendorCard from '../../molecules/KontrakVendorCard';
 import PelengkapPengadaanInlineForm from '../../organisms/PPBJ/PelengkapPengadaanInlineForm';
+import PpbjPembayaranSection from '../../organisms/PPBJ/PpbjPembayaranSection';
 import EditPengadaanModal from '../../organisms/EditPengadaanModal';
 import { PPBJ_NAV_ITEMS } from '../../../constants/ppbjNav';
 import { formatRupiah, formatTanggalIndo } from '../../../utils/formatters';
@@ -24,6 +25,7 @@ import type {
   PpbjPengadaanDetail,
   PpbjSimpanKontrakPayload,
   PpbjUpdateKlasifikasiPayload,
+  PpbjPembayaranContext,
 } from '../../../types/ppbj';
 import type { DokumenItem } from '../../../types/dokumen';
 
@@ -52,6 +54,10 @@ export interface PpbjPengadaanShowTemplateProps {
   previewDocId?: number | string | null;
   isLoadingPreview?: boolean;
   onClosePreview?: () => void;
+  pembayaranContext?: PpbjPembayaranContext | null;
+  isLoadingPembayaran?: boolean;
+  onUploadTagihan?: (file: File, nominal?: number, catatan?: string) => Promise<void>;
+  onUploadLegalitas?: (file: File) => Promise<void>;
 }
 
 export const PpbjPengadaanShowTemplate: FC<PpbjPengadaanShowTemplateProps> = ({
@@ -73,6 +79,10 @@ export const PpbjPengadaanShowTemplate: FC<PpbjPengadaanShowTemplateProps> = ({
   previewDocId = null,
   isLoadingPreview: _isLoadingPreview = false,
   onClosePreview,
+  pembayaranContext = null,
+  isLoadingPembayaran = false,
+  onUploadTagihan = async () => {},
+  onUploadLegalitas = async () => {},
 }) => {
   const navigate = useNavigate();
 
@@ -291,6 +301,27 @@ export const PpbjPengadaanShowTemplate: FC<PpbjPengadaanShowTemplateProps> = ({
                   }}
                 />
               )
+            )}
+
+            {/* Section Pembayaran, BAST Perlengkapan, dan Legalitas Vendor (FR-40 s.d. FR-45) */}
+            {pengadaan.kontrak && (
+              <PpbjPembayaranSection
+                pengadaanId={pengadaan.id}
+                context={pembayaranContext}
+                isLoading={isLoadingPembayaran}
+                onUploadTagihan={onUploadTagihan}
+                onUploadLegalitas={onUploadLegalitas}
+                onViewDokumen={(doc) => {
+                  onViewDokumen?.({
+                    id: doc.id,
+                    nama_asli: doc.nama_asli,
+                    tipe_dokumen: doc.tipe_dokumen,
+                    ukuran_bytes: doc.ukuran_bytes,
+                    mime_type: doc.mime_type,
+                    download_url: doc.url,
+                  });
+                }}
+              />
             )}
 
             {/* Modal Edit Klasifikasi Pengadaan (FR-36) */}
