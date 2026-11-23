@@ -164,6 +164,9 @@ Route::prefix('v1')->group(function () {
             Route::get('dashboard', DashboardPpbjController::class)->name('api.ppbj.dashboard');
             Route::apiResource('permohonan', PpbjPermohonanController::class)->names('api.ppbj.permohonan');
             Route::apiResource('pengadaan', PengadaanController::class)->except(['destroy'])->names('api.ppbj.pengadaan');
+            Route::get('pengadaan/{id}/pembayaran-context', [PengadaanController::class, 'pembayaranContext'])->name('api.ppbj.pengadaan.pembayaranContext');
+            Route::post('pengadaan/{id}/dokumen-tagihan', [PengadaanController::class, 'uploadDokumenTagihan'])->name('api.ppbj.pengadaan.uploadTagihan');
+            Route::post('pengadaan/{id}/legalitas-vendor', [PengadaanController::class, 'uploadLegalitasVendor'])->name('api.ppbj.pengadaan.uploadLegalitas');
             Route::post('pengadaan/{id}/kontrak', [PengadaanController::class, 'storeKontrak'])->name('api.ppbj.pengadaan.kontrak.store');
             Route::put('pengadaan/{id}/kontrak', [PengadaanController::class, 'updateKontrak'])->name('api.ppbj.pengadaan.kontrak.update');
             Route::get('pengadaan/{pengadaanId}/dokumen/{dokumenId}', [PengadaanController::class, 'downloadDokumen'])->name('api.ppbj.pengadaan.dokumen.download');

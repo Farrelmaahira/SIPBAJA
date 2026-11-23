@@ -210,4 +210,19 @@ class PengadaanController extends Controller
 
         return response()->noContent();
     }
+
+    /**
+     * Mengambil konteks pembayaran, BAST, foto fisik, serta status dual approval (FR-40).
+     */
+    public function pembayaranContext(string $id): JsonResponse
+    {
+        $pengadaan = Pengadaan::findOrFail((int) $id);
+        $context = $this->pengadaanService->getPembayaranContext($pengadaan);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Konteks pembayaran berhasil diambil.',
+            'data' => $context,
+        ]);
+    }
 }

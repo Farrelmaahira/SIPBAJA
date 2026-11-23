@@ -1229,4 +1229,143 @@ class PengadaanService
             'timeline' => $timeline,
         ];
     }
+
+    /**
+     * Mengambil konteks pembayaran, BAST & foto perlengkapan, serta status tagihan & legalitas vendor untuk PPBJ (FR-40 - FR-45).
+     */
+    public function getPembayaranContext(Pengadaan $pengadaan): array
+    {
+        $pengadaan->loadMissing([
+            'Penerimaan.Dokumen',
+            'Kontrak.RencanaPembayaran.Pembayaran.Dokumen',
+            'Kontrak.RencanaPembayaran.Pembayaran.ApprovalPembayaran.DokumenMemo',
+        ]);
+
+        $penerimaan = $pengadaan->Penerimaan;
+        $bastDoc = null;
+        $fotoDocs = [];
+
+        if ($penerimaan) {
+            foreach ($penerimaan->Dokumen as $doc) {
+                $docItem = [
+                    'id' => (int) $doc->id,
+                    'nama_asli' => $doc->nama_asli,
+                    'tipe_dokumen' => $doc->tipe_dokumen,
+                    'mime_type' => $doc->mime_type,
+                    'ukuran_bytes' => (int) $doc->ukuran_bytes,
+                    'url' => route('api.ppbj.pengadaan.dokumen.download', [
+                        'pengadaanId' => $pengadaan->id,
+                        'dokumenId' => $doc->id,
+                    ]) . '?disposition=inline',
+                ];
+
+                if (in_array($doc->tipe_dokumen, ['berita_acara', 'surat_tanda_terima', 'bast'])) {
+                    $bastDoc = $docItem;
+                } elseif ($doc->tipe_dokumen === 'foto_barang' || str_starts_with((string) $doc->mime_type, 'image/')) {
+                    $fotoDocs[] = $docItem;
+                }
+            }
+        }
+
+        $rencana = $pengadaan->Kontrak?->RencanaPembayaran?->first();
+        $pembayaran = $rencana?->Pembayaran;
+
+        $dokumenTagihan = null;
+        $dokumenLegalitas = null;
+
+        if ($pembayaran) {
+            foreach ($pembayaran->Dokumen as $pDoc) {
+                $pDocItem = [
+                    'id' => (int) $pDoc->id,
+                    'nama_asli' => $pDoc->nama_asli,
+                    'tipe_dokumen' => $pDoc->tipe_dokumen,
+                    'mime_type' => $pDoc->mime_type,
+                    'ukuran_bytes' => (int) $pDoc->ukuran_bytes,
+                    'url' => route('api.ppbj.pengadaan.dokumen.download', [
+                        'pengadaanId' => $pengadaan->id,
+                        'dokumenId' => $pDoc->id,
+                    ]) . '?disposition=inline',
+                ];
+
+                if ($pDoc->tipe_dokumen === 'dokumen_tagihan') {
+                    $dokumenTagihan = $pDocItem;
+                } elseif ($pDoc->tipe_dokumen === 'dokumen_legalitas_vendor') {
+                    $dokumenLegalitas = $pDocItem;
+                }
+            }
+        }
+
+        // Approvals status
+        $approvalPpk = null;
+        $approvalBidang2 = null;
+        $ppkApproved = false;
+        $bidang2Approved = false;
+
+        if ($pembayaran) {
+            foreach ($pembayaran->ApprovalPembayaran as $appr) {
+                $apprData = [
+                    'id' => (int) $appr->id,
+                    'tahap' => $appr->tahap,
+                    'keputusan' => $appr->keputusan,
+                    'alasan' => $appr->alasan,
+                    'memo' => $appr->DokumenMemo ? [
+                        'id' => (int) $appr->DokumenMemo->id,
+                        'nama_asli' => $appr->DokumenMemo->nama_asli,
+                        'url' => route('api.ppbj.pengadaan.dokumen.download', [
+                            'pengadaanId' => $pengadaan->id,
+                            'dokumenId' => $appr->DokumenMemo->id,
+                        ]) . '?disposition=inline',
+                    ] : null,
+                ];
+
+                if ($appr->tahap === 'PPK') {
+                    $approvalPpk = $apprData;
+                    if ($appr->keputusan === 'disetujui' && $appr->DokumenMemo) {
+                        $ppkApproved = true;
+                    }
+                } elseif ($appr->tahap === 'BIDANG2') {
+                    $approvalBidang2 = $apprData;
+                    if ($appr->keputusan === 'disetujui' && $appr->DokumenMemo) {
+                        $bidang2Approved = true;
+                    }
+                }
+            }
+        }
+
+        $bothMemosApproved = $ppkApproved && $bidang2Approved;
+        $isLocked = ($pembayaran?->status === 'selesai' || $pengadaan->status === 'selesai');
+
+        // FR-42: Re-upload tagihan bisa selama BELUM disetujui final oleh kedua pihak
+        $canUploadTagihan = ! $bothMemosApproved && ! $isLocked;
+
+        // FR-43 & FR-45: Upload/re-upload legalitas hanya terbuka jika kedua memo disetujui DAN belum selesai di Keuangan
+        $canUploadLegalitas = $bothMemosApproved && ! $isLocked;
+
+        return [
+            'penerimaan' => $penerimaan ? [
+                'id' => (int) $penerimaan->id,
+                'tanggal_terima' => $penerimaan->tanggal_terima,
+                'catatan' => $penerimaan->catatan,
+                'status_kondisi' => 'lengkap_sesuai',
+                'bast_dokumen' => $bastDoc,
+                'foto_barang' => $fotoDocs,
+            ] : null,
+            'pembayaran' => $pembayaran ? [
+                'id' => (int) $pembayaran->id,
+                'status' => $pembayaran->status,
+                'nominal' => (float) $pembayaran->nominal,
+                'tanggal_bayar' => $pembayaran->tanggal_bayar,
+                'revisi_ke' => (int) ($pembayaran->revisi_ke ?? 0),
+            ] : null,
+            'dokumen_tagihan' => $dokumenTagihan,
+            'approvals' => [
+                'ppk' => $approvalPpk,
+                'bidang2' => $approvalBidang2,
+            ],
+            'can_upload_tagihan' => $canUploadTagihan,
+            'can_upload_legalitas' => $canUploadLegalitas,
+            'dokumen_legalitas' => $dokumenLegalitas,
+            'is_locked' => $isLocked,
+        ];
+    }
 }
