@@ -196,7 +196,14 @@ export const Bidang2PengadaanShow: FC = () => {
               statusPengadaanPill={<StatusPill status={pengadaan?.status || 'review_pengajuan'} />}
             />
 
-            {/* 2. CARD REVIEW & PERSETUJUAN PEMBAYARAN BIDANG 2 (FR-55, FR-56, FR-57) */}
+            {/* 2. TRACKING PROSES PENGADAAN (FR-05) - Selalu di bawah Informasi Pengadaan */}
+            <TrackingPengadaanCard
+              statusPengadaan={pengadaan?.status}
+              stepper={tracking?.stepper}
+              timeline={tracking?.timeline}
+            />
+
+            {/* 3. CARD REVIEW & PERSETUJUAN PEMBAYARAN BIDANG 2 (FR-55, FR-56, FR-57) - Di paling bawah */}
             {pembayaranContext?.pembayaran && (
               <PimpinanPembayaranReviewCard
                 role="BIDANG2"
@@ -211,13 +218,6 @@ export const Bidang2PengadaanShow: FC = () => {
                 isLoadingPreview={isLoadingPreview}
               />
             )}
-
-            {/* 3. TRACKING PROSES PENGADAAN (FR-05) */}
-            <TrackingPengadaanCard
-              statusPengadaan={pengadaan?.status}
-              stepper={tracking?.stepper}
-              timeline={tracking?.timeline}
-            />
 
             {/* Document Preview Modal */}
             {previewDocId && previewBlobUrl && (

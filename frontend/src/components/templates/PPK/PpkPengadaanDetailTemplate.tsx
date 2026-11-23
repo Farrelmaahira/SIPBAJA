@@ -398,21 +398,7 @@ export const PpkPengadaanDetailTemplate: FC<PpkPengadaanDetailTemplateProps> = (
           </div>
         )}
 
-        {/* CARD VERIFIKASI PEMBAYARAN & MEMO PPK (FR-55, FR-56, FR-57) */}
-        {pembayaranContext?.pembayaran && onApprovePembayaran && onRejectPembayaran && (
-          <PimpinanPembayaranReviewCard
-            role="PPK"
-            context={pembayaranContext}
-            isLoading={isLoadingPembayaran}
-            onApprove={onApprovePembayaran}
-            onReject={onRejectPembayaran}
-            onViewDokumen={(doc) => handleViewNewTab(doc)}
-            onDownloadDokumen={(doc) => handleDownload(doc)}
-            previewBlobUrl={pengadaanBlobUrl}
-            previewDocId={primaryDokumenPengadaan?.id}
-            isLoadingPreview={loadingPengadaanBlob}
-          />
-        )}
+        {/* Flash Error Banner */}
         {flashError && (
           <div className="bg-[#FEF3DC] border border-[#FDE4A0] rounded-2xl p-4 flex items-center justify-between shadow-xs">
             <div className="flex items-center gap-3">
@@ -422,7 +408,7 @@ export const PpkPengadaanDetailTemplate: FC<PpkPengadaanDetailTemplateProps> = (
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="text-xs font-bold text-[#92400E] hover:underline"
+              className="text-xs font-bold text-[#92400E] hover:underline cursor-pointer"
             >
               Muat Ulang
             </button>
@@ -456,7 +442,7 @@ export const PpkPengadaanDetailTemplate: FC<PpkPengadaanDetailTemplateProps> = (
           statusPengadaanPill={renderHeroStatusBadge()}
         />
 
-        {/* TRACKING PROSES (FR-05) */}
+        {/* TRACKING PROSES (FR-05) - Selalu tepat di bawah Informasi Pengadaan */}
         <TrackingPengadaanCard
           statusPengadaan={rawStatus}
           stepper={detail?.tracking?.stepper as any}
@@ -574,10 +560,10 @@ export const PpkPengadaanDetailTemplate: FC<PpkPengadaanDetailTemplateProps> = (
           </div>
         </div>
 
-        {/* REVIEW BODY (2 KOLOM: DOKUMEN PENGADAAN & SIDE COLUMN) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Kolom Kiri: Card Dokumen Pengadaan & Live Iframe Preview */}
-          <div className="lg:col-span-8 bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)] space-y-5">
+        {/* REVIEW BODY (DOKUMEN PENGADAAN FULL WIDTH & AKSI OTORISASI) */}
+        <div className="space-y-6">
+          {/* Card Dokumen Pengadaan & Live Iframe Preview (Full Width) */}
+          <div className="w-full bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)] space-y-5">
             <div className="pb-3.5 border-b border-[#F0F4F2] flex items-center justify-between">
               <div>
                 <h3 className="text-base font-bold text-[#14201C]">Dokumen Pengadaan</h3>
@@ -655,7 +641,7 @@ export const PpkPengadaanDetailTemplate: FC<PpkPengadaanDetailTemplateProps> = (
                 <iframe
                   src={`${pengadaanBlobUrl}#toolbar=0&navpanes=0`}
                   title={`Pratinjau dokumen ${primaryDokumenPengadaan?.nama_asli || 'Pengadaan'}`}
-                  className="w-full h-[620px] border-0"
+                  className="w-full h-[640px] border-0"
                 />
               ) : (
                 <div className="h-[360px] flex flex-col items-center justify-center gap-2 p-6 text-center bg-[#F8FAF9]">
@@ -672,30 +658,22 @@ export const PpkPengadaanDetailTemplate: FC<PpkPengadaanDetailTemplateProps> = (
             </div>
           </div>
 
-          {/* Kolom Kanan: Kotak Keputusan Otorisasi PPK */}
-          <div className="lg:col-span-4 space-y-6">
-            {canAuthorizePpk ? (
-              <div className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)]">
-                <div className="pb-3.5 mb-4 border-b border-[#F0F4F2]">
+          {/* Kotak Keputusan Otorisasi PPK (Full Width Banner / Card) */}
+          {canAuthorizePpk ? (
+            <div className="w-full bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)]">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 mb-4 border-b border-[#F0F4F2]">
+                <div>
                   <h3 className="text-base font-bold text-[#14201C]">Otorisasi Komitmen PPK</h3>
                   <p className="text-xs text-[#8A9A95] mt-0.5">
                     Tinjau dokumen pengadaan, lalu berikan otorisasi atau tolak untuk revisi
                   </p>
                 </div>
-
-                <div className="p-3.5 rounded-2xl bg-[#F4F7F5] border border-[#E4EBE8] flex items-start gap-2.5 mb-5 text-xs text-[#5F6F6A]">
-                  <AlertCircle className="w-4 h-4 text-[#5F6F6A] shrink-0 mt-0.5" />
-                  <p className="leading-relaxed">
-                    Pastikan rincian pengadaan dan ketersediaan anggaran telah sesuai sebelum memberikan otorisasi komitmen.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
+                <div className="flex items-center gap-3 shrink-0">
                   <button
                     type="button"
                     disabled={submitting}
                     onClick={onOpenReject}
-                    className="py-3 px-3 rounded-xl border border-[#FECDCA] bg-[#FEE4E2]/70 hover:bg-[#FEE4E2] text-xs font-bold text-[#D92D20] disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="py-2.5 px-4 rounded-xl border border-[#FECDCA] bg-[#FEE4E2]/70 hover:bg-[#FEE4E2] text-xs font-bold text-[#D92D20] disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <XCircle className="w-4 h-4 shrink-0" />
                     <span>Revisi Dokumen</span>
@@ -704,78 +682,101 @@ export const PpkPengadaanDetailTemplate: FC<PpkPengadaanDetailTemplateProps> = (
                     type="button"
                     disabled={submitting}
                     onClick={onOpenConfirmApprove}
-                    className="py-3 px-3 rounded-xl bg-[#0E7C5A] hover:bg-[#0A5C43] text-xs font-bold text-white disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                    className="py-2.5 px-4 rounded-xl bg-[#0E7C5A] hover:bg-[#0A5C43] text-xs font-bold text-white disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
                   >
                     <CheckCircle2 className="w-4 h-4 shrink-0" />
-                    <span>Konfirmasi</span>
+                    <span>Konfirmasi Otorisasi</span>
                   </button>
                 </div>
               </div>
-            ) : isMenungguVerifikasiPp ? (
-              <div className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)]">
-                <div className="pb-3.5 mb-3 border-b border-[#F0F4F2]">
-                  <h3 className="text-base font-bold text-[#14201C]">Proses Verifikasi PP</h3>
-                  <p className="text-xs text-[#8A9A95] mt-0.5">
-                    Pengadaan level nominal Rp50 – 200 juta
-                  </p>
-                </div>
-                <div className="p-4 rounded-xl bg-[#FEF3DC] text-[#92400E] border border-[#FDE4A0] text-xs space-y-2">
-                  <div className="flex items-center gap-2 font-bold">
-                    <Clock className="w-4 h-4 shrink-0 text-[#D97706]" />
-                    <span>Menunggu Verifikasi Administratif PP</span>
-                  </div>
-                  <p className="text-[11px] leading-relaxed text-[#78350F]">
-                    Dokumen pengadaan ini sedang dalam proses verifikasi oleh Pejabat Pengadaan (PP). Tombol otorisasi komitmen PPK akan aktif setelah PP menyetujui dokumen ini.
-                  </p>
-                </div>
+
+              <div className="p-3.5 rounded-2xl bg-[#F4F7F5] border border-[#E4EBE8] flex items-start gap-2.5 text-xs text-[#5F6F6A]">
+                <AlertCircle className="w-4 h-4 text-[#5F6F6A] shrink-0 mt-0.5" />
+                <p className="leading-relaxed">
+                  Pastikan rincian pengadaan dan ketersediaan anggaran telah sesuai sebelum memberikan otorisasi komitmen.
+                </p>
               </div>
-            ) : isDraft ? (
-              <div className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)]">
-                <div className="pb-3.5 mb-3 border-b border-[#F0F4F2]">
-                  <h3 className="text-base font-bold text-[#14201C]">Dokumen Masih Draft</h3>
-                  <p className="text-xs text-[#8A9A95] mt-0.5">
-                    Paket pengadaan belum diajukan ke reviewer
-                  </p>
-                </div>
-                <div className="p-4 rounded-xl bg-[#F0F4F2] text-[#5F6F6A] border border-[#CFDAD6] text-xs space-y-2">
-                  <div className="flex items-center gap-2 font-bold">
-                    <AlertCircle className="w-4 h-4 shrink-0 text-[#5F6F6A]" />
-                    <span>Menunggu Pengajuan PPBJ</span>
-                  </div>
-                  <p className="text-[11px] leading-relaxed">
-                    Paket pengadaan ini masih berupa draf pada PPBJ dan belum disubmit ke tahapan review.
-                  </p>
-                </div>
+            </div>
+          ) : isMenungguVerifikasiPp ? (
+            <div className="w-full bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)]">
+              <div className="pb-3.5 mb-3 border-b border-[#F0F4F2]">
+                <h3 className="text-base font-bold text-[#14201C]">Proses Verifikasi PP</h3>
+                <p className="text-xs text-[#8A9A95] mt-0.5">
+                  Pengadaan level nominal Rp50 – 200 juta
+                </p>
               </div>
-            ) : isDitolak ? (
-              <div className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)]">
-                <div className="pb-3.5 mb-3 border-b border-[#F0F4F2]">
-                  <h3 className="text-base font-bold text-[#14201C]">Keputusan Review Selesai</h3>
-                  <p className="text-xs text-[#8A9A95] mt-0.5">
-                    Dokumen pengadaan ini telah diproses otorisasi oleh PPK.
-                  </p>
+              <div className="p-4 rounded-xl bg-[#FEF3DC] text-[#92400E] border border-[#FDE4A0] text-xs space-y-2">
+                <div className="flex items-center gap-2 font-bold">
+                  <Clock className="w-4 h-4 shrink-0 text-[#D97706]" />
+                  <span>Menunggu Verifikasi Administratif PP</span>
                 </div>
-                <div className="p-4 rounded-xl text-xs font-medium flex items-center gap-3 bg-[#FEF3F2] text-[#B42318] border border-[#FECDCA]">
-                  <XCircle className="w-5 h-5 shrink-0" />
-                  <span>Dokumen ditolak dan dikembalikan ke PPBJ untuk direvisi.</span>
-                </div>
+                <p className="text-[11px] leading-relaxed text-[#78350F]">
+                  Dokumen pengadaan ini sedang dalam proses verifikasi oleh Pejabat Pengadaan (PP). Tombol otorisasi komitmen PPK akan aktif setelah PP menyetujui dokumen ini.
+                </p>
               </div>
-            ) : isDisetujui ? (
-              <div className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)]">
-                <div className="pb-3.5 mb-3 border-b border-[#F0F4F2]">
-                  <h3 className="text-base font-bold text-[#14201C]">Keputusan Review Selesai</h3>
-                  <p className="text-xs text-[#8A9A95] mt-0.5">
-                    Dokumen pengadaan ini telah diproses otorisasi oleh PPK.
-                  </p>
-                </div>
-                <div className="p-4 rounded-xl text-xs font-medium flex items-center gap-3 bg-[#E8F5EF] text-[#0E7C5A] border border-[#A3D9C3]">
-                  <CheckCircle2 className="w-5 h-5 shrink-0" />
-                  <span>Dokumen telah diotorisasi dan diteruskan ke PPBJ untuk kontrak.</span>
-                </div>
+            </div>
+          ) : isDraft ? (
+            <div className="w-full bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)]">
+              <div className="pb-3.5 mb-3 border-b border-[#F0F4F2]">
+                <h3 className="text-base font-bold text-[#14201C]">Dokumen Masih Draft</h3>
+                <p className="text-xs text-[#8A9A95] mt-0.5">
+                  Paket pengadaan belum diajukan ke reviewer
+                </p>
               </div>
-            ) : null}
-          </div>
+              <div className="p-4 rounded-xl bg-[#F0F4F2] text-[#5F6F6A] border border-[#CFDAD6] text-xs space-y-2">
+                <div className="flex items-center gap-2 font-bold">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-[#5F6F6A]" />
+                  <span>Menunggu Pengajuan PPBJ</span>
+                </div>
+                <p className="text-[11px] leading-relaxed">
+                  Paket pengadaan ini masih berupa draf pada PPBJ dan belum disubmit ke tahapan review.
+                </p>
+              </div>
+            </div>
+          ) : isDitolak ? (
+            <div className="w-full bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)]">
+              <div className="pb-3.5 mb-3 border-b border-[#F0F4F2]">
+                <h3 className="text-base font-bold text-[#14201C]">Keputusan Review Selesai</h3>
+                <p className="text-xs text-[#8A9A95] mt-0.5">
+                  Dokumen pengadaan ini telah diproses otorisasi oleh PPK.
+                </p>
+              </div>
+              <div className="p-4 rounded-xl text-xs font-medium flex items-center gap-3 bg-[#FEF3F2] text-[#B42318] border border-[#FECDCA]">
+                <XCircle className="w-5 h-5 shrink-0" />
+                <span>Dokumen ditolak dan dikembalikan ke PPBJ untuk direvisi.</span>
+              </div>
+            </div>
+          ) : isDisetujui ? (
+            <div className="w-full bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)]">
+              <div className="pb-3.5 mb-3 border-b border-[#F0F4F2]">
+                <h3 className="text-base font-bold text-[#14201C]">Keputusan Review Selesai</h3>
+                <p className="text-xs text-[#8A9A95] mt-0.5">
+                  Dokumen pengadaan ini telah diproses otorisasi oleh PPK.
+                </p>
+              </div>
+              <div className="p-4 rounded-xl text-xs font-medium flex items-center gap-3 bg-[#E8F5EF] text-[#0E7C5A] border border-[#A3D9C3]">
+                <CheckCircle2 className="w-5 h-5 shrink-0" />
+                <span>Dokumen telah diotorisasi dan diteruskan ke PPBJ untuk kontrak.</span>
+              </div>
+            </div>
+          ) : null}
         </div>
+
+        {/* CARD VERIFIKASI PEMBAYARAN & MEMO PPK (FR-55, FR-56, FR-57) - DI PALING BAWAH */}
+        {pembayaranContext?.pembayaran && onApprovePembayaran && onRejectPembayaran && (
+          <PimpinanPembayaranReviewCard
+            role="PPK"
+            context={pembayaranContext}
+            isLoading={isLoadingPembayaran}
+            onApprove={onApprovePembayaran}
+            onReject={onRejectPembayaran}
+            onViewDokumen={(doc) => handleViewNewTab(doc)}
+            onDownloadDokumen={(doc) => handleDownload(doc)}
+            previewBlobUrl={pengadaanBlobUrl}
+            previewDocId={primaryDokumenPengadaan?.id}
+            isLoadingPreview={loadingPengadaanBlob}
+          />
+        )}
 
         {/* MODAL KONFIRMASI APPROVE */}
         <KonfirmasiApproveModal
