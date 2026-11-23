@@ -7,9 +7,13 @@ import HeroBanner from '../../../components/organisms/HeroBanner';
 import StatusPill from '../../../components/atoms/StatusPill';
 import InformasiPengadaanCard from '../../../components/organisms/PP/InformasiPengadaanCard';
 import TrackingPengadaanCard from '../../../components/organisms/TrackingPengadaanCard';
+import PimpinanPembayaranReviewCard from '../../../components/organisms/Pembayaran/PimpinanPembayaranReviewCard';
+import DocumentPreviewModal from '../../../components/organisms/DocumentPreviewModal';
 import { BIDANG2_NAV_ITEMS } from '../../../constants/bidang2Nav';
 import { formatRupiah, formatTanggalIndo } from '../../../utils/formatters';
 import { bidang2Service } from '../../../services/bidang2Service';
+import type { PpbjPembayaranContext } from '../../../types/ppbj';
+import type { DokumenItem } from '../../../types/dokumen';
 
 export const Bidang2PengadaanShow: FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -19,14 +23,35 @@ export const Bidang2PengadaanShow: FC = () => {
   const [detailData, setDetailData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  useEffect(() => {
+  const [pembayaranContext, setPembayaranContext] = useState<PpbjPembayaranContext | null>(null);
+  const [isLoadingPembayaran, setIsLoadingPembayaran] = useState<boolean>(false);
+
+  const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
+  const [previewDocId, setPreviewDocId] = useState<number | string | null>(null);
+  const [isLoadingPreview, setIsLoadingPreview] = useState<boolean>(false);
+
+  const fetchPembayaranContext = (signal?: AbortSignal) => {
     if (!id) return;
-    const controller = new AbortController();
+    setIsLoadingPembayaran(true);
+    bidang2Service
+      .getPembayaranReview(id, signal)
+      .then((data) => setPembayaranContext(data))
+      .catch((err) => {
+        if (err?.name !== 'CanceledError') {
+          // ignore context error
+        }
+      })
+      .finally(() => setIsLoadingPembayaran(false));
+  };
+
+  const fetchDetail = (signal?: AbortSignal) => {
+    if (!id) return;
     setIsLoading(true);
 
     bidang2Service
-      .getPengadaanDetail(id, controller.signal)
+      .getPengadaanDetail(id, signal)
       .then((data) => {
         setDetailData(data);
       })
@@ -38,9 +63,64 @@ export const Bidang2PengadaanShow: FC = () => {
       .finally(() => {
         setIsLoading(false);
       });
+  };
 
+  useEffect(() => {
+    if (!id) return;
+    const controller = new AbortController();
+    fetchDetail(controller.signal);
+    fetchPembayaranContext(controller.signal);
     return () => controller.abort();
   }, [id]);
+
+  const handleApprove = async (memo: File, catatan?: string) => {
+    if (!id) return;
+    const res = await bidang2Service.approvePembayaran(id, memo, catatan);
+    setSuccessMessage(res.message || 'Persetujuan pembayaran berhasil dikirim.');
+    fetchPembayaranContext();
+    fetchDetail();
+  };
+
+  const handleReject = async (alasan: string) => {
+    if (!id) return;
+    const res = await bidang2Service.rejectPembayaran(id, alasan);
+    setSuccessMessage(res.message || 'Penolakan pembayaran berhasil dikirim.');
+    fetchPembayaranContext();
+    fetchDetail();
+  };
+
+  const handleViewDokumen = async (doc: DokumenItem) => {
+    if (!doc.download_url) return;
+    setIsLoadingPreview(true);
+    setPreviewDocId(doc.id);
+    try {
+      const blob = await bidang2Service.getDokumenBlob(doc.download_url);
+      const url = URL.createObjectURL(blob);
+      setPreviewBlobUrl(url);
+    } catch {
+      setErrorMessage('Gagal membuka pratinjau dokumen.');
+      setPreviewDocId(null);
+    } finally {
+      setIsLoadingPreview(false);
+    }
+  };
+
+  const handleDownloadDokumen = async (doc: DokumenItem) => {
+    if (!doc.download_url) return;
+    try {
+      const blob = await bidang2Service.getDokumenBlob(doc.download_url);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = doc.nama_asli || 'dokumen.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      setErrorMessage('Gagal mengunduh dokumen.');
+    }
+  };
 
   const pengadaan = detailData?.pengadaan;
   const tracking = detailData?.tracking;
@@ -78,6 +158,12 @@ export const Bidang2PengadaanShow: FC = () => {
           />
         </div>
 
+        {successMessage && (
+          <div className="p-4 bg-[#E4F6EC] border border-[#BDE8D1] rounded-[22px] text-xs font-bold text-[#0B7A4E]">
+            {successMessage}
+          </div>
+        )}
+
         {isLoading ? (
           <div className="flex flex-col items-center justify-center min-h-[360px] gap-3 bg-white rounded-[22px] border border-[#E4EBE8] p-8">
             <Loader2 className="w-8 h-8 animate-spin text-[#0E7C5A]" />
@@ -110,12 +196,44 @@ export const Bidang2PengadaanShow: FC = () => {
               statusPengadaanPill={<StatusPill status={pengadaan?.status || 'review_pengajuan'} />}
             />
 
-            {/* 2. TRACKING PROSES PENGADAAN (FR-05) */}
+            {/* 2. CARD REVIEW & PERSETUJUAN PEMBAYARAN BIDANG 2 (FR-55, FR-56, FR-57) */}
+            {pembayaranContext?.pembayaran && (
+              <PimpinanPembayaranReviewCard
+                role="BIDANG2"
+                context={pembayaranContext}
+                isLoading={isLoadingPembayaran}
+                onApprove={handleApprove}
+                onReject={handleReject}
+                onViewDokumen={handleViewDokumen}
+                onDownloadDokumen={handleDownloadDokumen}
+                previewBlobUrl={previewBlobUrl}
+                previewDocId={previewDocId}
+                isLoadingPreview={isLoadingPreview}
+              />
+            )}
+
+            {/* 3. TRACKING PROSES PENGADAAN (FR-05) */}
             <TrackingPengadaanCard
               statusPengadaan={pengadaan?.status}
               stepper={tracking?.stepper}
               timeline={tracking?.timeline}
             />
+
+            {/* Document Preview Modal */}
+            {previewDocId && previewBlobUrl && (
+              <DocumentPreviewModal
+                open={Boolean(previewDocId)}
+                onClose={() => {
+                  if (previewBlobUrl) {
+                    URL.revokeObjectURL(previewBlobUrl);
+                  }
+                  setPreviewBlobUrl(null);
+                  setPreviewDocId(null);
+                }}
+                blobUrl={previewBlobUrl}
+                label="Pratinjau Dokumen"
+              />
+            )}
           </>
         )}
       </div>

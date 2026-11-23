@@ -111,6 +111,56 @@ export const bidang2Service = {
   },
 
   /**
+   * Mengambil konteks peninjauan pembayaran & riwayat pengadaan untuk Bidang 2 (FR-55).
+   */
+  async getPembayaranReview(
+    id: number | string,
+    signal?: AbortSignal
+  ): Promise<any> {
+    const response = await api.get<{ success: boolean; data: any }>(
+      `/v1/bidang-2/pengadaan/${id}/pembayaran-review`,
+      { signal }
+    );
+    return response.data.data;
+  },
+
+  /**
+   * Menyetujui dokumen pembayaran pengadaan dengan mengunggah memo persetujuan (FR-56).
+   */
+  async approvePembayaran(
+    id: number | string,
+    memo: File,
+    catatan?: string
+  ): Promise<any> {
+    const formData = new FormData();
+    formData.append('memo', memo);
+    if (catatan) formData.append('catatan', catatan);
+
+    const response = await api.post(
+      `/v1/bidang-2/pengadaan/${id}/pembayaran/approve`,
+      formData,
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }
+    );
+    return response.data;
+  },
+
+  /**
+   * Menolak dokumen pembayaran pengadaan dengan alasan spesifik (FR-57).
+   */
+  async rejectPembayaran(
+    id: number | string,
+    alasan: string
+  ): Promise<any> {
+    const response = await api.post(
+      `/v1/bidang-2/pengadaan/${id}/pembayaran/reject`,
+      { alasan }
+    );
+    return response.data;
+  },
+
+  /**
    * Mendapatkan endpoint URL untuk download memo persetujuan Bidang 2.
    */
   downloadMemoUrl(id: number | string): string {

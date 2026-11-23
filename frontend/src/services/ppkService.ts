@@ -125,6 +125,17 @@ export const rejectPengadaan = async (
   return response.data;
 };
 
+export const getPembayaranReview = async (
+  id: number | string,
+  signal?: AbortSignal
+): Promise<any> => {
+  const response = await api.get<{ success: boolean; data: any }>(
+    `/v1/ppk/pengajuan/${id}/pembayaran-review`,
+    { signal }
+  );
+  return response.data.data;
+};
+
 export const getPembayaranDetail = async (
   id: number | string,
   signal?: AbortSignal
@@ -205,6 +216,7 @@ export const ppkService = {
   approvePengadaan,
   rejectPengadaan,
   getPembayaranDetail,
+  getPembayaranReview,
   approvePembayaran,
   rejectPembayaran,
   fetchDokumenBlob,

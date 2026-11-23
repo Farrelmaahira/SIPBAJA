@@ -15,8 +15,12 @@ import {
 import PpLayout, { type PpNavItem } from './PpLayout';
 import DocumentCard from '../../organisms/DocumentCard';
 import DokumentasiGalleryModal from '../../organisms/DokumentasiGalleryModal';
+import PimpinanPembayaranReviewCard from '../../organisms/Pembayaran/PimpinanPembayaranReviewCard';
+import DocumentPreviewModal from '../../organisms/DocumentPreviewModal';
 import type { PpPengadaanDetailPayload, PpMakItem } from '../../../types/pp';
 import type { NotificationItem } from '../../../types/notification';
+import type { PpbjPembayaranContext } from '../../../types/ppbj';
+import type { DokumenItem } from '../../../types/dokumen';
 
 export interface PpPengajuanShowTemplateProps {
   detail?: PpPengadaanDetailPayload;
@@ -30,6 +34,17 @@ export interface PpPengajuanShowTemplateProps {
   galleryOpen: boolean;
   onOpenGallery: () => void;
   onCloseGallery: () => void;
+  pembayaranContext?: PpbjPembayaranContext | null;
+  isLoadingPembayaran?: boolean;
+  onApprovePembayaran?: (memo: File, catatan?: string) => Promise<void>;
+  onRejectPembayaran?: (alasan: string) => Promise<void>;
+  onViewDokumen?: (doc: DokumenItem) => void;
+  onDownloadDokumen?: (doc: DokumenItem) => void;
+  previewBlobUrl?: string | null;
+  previewDocId?: number | string | null;
+  isLoadingPreview?: boolean;
+  onClosePreview?: () => void;
+  flashSuccess?: string | null;
 }
 
 export const PpPengajuanShowTemplate: FC<PpPengajuanShowTemplateProps> = ({
@@ -44,6 +59,17 @@ export const PpPengajuanShowTemplate: FC<PpPengajuanShowTemplateProps> = ({
   galleryOpen,
   onOpenGallery,
   onCloseGallery,
+  pembayaranContext = null,
+  isLoadingPembayaran = false,
+  onApprovePembayaran,
+  onRejectPembayaran,
+  onViewDokumen,
+  onDownloadDokumen,
+  previewBlobUrl = null,
+  previewDocId = null,
+  isLoadingPreview = false,
+  onClosePreview,
+  flashSuccess = null,
 }) => {
   const pengadaan = detail.pengadaan || { id: 0 };
   const makList: PpMakItem[] = detail.mak_list || [];
@@ -374,38 +400,59 @@ export const PpPengajuanShowTemplate: FC<PpPengajuanShowTemplateProps> = ({
           </div>
         </div>
 
-        {/* 5. Pembayaran */}
-        <div className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)]">
-          <div className="pb-4 mb-5 border-b border-[#F0F4F2]">
-            <h3 className="text-base font-bold text-[#14201C]">5. Pembayaran</h3>
-            <p className="text-xs text-[#8A9A95] mt-0.5">
-              Dokumen pembayaran dari Keuangan, memo persetujuan pembayaran, dan bukti pencairan
-            </p>
+        {flashSuccess && (
+          <div className="p-4 bg-[#E4F6EC] border border-[#BDE8D1] rounded-[22px] text-xs font-bold text-[#0B7A4E]">
+            {flashSuccess}
           </div>
+        )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <DocumentCard
-              category="Dokumen Pembayaran"
-              filename="Dokumen_Pembayaran.pdf"
-              size="PDF • 2 MB"
-            />
-            <DocumentCard
-              category="Memo Persetujuan PPK"
-              filename={`Memo_Pembayaran_PPK_${nomorSurat}.pdf`}
-              size="PDF • 1 MB"
-            />
-            <DocumentCard
-              category="Memo Persetujuan Bidang 2"
-              filename={`Memo_Pembayaran_Bidang2_${nomorSurat}.pdf`}
-              size="PDF • 1 MB"
-            />
-            <DocumentCard
-              category="Bukti Pencairan"
-              filename="Bukti_Pencairan.pdf"
-              size="PDF • 1 MB"
-            />
+        {/* 5. Pembayaran & Verifikasi Memo PPK (FR-55, FR-56, FR-57) */}
+        {pembayaranContext?.pembayaran && onApprovePembayaran && onRejectPembayaran ? (
+          <PimpinanPembayaranReviewCard
+            role="PPK"
+            context={pembayaranContext}
+            isLoading={isLoadingPembayaran}
+            onApprove={onApprovePembayaran}
+            onReject={onRejectPembayaran}
+            onViewDokumen={onViewDokumen || (() => {})}
+            onDownloadDokumen={onDownloadDokumen}
+            previewBlobUrl={previewBlobUrl}
+            previewDocId={previewDocId}
+            isLoadingPreview={isLoadingPreview}
+          />
+        ) : (
+          <div className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)]">
+            <div className="pb-4 mb-5 border-b border-[#F0F4F2]">
+              <h3 className="text-base font-bold text-[#14201C]">5. Pembayaran</h3>
+              <p className="text-xs text-[#8A9A95] mt-0.5">
+                Dokumen pembayaran dari Keuangan, memo persetujuan pembayaran, dan bukti pencairan
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <DocumentCard
+                category="Dokumen Pembayaran"
+                filename="Dokumen_Pembayaran.pdf"
+                size="PDF • 2 MB"
+              />
+              <DocumentCard
+                category="Memo Persetujuan PPK"
+                filename={`Memo_Pembayaran_PPK_${nomorSurat}.pdf`}
+                size="PDF • 1 MB"
+              />
+              <DocumentCard
+                category="Memo Persetujuan Bidang 2"
+                filename={`Memo_Pembayaran_Bidang2_${nomorSurat}.pdf`}
+                size="PDF • 1 MB"
+              />
+              <DocumentCard
+                category="Bukti Pencairan"
+                filename="Bukti_Pencairan.pdf"
+                size="PDF • 1 MB"
+              />
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <DokumentasiGalleryModal
@@ -415,6 +462,16 @@ export const PpPengajuanShowTemplate: FC<PpPengajuanShowTemplateProps> = ({
         unitName={unitNama}
         totalPhotos={4}
       />
+
+      {/* Document Preview Modal */}
+      {previewDocId && previewBlobUrl && (
+        <DocumentPreviewModal
+          open={Boolean(previewDocId)}
+          onClose={onClosePreview || (() => {})}
+          blobUrl={previewBlobUrl}
+          label="Pratinjau Dokumen"
+        />
+      )}
     </PpLayout>
   );
 };

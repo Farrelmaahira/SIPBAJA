@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\ApprovalPembayaran;
 use App\Models\Dokumen;
 use App\Models\JenisPengadaan;
 use App\Models\Kontrak;
@@ -14,12 +13,8 @@ use App\Models\Pengadaan;
 use App\Models\Permohonan;
 use App\Models\PermohonanMak;
 use App\Models\RencanaPembayaran;
-use App\Models\Role;
 use App\Models\Unit;
 use App\Models\User;
-use Database\Seeders\PermohonanDiajukanSeeder;
-use Database\Seeders\RolePermissionSeeder;
-use Database\Seeders\UserSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -30,9 +25,13 @@ class PimpinanPembayaranApiTest extends TestCase
     use RefreshDatabase;
 
     protected User $ppbjUser;
+
     protected User $ppkUser;
+
     protected User $bidang2User;
+
     protected Pengadaan $pengadaan;
+
     protected Pembayaran $pembayaran;
 
     protected function setUp(): void

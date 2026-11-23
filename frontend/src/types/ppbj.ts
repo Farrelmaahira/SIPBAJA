@@ -343,4 +343,20 @@ export interface PpbjPembayaranContext {
   can_upload_legalitas: boolean;
   dokumen_legalitas: PpbjDokumenItem | null;
   is_locked: boolean;
+  dokumen_riwayat?: {
+    permohonan?: {
+      id: number;
+      nomor_surat?: string;
+      judul: string;
+      dokumen: PpbjDokumenItem[];
+    } | null;
+    kontrak?: {
+      id: number;
+      tipe: string;
+      nomor: string;
+      vendor_nama: string;
+      nominal_kontrak: number;
+      dokumen: PpbjDokumenItem[];
+    } | null;
+  };
 }

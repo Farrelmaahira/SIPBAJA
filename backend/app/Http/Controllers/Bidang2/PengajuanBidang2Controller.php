@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Bidang2;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Bidang2\SetujuPermohonanBidang2Request;
 use App\Http\Requests\Bidang2\SetujuiPembayaranBidang2Request;
+use App\Http\Requests\Bidang2\SetujuPermohonanBidang2Request;
 use App\Http\Requests\Bidang2\TolakPermohonanBidang2Request;
 use App\Models\Pengadaan;
 use App\Models\Permohonan;
