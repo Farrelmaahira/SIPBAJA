@@ -87,6 +87,29 @@ export interface PermohonanDokumenDetail {
   [key: string]: unknown;
 }
 
+export interface PengadaanTrackingItem {
+  id: number;
+  nomor_pengadaan: string;
+  judul?: string;
+  jenis_nama?: string;
+  mak_nama?: string;
+  nominal?: number;
+  status: string;
+  status_label?: string;
+  stepper: Array<{
+    key: string;
+    label: string;
+    status: 'selesai' | 'sedang_berlangsung' | 'belum_dimulai';
+  }>;
+  timeline: Array<{
+    id?: number | string;
+    tanggal: string;
+    keterangan: string;
+    actor_nama?: string;
+    aktif?: boolean;
+  }>;
+}
+
 export interface PermohonanDetailInfo extends PermohonanItem {
   unit_nama?: string;
   pembuat_nama?: string;
@@ -94,6 +117,7 @@ export interface PermohonanDetailInfo extends PermohonanItem {
   catatan_penolakan?: CatatanPenolakanData | null;
   timeline_stages?: TimelineStageInfo[];
   history?: TimelineHistoryItem[];
+  pengadaan?: PengadaanTrackingItem[];
   [key: string]: unknown;
 }
 

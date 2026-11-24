@@ -293,7 +293,18 @@ class PermohonanService
         $isReviewer = in_array($user->role?->nama, ['Admin', 'Bidang 2', 'Perencanaan', 'PPBJ', 'PPK', 'PP', 'Perlengkapan', 'Keuangan']);
         abort_unless($isReviewer || ($user->unit_id && (int) $user->unit_id === (int) $permohonan->unit_id), 403, 'Akses tidak diizinkan untuk unit lain.');
 
-        $permohonan->loadMissing(['Unit', 'Creator', 'Dokumen', 'Approvals.Actor.Role', 'Pengadaan']);
+        $permohonan->loadMissing([
+            'Unit',
+            'Creator',
+            'Dokumen',
+            'Approvals.Actor.Role',
+            'Pengadaan.Jenis',
+            'Pengadaan.Metode',
+            'Pengadaan.Level',
+            'Pengadaan.Kontrak',
+            'Pengadaan.Penerimaan',
+            'Pengadaan.PermohonanMak.Mak',
+        ]);
 
         $dokumen = $permohonan->Dokumen()->where('tipe_dokumen', 'surat_permohonan')->latest('versi')->first();
         $dokumenInfo = $dokumen ? [
@@ -414,6 +425,36 @@ class PermohonanService
             ],
         ];
 
+        $pengadaanService = app(PengadaanService::class);
+        $pengadaanList = $permohonan->Pengadaan->map(function ($pgd) use ($permohonan, $pengadaanService) {
+            $tracking = $pengadaanService->buildTrackingData($pgd);
+
+            $year = $pgd->created_at ? Carbon::parse($pgd->created_at)->format('Y') : ($permohonan->created_at ? Carbon::parse($permohonan->created_at)->format('Y') : date('Y'));
+            $nomorPengadaan = sprintf('PGD-%s-%04d', $year, $pgd->id);
+
+            $isSelesai = in_array($pgd->status, ['selesai', 'barang_diterima'], true);
+            $statusLabel = $isSelesai ? 'Selesai' : 'Sedang Berlangsung';
+
+            $nominal = $pgd->Kontrak?->nominal_kontrak
+                ? (float) $pgd->Kontrak->nominal_kontrak
+                : (float) ($permohonan->estimasi_anggaran ?? 0);
+
+            $judul = $permohonan->judul ?: 'Pengadaan Barang & Jasa';
+
+            return [
+                'id' => (int) $pgd->id,
+                'nomor_pengadaan' => $nomorPengadaan,
+                'judul' => $judul,
+                'jenis_nama' => $pgd->Jenis?->nama,
+                'mak_nama' => $pgd->PermohonanMak?->Mak?->nama,
+                'nominal' => $nominal,
+                'status' => (string) $pgd->status,
+                'status_label' => $statusLabel,
+                'stepper' => $tracking['stepper'],
+                'timeline' => $tracking['timeline'],
+            ];
+        })->values()->all();
+
         return [
             'id' => (int) $permohonan->id,
             'nomor_surat' => (string) ($permohonan->nomor_surat ?? '-'),
@@ -431,6 +472,7 @@ class PermohonanService
             'catatan_penolakan' => $catatanPenolakan,
             'timeline_stages' => $timelineStages,
             'history' => $historyList,
+            'pengadaan' => $pengadaanList,
         ];
     }
 
