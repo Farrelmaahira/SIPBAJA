@@ -139,6 +139,36 @@ const STATUS_CONFIG: Record<string, StatusTheme> = {
     dot: 'bg-[#12A06B]',
     defaultLabel: 'Kontrak Terbit',
   },
+  barang_diterima: {
+    bg: 'bg-[#E4F6EC]',
+    text: 'text-[#0B7A4E]',
+    dot: 'bg-[#12A06B]',
+    defaultLabel: 'Barang Diterima',
+  },
+  menunggu_review: {
+    bg: 'bg-[#FEF6EE]',
+    text: 'text-[#B54708]',
+    dot: 'bg-[#F79009]',
+    defaultLabel: 'Menunggu Review',
+  },
+  diteruskan: {
+    bg: 'bg-[#E8F0FF]',
+    text: 'text-[#1F55C7]',
+    dot: 'bg-[#2F6FED]',
+    defaultLabel: 'Diteruskan ke PPK',
+  },
+  pembayaran: {
+    bg: 'bg-[#FEF6EE]',
+    text: 'text-[#B54708]',
+    dot: 'bg-[#F79009]',
+    defaultLabel: 'Proses Pembayaran',
+  },
+  sedang_berlangsung: {
+    bg: 'bg-[#FEF6EE]',
+    text: 'text-[#B54708]',
+    dot: 'bg-[#F79009]',
+    defaultLabel: 'Sedang Berlangsung',
+  },
   berjalan: {
     bg: 'bg-[#E8F0FF]',
     text: 'text-[#1F55C7]',

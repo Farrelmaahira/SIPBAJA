@@ -85,6 +85,11 @@ class Pengadaan extends Model
         return $this->hasMany(Dokumen::class, 'ref_id')->where('ref_type', 'pengadaan');
     }
 
+    public function StatusHistories(): HasMany
+    {
+        return $this->hasMany(StatusHistory::class, 'ref_id')->where('ref_type', 'pengadaan');
+    }
+
     public function getTrackingAttribute(): ?array
     {
         return $this->attributes['tracking'] ?? null;

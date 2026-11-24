@@ -30,19 +30,32 @@ export const Bidang2PengadaanIndex: FC = () => {
     setHasError(false);
 
     bidang2Service
-      .getDashboard(undefined, controller.signal)
-      .then((res) => {
+      .getPengadaanList(controller.signal)
+      .then((data) => {
         if (!isMounted) return;
-        const pengadaanData = res.riwayatPengadaanTerbaru;
-        if (pengadaanData && pengadaanData.length > 0) {
-          setAllItems(pengadaanData as Bidang2TableItem[]);
+        if (data && data.length > 0) {
+          setAllItems(data as Bidang2TableItem[]);
         } else {
           setAllItems(FALLBACK_PENGADAAN_ITEMS);
         }
       })
       .catch((_err: unknown) => {
         if (!isMounted || controller.signal.aborted) return;
-        setAllItems(FALLBACK_PENGADAAN_ITEMS);
+        bidang2Service
+          .getDashboard(undefined, controller.signal)
+          .then((res) => {
+            if (!isMounted) return;
+            const pengadaanData = res.riwayatPengadaanTerbaru;
+            if (pengadaanData && pengadaanData.length > 0) {
+              setAllItems(pengadaanData as Bidang2TableItem[]);
+            } else {
+              setAllItems(FALLBACK_PENGADAAN_ITEMS);
+            }
+          })
+          .catch(() => {
+            if (!isMounted) return;
+            setAllItems(FALLBACK_PENGADAAN_ITEMS);
+          });
       })
       .finally(() => {
         if (isMounted) {

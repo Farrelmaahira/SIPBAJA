@@ -88,6 +88,38 @@ class PengajuanBidang2Controller extends Controller
     }
 
     /**
+     * Menampilkan daftar seluruh paket pengadaan untuk Bidang 2 dengan status yang tercatat di status_history.
+     */
+    public function indexPengadaan(Request $request): JsonResponse
+    {
+        $pengadaanList = Pengadaan::with(['Permohonan.unit', 'Jenis', 'Metode', 'Level', 'Kontrak', 'StatusHistories'])
+            ->orderBy('id', 'desc')
+            ->get()
+            ->map(function ($item) {
+                $latestHistory = $item->StatusHistories->sortByDesc('id')->first();
+                $actualStatus = $item->status;
+                if ($latestHistory && $latestHistory->status_baru) {
+                    $actualStatus = $latestHistory->status_baru;
+                }
+
+                return [
+                    'id' => $item->id,
+                    'nomor_pengadaan' => sprintf('PGD-%04d', $item->id),
+                    'nomor_permohonan' => $item->Permohonan?->nomor_surat ?? '-',
+                    'judul' => $item->Permohonan?->judul ?? '-',
+                    'unit_nama' => $item->Permohonan?->unit?->nama ?? '-',
+                    'nominal' => $item->Kontrak?->nominal_kontrak ? (float) $item->Kontrak->nominal_kontrak : (float) ($item->nominal ?? 0),
+                    'status' => $actualStatus,
+                    'created_at' => $item->created_at,
+                ];
+            });
+
+        return response()->json([
+            'pengadaan' => $pengadaanList,
+        ]);
+    }
+
+    /**
      * Menampilkan detail lengkap pengadaan untuk Bidang 2 (termasuk status & tracking FR-05).
      */
     public function showPengadaan(Request $request, Pengadaan $pengadaan): JsonResponse

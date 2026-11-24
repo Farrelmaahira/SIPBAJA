@@ -97,6 +97,17 @@ export const bidang2Service = {
   },
 
   /**
+   * Mengambil seluruh daftar paket pengadaan untuk Bidang 2.
+   */
+  async getPengadaanList(signal?: AbortSignal): Promise<any[]> {
+    const response = await api.get<{ pengadaan: any[] }>(
+      '/v1/bidang-2/pengadaan',
+      { signal }
+    );
+    return response.data.pengadaan;
+  },
+
+  /**
    * Mendapatkan detail pengadaan untuk Bidang 2.
    */
   async getPengadaanDetail(

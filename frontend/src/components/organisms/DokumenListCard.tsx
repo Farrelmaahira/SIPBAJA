@@ -31,6 +31,7 @@ export interface DokumenListCardProps {
   emptyDescription?: string;
   onEmptyAction?: () => void;
   emptyActionLabel?: string;
+  autoExpand?: boolean;
 }
 
 export const DokumenListCard: FC<DokumenListCardProps> = ({
@@ -48,20 +49,21 @@ export const DokumenListCard: FC<DokumenListCardProps> = ({
   emptyDescription,
   onEmptyAction,
   emptyActionLabel,
+  autoExpand = true,
 }) => {
   const safeList = useMemo(() => {
     if (!dokumenList || !Array.isArray(dokumenList)) return [];
     return dokumenList;
   }, [dokumenList]);
 
-  // Default expanded: open the first 'surat_permohonan' doc, or the first doc in the list
+  // Default expanded: open the first 'surat_permohonan' doc, or the first doc in the list if autoExpand is true
   const initialExpandedId = useMemo(() => {
-    if (safeList.length === 0) return null;
+    if (!autoExpand || safeList.length === 0) return null;
     const permohonanDoc = safeList.find(
       (d) => d.tipe_dokumen === 'surat_permohonan' || d.tipe_dokumen === 'permohonan'
     );
     return permohonanDoc ? permohonanDoc.id : safeList[0].id;
-  }, [safeList]);
+  }, [safeList, autoExpand]);
 
   const [expandedId, setExpandedId] = useState<number | string | null>(initialExpandedId);
   const hasAutoExpandedRef = useRef<boolean>(false);
@@ -275,7 +277,13 @@ export const DokumenListCard: FC<DokumenListCardProps> = ({
                         <div className="flex items-center justify-between text-xs text-[#5F6F6A] px-1">
                           <span className="font-semibold text-[#14201C] flex items-center gap-1.5">
                             <FileCheck2 className="w-4 h-4 text-[#0E7C5A]" />
-                            {isRkaklDoc ? 'Pratinjau Dokumen RKAKL' : 'Pratinjau Surat Permohonan'}
+                            {isRkaklDoc
+                              ? 'Pratinjau Dokumen RKAKL'
+                              : doc.tipe_dokumen === 'dokumen_tagihan' || doc.tipe_dokumen === 'tagihan' || doc.nama_asli?.toLowerCase().includes('invoice')
+                                ? 'Pratinjau Dokumen Tagihan / Invoice'
+                                : doc.tipe_dokumen === 'surat_permohonan' || doc.tipe_dokumen === 'permohonan'
+                                  ? 'Pratinjau Surat Permohonan'
+                                  : `Pratinjau ${doc.nama_asli || 'Dokumen'}`}
                           </span>
                           <span className="text-[11px] text-[#8A9A95]">
                             {isRkaklDoc

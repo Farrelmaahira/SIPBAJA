@@ -95,7 +95,7 @@ export const Bidang2PengadaanIndexTemplate: FC<Bidang2PengadaanIndexTemplateProp
       key: 'status',
       header: 'Status',
       className: 'whitespace-nowrap',
-      render: (row) => <StatusPill status={row.status || 'review_pengajuan'} label="Review Pengajuan" />,
+      render: (row) => <StatusPill status={row.status || 'menunggu_review'} />,
     },
   ];
 

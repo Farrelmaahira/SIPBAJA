@@ -57,11 +57,17 @@ class DashboardBidang2Service
      */
     public function riwayatPengadaanTerbaru(int $limit = 4): Collection
     {
-        return Pengadaan::with(['Permohonan.unit', 'Jenis', 'Metode', 'Level'])
+        return Pengadaan::with(['Permohonan.unit', 'Jenis', 'Metode', 'Level', 'Kontrak', 'StatusHistories'])
             ->orderBy('id', 'desc')
             ->limit($limit)
             ->get()
             ->map(function ($item) {
+                $latestHistory = $item->StatusHistories->sortByDesc('id')->first();
+                $actualStatus = $item->status;
+                if ($latestHistory && $latestHistory->status_baru) {
+                    $actualStatus = $latestHistory->status_baru;
+                }
+
                 return [
                     'id' => $item->id,
                     'nomor_pengadaan' => sprintf('PGD-%04d', $item->id),
@@ -69,7 +75,7 @@ class DashboardBidang2Service
                     'judul' => $item->Permohonan?->judul ?? '-',
                     'unit_nama' => $item->Permohonan?->unit?->nama ?? '-',
                     'nominal' => $item->Kontrak?->nominal_kontrak ? (float) $item->Kontrak->nominal_kontrak : null,
-                    'status' => $item->status,
+                    'status' => $actualStatus,
                     'created_at' => $item->created_at,
                 ];
             });

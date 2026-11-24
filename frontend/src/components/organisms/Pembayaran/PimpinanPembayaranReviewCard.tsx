@@ -30,6 +30,9 @@ export interface PimpinanPembayaranReviewCardProps {
   previewBlobUrl?: string | null;
   previewDocId?: number | string | null;
   isLoadingPreview?: boolean;
+  isViewingDocId?: number | string | null;
+  isDownloadingDocId?: number | string | null;
+  autoExpand?: boolean;
 }
 
 export const PimpinanPembayaranReviewCard: FC<PimpinanPembayaranReviewCardProps> = ({
@@ -43,6 +46,9 @@ export const PimpinanPembayaranReviewCard: FC<PimpinanPembayaranReviewCardProps>
   previewBlobUrl,
   previewDocId,
   isLoadingPreview,
+  isViewingDocId,
+  isDownloadingDocId,
+  autoExpand = false,
 }) => {
   const [isApproveModalOpen, setIsApproveModalOpen] = useState<boolean>(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState<boolean>(false);
@@ -334,6 +340,9 @@ export const PimpinanPembayaranReviewCard: FC<PimpinanPembayaranReviewCardProps>
           previewBlobUrl={previewBlobUrl}
           previewDocId={previewDocId}
           isLoadingPreview={isLoadingPreview}
+          isViewingId={isViewingDocId}
+          isDownloadingId={isDownloadingDocId}
+          autoExpand={autoExpand}
         />
       </div>
 
@@ -385,6 +394,9 @@ export const PimpinanPembayaranReviewCard: FC<PimpinanPembayaranReviewCardProps>
               previewBlobUrl={previewBlobUrl}
               previewDocId={previewDocId}
               isLoadingPreview={isLoadingPreview}
+              isViewingId={isViewingDocId}
+              isDownloadingId={isDownloadingDocId}
+              autoExpand={false}
             />
           </div>
         )}
