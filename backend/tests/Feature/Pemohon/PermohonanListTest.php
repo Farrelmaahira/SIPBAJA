@@ -209,6 +209,45 @@ class PermohonanListTest extends TestCase
             ->assertJsonMissing(['nomor_surat' => '01017-FF-11']);
     }
 
+    public function test_pemohon_can_filter_permohonan_by_tahun_and_bulan(): void
+    {
+        $pemohon = $this->getPemohonUser();
+
+        Permohonan::create([
+            'unit_id' => $pemohon->unit_id,
+            'created_by' => $pemohon->id,
+            'nomor_surat' => '01018-THN-2025',
+            'judul' => 'Pengadaan Tahun 2025',
+            'ringkasan_tujuan' => 'Tahun lalu',
+            'estimasi_anggaran' => 50000000,
+            'revisi_ke' => 0,
+            'status' => 'diajukan',
+            'created_at' => '2025-05-10 10:00:00',
+        ]);
+
+        Permohonan::create([
+            'unit_id' => $pemohon->unit_id,
+            'created_by' => $pemohon->id,
+            'nomor_surat' => '01019-BLN-05-2026',
+            'judul' => 'Pengadaan Mei 2026',
+            'ringkasan_tujuan' => 'Bulan Mei',
+            'estimasi_anggaran' => 60000000,
+            'revisi_ke' => 0,
+            'status' => 'diajukan',
+            'created_at' => '2026-05-15 10:00:00',
+        ]);
+
+        $resTahun = $this->actingAs($pemohon, 'sanctum')->getJson('/api/v1/pemohon/permohonan?tahun=2025');
+        $resTahun->assertStatus(200)
+            ->assertJsonFragment(['nomor_surat' => '01018-THN-2025'])
+            ->assertJsonMissing(['nomor_surat' => '01019-BLN-05-2026']);
+
+        $resBulan = $this->actingAs($pemohon, 'sanctum')->getJson('/api/v1/pemohon/permohonan?tahun=2026&bulan=5');
+        $resBulan->assertStatus(200)
+            ->assertJsonFragment(['nomor_surat' => '01019-BLN-05-2026'])
+            ->assertJsonMissing(['nomor_surat' => '01018-THN-2025']);
+    }
+
     public function test_pemohon_can_delete_own_draft_or_pending_permohonan(): void
     {
         $pemohon = $this->getPemohonUser();

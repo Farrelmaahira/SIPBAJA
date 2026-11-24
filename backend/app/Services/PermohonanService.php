@@ -179,13 +179,18 @@ class PermohonanService
     }
 
     /**
-     * Mengambil daftar permohonan milik unit pemohon dengan filter status dan pencarian.
+     * Mengambil daftar permohonan milik unit pemohon dengan filter status, pencarian, tahun, dan bulan.
      * Mendukung status tunggal, array status, atau string status dipisahkan koma.
      *
      * @param  string|array<string>|null  $status
      */
-    public function daftarPermohonan(User $user, string|array|null $status = null, ?string $search = null)
-    {
+    public function daftarPermohonan(
+        User $user,
+        string|array|null $status = null,
+        ?string $search = null,
+        ?int $tahun = null,
+        ?int $bulan = null
+    ) {
         $query = Permohonan::where('unit_id', $user->unit_id)->with('Dokumen');
 
         if (! empty($status) && $status !== 'semua') {
@@ -226,6 +231,14 @@ class PermohonanService
                 $q->where('nomor_surat', 'like', "%{$search}%")
                     ->orWhere('judul', 'like', "%{$search}%");
             });
+        }
+
+        if ($tahun) {
+            $query->whereYear('created_at', $tahun);
+        }
+
+        if ($bulan) {
+            $query->whereMonth('created_at', $bulan);
         }
 
         return $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();

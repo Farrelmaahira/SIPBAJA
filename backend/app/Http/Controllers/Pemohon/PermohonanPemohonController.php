@@ -34,14 +34,18 @@ class PermohonanPemohonController extends Controller
         $user = $request->user();
         $status = $request->input('status');
         $search = $request->input('search');
+        $tahun = $request->filled('tahun') ? (int) $request->input('tahun') : null;
+        $bulan = $request->filled('bulan') ? (int) $request->input('bulan') : null;
 
-        $permohonanList = $this->permohonanService->daftarPermohonan($user, $status, $search);
+        $permohonanList = $this->permohonanService->daftarPermohonan($user, $status, $search, $tahun, $bulan);
 
         return response()->json([
             'permohonanList' => $permohonanList,
             'filters' => [
                 'status' => $status ?? 'semua',
                 'search' => $search ?? '',
+                'tahun' => $tahun,
+                'bulan' => $bulan,
             ],
         ]);
     }

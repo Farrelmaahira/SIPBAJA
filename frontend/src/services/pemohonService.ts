@@ -43,7 +43,13 @@ export const pemohonService = {
    * Mengambil daftar seluruh permohonan pengadaan untuk unit Pemohon dengan filter dan paginasi.
    */
   async getPermohonanList(
-    params?: { search?: string; status?: string; page?: number },
+    params?: {
+      search?: string;
+      status?: string;
+      tahun?: string | number;
+      bulan?: string | number;
+      page?: number;
+    },
     signal?: AbortSignal
   ): Promise<PermohonanListApiResponse> {
     const response = await api.get<PermohonanListApiResponse>(

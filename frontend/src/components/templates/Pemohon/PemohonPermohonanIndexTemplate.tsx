@@ -24,6 +24,10 @@ export interface PemohonPermohonanIndexTemplateProps {
   onSearchChange: (query: string) => void;
   onSearchSubmit: (e: FormEvent) => void;
   onClearSearch: () => void;
+  selectedBulan?: string;
+  onBulanChange?: (bulan: string) => void;
+  selectedTahun?: string;
+  onTahunChange?: (tahun: string) => void;
   filterModalOpen: boolean;
   onToggleFilterModal: (open: boolean) => void;
   selectedStatuses: string[];
@@ -59,6 +63,10 @@ export const PemohonPermohonanIndexTemplate: FC<
   onSearchChange,
   onSearchSubmit,
   onClearSearch,
+  selectedBulan = '',
+  onBulanChange,
+  selectedTahun = '',
+  onTahunChange,
   filterModalOpen,
   onToggleFilterModal,
   selectedStatuses,
@@ -128,6 +136,10 @@ export const PemohonPermohonanIndexTemplate: FC<
         filterStatusLabel="Filter"
         filterStatusCount={isFilterActive ? 1 : 0}
         onFilterStatusClick={() => onToggleFilterModal(true)}
+        selectedBulan={selectedBulan}
+        onBulanChange={onBulanChange}
+        selectedTahun={selectedTahun}
+        onTahunChange={onTahunChange}
         total={isLoading ? 'Memuat data...' : `${pagination.total} permohonan`}
       />
     );

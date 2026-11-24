@@ -19,12 +19,16 @@ export const PermohonanIndex: FC = () => {
     searchQuery,
     setSearchQuery,
     selectedStatus,
+    selectedTahun,
+    selectedBulan,
     filterModalOpen,
     setFilterModalOpen,
     handlePageChange,
     handleSearchSubmit,
     handleApplyFilter,
     handleResetFilter,
+    handleTahunChange,
+    handleBulanChange,
     refetch,
   } = usePemohonPermohonan();
 
@@ -86,6 +90,10 @@ export const PermohonanIndex: FC = () => {
       onSearchChange={setSearchQuery}
       onSearchSubmit={(e: FormEvent) => handleSearchSubmit(e)}
       onClearSearch={handleClearSearch}
+      selectedBulan={selectedBulan}
+      onBulanChange={handleBulanChange}
+      selectedTahun={selectedTahun}
+      onTahunChange={handleTahunChange}
       filterModalOpen={filterModalOpen}
       onToggleFilterModal={setFilterModalOpen}
       selectedStatuses={selectedStatuses}

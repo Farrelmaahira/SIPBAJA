@@ -20,12 +20,18 @@ export interface UsePemohonPermohonanReturn {
   setSearchQuery: (q: string) => void;
   selectedStatus: string;
   setSelectedStatus: (s: string) => void;
+  selectedTahun: string;
+  setSelectedTahun: (t: string) => void;
+  selectedBulan: string;
+  setSelectedBulan: (b: string) => void;
   filterModalOpen: boolean;
   setFilterModalOpen: (open: boolean) => void;
   handlePageChange: (page: number) => void;
   handleSearchSubmit: (e?: FormEvent) => void;
   handleApplyFilter: (status: string) => void;
   handleResetFilter: () => void;
+  handleTahunChange: (tahun: string) => void;
+  handleBulanChange: (bulan: string) => void;
   refetch: () => void;
 }
 
@@ -38,6 +44,8 @@ export function usePemohonPermohonan(): UsePemohonPermohonanReturn {
   const [searchQuery, setSearchQuery] = useState('');
   const [appliedSearch, setAppliedSearch] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('semua');
+  const [selectedTahun, setSelectedTahun] = useState('');
+  const [selectedBulan, setSelectedBulan] = useState('');
   const [filterModalOpen, setFilterModalOpen] = useState(false);
 
   const [pagination, setPagination] = useState<UsePemohonPermohonanPagination>({
@@ -53,6 +61,8 @@ export function usePemohonPermohonan(): UsePemohonPermohonanReturn {
       page = 1,
       status = selectedStatus,
       search = appliedSearch,
+      tahun = selectedTahun,
+      bulan = selectedBulan,
       signal?: AbortSignal
     ) => {
       setIsLoading(true);
@@ -65,6 +75,8 @@ export function usePemohonPermohonan(): UsePemohonPermohonanReturn {
             page,
             status,
             search,
+            tahun: tahun ? Number(tahun) : undefined,
+            bulan: bulan ? Number(bulan) : undefined,
           },
           signal
         );
@@ -94,17 +106,31 @@ export function usePemohonPermohonan(): UsePemohonPermohonanReturn {
         }
       }
     },
-    [selectedStatus, appliedSearch]
+    [selectedStatus, appliedSearch, selectedTahun, selectedBulan]
   );
 
   useEffect(() => {
     const controller = new AbortController();
-    void fetchList(pagination.currentPage, selectedStatus, appliedSearch, controller.signal);
+    void fetchList(
+      pagination.currentPage,
+      selectedStatus,
+      appliedSearch,
+      selectedTahun,
+      selectedBulan,
+      controller.signal
+    );
 
     return () => {
       controller.abort();
     };
-  }, [fetchList, pagination.currentPage, selectedStatus, appliedSearch]);
+  }, [
+    fetchList,
+    pagination.currentPage,
+    selectedStatus,
+    appliedSearch,
+    selectedTahun,
+    selectedBulan,
+  ]);
 
   const handlePageChange = useCallback(
     (page: number) => {
@@ -136,9 +162,32 @@ export function usePemohonPermohonan(): UsePemohonPermohonanReturn {
     setPagination((prev) => ({ ...prev, currentPage: 1 }));
   }, []);
 
+  const handleTahunChange = useCallback((tahun: string) => {
+    setSelectedTahun(tahun);
+    setPagination((prev) => ({ ...prev, currentPage: 1 }));
+  }, []);
+
+  const handleBulanChange = useCallback((bulan: string) => {
+    setSelectedBulan(bulan);
+    setPagination((prev) => ({ ...prev, currentPage: 1 }));
+  }, []);
+
   const refetch = useCallback(() => {
-    void fetchList(pagination.currentPage, selectedStatus, appliedSearch);
-  }, [fetchList, pagination.currentPage, selectedStatus, appliedSearch]);
+    void fetchList(
+      pagination.currentPage,
+      selectedStatus,
+      appliedSearch,
+      selectedTahun,
+      selectedBulan
+    );
+  }, [
+    fetchList,
+    pagination.currentPage,
+    selectedStatus,
+    appliedSearch,
+    selectedTahun,
+    selectedBulan,
+  ]);
 
   return {
     items,
@@ -150,12 +199,18 @@ export function usePemohonPermohonan(): UsePemohonPermohonanReturn {
     setSearchQuery,
     selectedStatus,
     setSelectedStatus,
+    selectedTahun,
+    setSelectedTahun,
+    selectedBulan,
+    setSelectedBulan,
     filterModalOpen,
     setFilterModalOpen,
     handlePageChange,
     handleSearchSubmit,
     handleApplyFilter,
     handleResetFilter,
+    handleTahunChange,
+    handleBulanChange,
     refetch,
   };
 }
