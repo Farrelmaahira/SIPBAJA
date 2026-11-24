@@ -238,7 +238,7 @@ class PermohonanService
     {
         $user->loadMissing('role');
         $isReviewer = in_array($user->role?->nama, ['Admin', 'Bidang 2', 'Perencanaan', 'PPBJ', 'PPK', 'PP', 'Perlengkapan', 'Keuangan']);
-        abort_unless($isReviewer || ($user->unit_id && $user->unit_id === $permohonan->unit_id), 403, 'Akses tidak diizinkan untuk unit lain.');
+        abort_unless($isReviewer || ($user->unit_id && (int) $user->unit_id === (int) $permohonan->unit_id), 403, 'Akses tidak diizinkan untuk unit lain.');
 
         if ($dokumenId) {
             $dokumen = $permohonan->Dokumen()->where('id', $dokumenId)->first()
@@ -291,7 +291,7 @@ class PermohonanService
     {
         $user->loadMissing('role');
         $isReviewer = in_array($user->role?->nama, ['Admin', 'Bidang 2', 'Perencanaan', 'PPBJ', 'PPK', 'PP', 'Perlengkapan', 'Keuangan']);
-        abort_unless($isReviewer || ($user->unit_id && $user->unit_id === $permohonan->unit_id), 403, 'Akses tidak diizinkan untuk unit lain.');
+        abort_unless($isReviewer || ($user->unit_id && (int) $user->unit_id === (int) $permohonan->unit_id), 403, 'Akses tidak diizinkan untuk unit lain.');
 
         $permohonan->loadMissing(['Unit', 'Creator', 'Dokumen', 'Approvals.Actor.Role', 'Pengadaan']);
 
@@ -800,7 +800,10 @@ class PermohonanService
             'download_url' => "/api/v1/perencanaan/rkakl/dokumen/{$rkaklDoc->id}",
         ] : null;
 
-        $data = [
+        $actor = request()->user() ?? User::whereHas('Role', fn ($q) => $q->where('nama', 'Perencanaan'))->first() ?? $permohonan->Creator;
+        $detailUtama = $this->detailPermohonan($actor, $permohonan);
+
+        return [
             'permohonan' => $permohonan,
             'maks' => $maks,
             'selected_mak_ids' => $selectedMakIds,
@@ -810,6 +813,10 @@ class PermohonanService
             'dokumen_permohonan' => $dokumenPermohonan,
             'dokumen' => $dokumenInfo,
             'rkakl_active' => $rkaklInfo,
+            'timeline_stages' => $detailUtama['timeline_stages'] ?? [],
+            'history' => $detailUtama['history'] ?? [],
+            'pengadaan' => $detailUtama['pengadaan'] ?? [],
+            'tracking' => ! empty($detailUtama['pengadaan']) ? $detailUtama['pengadaan'][0] : null,
         ];
 
         return $data;
