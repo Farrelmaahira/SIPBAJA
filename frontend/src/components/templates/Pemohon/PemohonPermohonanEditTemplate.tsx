@@ -67,8 +67,8 @@ export const PemohonPermohonanEditTemplate: FC<
         roleInitials="PM"
         roleTitle="Pemohon"
         roleSubtitle="Unit Pemohon"
-        profileHref="/pemohon/dashboard"
-        notifikasiHref="/pemohon/dashboard"
+        profileHref="/pemohon/profil"
+        notifikasiHref="/pemohon/notifikasi"
       >
         {/* Breadcrumb Navigasi */}
         <nav

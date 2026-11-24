@@ -240,7 +240,7 @@ export const PemohonDashboardTemplate: FC<PemohonDashboardTemplateProps> = ({
       roleTitle="Pemohon"
       roleSubtitle={user?.unit?.nama || 'Jurusan / Bagian'}
       profileHref="/pemohon/profil"
-      notifikasiHref="/pemohon/dashboard"
+      notifikasiHref="/pemohon/notifikasi"
       user={user}
     >
       <div className="space-y-6">

@@ -23,6 +23,8 @@ import PemohonPermohonanIndex from '../pages/Pemohon/Permohonan/Index';
 import PemohonPermohonanCreate from '../pages/Pemohon/Permohonan/Create';
 import PemohonPermohonanShow from '../pages/Pemohon/Permohonan/Show';
 import PemohonPermohonanEdit from '../pages/Pemohon/Permohonan/Edit';
+import PemohonNotifikasiIndex from '../pages/Pemohon/Notifikasi/Index';
+import PemohonProfilIndex from '../pages/Pemohon/Profil/Index';
 
 // Perencanaan Pages
 import PerencanaanDashboard from '../pages/Perencanaan/Dashboard';
@@ -215,6 +217,8 @@ export const AppRoutes: FC = () => {
           <Route path="/pemohon/permohonan/create" element={<PemohonPermohonanCreate />} />
           <Route path="/pemohon/permohonan/:id" element={<PemohonPermohonanShow />} />
           <Route path="/pemohon/permohonan/:id/edit" element={<PemohonPermohonanEdit />} />
+          <Route path="/pemohon/notifikasi" element={<PemohonNotifikasiIndex />} />
+          <Route path="/pemohon/profil" element={<PemohonProfilIndex />} />
         </Route>
 
         {/* Perencanaan Routes */}

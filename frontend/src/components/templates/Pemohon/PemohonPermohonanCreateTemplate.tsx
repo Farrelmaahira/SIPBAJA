@@ -36,8 +36,8 @@ export const PemohonPermohonanCreateTemplate: FC<PemohonPermohonanCreateTemplate
       roleInitials="PM"
       roleTitle="Pemohon"
       roleSubtitle="Unit Pemohon"
-      profileHref="/pemohon/dashboard"
-      notifikasiHref="/pemohon/dashboard"
+      profileHref="/pemohon/profil"
+      notifikasiHref="/pemohon/notifikasi"
     >
       <div className="space-y-6">
         <HeroBanner

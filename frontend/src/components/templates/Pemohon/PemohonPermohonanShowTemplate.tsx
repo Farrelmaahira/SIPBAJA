@@ -208,8 +208,8 @@ export const PemohonPermohonanShowTemplate: FC<
         roleInitials="PM"
         roleTitle="Pemohon"
         roleSubtitle="Unit Pemohon"
-        profileHref="/pemohon/dashboard"
-        notifikasiHref="/pemohon/dashboard"
+        profileHref="/pemohon/profil"
+        notifikasiHref="/pemohon/notifikasi"
         breadcrumb={[
           {
             label: 'Dashboard',
