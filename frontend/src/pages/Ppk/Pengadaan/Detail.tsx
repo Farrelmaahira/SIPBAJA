@@ -1,6 +1,7 @@
 import { useState, useEffect, type FC } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ppkService from '../../../services/ppkService';
+import { usePengadaanDokumen } from '../../../hooks/usePengadaanDokumen';
 import PpkPengadaanDetailTemplate from '../../../components/templates/PPK/PpkPengadaanDetailTemplate';
 import { extractServerErrors } from '../../../utils/fileValidation';
 import { PPK_NAV_ITEMS } from '@/constants/ppkNav';
@@ -35,6 +36,8 @@ export const PpkPengadaanDetail: FC<PpkPengadaanDetailProps> = ({
 
   const [pembayaranContext, setPembayaranContext] = useState<any>(null);
   const [isLoadingPembayaran, setIsLoadingPembayaran] = useState<boolean>(false);
+
+  const dokumenPengadaan = usePengadaanDokumen(detail);
 
   const fetchPembayaran = (signal?: AbortSignal) => {
     if (!id) return;
@@ -150,6 +153,12 @@ export const PpkPengadaanDetail: FC<PpkPengadaanDetailProps> = ({
       recentNotifications={recentNotifications}
       unreadNotificationsCount={unreadNotificationsCount}
       navItems={PPK_NAV_ITEMS}
+      primaryDokumenPengadaan={dokumenPengadaan.primaryDokumenPengadaan}
+      previewBlobUrl={dokumenPengadaan.previewBlobUrl}
+      isLoadingPreview={dokumenPengadaan.isLoadingPreview}
+      downloadingDocId={dokumenPengadaan.downloadingDocId}
+      onDownloadDokumen={dokumenPengadaan.handleDownload}
+      onViewDokumen={dokumenPengadaan.handleViewNewTab}
       confirmApproveOpen={confirmApproveOpen}
       rejectOpen={rejectOpen}
       submitting={submitting}

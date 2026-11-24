@@ -99,7 +99,7 @@ export const PpkDashboardTemplate: FC<PpkDashboardTemplateProps> = ({
               <p className="text-xs text-[#8A9A95] mt-0.5">Permohonan yang membutuhkan tindakan PPK</p>
             </div>
             <Link
-              to="/ppk/pengajuan"
+              to="/ppk/pengadaan"
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-[#E4EBE8] hover:bg-[#F4F7F5] text-xs font-bold text-[#0E7C5A] transition"
             >
               <span>Lihat Semua</span>

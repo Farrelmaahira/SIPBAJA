@@ -94,11 +94,14 @@ export const PpbjPengadaanIndexTemplate: FC<PpbjPengadaanIndexTemplateProps> = (
         {
             key: 'nilaiPengadaan',
             header: 'Nilai Pengadaan',
-            render: (item) => (
-                <span className="font-bold text-xs text-[#0E7C5A] tabular-nums">
-                    {formatRupiah(item.nominal)}
-                </span>
-            )
+            render: (item) => {
+                const nominal = Number(item.nominal ?? (item as any)?.kontrak?.nominal_kontrak ?? 0);
+                return (
+                    <span className="font-bold text-xs text-[#0E7C5A] tabular-nums">
+                        {formatRupiah(nominal)}
+                    </span>
+                );
+            }
         },
         {
             key: 'status',

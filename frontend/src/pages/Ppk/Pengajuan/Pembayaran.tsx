@@ -88,7 +88,7 @@ export const PpkPengajuanPembayaran: FC<PpkPembayaranProps> = ({
     try {
       await ppkService.approvePembayaran(targetId, selectedMemoFile, catatanApprove);
       setApproveModalOpen(false);
-      navigate('/ppk/pengajuan');
+      navigate('/ppk/pengadaan');
     } catch (err) {
       const { fieldErrors, message } = extractServerErrors(err);
       setMemoFileError(fieldErrors.memo || message);
@@ -112,7 +112,7 @@ export const PpkPengajuanPembayaran: FC<PpkPembayaranProps> = ({
     try {
       await ppkService.rejectPembayaran(targetId, alasanTolak.trim());
       setRejectModalOpen(false);
-      navigate('/ppk/pengajuan');
+      navigate('/ppk/pengadaan');
     } catch (err) {
       const { fieldErrors, message } = extractServerErrors(err);
       setAlasanError(fieldErrors.alasan || message);

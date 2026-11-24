@@ -141,7 +141,7 @@ export const Bidang2PengadaanShowTemplate: FC<Bidang2PengadaanShowTemplateProps>
               metodePengadaan={pengadaan?.metode?.nama || '-'}
               levelPengadaan={pengadaan?.level?.nama || '-'}
               nominal={formatRupiah(
-                pengadaan?.kontrak?.nominal_kontrak ?? pengadaan?.nominal ?? 0,
+                pengadaan?.kontrak?.nominal_kontrak ?? 0,
               )}
               statusPpLabel={pengadaan?.level?.perlu_review_pp ? 'Memerlukan Verifikasi PP' : 'Bypass PP'}
               statusPengadaanPill={<StatusPill status={pengadaan?.status || 'review_pengajuan'} />}

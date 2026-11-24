@@ -730,7 +730,18 @@ class PengadaanService
                 'Metode',
                 'Ppk',
                 'Approvals.Actor',
+                'Kontrak',
             ]);
+    }
+
+    /**
+     * Menyalin nominal kontrak ke atribut `nominal` agar konsisten dengan endpoint PPBJ.
+     */
+    private function pasangNominalKontrak(Pengadaan $pengadaan): Pengadaan
+    {
+        $pengadaan->nominal = (float) ($pengadaan->Kontrak?->nominal_kontrak ?? 0);
+
+        return $pengadaan;
     }
 
     /**
@@ -748,7 +759,8 @@ class PengadaanService
         $pengajuanTerbaru = (clone $base)
             ->orderByDesc('created_at')
             ->limit(4)
-            ->get();
+            ->get()
+            ->each(fn (Pengadaan $item) => $this->pasangNominalKontrak($item));
 
         return [
             'stats' => [
@@ -807,7 +819,8 @@ class PengadaanService
         return $query
             ->orderByDesc('created_at')
             ->paginate($perPage)
-            ->withQueryString();
+            ->withQueryString()
+            ->through(fn (Pengadaan $item) => $this->pasangNominalKontrak($item));
     }
 
     public function getProfilPengguna(User $user): User
@@ -858,7 +871,8 @@ class PengadaanService
         return $query
             ->orderByDesc('id')
             ->paginate($perPage)
-            ->withQueryString();
+            ->withQueryString()
+            ->through(fn (Pengadaan $item) => $this->pasangNominalKontrak($item));
     }
 
     public function getDetailPengadaanPpbj(int $pengadaanId): Pengadaan

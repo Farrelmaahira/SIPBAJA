@@ -269,7 +269,6 @@ export const AppRoutes: FC = () => {
           <Route path="/ppk/permohonan/:id/review" element={<PpkPermohonanReview />} />
           <Route path="/ppk/pengadaan" element={<PpkPengadaanIndex />} />
           <Route path="/ppk/pengadaan/:id" element={<PpkPengadaanDetail />} />
-          <Route path="/ppk/pengadaan/:id/review" element={<PpkPengadaanDetail />} />
           <Route path="/ppk/pengadaan/:id/pembayaran" element={<PpkPengajuanPembayaran />} />
           <Route path="/ppk/notifikasi" element={<PpkNotifikasiIndex />} />
           <Route path="/ppk/profil" element={<PpkProfilIndex />} />

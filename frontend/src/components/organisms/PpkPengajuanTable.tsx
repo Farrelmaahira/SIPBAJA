@@ -20,13 +20,10 @@ export const PpkPengajuanTable: FC<PpkPengajuanTableProps> = ({
     if (row.sourceType === 'permohonan') {
       return `/ppk/permohonan/${row.id}/review`;
     }
-    if (row.status === 'menunggu_persetujuan' || row.status === 'menunggu_review') {
-      return `/ppk/pengajuan/${row.id}/review`;
-    }
     if (row.status === 'review_pembayaran' || row.status === 'diteruskan') {
-      return `/ppk/pengajuan/${row.id}/pembayaran`;
+      return `/ppk/pengadaan/${row.id}/pembayaran`;
     }
-    return `/ppk/pengajuan/${row.id}`;
+    return `/ppk/pengadaan/${row.id}`;
   };
 
   return (

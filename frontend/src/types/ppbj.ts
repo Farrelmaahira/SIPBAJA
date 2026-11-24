@@ -20,6 +20,8 @@ export interface PpbjPermohonanItem {
   unit_nama?: string;
   estimasiAnggaran?: number;
   estimasi_anggaran?: number;
+  nilaiPengadaan?: number;
+  nominal?: number;
   revisiKe?: number;
   revisi_ke?: number;
   status: string;

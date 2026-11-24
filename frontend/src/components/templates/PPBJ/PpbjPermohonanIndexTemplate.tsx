@@ -91,12 +91,15 @@ export const PpbjPermohonanIndexTemplate: FC<PpbjPermohonanIndexTemplateProps> =
     },
     {
       key: 'estimasiAnggaran',
-      header: 'Nilai Pengajuan',
-      render: (item) => (
-        <span className="text-xs font-bold text-[#0E7C5A] whitespace-nowrap">
-          {formatRupiah(item.estimasiAnggaran)}
-        </span>
-      ),
+      header: 'Nilai Pengadaan',
+      render: (item) => {
+        const nominal = Number(item.nilaiPengadaan ?? item.nominal ?? 0);
+        return (
+          <span className="text-xs font-bold text-[#0E7C5A] whitespace-nowrap">
+            {formatRupiah(nominal)}
+          </span>
+        );
+      },
     },
     {
       key: 'status',

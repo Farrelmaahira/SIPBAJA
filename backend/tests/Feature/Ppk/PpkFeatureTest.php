@@ -3,6 +3,7 @@
 namespace Tests\Feature\Ppk;
 
 use App\Models\Dokumen;
+use App\Models\Kontrak;
 use App\Models\Mak;
 use App\Models\Pengadaan;
 use App\Models\Permohonan;
@@ -131,6 +132,31 @@ class PpkFeatureTest extends TestCase
 
         $this->actingAs($this->ppkUser, 'sanctum')
             ->get("/api/v1/ppk/permohonan/{$permohonan->id}/dokumen?dokumen_id={$dokumen->id}&disposition=inline")
+            ->assertStatus(200)
+            ->assertHeader('content-type', 'application/pdf');
+    }
+
+    public function test_ppk_can_preview_pengadaan_dokumen_from_public_disk(): void
+    {
+        Storage::fake('public');
+
+        $pengadaan = Pengadaan::firstOrFail();
+        $pengadaan->update([
+            'ppk_id' => $this->ppkUser->id,
+            'status' => 'diteruskan',
+        ]);
+
+        $dokumen = Dokumen::where('ref_type', 'pengadaan')
+            ->where('ref_id', $pengadaan->id)
+            ->firstOrFail();
+
+        Storage::disk('public')->put(
+            'dokumen_pengadaan/'.basename($dokumen->nama_hash),
+            '%PDF-1.4 dummy'
+        );
+
+        $this->actingAs($this->ppkUser, 'sanctum')
+            ->get("/api/v1/ppk/pengajuan/{$pengadaan->id}/dokumen/{$dokumen->id}?disposition=inline")
             ->assertStatus(200)
             ->assertHeader('content-type', 'application/pdf');
     }
@@ -281,6 +307,51 @@ class PpkFeatureTest extends TestCase
             ->getJson('/api/v1/ppk/permohonan?statuses[]=ditolak');
         $nonMatching->assertOk();
         $this->assertFalse(collect($nonMatching->json('data'))->pluck('id')->contains($permohonan->id));
+    }
+
+    public function test_ppk_pengadaan_list_and_dashboard_use_contract_nominal(): void
+    {
+        $pengadaan = Pengadaan::orderByDesc('created_at')->firstOrFail();
+        $pengadaan->update([
+            'ppk_id' => $this->ppkUser->id,
+            'status' => 'diteruskan',
+        ]);
+
+        Kontrak::updateOrCreate(
+            ['pengadaan_id' => $pengadaan->id],
+            [
+                'tipe' => 'SPK',
+                'nomor' => 'SPK-'.uniqid(),
+                'tanggal' => now()->toDateString(),
+                'vendor_nama' => 'PT Uji Nominal',
+                'nominal_kontrak' => 30000000,
+            ]
+        );
+
+        $list = $this->actingAs($this->ppkUser, 'sanctum')
+            ->getJson('/api/v1/ppk/pengajuan?per_page=100');
+
+        $list->assertOk();
+        $row = collect($list->json('pengajuan.data'))->firstWhere('id', $pengadaan->id);
+        $this->assertNotNull($row);
+        $this->assertSame(30000000.0, (float) $row['nominal']);
+
+        $dashboard = $this->actingAs($this->ppkUser, 'sanctum')
+            ->getJson('/api/v1/ppk/dashboard');
+
+        $dashboard->assertOk();
+        $dashboardRow = collect($dashboard->json('pengajuanTerbaru'))->firstWhere('id', $pengadaan->id);
+        $this->assertNotNull($dashboardRow);
+        $this->assertSame(30000000.0, (float) $dashboardRow['nominal']);
+
+        Kontrak::where('pengadaan_id', $pengadaan->id)->delete();
+
+        $listTanpaKontrak = $this->actingAs($this->ppkUser, 'sanctum')
+            ->getJson('/api/v1/ppk/pengajuan?per_page=100');
+
+        $rowTanpaKontrak = collect($listTanpaKontrak->json('pengajuan.data'))->firstWhere('id', $pengadaan->id);
+        $this->assertNotNull($rowTanpaKontrak);
+        $this->assertSame(0.0, (float) $rowTanpaKontrak['nominal']);
     }
 
     public function test_ppk_can_view_pengadaan_list_and_review(): void

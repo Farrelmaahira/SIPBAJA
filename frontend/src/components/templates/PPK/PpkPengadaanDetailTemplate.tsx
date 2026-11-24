@@ -1,27 +1,16 @@
-import { useState, useEffect, useMemo, type FC } from 'react';
-import {
-  ArrowLeft,
-  FileText,
-  Tag,
-  CheckCircle2,
-  XCircle,
-  Download,
-  AlertCircle,
-  UserCheck,
-  Loader2,
-  ExternalLink,
-  Clock,
-} from 'lucide-react';
+import { useMemo, type FC } from 'react';
+import { ArrowLeft, CheckCircle2, XCircle, AlertCircle, Clock } from 'lucide-react';
 import AppLayout, { type AppNavItem } from '../General/AppLayout';
 import HeroBanner from '../../organisms/HeroBanner';
 import { InformasiPengadaanCard } from '../../organisms/PP/InformasiPengadaanCard';
 import TrackingPengadaanCard from '../../organisms/TrackingPengadaanCard';
 import { CatatanRevisiCard } from '../../organisms/PP/CatatanRevisiCard';
-import DocumentCard from '../../organisms/DocumentCard';
+import { DokumenProsesCard } from '../../organisms/PP/DokumenProsesCard';
+import { DokumenPengadaanCard } from '../../organisms/PP/DokumenPengadaanCard';
 import KonfirmasiApproveModal from '../../organisms/KonfirmasiApproveModal';
 import TolakPengadaanModal from '../../organisms/TolakPengadaanModal';
-import { ppkService } from '../../../services/ppkService';
-import { formatBytes } from '../../../utils/formatters';
+import { formatCurrency } from '../../../utils/formatCurrency';
+import { formatTanggalIndo } from '../../../utils/formatters';
 import type {
   PpPengadaanDetailPayload,
   PpMakItem,
@@ -41,6 +30,12 @@ export interface PpkPengadaanDetailTemplateProps {
   roleTitle?: string | null;
   roleSubtitle?: string | null;
   navItems?: AppNavItem[] | null;
+  primaryDokumenPengadaan: DokumenItem | null;
+  previewBlobUrl: string | null;
+  isLoadingPreview: boolean;
+  downloadingDocId: number | string | null;
+  onDownloadDokumen: (doc: DokumenItem) => void;
+  onViewDokumen: (doc: DokumenItem) => void;
   confirmApproveOpen: boolean;
   rejectOpen: boolean;
   submitting: boolean;
@@ -68,6 +63,12 @@ export const PpkPengadaanDetailTemplate: FC<PpkPengadaanDetailTemplateProps> = (
   roleTitle = 'Pejabat Pembuat Komitmen',
   roleSubtitle = 'PPK - Pengadaan Barang/Jasa',
   navItems = null,
+  primaryDokumenPengadaan,
+  previewBlobUrl,
+  isLoadingPreview,
+  downloadingDocId,
+  onDownloadDokumen,
+  onViewDokumen,
   confirmApproveOpen,
   rejectOpen,
   submitting,
@@ -95,25 +96,11 @@ export const PpkPengadaanDetailTemplate: FC<PpkPengadaanDetailTemplateProps> = (
   const level = pengadaan.level || pengadaan.Level;
   const makList: PpMakItem[] = detail.mak_list || [];
 
-  const rawDokumenPengadaan: DokumenItem[] = Array.isArray(detail.dokumen_pengadaan)
-    ? (detail.dokumen_pengadaan as DokumenItem[])
-    : detail.dokumen_pengadaan
-      ? [detail.dokumen_pengadaan as DokumenItem]
-      : [];
   const rawDokumenPermohonan: DokumenItem[] = Array.isArray(detail.dokumen_permohonan)
     ? (detail.dokumen_permohonan as DokumenItem[])
     : detail.dokumen_permohonan
       ? [detail.dokumen_permohonan as DokumenItem]
       : [];
-
-  // Cari file dokumen pengadaan utama yang diunggah PPBJ
-  const primaryDokumenPengadaan = useMemo(() => {
-    return (
-      rawDokumenPengadaan.find((d) => d.tipe_dokumen === 'dokumen_pengadaan') ||
-      rawDokumenPengadaan[0] ||
-      null
-    );
-  }, [rawDokumenPengadaan]);
 
   // Cari dokumen surat permohonan dan memo persetujuan
   const suratPermohonanDoc = useMemo(() => {
@@ -240,104 +227,13 @@ export const PpkPengadaanDetailTemplate: FC<PpkPengadaanDetailTemplateProps> = (
     };
   }, [pengadaan]);
 
-  // Formatter helpers
-  const formatCurrency = (val?: number | string) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      maximumFractionDigits: 0,
-    }).format(Number(val) || 0);
-  };
-
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString('id-ID', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-    });
-  };
-
-  // State untuk Live Preview Iframe Dokumen Pengadaan
-  const [pengadaanBlobUrl, setPengadaanBlobUrl] = useState<string | null>(null);
-  const [loadingPengadaanBlob, setLoadingPengadaanBlob] = useState<boolean>(false);
-  const [downloadingDocId, setDownloadingDocId] = useState<number | string | null>(null);
-
-  useEffect(() => {
-    if (!primaryDokumenPengadaan?.download_url) {
-      setPengadaanBlobUrl(null);
-      return;
-    }
-
-    const controller = new AbortController();
-    setLoadingPengadaanBlob(true);
-
-    ppkService
-      .fetchDokumenBlob(primaryDokumenPengadaan.download_url, 'inline', controller.signal)
-      .then(({ blob }) => {
-        const url = URL.createObjectURL(blob);
-        setPengadaanBlobUrl(url);
-      })
-      .catch((err) => {
-        if (!controller.signal.aborted) {
-          console.warn('Gagal memuat blob dokumen pengadaan untuk live preview:', err);
-          setPengadaanBlobUrl(null);
-        }
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) {
-          setLoadingPengadaanBlob(false);
-        }
-      });
-
-    return () => {
-      controller.abort();
-      if (pengadaanBlobUrl) {
-        URL.revokeObjectURL(pengadaanBlobUrl);
-      }
-    };
-  }, [primaryDokumenPengadaan?.download_url]);
-
-  // Download handler
-  const handleDownload = async (doc: DokumenItem) => {
-    if (!doc.download_url) return;
-    setDownloadingDocId(doc.id);
-    try {
-      const { blob } = await ppkService.fetchDokumenBlob(doc.download_url, 'attachment');
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = doc.nama_asli || 'dokumen.pdf';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error('Gagal mengunduh dokumen:', err);
-    } finally {
-      setDownloadingDocId(null);
-    }
-  };
-
-  // Handler buka dokumen proses sebelumnya di tab baru
-  const handleViewNewTab = async (doc: DokumenItem) => {
-    if (!doc.download_url) return;
-    try {
-      const { blob } = await ppkService.fetchDokumenBlob(doc.download_url, 'inline');
-      const blobUrl = URL.createObjectURL(blob);
-      window.open(blobUrl, '_blank');
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
-    } catch (err) {
-      console.error('Gagal membuka dokumen:', err);
-    }
-  };
-
   const nomorPengadaan = `PGD-${new Date(pengadaan.created_at || Date.now()).getFullYear()}-${String(pengadaan.id || 0).padStart(4, '0')}`;
   const nomorPermohonan = permohonan.nomor_surat || '-';
   const judulPengadaan = permohonan.judul || 'Pengadaan Barang & Jasa';
   const unitNama = unit?.nama || 'Unit Kerja';
-  const tanggalPengajuan = formatDate(pengadaan.created_at || permohonan.created_at);
-  const nominalEstimasi = formatCurrency(permohonan.estimasi_anggaran || pengadaan.nominal || 0);
+  const tanggalPengajuan = formatTanggalIndo(pengadaan.created_at || permohonan.created_at, true);
+  const kontrak = pengadaan.kontrak || pengadaan.Kontrak;
+  const nominalEstimasi = formatCurrency(kontrak?.nominal_kontrak || 0);
 
   // Status Badge UI
   const renderHeroStatusBadge = () => {
@@ -458,205 +354,25 @@ export const PpkPengadaanDetailTemplate: FC<PpkPengadaanDetailTemplateProps> = (
           />
         )}
 
-        {/* CARD DOKUMEN PROSES SEBELUMNYA */}
-        <div className="bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)]">
-          <div className="pb-4 mb-5 border-b border-[#F0F4F2]">
-            <h3 className="text-base font-bold text-[#14201C]">Dokumen Proses Sebelumnya</h3>
-            <p className="text-xs text-[#8A9A95] mt-0.5">
-              Surat permohonan, memo persetujuan, dan jenis MAK dari Perencanaan
-            </p>
-          </div>
-
-          {/* Document Rows: Surat Permohonan (Full Width) & Memo Persetujuan (2 Kolom) */}
-          <div className="space-y-4 mb-6">
-            <DocumentCard
-              category="Surat Permohonan"
-              filename={suratPermohonanDoc?.nama_asli || 'Surat_Permohonan.pdf'}
-              size={
-                suratPermohonanDoc?.ukuran_bytes
-                  ? `PDF • ${formatBytes(suratPermohonanDoc.ukuran_bytes)}`
-                  : 'PDF • Tersedia'
-              }
-              onView={
-                suratPermohonanDoc?.download_url
-                  ? () => handleViewNewTab(suratPermohonanDoc)
-                  : undefined
-              }
-              onDownload={
-                suratPermohonanDoc?.download_url
-                  ? () => handleDownload(suratPermohonanDoc)
-                  : undefined
-              }
-            />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <DocumentCard
-                category="Memo Persetujuan Bidang 2"
-                filename={memoBidang2Doc?.nama_asli || 'Memo_Persetujuan_Bidang2.pdf'}
-                size={
-                  memoBidang2Doc?.ukuran_bytes
-                    ? `PDF • ${formatBytes(memoBidang2Doc.ukuran_bytes)}`
-                    : 'PDF • Tersedia'
-                }
-                onView={
-                  memoBidang2Doc?.download_url
-                    ? () => handleViewNewTab(memoBidang2Doc)
-                    : undefined
-                }
-                onDownload={
-                  memoBidang2Doc?.download_url
-                    ? () => handleDownload(memoBidang2Doc)
-                    : undefined
-                }
-              />
-
-              <DocumentCard
-                category="Memo Persetujuan PPK"
-                filename={memoPpkDoc?.nama_asli || 'Memo_Persetujuan_PPK.pdf'}
-                size={
-                  memoPpkDoc?.ukuran_bytes
-                    ? `PDF • ${formatBytes(memoPpkDoc.ukuran_bytes)}`
-                    : 'PDF • Tersedia'
-                }
-                onView={
-                  memoPpkDoc?.download_url
-                    ? () => handleViewNewTab(memoPpkDoc)
-                    : undefined
-                }
-                onDownload={
-                  memoPpkDoc?.download_url
-                    ? () => handleDownload(memoPpkDoc)
-                    : undefined
-                }
-              />
-            </div>
-          </div>
-
-          {/* Baris Jenis MAK dari Perencanaan */}
-          <div className="p-4 rounded-xl bg-[#F4F7F5] border border-[#E4EBE8] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-[#E8F5EF] text-[#0E7C5A] flex items-center justify-center shrink-0">
-                <Tag className="w-4 h-4" />
-              </div>
-              <div>
-                <span className="text-[11px] font-medium text-[#8A9A95] block">
-                  Jenis MAK dari Perencanaan
-                </span>
-                <span className="text-xs font-bold text-[#14201C] block mt-0.5">
-                  {makList.length > 0
-                    ? makList.map((m) => (m.kode ? `${m.kode} · ${m.nama}` : m.nama)).join(', ')
-                    : '532111 · Belanja Modal Peralatan dan Mesin'}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 text-xs text-[#5F6F6A] pl-11 sm:pl-0">
-              <UserCheck className="w-4 h-4 text-[#0E7C5A] shrink-0" />
-              <span className="text-[#8A9A95]">Penanggung Jawab MAK:</span>
-              <span className="font-bold text-[#14201C]">
-                {ppk?.nama ? `${ppk.nama} · PPK` : 'Budi Santoso · PPK'}
-              </span>
-            </div>
-          </div>
-        </div>
+        <DokumenProsesCard
+          suratPermohonanDoc={suratPermohonanDoc}
+          memoBidang2Doc={memoBidang2Doc}
+          memoPpkDoc={memoPpkDoc}
+          makList={makList}
+          ppkNama={ppk?.nama}
+          onView={onViewDokumen}
+          onDownload={onDownloadDokumen}
+        />
 
         {/* REVIEW BODY (DOKUMEN PENGADAAN FULL WIDTH & AKSI OTORISASI) */}
         <div className="space-y-6">
-          {/* Card Dokumen Pengadaan & Live Iframe Preview (Full Width) */}
-          <div className="w-full bg-white rounded-[22px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.04)] space-y-5">
-            <div className="pb-3.5 border-b border-[#F0F4F2] flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-bold text-[#14201C]">Dokumen Pengadaan</h3>
-                <p className="text-xs text-[#8A9A95] mt-0.5">
-                  Pratinjau dokumen pengadaan yang diunggah PPBJ
-                </p>
-              </div>
-              <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#E8F5EF] text-[#0E7C5A] border border-[#A3D9C3] flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#0E7C5A] animate-pulse" />
-                Live Preview
-              </span>
-            </div>
-
-            {primaryDokumenPengadaan ? (
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-[#F4F7F5] border border-[#E4EBE8]">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded-lg bg-[#FEE4E2] text-[#D92D20] flex items-center justify-center shrink-0">
-                    <FileText className="w-5 h-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <p
-                      className="text-xs font-bold text-[#14201C] truncate max-w-[220px] sm:max-w-xs md:max-w-md"
-                      title={primaryDokumenPengadaan.nama_asli}
-                    >
-                      {primaryDokumenPengadaan.nama_asli}
-                    </p>
-                    <p className="text-[11px] text-[#8A9A95] mt-0.5">
-                      PDF &bull; {formatBytes(primaryDokumenPengadaan.ukuran_bytes || 0)}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 shrink-0">
-                  {pengadaanBlobUrl && (
-                    <a
-                      href={pengadaanBlobUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-[#E4EBE8] text-xs font-bold text-[#14201C] hover:bg-[#F8FAF9] shadow-2xs transition cursor-pointer"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5 text-[#5F6F6A]" />
-                      <span>Lihat</span>
-                    </a>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => handleDownload(primaryDokumenPengadaan)}
-                    disabled={downloadingDocId === primaryDokumenPengadaan.id}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0E7C5A] hover:bg-[#0A5C43] text-white text-xs font-bold disabled:opacity-50 shadow-2xs transition cursor-pointer"
-                  >
-                    {downloadingDocId === primaryDokumenPengadaan.id ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Download className="w-3.5 h-3.5" />
-                    )}
-                    <span>Unduh</span>
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="p-4 rounded-xl bg-[#F4F7F5] border border-[#E4EBE8] text-center text-xs text-[#8A9A95]">
-                Belum ada berkas dokumen pengadaan yang diunggah PPBJ.
-              </div>
-            )}
-
-            <div className="rounded-xl border border-[#E4EBE8] overflow-hidden bg-white shadow-xs">
-              {loadingPengadaanBlob ? (
-                <div className="h-[560px] flex flex-col items-center justify-center gap-3 bg-[#F8FAF9]">
-                  <Loader2 className="w-8 h-8 text-[#0E7C5A] animate-spin" />
-                  <p className="text-xs font-semibold text-[#5F6F6A]">
-                    Memuat pratinjau dokumen pengadaan...
-                  </p>
-                </div>
-              ) : pengadaanBlobUrl ? (
-                <iframe
-                  src={`${pengadaanBlobUrl}#toolbar=0&navpanes=0`}
-                  title={`Pratinjau dokumen ${primaryDokumenPengadaan?.nama_asli || 'Pengadaan'}`}
-                  className="w-full h-[640px] border-0"
-                />
-              ) : (
-                <div className="h-[360px] flex flex-col items-center justify-center gap-2 p-6 text-center bg-[#F8FAF9]">
-                  <FileText className="w-10 h-10 text-[#8A9A95]" />
-                  <p className="text-sm font-semibold text-[#14201C]">
-                    Pratinjau Tidak Tersedia
-                  </p>
-                  <p className="text-xs text-[#8A9A95] max-w-sm">
-                    Berkas dokumen pengadaan belum dapat dipratinjau secara langsung. Gunakan tombol
-                    unduh untuk memeriksa dokumen secara offline.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
+          <DokumenPengadaanCard
+            dokumen={primaryDokumenPengadaan}
+            previewBlobUrl={previewBlobUrl}
+            isLoadingPreview={isLoadingPreview}
+            downloadingDocId={downloadingDocId}
+            onDownload={onDownloadDokumen}
+          />
 
           {/* Kotak Keputusan Otorisasi PPK (Full Width Banner / Card) */}
           {canAuthorizePpk ? (
@@ -770,11 +486,11 @@ export const PpkPengadaanDetailTemplate: FC<PpkPengadaanDetailTemplateProps> = (
             isLoading={isLoadingPembayaran}
             onApprove={onApprovePembayaran}
             onReject={onRejectPembayaran}
-            onViewDokumen={(doc) => handleViewNewTab(doc)}
-            onDownloadDokumen={(doc) => handleDownload(doc)}
-            previewBlobUrl={pengadaanBlobUrl}
+            onViewDokumen={onViewDokumen}
+            onDownloadDokumen={onDownloadDokumen}
+            previewBlobUrl={previewBlobUrl}
             previewDocId={primaryDokumenPengadaan?.id}
-            isLoadingPreview={loadingPengadaanBlob}
+            isLoadingPreview={isLoadingPreview}
           />
         )}
 
@@ -784,7 +500,7 @@ export const PpkPengadaanDetailTemplate: FC<PpkPengadaanDetailTemplateProps> = (
           onClose={onCloseConfirmApprove}
           onConfirm={onConfirmApprove}
           pengadaan={{
-            nominal: permohonan.estimasi_anggaran || pengadaan.nominal,
+            nominal: kontrak?.nominal_kontrak || 0,
             permohonan: {
               nomor_surat: nomorPermohonan,
               judul: judulPengadaan,

@@ -512,7 +512,7 @@ class PermohonanService
      */
     public function getPermohonanPpbjList(): array
     {
-        $permohonanItems = Permohonan::with(['Unit', 'PermohonanMak.Mak', 'Pengadaan'])
+        $permohonanItems = Permohonan::with(['Unit', 'PermohonanMak.Mak', 'Pengadaan.Kontrak'])
             ->orderByDesc('created_at')
             ->get();
 
@@ -527,6 +527,10 @@ class PermohonanService
                 ? Carbon::parse($item->created_at)->format('Y-m-d')
                 : '';
 
+            $nilaiPengadaan = (float) $item->Pengadaan->sum(function ($pg) {
+                return (float) ($pg->Kontrak?->nominal_kontrak ?? 0);
+            });
+
             return [
                 'id' => (int) $item->id,
                 'nomorSurat' => (string) ($item->nomor_surat ?? '-'),
@@ -534,6 +538,8 @@ class PermohonanService
                 'ringkasanTujuan' => (string) ($item->ringkasan_tujuan ?? ''),
                 'unitNama' => (string) ($item->Unit?->nama ?? '-'),
                 'estimasiAnggaran' => (float) ($item->estimasi_anggaran ?? 0),
+                'nilaiPengadaan' => $nilaiPengadaan,
+                'nominal' => $nilaiPengadaan,
                 'revisiKe' => (int) ($item->revisi_ke ?? 0),
                 'status' => (string) ($item->status ?? 'menunggu_persetujuan'),
                 'tanggalPengajuan' => $tanggalPengajuan,

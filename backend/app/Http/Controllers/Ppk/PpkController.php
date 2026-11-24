@@ -189,16 +189,29 @@ class PpkController extends Controller
         $path = $dokumen->path;
 
         if (! $path) {
-            if ($dokumen->ref_type === 'permohonan') {
-                $path = 'dokumen/permohonan/'.$dokumen->nama_hash;
-            } elseif ($dokumen->ref_type === 'pengadaan') {
-                $path = 'dokumen/pengadaan/'.$dokumen->nama_hash;
-            } elseif ($dokumen->ref_type === 'approval_permohonan') {
-                $path = $this->memoPath($dokumen);
+            $namaHash = basename($dokumen->nama_hash);
+            $candidates = array_unique(array_filter([
+                'dokumen/pengadaan/'.$namaHash,
+                'dokumen_pengadaan/'.$namaHash,
+                'dokumen/permohonan/'.$namaHash,
+                'dokumen/permohonan/memo/'.$namaHash,
+                'dokumen/memo/'.$namaHash,
+            ]));
+
+            foreach ($candidates as $candidate) {
+                if (Storage::disk('local')->exists($candidate)) {
+                    $path = $candidate;
+                    break;
+                }
+                if (Storage::disk('public')->exists($candidate)) {
+                    $path = $candidate;
+                    $disk = 'public';
+                    break;
+                }
             }
         }
 
-        if (! $path || ! Storage::disk('local')->exists($path)) {
+        if (! $path || ! Storage::disk($disk)->exists($path)) {
             return response()->json(['message' => 'Berkas fisik dokumen tidak ditemukan di server.'], 404);
         }
 
@@ -212,22 +225,5 @@ class PpkController extends Controller
                 'Content-Disposition' => "{$disposition}; filename=\"".($dokumen->nama_asli ?: 'dokumen.pdf').'"',
             ]
         );
-    }
-
-    private function memoPath(Dokumen $dokumen): ?string
-    {
-        $candidates = [
-            'dokumen/memo/'.$dokumen->nama_hash,
-            'dokumen/permohonan/memo/'.$dokumen->nama_hash,
-            'dokumen/permohonan/'.$dokumen->nama_hash,
-        ];
-
-        foreach ($candidates as $candidate) {
-            if (Storage::disk('local')->exists($candidate)) {
-                return $candidate;
-            }
-        }
-
-        return null;
     }
 }

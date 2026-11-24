@@ -116,11 +116,13 @@ export interface PpPengadaanItem {
     id?: number;
     tanggal?: string;
     nomor_kontrak?: string;
+    nominal_kontrak?: number | string | null;
   } | null;
   Kontrak?: {
     id?: number;
     tanggal?: string;
     nomor_kontrak?: string;
+    nominal_kontrak?: number | string | null;
   } | null;
   penerimaan?: {
     id?: number;

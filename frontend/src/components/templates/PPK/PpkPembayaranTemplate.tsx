@@ -211,7 +211,7 @@ export const PpkPembayaranTemplate: FC<PpkPembayaranTemplateProps> = ({
       notifications={recentNotifications}
       unreadCount={unreadNotificationsCount}
       breadcrumb={[
-        { label: 'LIST PENGAJUAN', href: '/ppk/pengajuan' },
+        { label: 'LIST PENGAJUAN', href: '/ppk/pengadaan' },
         { label: 'DETAIL DOKUMEN PEMBAYARAN' },
       ]}
     >
@@ -238,7 +238,7 @@ export const PpkPembayaranTemplate: FC<PpkPembayaranTemplateProps> = ({
           </div>
 
           <Link
-            to="/ppk/pengajuan"
+            to="/ppk/pengadaan"
             className="inline-flex items-center gap-2 px-5 py-3.5 rounded-[14px] bg-white/16 hover:bg-white/25 border border-white/35 text-white text-sm font-semibold transition-colors shrink-0 self-start sm:self-auto"
           >
             <ArrowLeft className="w-4 h-4" />
