@@ -7,12 +7,14 @@ import type {
   RingkasanPemohon,
   PermohonanAktifItem,
   StatistikBulananItem,
+  StatistikTahunanItem,
 } from '../hooks/usePemohonDashboard';
 
 export interface PemohonDashboardData {
   ringkasan?: RingkasanPemohon;
   permohonanAktif?: PermohonanAktifItem[];
   statistikBulanan?: StatistikBulananItem[];
+  statistikTahunan?: StatistikTahunanItem[];
   tahunAktif?: number;
 }
 

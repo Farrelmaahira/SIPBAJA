@@ -22,6 +22,7 @@ class DashboardPemohonController extends Controller
             'ringkasan' => $this->dashboardService->ringkasan($user),
             'permohonanAktif' => $this->dashboardService->permohonanAktif($user),
             'statistikBulanan' => $this->dashboardService->statistikPerBulan($user, $tahun),
+            'statistikTahunan' => $this->dashboardService->statistikPerTahun($user, $tahun),
             'tahunAktif' => $tahun,
         ]);
     }

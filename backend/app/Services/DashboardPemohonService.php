@@ -43,14 +43,15 @@ class DashboardPemohonService
     }
 
     /**
-     * Daftar permohonan aktif (belum selesai / bukan ditolak final) milik unit pemohon.
-     * Scoped ke unit_id user. Eager load: tidak ada relasi yang dibutuhkan tabel selain kolom native.
+     * Daftar permohonan aktif / sedang berlangsung milik unit pemohon.
+     * Opsi A: Berlangsung = semua tahapan aktif sebelum selesai atau ditolak.
+     * Scoped ke unit_id user.
      * Limit 10, terbaru lebih dulu.
      */
     public function permohonanAktif(User $user): Collection
     {
         return Permohonan::where('unit_id', $user->unit_id)
-            ->whereNotIn('status', ['ditolak'])
+            ->whereNotIn('status', ['ditolak', 'selesai'])
             ->with('Dokumen')
             ->orderBy('created_at', 'desc')
             ->limit(10)
@@ -65,25 +66,52 @@ class DashboardPemohonService
     public function statistikPerBulan(User $user, int $tahun): array
     {
         $rows = Permohonan::where('unit_id', $user->unit_id)
-            ->whereYear(DB::raw('created_at'), $tahun)
+            ->whereYear('created_at', $tahun)
             ->whereIn('status', ['disetujui', 'ditolak'])
-            ->select(
-                DB::raw('CAST(strftime(\'%m\', created_at) AS INTEGER) as bulan'),
-                DB::raw('SUM(CASE WHEN status = \'disetujui\' THEN 1 ELSE 0 END) as disetujui'),
-                DB::raw('SUM(CASE WHEN status = \'ditolak\' THEN 1 ELSE 0 END) as ditolak'),
-            )
-            ->groupBy('bulan')
-            ->get()
-            ->keyBy('bulan');
+            ->get(['id', 'status', 'created_at']);
+
+        $grouped = $rows->groupBy(function ($item) {
+            return Carbon::parse($item->created_at)->month;
+        });
 
         // Lengkapi semua 12 bulan agar frontend tidak perlu handle gap
-        return collect(range(1, 12))->map(function (int $bulan) use ($rows) {
-            $row = $rows->get($bulan);
+        return collect(range(1, 12))->map(function (int $bulan) use ($grouped) {
+            $items = $grouped->get($bulan, collect());
 
             return [
                 'bulan' => $bulan,
-                'disetujui' => $row ? (int) $row->disetujui : 0,
-                'ditolak' => $row ? (int) $row->ditolak : 0,
+                'disetujui' => $items->where('status', 'disetujui')->count(),
+                'ditolak' => $items->where('status', 'ditolak')->count(),
+            ];
+        })->values()->all();
+    }
+
+    /**
+     * Data statistik tahunan: disetujui vs ditolak per tahun untuk 5 tahun terakhir.
+     */
+    public function statistikPerTahun(User $user, int $tahunAkhir, int $rentang = 5): array
+    {
+        $tahunAwal = $tahunAkhir - ($rentang - 1);
+
+        $records = Permohonan::where('unit_id', $user->unit_id)
+            ->whereBetween('created_at', [
+                Carbon::create($tahunAwal, 1, 1)->startOfDay(),
+                Carbon::create($tahunAkhir, 12, 31)->endOfDay(),
+            ])
+            ->whereIn('status', ['disetujui', 'ditolak'])
+            ->get(['id', 'status', 'created_at']);
+
+        $grouped = $records->groupBy(function ($item) {
+            return Carbon::parse($item->created_at)->year;
+        });
+
+        return collect(range($tahunAwal, $tahunAkhir))->map(function (int $th) use ($grouped) {
+            $items = $grouped->get($th, collect());
+
+            return [
+                'tahun' => $th,
+                'disetujui' => $items->where('status', 'disetujui')->count(),
+                'ditolak' => $items->where('status', 'ditolak')->count(),
             ];
         })->values()->all();
     }

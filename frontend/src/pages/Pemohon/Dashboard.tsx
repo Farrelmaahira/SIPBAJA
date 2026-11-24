@@ -12,7 +12,11 @@ export const PemohonDashboard: FC = () => {
     ringkasan,
     permohonanAktif,
     chartData,
+    totalDisetujui,
+    totalDitolak,
     tahunAktif,
+    viewMode,
+    setViewMode,
     gantiTahun,
     isLoading,
     isError,
@@ -32,7 +36,11 @@ export const PemohonDashboard: FC = () => {
       ringkasan={ringkasan}
       permohonanAktif={permohonanAktif}
       chartData={chartData ?? undefined}
+      totalDisetujui={totalDisetujui}
+      totalDitolak={totalDitolak}
       tahunAktif={tahunAktif}
+      viewMode={viewMode}
+      onViewModeChange={setViewMode}
       gantiTahun={handleGantiTahun}
       onBuatPermohonan={handleBuatPermohonan}
       isLoading={isLoading}

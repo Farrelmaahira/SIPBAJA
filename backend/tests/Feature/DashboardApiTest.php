@@ -70,6 +70,7 @@ class DashboardApiTest extends TestCase
                 'ringkasan',
                 'permohonanAktif',
                 'statistikBulanan',
+                'statistikTahunan',
                 'tahunAktif',
             ]);
     }

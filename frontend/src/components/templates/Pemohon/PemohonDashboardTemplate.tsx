@@ -45,7 +45,11 @@ export interface PemohonDashboardTemplateProps {
   ringkasan?: RingkasanPemohon;
   permohonanAktif?: PermohonanOrganismItem[];
   chartData?: ChartDatum[];
+  totalDisetujui?: number;
+  totalDitolak?: number;
   tahunAktif?: number;
+  viewMode?: 'bulan' | 'tahun';
+  onViewModeChange?: (mode: 'bulan' | 'tahun') => void;
   gantiTahun?: (tahun: number) => void;
   isLoading?: boolean;
   isError?: boolean;
@@ -57,7 +61,11 @@ export const PemohonDashboardTemplate: FC<PemohonDashboardTemplateProps> = ({
   ringkasan = {},
   permohonanAktif = [],
   chartData,
+  totalDisetujui,
+  totalDitolak,
   tahunAktif,
+  viewMode = 'bulan',
+  onViewModeChange,
   gantiTahun,
   isLoading = false,
   isError = false,
@@ -164,6 +172,10 @@ export const PemohonDashboardTemplate: FC<PemohonDashboardTemplateProps> = ({
           chartData={chartData}
           tahunAktif={tahunAktif}
           gantiTahun={gantiTahun}
+          totalDisetujui={totalDisetujui}
+          totalDitolak={totalDitolak}
+          viewMode={viewMode}
+          onViewModeChange={onViewModeChange}
           isLoading={isLoading && !chartData}
         />
 

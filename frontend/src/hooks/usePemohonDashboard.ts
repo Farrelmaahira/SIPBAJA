@@ -29,14 +29,26 @@ export interface StatistikBulananItem {
   [key: string]: any;
 }
 
-export interface ChartDataItem extends StatistikBulananItem {
+export interface StatistikTahunanItem {
+  tahun: number;
+  disetujui: number;
+  ditolak: number;
+  [key: string]: any;
+}
+
+export interface ChartDataItem {
+  bulan: number | string;
   label: string;
+  disetujui: number;
+  ditolak: number;
+  [key: string]: any;
 }
 
 export interface UsePemohonDashboardProps {
   ringkasan?: RingkasanPemohon | null;
   permohonanAktif?: PermohonanAktifItem[] | null;
   statistikBulanan?: StatistikBulananItem[] | null;
+  statistikTahunan?: StatistikTahunanItem[] | null;
   tahunAktif?: number | null;
 }
 
@@ -44,9 +56,11 @@ export interface UsePemohonDashboardReturn {
   ringkasan: RingkasanPemohon;
   permohonanAktif: PermohonanAktifItem[];
   chartData: ChartDataItem[] | null;
+  totalDisetujui: number;
+  totalDitolak: number;
   tahunAktif: number;
-  viewMode: string;
-  setViewMode: Dispatch<SetStateAction<string>>;
+  viewMode: 'bulan' | 'tahun';
+  setViewMode: Dispatch<SetStateAction<'bulan' | 'tahun'>>;
   gantiTahun: (tahun: number) => Promise<void>;
   isLoading: boolean;
   isError: boolean;
@@ -69,7 +83,7 @@ const DEFAULT_RINGKASAN: RingkasanPemohon = {
 export function usePemohonDashboard(
   initialProps: UsePemohonDashboardProps = {}
 ): UsePemohonDashboardReturn {
-  const [viewMode, setViewMode] = useState<string>('bulan');
+  const [viewMode, setViewMode] = useState<'bulan' | 'tahun'>('bulan');
 
   const [ringkasan, setRingkasan] = useState<RingkasanPemohon>(
     () => initialProps.ringkasan ?? DEFAULT_RINGKASAN
@@ -79,6 +93,9 @@ export function usePemohonDashboard(
   );
   const [statistikBulanan, setStatistikBulanan] = useState<StatistikBulananItem[]>(
     () => initialProps.statistikBulanan ?? []
+  );
+  const [statistikTahunan, setStatistikTahunan] = useState<StatistikTahunanItem[]>(
+    () => initialProps.statistikTahunan ?? []
   );
   const [tahunAktif, setTahunAktif] = useState<number>(
     () => initialProps.tahunAktif ?? new Date().getFullYear()
@@ -102,6 +119,9 @@ export function usePemohonDashboard(
         }
         if (data.statistikBulanan) {
           setStatistikBulanan(data.statistikBulanan);
+        }
+        if (data.statistikTahunan) {
+          setStatistikTahunan(data.statistikTahunan);
         }
         if (data.tahunAktif) {
           setTahunAktif(data.tahunAktif);
@@ -143,6 +163,9 @@ export function usePemohonDashboard(
         if (data.statistikBulanan) {
           setStatistikBulanan(data.statistikBulanan);
         }
+        if (data.statistikTahunan) {
+          setStatistikTahunan(data.statistikTahunan);
+        }
         if (data.tahunAktif) {
           setTahunAktif(data.tahunAktif);
         } else {
@@ -157,12 +180,32 @@ export function usePemohonDashboard(
   };
 
   const chartData = useMemo<ChartDataItem[] | null>(() => {
+    if (viewMode === 'tahun') {
+      if (!statistikTahunan || statistikTahunan.length === 0) return null;
+      return statistikTahunan.map((item) => ({
+        bulan: item.tahun,
+        label: String(item.tahun),
+        disetujui: item.disetujui,
+        ditolak: item.ditolak,
+      }));
+    }
+
     if (!statistikBulanan || statistikBulanan.length === 0) return null;
     return statistikBulanan.map((item) => ({
       ...item,
       label: namaBulan(item.bulan),
     }));
-  }, [statistikBulanan]);
+  }, [viewMode, statistikBulanan, statistikTahunan]);
+
+  const totalDisetujui = useMemo(() => {
+    if (!chartData) return 0;
+    return chartData.reduce((acc, curr) => acc + (curr.disetujui || 0), 0);
+  }, [chartData]);
+
+  const totalDitolak = useMemo(() => {
+    if (!chartData) return 0;
+    return chartData.reduce((acc, curr) => acc + (curr.ditolak || 0), 0);
+  }, [chartData]);
 
   const refetch = useCallback(() => {
     void fetchDashboardData();
@@ -172,6 +215,8 @@ export function usePemohonDashboard(
     ringkasan,
     permohonanAktif,
     chartData,
+    totalDisetujui,
+    totalDitolak,
     tahunAktif,
     viewMode,
     setViewMode,
