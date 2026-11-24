@@ -1,10 +1,25 @@
-import type { FC } from 'react';
-import { LayoutDashboard, ClipboardList, FileText, CheckCircle, XCircle } from 'lucide-react';
+import { useMemo, type FC } from 'react';
+import { Link } from 'react-router-dom';
+import {
+  LayoutDashboard,
+  ClipboardList,
+  FileText,
+  CheckCircle,
+  XCircle,
+  Plus,
+  Download,
+} from 'lucide-react';
 import AppLayout, { type AppNavItem } from '../General/AppLayout';
 import HeroBanner from '../../organisms/HeroBanner';
 import StatCard, { type StatBadge } from '../../molecules/StatCard';
 import StatistikChart, { type ChartDatum } from '../../organisms/StatistikChart';
-import PermohonanTable, { type PermohonanOrganismItem } from '../../organisms/PermohonanTable';
+import DashboardTable, {
+  type DashboardTableColumn,
+  type DashboardTableAction,
+} from '../../organisms/DashboardTable';
+import StatusPill from '../../atoms/StatusPill';
+import { formatRupiah, formatTanggal, labelStatusPermohonan } from '../../../utils/formatPermohonan';
+import type { PermohonanAktifItem } from '../../../hooks/usePemohonDashboard';
 import type { ProfilePillUser } from '../../molecules/ProfilePill';
 
 const NAV_ITEMS: AppNavItem[] = [
@@ -43,7 +58,7 @@ export interface RingkasanPemohon {
 export interface PemohonDashboardTemplateProps {
   user?: (ProfilePillUser & { unit?: { nama?: string } }) | null;
   ringkasan?: RingkasanPemohon;
-  permohonanAktif?: PermohonanOrganismItem[];
+  permohonanAktif?: PermohonanAktifItem[];
   chartData?: ChartDatum[];
   totalDisetujui?: number;
   totalDitolak?: number;
@@ -128,6 +143,95 @@ export const PemohonDashboardTemplate: FC<PemohonDashboardTemplateProps> = ({
     return item;
   });
 
+  const tableColumns: DashboardTableColumn<PermohonanAktifItem>[] = useMemo(
+    () => [
+      {
+        key: 'nomor_surat',
+        header: 'No Permohonan',
+        render: (row) =>
+          row.id ? (
+            <Link
+              to={`/pemohon/permohonan/${row.id}`}
+              className="text-left font-semibold text-[#0E7C5A] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C5A] rounded whitespace-nowrap"
+              aria-label={`Buka detail permohonan ${row.nomor_surat || '-'}`}
+            >
+              {row.nomor_surat || '-'}
+            </Link>
+          ) : (
+            <span className="font-semibold text-[#14201C] whitespace-nowrap">
+              {row.nomor_surat || '-'}
+            </span>
+          ),
+      },
+      {
+        key: 'judul',
+        header: 'Judul Pengadaan',
+        render: (row) => (
+          <span
+            className="block max-w-xs truncate font-medium text-[#14201C]"
+            title={row.judul || undefined}
+          >
+            {row.judul || '-'}
+          </span>
+        ),
+      },
+      {
+        key: 'created_at',
+        header: 'Tanggal',
+        render: (row) => (
+          <span className="text-[#5F6F6A] whitespace-nowrap">
+            {formatTanggal(row.created_at)}
+          </span>
+        ),
+      },
+      {
+        key: 'estimasi_anggaran',
+        header: 'Nilai Pengajuan',
+        render: (row) => (
+          <span className="font-semibold text-[#14201C] whitespace-nowrap">
+            {formatRupiah(row.estimasi_anggaran)}
+          </span>
+        ),
+      },
+      {
+        key: 'status',
+        header: 'Status',
+        render: (row) => {
+          const rawStatus = String(row.status ?? 'diajukan');
+          const { label } = labelStatusPermohonan(rawStatus);
+          return (
+            <div className="whitespace-nowrap">
+              <StatusPill status={rawStatus} label={label} />
+            </div>
+          );
+        },
+      },
+    ],
+    []
+  );
+
+  const tableActions = (
+    row: PermohonanAktifItem
+  ): DashboardTableAction<PermohonanAktifItem>[] => [
+    {
+      key: 'detail',
+      label: 'Lihat Detail',
+      icon: FileText,
+      href: row.id ? `/pemohon/permohonan/${row.id}` : undefined,
+    },
+    {
+      key: 'unduh',
+      label: 'Unduh Berkas',
+      icon: Download,
+      hidden: !row.dokumen?.[0] && !row.id,
+      onClick: () => {
+        if (row.id) {
+          window.open(`/api/v1/pemohon/permohonan/${row.id}/dokumen`, '_blank');
+        }
+      },
+    },
+  ];
+
   return (
     <AppLayout
       activeRoute="dashboard"
@@ -179,11 +283,34 @@ export const PemohonDashboardTemplate: FC<PemohonDashboardTemplateProps> = ({
           isLoading={isLoading && !chartData}
         />
 
-        <PermohonanTable
-          rows={permohonanAktif}
+        <DashboardTable<PermohonanAktifItem>
+          title="Permohonan Sedang Berlangsung"
+          subtitle={isLoading ? 'Memuat...' : `${permohonanAktif.length} permohonan aktif`}
+          viewAllLink={{
+            href: '/pemohon/permohonan',
+            label: 'Lihat Semua',
+          }}
+          columns={tableColumns}
+          data={permohonanAktif}
+          actions={tableActions}
           isLoading={isLoading}
           isError={isError}
-          onBuatPermohonan={onBuatPermohonan}
+          errorMessage="Gagal memuat data permohonan."
+          emptyState={{
+            icon: ClipboardList,
+            title: 'Tidak ada permohonan aktif',
+            description: 'Buat permohonan pengadaan pertama unit Anda untuk memulai.',
+            action: onBuatPermohonan ? (
+              <button
+                type="button"
+                onClick={onBuatPermohonan}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#0E7C5A] text-white text-sm font-semibold hover:bg-[#0B6B4D] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C5A] focus-visible:ring-offset-2 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" aria-hidden="true" />
+                Buat Permohonan
+              </button>
+            ) : undefined,
+          }}
         />
       </div>
     </AppLayout>
