@@ -174,6 +174,18 @@ export const perencanaanService = {
   },
 
   /**
+   * Mengubah status aktif/nonaktif Jenis MAK.
+   */
+  async toggleStatusJenisMak(
+    id: number | string
+  ): Promise<ApiMessageResponse & { mak?: PerencanaanMakItem }> {
+    const response = await api.patch<ApiMessageResponse & { mak?: PerencanaanMakItem }>(
+      `/v1/perencanaan/jenis-mak/${id}/toggle-status`
+    );
+    return response.data;
+  },
+
+  /**
    * Mengambil data dokumen RKAKL aktif dan riwayat versinya per tahun anggaran.
    */
   async getRkaklData(

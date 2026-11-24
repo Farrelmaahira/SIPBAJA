@@ -126,6 +126,7 @@ Route::prefix('v1')->group(function () {
             Route::get('jenis-mak', [PerencanaanMakController::class, 'index'])->name('api.perencanaan.mak.index');
             Route::post('jenis-mak', [PerencanaanMakController::class, 'store'])->name('api.perencanaan.mak.store');
             Route::put('jenis-mak/{mak}', [PerencanaanMakController::class, 'update'])->name('api.perencanaan.mak.update');
+            Route::patch('jenis-mak/{mak}/toggle-status', [PerencanaanMakController::class, 'toggleStatus'])->name('api.perencanaan.mak.toggleStatus');
             Route::delete('jenis-mak/{mak}', [PerencanaanMakController::class, 'destroy'])->name('api.perencanaan.mak.destroy');
             Route::get('rkakl/dokumen', [PerencanaanRkaklController::class, 'downloadDokumen'])->name('api.perencanaan.rkakl.dokumen.latest');
             Route::get('rkakl/dokumen/{dokumen}', [PerencanaanRkaklController::class, 'downloadDokumen'])->name('api.perencanaan.rkakl.dokumen.download');

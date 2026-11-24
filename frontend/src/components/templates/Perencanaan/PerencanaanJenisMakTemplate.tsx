@@ -1,10 +1,11 @@
 import type { FC, FormEvent } from 'react';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, ToggleRight, ToggleLeft } from 'lucide-react';
 import AppLayout from '../General/AppLayout';
 import { CrudTable, type CrudColumn } from '../../organisms/CrudTable';
 import JenisMakFormModal from '../../organisms/JenisMakFormModal';
 import HapusJenisMakModal from '../../organisms/HapusJenisMakModal';
 import TableFooter from '../../molecules/TableFooter';
+import StatusPill from '../../atoms/StatusPill';
 import type { JenisMakRow, PpkOption } from '../../../types/perencanaan';
 import { PERENCANAAN_NAV_ITEMS } from '@/constants/perencanaanNav';
 import HeroBanner from '@/components/organisms/HeroBanner';
@@ -24,6 +25,7 @@ export interface PerencanaanJenisMakTemplateProps {
   onOpenAddModal: () => void;
   onOpenEditModal: (row: JenisMakRow) => void;
   onOpenDeleteModal: (row: JenisMakRow) => void;
+  onToggleStatus?: (row: JenisMakRow) => void;
 
   // Modal Form
   formModalOpen: boolean;
@@ -63,6 +65,7 @@ export const PerencanaanJenisMakTemplate: FC<PerencanaanJenisMakTemplateProps> =
   onOpenAddModal,
   onOpenEditModal,
   onOpenDeleteModal,
+  onToggleStatus,
 
   formModalOpen,
   isEdit,
@@ -109,6 +112,19 @@ export const PerencanaanJenisMakTemplate: FC<PerencanaanJenisMakTemplateProps> =
         </span>
       ),
     },
+    {
+      key: 'status',
+      header: 'STATUS',
+      render: (row) => {
+        const active = row.isActive ?? true;
+        return (
+          <StatusPill
+            status={active ? 'aktif' : 'nonaktif'}
+            label={active ? 'Aktif' : 'Nonaktif'}
+          />
+        );
+      },
+    },
   ];
 
   return (
@@ -152,8 +168,28 @@ export const PerencanaanJenisMakTemplate: FC<PerencanaanJenisMakTemplateProps> =
           columns={columns}
           rows={rows}
           isLoading={isLoading}
-          onEdit={onOpenEditModal}
-          onDelete={onOpenDeleteModal}
+          actions={(row) => [
+            {
+              key: 'toggle-status',
+              label: row.isActive ?? true ? 'Nonaktifkan' : 'Aktifkan',
+              icon: row.isActive ?? true ? ToggleLeft : ToggleRight,
+              variant: row.isActive ?? true ? 'danger' : 'default',
+              onClick: () => onToggleStatus?.(row),
+            },
+            {
+              key: 'edit',
+              label: 'Ubah Data',
+              icon: Pencil,
+              onClick: () => onOpenEditModal(row),
+            },
+            {
+              key: 'delete',
+              label: 'Hapus MAK',
+              icon: Trash2,
+              variant: 'danger',
+              onClick: () => onOpenDeleteModal(row),
+            },
+          ]}
           toolbar={
             <form onSubmit={onSearchSubmit} className="relative min-w-[240px]">
               <Search className="w-4 h-4 text-[#8A9A95] absolute left-3 top-1/2 -translate-y-1/2" />

@@ -25,6 +25,7 @@ function parseMakRow(item: PerencanaanMakRawItem): JenisMakRow {
     penanggung_jawab: ppkNama,
     digunakan: item.permohonan_mak_count || 0,
     ppk_user_id: item.ppk_user_id || 1,
+    isActive: item.isActive ?? true,
   };
 }
 
@@ -192,6 +193,22 @@ export const PerencanaanJenisMakIndex: FC = () => {
     }
   };
 
+  const handleToggleStatus = async (row: JenisMakRow) => {
+    setProcessing(true);
+    setFlashError('');
+    setFlashSuccess('');
+    try {
+      const res = await perencanaanService.toggleStatusJenisMak(row.id);
+      setFlashSuccess(res.message || 'Status Jenis MAK berhasil diperbarui.');
+      await fetchJenisMak(search, currentPage);
+    } catch (err: unknown) {
+      const serverErr = extractServerErrors(err);
+      setFlashError(serverErr.message || 'Gagal mengubah status Jenis MAK.');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   const rows: JenisMakRow[] = rawMaks.map(parseMakRow);
 
   return (
@@ -210,6 +227,7 @@ export const PerencanaanJenisMakIndex: FC = () => {
       onOpenAddModal={handleOpenAdd}
       onOpenEditModal={handleOpenEdit}
       onOpenDeleteModal={handleOpenDelete}
+      onToggleStatus={handleToggleStatus}
       formModalOpen={formModalOpen}
       isEdit={isEdit}
       formKode={formKode}

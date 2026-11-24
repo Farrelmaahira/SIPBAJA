@@ -217,6 +217,7 @@ export interface JenisMakRow {
   digunakan: number;
   updated?: string;
   ppk_user_id: number;
+  isActive?: boolean;
 }
 
 export interface JenisMakResponse {

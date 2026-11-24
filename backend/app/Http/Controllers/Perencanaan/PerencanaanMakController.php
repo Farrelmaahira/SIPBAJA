@@ -55,4 +55,15 @@ class PerencanaanMakController extends Controller
 
         return response()->noContent();
     }
+
+    public function toggleStatus(Mak $mak): JsonResponse
+    {
+        $mak = $this->makService->toggleStatus($mak);
+        $statusText = $mak->isActive ? 'diaktifkan' : 'dinonaktifkan';
+
+        return response()->json([
+            'message' => "Jenis MAK berhasil {$statusText}.",
+            'mak' => $mak->loadMissing(['Ppk:id,nama,email']),
+        ]);
+    }
 }
