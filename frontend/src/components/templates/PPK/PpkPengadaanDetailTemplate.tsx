@@ -6,7 +6,7 @@ import { InformasiPengadaanCard } from '../../organisms/PP/InformasiPengadaanCar
 import TrackingPengadaanCard from '../../organisms/TrackingPengadaanCard';
 import { CatatanRevisiCard } from '../../organisms/PP/CatatanRevisiCard';
 import { DokumenProsesCard } from '../../organisms/PP/DokumenProsesCard';
-import { DokumenPengadaanCard } from '../../organisms/PP/DokumenPengadaanCard';
+import DokumenListCard from '../../organisms/DokumenListCard';
 import KonfirmasiApproveModal from '../../organisms/KonfirmasiApproveModal';
 import TolakPengadaanModal from '../../organisms/TolakPengadaanModal';
 import { formatCurrency } from '../../../utils/formatCurrency';
@@ -101,6 +101,19 @@ export const PpkPengadaanDetailTemplate: FC<PpkPengadaanDetailTemplateProps> = (
     : detail.dokumen_permohonan
       ? [detail.dokumen_permohonan as DokumenItem]
       : [];
+
+  const dokumenPengadaanList: DokumenItem[] = useMemo(() => {
+    if (Array.isArray(detail.dokumen_pengadaan)) {
+      return detail.dokumen_pengadaan as DokumenItem[];
+    }
+    if (primaryDokumenPengadaan) {
+      return [primaryDokumenPengadaan];
+    }
+    if (detail.dokumen_pengadaan) {
+      return [detail.dokumen_pengadaan as DokumenItem];
+    }
+    return [];
+  }, [detail.dokumen_pengadaan, primaryDokumenPengadaan]);
 
   // Cari dokumen surat permohonan dan memo persetujuan
   const suratPermohonanDoc = useMemo(() => {
@@ -366,12 +379,19 @@ export const PpkPengadaanDetailTemplate: FC<PpkPengadaanDetailTemplateProps> = (
 
         {/* REVIEW BODY (DOKUMEN PENGADAAN FULL WIDTH & AKSI OTORISASI) */}
         <div className="space-y-6">
-          <DokumenPengadaanCard
-            dokumen={primaryDokumenPengadaan}
-            previewBlobUrl={previewBlobUrl}
-            isLoadingPreview={isLoadingPreview}
-            downloadingDocId={downloadingDocId}
+          <DokumenListCard
+            title="Dokumen Pengadaan"
+            dokumenList={dokumenPengadaanList}
+            nomorSurat={nomorPengadaan}
+            onViewNewTab={onViewDokumen}
             onDownload={onDownloadDokumen}
+            previewBlobUrl={previewBlobUrl}
+            previewDocId={primaryDokumenPengadaan?.id}
+            isLoadingPreview={isLoadingPreview}
+            isDownloadingId={downloadingDocId}
+            emptyTitle="Belum ada berkas dokumen pengadaan"
+            emptyDescription="Berkas dokumen pengadaan yang diunggah oleh PPBJ akan muncul di sini."
+            autoExpand={true}
           />
 
           {/* Kotak Keputusan Otorisasi PPK (Full Width Banner / Card) */}

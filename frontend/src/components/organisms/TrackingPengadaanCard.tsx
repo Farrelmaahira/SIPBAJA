@@ -100,9 +100,6 @@ export const TrackingPengadaanCard: FC<TrackingPengadaanCardProps> = ({
     ? formatRupiah(nominal).replace('Rp ', 'Rp')
     : null;
 
-  // Timeline list (collapse / expand if > 5 items)
-  const visibleTimeline = isExpanded || timeline.length <= 5 ? timeline : timeline.slice(0, 5);
-
   return (
     <section
       className={`bg-white rounded-[22px] md:rounded-[24px] border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.05)] p-6 md:p-8 transition-all ${className}`}
@@ -204,53 +201,59 @@ export const TrackingPengadaanCard: FC<TrackingPengadaanCardProps> = ({
       {/* Vertical Timeline Riwayat Status */}
       {timeline && timeline.length > 0 && (
         <div className="mt-4 pt-6 border-t border-[#F0F4F2]">
-          <div className="space-y-3.5">
-            {visibleTimeline.map((item, idx) => (
-              <div key={item.id ?? idx} className="flex items-start gap-4 text-xs">
-                {/* Timestamp */}
-                <span className="font-mono text-[#5F6F6A] w-32 sm:w-36 shrink-0 pt-0.5">
-                  {item.tanggal}
-                </span>
+          {/* Timeline Items (Hanya tampil jika isExpanded = true) */}
+          {isExpanded && (
+            <div className="space-y-3.5">
+              {timeline.map((item, idx) => (
+                <div key={item.id ?? idx} className="flex items-start gap-4 text-xs">
+                  {/* Timestamp */}
+                  <span className="font-mono text-[#5F6F6A] w-32 sm:w-36 shrink-0 pt-0.5">
+                    {item.tanggal}
+                  </span>
 
-                {/* Indicator Dot & Vertical Connector */}
-                <div className="flex flex-col items-center pt-1.5 shrink-0">
-                  <span
-                    className={`w-2.5 h-2.5 rounded-full ${
-                      item.aktif
-                        ? 'bg-[#0E7C5A] ring-2 ring-[#BDE8D1]'
-                        : 'bg-[#D5DFDC]'
-                    }`}
-                  />
-                  {idx < visibleTimeline.length - 1 && (
-                    <span className="w-0.5 h-5 bg-[#E4EBE8] mt-1" />
-                  )}
+                  {/* Indicator Dot & Vertical Connector */}
+                  <div className="flex flex-col items-center pt-1.5 shrink-0">
+                    <span
+                      className={`w-2.5 h-2.5 rounded-full ${
+                        item.aktif
+                          ? 'bg-[#0E7C5A] ring-2 ring-[#BDE8D1]'
+                          : 'bg-[#D5DFDC]'
+                      }`}
+                    />
+                    {idx < timeline.length - 1 && (
+                      <span className="w-0.5 h-5 bg-[#E4EBE8] mt-1" />
+                    )}
+                  </div>
+
+                  {/* Event Description */}
+                  <div className="text-[#14201C] font-normal leading-relaxed flex-1">
+                    <span>{item.keterangan}</span>
+                    {item.actor_nama && (
+                      <p className="text-[10px] text-[#8A9A95] mt-0.5">
+                        Oleh: {item.actor_nama}
+                      </p>
+                    )}
+                  </div>
                 </div>
-
-                {/* Event Description */}
-                <div className="text-[#14201C] font-normal leading-relaxed flex-1">
-                  <span>{item.keterangan}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Toggle Selengkapnya / Lebih Sedikit */}
-          {timeline.length > 5 && (
-            <div className="flex justify-center pt-4">
-              <button
-                type="button"
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="text-xs font-semibold text-[#0E7C5A] hover:text-[#0A5C43] inline-flex items-center gap-1 transition-colors cursor-pointer py-1"
-              >
-                <span>{isExpanded ? 'Tampilkan Lebih Sedikit' : 'Tampilkan Selengkapnya'}</span>
-                {isExpanded ? (
-                  <ChevronUp className="w-3.5 h-3.5" />
-                ) : (
-                  <ChevronDown className="w-3.5 h-3.5" />
-                )}
-              </button>
+              ))}
             </div>
           )}
+
+          {/* Toggle Selengkapnya / Lebih Sedikit (Hanya satu di bagian bawah) */}
+          <div className={`flex justify-center ${isExpanded ? 'pt-4 border-t border-[#F0F4F2] mt-4' : ''}`}>
+            <button
+              type="button"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="text-xs font-semibold text-[#0E7C5A] hover:text-[#0A5C43] inline-flex items-center gap-1 transition-colors cursor-pointer py-1"
+            >
+              <span>{isExpanded ? 'Tampilkan Lebih Sedikit' : 'Tampilkan Lebih Banyak'}</span>
+              {isExpanded ? (
+                <ChevronUp className="w-3.5 h-3.5" />
+              ) : (
+                <ChevronDown className="w-3.5 h-3.5" />
+              )}
+            </button>
+          </div>
         </div>
       )}
     </section>
