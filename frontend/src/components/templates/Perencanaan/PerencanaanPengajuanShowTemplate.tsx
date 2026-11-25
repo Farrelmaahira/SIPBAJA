@@ -1,4 +1,4 @@
-import { useState, type FC, type FormEvent } from 'react';
+import { type FC, type FormEvent } from 'react';
 import {
   ArrowLeft,
   CheckCircle2,
@@ -6,7 +6,6 @@ import {
   Loader2,
   FileText,
   ChevronDown,
-  ChevronUp,
   Save,
   Lock,
   Download,
@@ -19,13 +18,15 @@ import {
   Tag,
   Check,
   X,
-  ShoppingCart,
-  Package,
 } from 'lucide-react';
 import AppLayout from '../General/AppLayout';
 import HeroBanner from '../../organisms/HeroBanner';
 import StatusPill from '../../atoms/StatusPill';
 import PerencanaanVerifikasiMakCard from '../../organisms/PerencanaanVerifikasiMakCard';
+import RiwayatStatusTimeline, {
+  type TimelineStepItem,
+  type TimelineLogItem,
+} from '../../organisms/RiwayatStatusTimeline';
 import { formatRupiah, formatTanggalIndo, formatBytes } from '../../../utils/formatters';
 import { PERENCANAAN_NAV_ITEMS } from '@/constants/perencanaanNav';
 import type {
@@ -145,12 +146,12 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
   recentNotifications,
   unreadNotificationsCount,
 }) => {
-  const [timelineExpanded, setTimelineExpanded] = useState<boolean>(true);
-
   const permohonan = detail?.permohonan;
   const rawStatus = (permohonan?.status || 'diajukan').toLowerCase();
   const isSelesai = rawStatus === 'selesai' || rawStatus === 'barang_diterima';
   const isDitolak = rawStatus === 'ditolak';
+  const isDiteruskan = rawStatus === 'diteruskan';
+  const isDisetujui = ['disetujui', 'proses_pengadaan', 'sedang_diproses', 'selesai', 'barang_diterima'].includes(rawStatus);
   const pengadaanChildren: PerencanaanPengadaanChildItem[] = permohonan?.pengadaan || [];
 
   const permohonanMakOptions: PerencanaanMakItem[] =
@@ -194,93 +195,95 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
   // Stepper & Timeline Data
   const trackingData = detail?.tracking;
 
-  const defaultStepper = [
+  const approvalPerencanaan =
+    detail?.approval_perencanaan ||
+    permohonan?.Approvals?.find(
+      (a) => (a.tahap || '').toUpperCase() === 'PERENCANAAN'
+    );
+  const isPerencanaanDone = Boolean(approvalPerencanaan) || isDiteruskan || isDisetujui;
+
+  const permohonanSteps: TimelineStepItem[] = [
     {
-      key: 'permohonan',
-      label: 'Permohonan',
-      subtext: isDitolak ? 'Ditolak' : 'Disetujui',
-      status: 'selesai',
+      key: 'diajukan',
+      title: 'Diajukan Pemohon',
+      subtitle: 'Permohonan diajukan oleh unit pemohon',
+      state: 'done',
     },
     {
-      key: 'pengadaan',
-      label: 'Pengadaan',
-      subtext: isSelesai ? 'Selesai' : mode === 'pengadaan' ? 'Sedang berlangsung' : 'Belum dimulai',
-      status: isSelesai || mode === 'pengadaan' ? 'selesai' : 'belum_dimulai',
+      key: 'verifikasi_perencanaan',
+      title: 'Verifikasi Perencanaan',
+      subtitle: isDitolak && !isPerencanaanDone
+        ? 'Permohonan ditolak pada tahap perencanaan'
+        : isPerencanaanDone
+        ? 'Telah diverifikasi dan Jenis MAK ditetapkan'
+        : 'Menunggu verifikasi dan penentuan Jenis MAK',
+      state: isDitolak && !isPerencanaanDone
+        ? 'rejected'
+        : isPerencanaanDone
+        ? 'done'
+        : 'active',
     },
     {
-      key: 'pembelian_barang',
-      label: 'Pembelian Barang',
-      subtext: isSelesai ? 'Selesai' : 'Belum dimulai',
-      status: isSelesai ? 'selesai' : 'belum_dimulai',
+      key: 'persetujuan_bidang2',
+      title: 'Persetujuan Bidang 2',
+      subtitle: isDitolak && isPerencanaanDone
+        ? 'Permohonan ditolak oleh Bidang 2'
+        : isDisetujui
+        ? 'Disetujui oleh Wakil Direktur II'
+        : isDiteruskan
+        ? 'Menunggu persetujuan Wakil Direktur II'
+        : 'Menunggu verifikasi perencanaan selesai',
+      state: isDitolak && isPerencanaanDone
+        ? 'rejected'
+        : isDisetujui
+        ? 'done'
+        : isDiteruskan
+        ? 'active'
+        : 'pending',
     },
     {
-      key: 'penerimaan_barang',
-      label: 'Penerimaan Barang',
-      subtext: isSelesai ? 'Selesai' : 'Belum dimulai',
-      status: isSelesai ? 'selesai' : 'belum_dimulai',
-    },
-    {
-      key: 'selesai',
-      label: 'Selesai',
-      subtext: isSelesai ? 'Selesai' : 'Belum dimulai',
-      status: isSelesai ? 'selesai' : 'belum_dimulai',
+      key: 'diteruskan_ppbj',
+      title: 'Diteruskan ke PPBJ',
+      subtitle: isDisetujui
+        ? 'Disetujui dan diteruskan ke PPBJ untuk proses pengadaan'
+        : 'Menunggu seluruh persetujuan diselesaikan',
+      state: isDisetujui ? 'done' : 'pending',
     },
   ];
 
-  const stepperItems = trackingData?.stepper
-    ? trackingData.stepper.map((s) => ({
-      key: s.key,
-      label: s.label,
-      subtext: s.status === 'selesai' ? (s.key === 'permohonan' ? 'Disetujui' : 'Selesai') : s.status === 'sedang_berlangsung' ? 'Sedang berlangsung' : 'Belum dimulai',
-      status: s.status,
-    }))
-    : defaultStepper;
-
-  const defaultTimelineEvents = [
-    {
-      id: 1,
-      tanggal: '14-03-2027 10:30',
-      keterangan: 'Pengadaan dinyatakan selesai',
-      aktif: true,
-    },
-    {
-      id: 2,
-      tanggal: '12-03-2027 16:15',
-      keterangan: 'Barang diterima dan dokumen pembayaran lengkap',
-      aktif: false,
-    },
-    {
-      id: 3,
-      tanggal: '09-03-2027 09:40',
-      keterangan: 'Pembelian barang selesai dilakukan',
-      aktif: false,
-    },
-    {
-      id: 4,
-      tanggal: '06-03-2027 13:05',
-      keterangan: 'Pengadaan diproses oleh PPBJ',
-      aktif: false,
-    },
-    {
-      id: 5,
-      tanggal: '05-03-2027 14:20',
-      keterangan: 'Permohonan disetujui oleh Perencanaan',
-      aktif: false,
-    },
-  ];
-
-  const rawTimeline = trackingData?.timeline && trackingData.timeline.length > 0
-    ? trackingData.timeline
-    : detail?.history && detail.history.length > 0
+  const timelineLogs: TimelineLogItem[] =
+    detail?.history && detail.history.length > 0
       ? detail.history.map((h, idx) => ({
-        id: h.id,
-        tanggal: h.waktu || '05-03-2027 14:20',
-        keterangan: h.deskripsi,
-        aktif: idx === 0,
-      }))
-      : defaultTimelineEvents;
-
-  const visibleTimeline = timelineExpanded || rawTimeline.length <= 5 ? rawTimeline : rawTimeline.slice(0, 5);
+          id: h.id,
+          waktu: h.waktu || null,
+          deskripsi: h.deskripsi,
+          actor_nama: h.actor_nama || null,
+          actor_role: h.actor_role || null,
+          aktif: idx === 0,
+        }))
+      : trackingData?.timeline && trackingData.timeline.length > 0
+      ? trackingData.timeline.map((t, idx) => ({
+          id: t.id ?? idx,
+          waktu: t.tanggal || null,
+          deskripsi: t.keterangan,
+          actor_nama: t.actor_nama || null,
+          aktif: idx === 0,
+        }))
+      : [
+          {
+            id: 1,
+            waktu: formatTanggalIndo(
+              permohonan?.created_at ? String(permohonan.created_at) : undefined
+            ),
+            deskripsi: `Permohonan diajukan oleh ${unitNama}`,
+            actor_nama:
+              (permohonan as any)?.pembuat_nama ||
+              (permohonan as any)?.pemohon?.nama ||
+              'Pemohon',
+            actor_role: 'Pemohon',
+            aktif: true,
+          },
+        ];
 
   const tanggalSelesai = formatTanggalIndo(
     (permohonan as any)?.updated_at || (permohonan as any)?.created_at ? String((permohonan as any)?.updated_at || permohonan?.created_at) : undefined
@@ -603,127 +606,16 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
               processing={processing}
             />
           ) : (
-            <div className="bg-white rounded-[22px] md:rounded-[24px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(20,32,28,0.04)] space-y-6">
-              {/* Header Timeline */}
-              <div>
-                <h3 className="text-base font-bold text-[#14201C]">Timeline Proses</h3>
-                <p className="text-xs text-[#5F6F6A] mt-0.5">
-                  {isSelesai ? 'Seluruh tahapan telah diselesaikan' : 'Posisi permohonan dalam alur proses'}
-                </p>
-              </div>
-
-              {/* Horizontal Stepper */}
-              <div className="pt-1 pb-4 overflow-x-auto">
-                <div className="flex items-center justify-between min-w-[460px] relative">
-                  {stepperItems.map((step, idx) => {
-                    const isStepSelesai = step.status === 'selesai';
-                    const isStepActive = step.status === 'sedang_berlangsung';
-
-                    let StepIcon = Check;
-                    if (step.key === 'permohonan') StepIcon = Check;
-                    else if (step.key === 'pengadaan') StepIcon = isStepSelesai ? Check : FileText;
-                    else if (step.key === 'pembelian_barang') StepIcon = isStepSelesai ? Check : ShoppingCart;
-                    else if (step.key === 'penerimaan_barang') StepIcon = isStepSelesai ? Check : Package;
-                    else if (step.key === 'selesai') StepIcon = CheckCircle2;
-
-                    const nextStep = stepperItems[idx + 1];
-                    const isLineActive =
-                      nextStep && (nextStep.status === 'selesai' || nextStep.status === 'sedang_berlangsung');
-
-                    return (
-                      <div key={step.key} className="flex-1 flex flex-col items-center relative group">
-                        {/* Connecting Line */}
-                        {idx < stepperItems.length - 1 && (
-                          <div
-                            className={`absolute top-3.5 left-1/2 w-full h-[2px] -z-0 ${
-                              isLineActive ? 'bg-[#0E7C5A]' : 'bg-[#E4EBE8]'
-                            }`}
-                          />
-                        )}
-
-                        {/* Step Circle */}
-                        <div
-                          className={`w-7 h-7 rounded-full flex items-center justify-center relative z-10 transition-transform ${
-                            isStepSelesai
-                              ? 'bg-[#0E7C5A] text-white shadow-xs'
-                              : isStepActive
-                              ? 'bg-[#0E7C5A] text-white ring-4 ring-[#E8F5EF]'
-                              : 'bg-white border-2 border-[#D5DFDC] text-[#8A9A95]'
-                          }`}
-                        >
-                          <StepIcon className="w-3.5 h-3.5" />
-                        </div>
-
-                        {/* Labels */}
-                        <p className="text-[11px] font-bold text-[#14201C] mt-2 text-center whitespace-nowrap">
-                          {step.label}
-                        </p>
-                        <p
-                          className={`text-[10px] font-medium mt-0.5 text-center whitespace-nowrap ${
-                            isStepSelesai
-                              ? 'text-[#0E7C5A]'
-                              : isStepActive
-                              ? 'text-[#0E7C5A]'
-                              : 'text-[#8A9A95]'
-                          }`}
-                        >
-                          {step.subtext}
-                        </p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Vertical Timeline Events */}
-              <div className="pt-4 border-t border-[#F0F4F2] space-y-3.5">
-                {visibleTimeline.map((item, idx) => (
-                  <div key={item.id ?? idx} className="flex items-start gap-3.5 text-xs">
-                    {/* Timestamp */}
-                    <span className="font-mono text-[#5F6F6A] w-28 sm:w-32 shrink-0 pt-0.5">
-                      {item.tanggal}
-                    </span>
-
-                    {/* Indicator Dot & Vertical Connector Line */}
-                    <div className="flex flex-col items-center pt-1.5 shrink-0">
-                      <span
-                        className={`w-2 h-2 rounded-full ${
-                          item.aktif
-                            ? 'bg-[#0E7C5A] ring-2 ring-[#BDE8D1]'
-                            : 'bg-[#0E7C5A]'
-                        }`}
-                      />
-                      {idx < visibleTimeline.length - 1 && (
-                        <span className="w-0.5 h-6 bg-[#CDE9DE] mt-1" />
-                      )}
-                    </div>
-
-                    {/* Event Description */}
-                    <div className="text-[#14201C] font-normal leading-relaxed flex-1">
-                      <span>{item.keterangan}</span>
-                    </div>
-                  </div>
-                ))}
-
-                {/* Toggle Button */}
-                {rawTimeline.length > 5 && (
-                  <div className="flex justify-center pt-3">
-                    <button
-                      type="button"
-                      onClick={() => setTimelineExpanded(!timelineExpanded)}
-                      className="text-xs font-semibold text-[#0E7C5A] hover:text-[#0A5C43] inline-flex items-center gap-1 transition-colors cursor-pointer py-1"
-                    >
-                      <span>{timelineExpanded ? 'Tampilkan Lebih Sedikit' : 'Tampilkan Selengkapnya'}</span>
-                      {timelineExpanded ? (
-                        <ChevronUp className="w-3.5 h-3.5" />
-                      ) : (
-                        <ChevronDown className="w-3.5 h-3.5" />
-                      )}
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
+            <RiwayatStatusTimeline
+              title="Timeline Proses"
+              subtitle={
+                isSelesai
+                  ? 'Seluruh tahapan telah diselesaikan'
+                  : 'Posisi permohonan dalam alur proses'
+              }
+              steps={permohonanSteps}
+              logs={timelineLogs}
+            />
           )}
         </div>
 
