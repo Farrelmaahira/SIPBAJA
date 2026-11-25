@@ -4,7 +4,7 @@ import { FileText, Hourglass, CheckCircle2, XCircle } from 'lucide-react';
 import AppLayout from '../General/AppLayout';
 import HeroBanner from '../../organisms/HeroBanner';
 import StatCard from '../../molecules/StatCard';
-import StatistikChart from '../../organisms/StatistikChart';
+import StatistikChart, { type ChartDatum } from '../../organisms/StatistikChart';
 import PerencanaanPermohonanTerbaruTable from '../../organisms/PerencanaanPermohonanTerbaruTable';
 import type {
   PerencanaanDashboardStats,
@@ -16,6 +16,7 @@ import { PERENCANAAN_NAV_ITEMS } from '@/constants/perencanaanNav';
 export interface PerencanaanDashboardTemplateProps {
   stats?: PerencanaanDashboardStats;
   permohonanTerbaru: PermohonanTerbaruItem[];
+  chartData?: ChartDatum[];
   isLoading?: boolean;
   errorMessage?: string;
   viewMode: 'bulan' | 'tahun';
@@ -27,6 +28,7 @@ export interface PerencanaanDashboardTemplateProps {
 export const PerencanaanDashboardTemplate: FC<PerencanaanDashboardTemplateProps> = ({
   stats,
   permohonanTerbaru,
+  chartData,
   isLoading = false,
   errorMessage = '',
   viewMode,
@@ -69,7 +71,10 @@ export const PerencanaanDashboardTemplate: FC<PerencanaanDashboardTemplateProps>
             value={isLoading ? '-' : (stats?.total ?? 0)}
             iconBg="bg-[#E4F6EC]"
             iconColor="text-[#0E7C5A]"
-            badge={{ label: '+3 bulan ini', variant: 'success' }}
+            badge={{
+              label: stats?.tambahan_bulan_ini ? `+${stats.tambahan_bulan_ini} bulan ini` : 'Bulan ini',
+              variant: 'success',
+            }}
           />
           <StatCard
             icon={Hourglass}
@@ -85,7 +90,10 @@ export const PerencanaanDashboardTemplate: FC<PerencanaanDashboardTemplateProps>
             value={isLoading ? '-' : (stats?.selesai ?? 0)}
             iconBg="bg-[#E4F6EC]"
             iconColor="text-[#0E7C5A]"
-            badge={{ label: '+2 bulan ini', variant: 'success' }}
+            badge={{
+              label: stats?.selesai_bulan_ini ? `+${stats.selesai_bulan_ini} bulan ini` : 'Selesai diproses',
+              variant: 'success',
+            }}
           />
           <StatCard
             icon={XCircle}
@@ -101,6 +109,7 @@ export const PerencanaanDashboardTemplate: FC<PerencanaanDashboardTemplateProps>
         <StatistikChart
           viewMode={viewMode}
           onViewModeChange={onViewModeChange}
+          chartData={chartData}
           totalDisetujui={stats?.selesai ?? 0}
           totalDitolak={stats?.ditolak ?? 0}
           isLoading={isLoading}

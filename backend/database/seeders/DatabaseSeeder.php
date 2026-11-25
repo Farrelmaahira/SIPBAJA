@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             MasterSeeder::class,
             PermohonanDiajukanSeeder::class,
             KeuanganSeeder::class,
+            PerencanaanDashboardSeeder::class,
             // PengadaanPpSeeder::class,
         ]);
     }

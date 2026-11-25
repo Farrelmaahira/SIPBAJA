@@ -26,7 +26,7 @@ export const PerencanaanPermohonanTerbaruTable: FC<PerencanaanPermohonanTerbaruT
         </div>
 
         <Link
-          to="/perencanaan/pengajuan"
+          to="/perencanaan/permohonan"
           className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0E7C5A] hover:underline cursor-pointer"
         >
           <span>Lihat Semua</span>
@@ -70,7 +70,7 @@ export const PerencanaanPermohonanTerbaruTable: FC<PerencanaanPermohonanTerbaruT
                 <tr key={item.id} className="hover:bg-[#F9FBFA] transition-colors">
                   <td className="py-4 px-4 font-bold text-[#0E7C5A]">
                     <Link
-                      to={`/perencanaan/pengajuan/${item.id}`}
+                      to={`/perencanaan/permohonan/${item.id}`}
                       className="hover:underline"
                     >
                       {item.nomor_surat || '-'}

@@ -299,6 +299,8 @@ export interface PerencanaanDashboardStats {
   diajukan?: number;
   selesai?: number;
   ditolak?: number;
+  tambahan_bulan_ini?: number;
+  selesai_bulan_ini?: number;
 }
 
 export interface PermohonanTerbaruItem {
@@ -315,9 +317,23 @@ export interface PermohonanTerbaruItem {
    [key: string]: unknown;
 }
 
+export interface StatistikBulananItem {
+  bulan: number;
+  disetujui: number;
+  ditolak: number;
+}
+
+export interface StatistikTahunanItem {
+  tahun: number;
+  disetujui: number;
+  ditolak: number;
+}
+
 export interface PerencanaanDashboardResponse {
   stats?: PerencanaanDashboardStats;
   permohonanTerbaru?: PermohonanTerbaruItem[];
   recentNotifications?: NotificationItem[];
   unreadNotificationsCount?: number;
+  statistikBulanan?: StatistikBulananItem[];
+  statistikTahunan?: StatistikTahunanItem[];
 }

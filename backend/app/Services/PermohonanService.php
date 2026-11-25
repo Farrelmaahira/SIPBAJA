@@ -709,15 +709,70 @@ class PermohonanService
      */
     public function getDashboardPerencanaan(): array
     {
+        $tahunIni = Carbon::now()->year;
+        $bulanIni = Carbon::now()->month;
+
         $total = Permohonan::count();
         $diajukan = Permohonan::whereIn('status', ['diajukan', 'menunggu_verifikasi'])->count();
         $selesai = Permohonan::whereIn('status', ['selesai', 'disetujui', 'diteruskan'])->count();
         $ditolak = Permohonan::where('status', 'ditolak')->count();
 
+        $tambahanBulanIni = Permohonan::whereYear('created_at', $tahunIni)
+            ->whereMonth('created_at', $bulanIni)
+            ->count();
+
+        $selesaiBulanIni = Permohonan::whereYear('created_at', $tahunIni)
+            ->whereMonth('created_at', $bulanIni)
+            ->whereIn('status', ['selesai', 'disetujui', 'diteruskan'])
+            ->count();
+
         $permohonanTerbaru = Permohonan::with(['Unit', 'Creator'])
+            ->orderByDesc('created_at')
             ->orderByDesc('id')
-            ->limit(4)
+            ->limit(10)
             ->get();
+
+        // Statistik bulanan (Jan - Des tahun ini)
+        $rowsBulan = Permohonan::whereYear('created_at', $tahunIni)
+            ->whereIn('status', ['disetujui', 'selesai', 'diteruskan', 'ditolak'])
+            ->get(['status', 'created_at']);
+
+        $groupedBulan = $rowsBulan->groupBy(function ($item) {
+            return Carbon::parse($item->created_at)->month;
+        });
+
+        $statistikBulanan = collect(range(1, 12))->map(function (int $bulan) use ($groupedBulan) {
+            $items = $groupedBulan->get($bulan, collect());
+
+            return [
+                'bulan' => $bulan,
+                'disetujui' => $items->whereIn('status', ['disetujui', 'selesai', 'diteruskan'])->count(),
+                'ditolak' => $items->where('status', 'ditolak')->count(),
+            ];
+        })->values()->all();
+
+        // Statistik tahunan (5 tahun terakhir: 2022 - 2026)
+        $tahunAwal = $tahunIni - 4;
+        $rowsTahun = Permohonan::whereBetween('created_at', [
+            Carbon::create($tahunAwal, 1, 1)->startOfDay(),
+            Carbon::create($tahunIni, 12, 31)->endOfDay(),
+        ])
+            ->whereIn('status', ['disetujui', 'selesai', 'diteruskan', 'ditolak'])
+            ->get(['status', 'created_at']);
+
+        $groupedTahun = $rowsTahun->groupBy(function ($item) {
+            return Carbon::parse($item->created_at)->year;
+        });
+
+        $statistikTahunan = collect(range($tahunAwal, $tahunIni))->map(function (int $thn) use ($groupedTahun) {
+            $items = $groupedTahun->get($thn, collect());
+
+            return [
+                'tahun' => $thn,
+                'disetujui' => $items->whereIn('status', ['disetujui', 'selesai', 'diteruskan'])->count(),
+                'ditolak' => $items->where('status', 'ditolak')->count(),
+            ];
+        })->values()->all();
 
         return [
             'stats' => [
@@ -725,8 +780,12 @@ class PermohonanService
                 'diajukan' => $diajukan,
                 'selesai' => $selesai,
                 'ditolak' => $ditolak,
+                'tambahan_bulan_ini' => $tambahanBulanIni,
+                'selesai_bulan_ini' => $selesaiBulanIni,
             ],
             'permohonan_terbaru' => $permohonanTerbaru,
+            'statistik_bulanan' => $statistikBulanan,
+            'statistik_tahunan' => $statistikTahunan,
         ];
     }
 

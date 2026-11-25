@@ -19,6 +19,8 @@ class DashboardPerencanaanController extends Controller
         return response()->json([
             'stats' => $data['stats'],
             'permohonanTerbaru' => $data['permohonan_terbaru'],
+            'statistikBulanan' => $data['statistik_bulanan'] ?? [],
+            'statistikTahunan' => $data['statistik_tahunan'] ?? [],
         ]);
     }
 }
