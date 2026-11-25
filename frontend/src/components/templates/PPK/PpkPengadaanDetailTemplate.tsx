@@ -293,6 +293,11 @@ export const PpkPengadaanDetailTemplate: FC<PpkPengadaanDetailTemplateProps> = (
       notifikasiHref={`${basePath}/notifikasi`}
       notifications={recentNotifications}
       unreadCount={unreadNotificationsCount}
+      flash={
+        flashError || flashSuccess
+          ? { error: flashError || undefined, success: flashSuccess || undefined }
+          : undefined
+      }
       breadcrumb={[
         { label: 'PPK', href: `${basePath}/dashboard` },
         { label: 'DAFTAR PENGADAAN', href: `${basePath}/pengadaan` },
@@ -300,30 +305,6 @@ export const PpkPengadaanDetailTemplate: FC<PpkPengadaanDetailTemplateProps> = (
       ]}
     >
       <div className="space-y-6 pb-12">
-        {/* Flash Success Banner */}
-        {flashSuccess && (
-          <div className="bg-[#E4F6EC] border border-[#BDE8D1] rounded-2xl p-4 flex items-center justify-between shadow-xs text-xs font-bold text-[#0B7A4E]">
-            {flashSuccess}
-          </div>
-        )}
-
-        {/* Flash Error Banner */}
-        {flashError && (
-          <div className="bg-[#FEF3DC] border border-[#FDE4A0] rounded-2xl p-4 flex items-center justify-between shadow-xs">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="w-5 h-5 text-[#D97706] shrink-0" />
-              <p className="text-sm font-medium text-[#92400E]">{flashError}</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => window.location.reload()}
-              className="text-xs font-bold text-[#92400E] hover:underline cursor-pointer"
-            >
-              Muat Ulang
-            </button>
-          </div>
-        )}
-
         {/* HERO BANNER */}
         <HeroBanner
           eyebrow="PENGADAAN"

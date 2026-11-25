@@ -18,7 +18,14 @@ use Illuminate\Support\Str;
 
 class PermohonanService
 {
-    public function __construct(private ApprovalService $approvalService) {}
+    protected NotificationService $notificationService;
+
+    public function __construct(
+        private ApprovalService $approvalService,
+        ?NotificationService $notificationService = null,
+    ) {
+        $this->notificationService = $notificationService ?? app(NotificationService::class);
+    }
 
     /**
      * Menyimpan permohonan baru, dokumen PDF pendukung, dan riwayat status pertama.
@@ -91,6 +98,9 @@ class PermohonanService
                 'status_baru' => 'diajukan',
                 'actor_id' => $user->id,
             ]);
+
+            // 5. Kirim notifikasi ke role yang mendapatkan data permohonan (Perencanaan, Bidang 2, PPBJ) & Pemohon
+            $this->kirimNotifikasiPermohonanDiajukan($permohonan, $user, false);
 
             return $permohonan;
         });
@@ -174,8 +184,75 @@ class PermohonanService
                 'actor_id' => $user->id,
             ]);
 
+            // Kirim notifikasi revisi ke role yang mendapatkan data permohonan (Perencanaan, Bidang 2, PPBJ) & Pemohon
+            $this->kirimNotifikasiPermohonanDiajukan($permohonan, $user, true);
+
             return $permohonan;
         });
+    }
+
+    /**
+     * Mengirim notifikasi pengajuan / revisi permohonan ke seluruh role penerima data permohonan (Perencanaan, Bidang 2, PPBJ) dan Pemohon.
+     */
+    private function kirimNotifikasiPermohonanDiajukan(Permohonan $permohonan, User $pemohon, bool $isRevisi = false): void
+    {
+        $nomorSurat = $permohonan->nomor_surat ?: '-';
+        $judul = $permohonan->judul;
+
+        // 1. Notifikasi ke Perencanaan (Verifikator utama permohonan & penentu MAK)
+        $perencanaanUsers = User::whereHas('Role', fn ($q) => $q->where('nama', 'Perencanaan'))->pluck('id');
+        foreach ($perencanaanUsers as $pId) {
+            $this->notificationService->send(
+                user: (int) $pId,
+                judul: $isRevisi ? 'Permohonan Telah Direvisi' : 'Permohonan Baru Perlu Diverifikasi',
+                pesan: $isRevisi
+                    ? "Permohonan '{$judul}' ({$nomorSurat}) telah direvisi oleh pemohon dan siap diverifikasi kembali."
+                    : "Permohonan baru '{$judul}' ({$nomorSurat}) telah diajukan dan menunggu verifikasi serta penetapan MAK.",
+                refType: 'permohonan',
+                refId: $permohonan->id,
+            );
+        }
+
+        // 2. Notifikasi ke Bidang 2 (Monitoring Pengajuan Permohonan)
+        $bidang2Users = User::whereHas('Role', fn ($q) => $q->where('nama', 'Bidang 2'))->pluck('id');
+        foreach ($bidang2Users as $bId) {
+            $this->notificationService->send(
+                user: (int) $bId,
+                judul: $isRevisi ? 'Permohonan Telah Direvisi' : 'Pengajuan Permohonan Baru',
+                pesan: $isRevisi
+                    ? "Permohonan '{$judul}' ({$nomorSurat}) telah direvisi oleh pemohon."
+                    : "Pengajuan permohonan baru '{$judul}' ({$nomorSurat}) telah masuk ke antrean pengajuan.",
+                refType: 'permohonan',
+                refId: $permohonan->id,
+            );
+        }
+
+        // 3. Notifikasi ke PPBJ (Monitoring Daftar Permohonan Pengadaan)
+        $ppbjUsers = User::whereHas('Role', fn ($q) => $q->where('nama', 'PPBJ'))->pluck('id');
+        foreach ($ppbjUsers as $ppbjId) {
+            $this->notificationService->send(
+                user: (int) $ppbjId,
+                judul: $isRevisi ? 'Permohonan Telah Direvisi' : 'Permohonan Baru Masuk',
+                pesan: $isRevisi
+                    ? "Permohonan pengadaan '{$judul}' ({$nomorSurat}) telah direvisi oleh pemohon."
+                    : "Permohonan pengadaan baru '{$judul}' ({$nomorSurat}) telah diajukan oleh pemohon.",
+                refType: 'permohonan',
+                refId: $permohonan->id,
+            );
+        }
+
+        // 4. Notifikasi konfirmasi ke Pemohon
+        if ($pemohon->id) {
+            $this->notificationService->send(
+                user: (int) $pemohon->id,
+                judul: $isRevisi ? 'Revisi Permohonan Berhasil Dikirim' : 'Permohonan Berhasil Diajukan',
+                pesan: $isRevisi
+                    ? "Revisi permohonan '{$judul}' ({$nomorSurat}) berhasil dikirim dan masuk antrean verifikasi kembali."
+                    : "Permohonan '{$judul}' ({$nomorSurat}) berhasil dikirim dan masuk antrean verifikasi Perencanaan.",
+                refType: 'permohonan',
+                refId: $permohonan->id,
+            );
+        }
     }
 
     /**

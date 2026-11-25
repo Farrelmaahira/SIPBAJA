@@ -79,6 +79,17 @@ class PermohonanApiTest extends TestCase
             'judul' => 'Pengadaan Laptop Laboratorium Baru',
             'created_by' => $pemohon->id,
         ]);
+
+        $perencanaan = $this->user('perencanaan@pnj.ac.id');
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $perencanaan->id,
+            'judul' => 'Permohonan Baru Perlu Diverifikasi',
+        ]);
+
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $pemohon->id,
+            'judul' => 'Permohonan Berhasil Diajukan',
+        ]);
     }
 
     public function test_pemohon_can_download_permohonan_dokumen(): void

@@ -380,29 +380,13 @@ export const PpPengadaanDetailTemplate: FC<PpPengadaanDetailTemplateProps> = ({
       readAllHref={`${basePath}/notifikasi/read-all`}
       notifications={recentNotifications}
       unreadCount={unreadNotificationsCount}
+      flash={flashError ? { error: flashError } : undefined}
       breadcrumb={[
         { label: 'DAFTAR PENGADAAN', href: `${basePath}/pengadaan` },
         { label: 'DETAIL PENGADAAN' },
       ]}
     >
       <div className="space-y-6 pb-12">
-        {/* Flash Error Banner */}
-        {flashError && (
-          <div className="bg-[#FEF3DC] border border-[#FDE4A0] rounded-2xl p-4 flex items-center justify-between shadow-xs">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="w-5 h-5 text-[#D97706] shrink-0" />
-              <p className="text-sm font-medium text-[#92400E]">{flashError}</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => window.location.reload()}
-              className="text-xs font-bold text-[#92400E] hover:underline"
-            >
-              Muat Ulang
-            </button>
-          </div>
-        )}
-
         {/* HERO BANNER */}
         <HeroBanner
           eyebrow="PENGADAAN"

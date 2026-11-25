@@ -1,6 +1,7 @@
 import { useState, type FC, type ReactNode } from 'react';
 import AppSidebar, { type AppNavItem } from '../../organisms/AppSidebar';
 import AppTopbar, { type BreadcrumbItem, type AppTopbarUser } from '../../organisms/AppTopbar';
+import FlashMessage from '../../molecules/FlashMessage';
 import { useAuth } from '../../../hooks/useAuth';
 import type { NotificationItem } from '../../../types/notification';
 
@@ -84,15 +85,15 @@ export const AppLayout: FC<AppLayoutProps> = ({
           readAllHref={resolvedReadAllHref}
         />
 
-        {/* Flash Messages */}
-        {flash?.success && (
-          <div className="mb-5 p-4 rounded-2xl bg-[#E4F6EC] border border-[#C8E6C9] text-xs font-semibold text-[#0B7A4E] flex items-center justify-between">
-            <span>{flash.success}</span>
-          </div>
-        )}
-        {flash?.error && (
-          <div className="mb-5 p-4 rounded-2xl bg-[#FDECEC] border border-[#FECDCA] text-xs font-semibold text-[#B42318] flex items-center justify-between">
-            <span>{flash.error}</span>
+        {/* Flash Messages (Sejajar di bawah topbar, rata kanan dengan komponen) */}
+        {(flash?.success || flash?.error) && (
+          <div className="flex justify-end mb-4">
+            {flash?.success && (
+              <FlashMessage type="success" message={flash.success} duration={4000} />
+            )}
+            {flash?.error && (
+              <FlashMessage type="error" message={flash.error} duration={5000} />
+            )}
           </div>
         )}
 

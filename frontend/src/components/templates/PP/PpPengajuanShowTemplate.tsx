@@ -111,6 +111,7 @@ export const PpPengajuanShowTemplate: FC<PpPengajuanShowTemplateProps> = ({
       profileHref={`${basePath}/profil`}
       notifikasiHref={`${basePath}/notifikasi`}
       readAllHref={`${basePath}/notifikasi/read-all`}
+      flash={flashSuccess ? { success: flashSuccess } : undefined}
       breadcrumb={[
         { label: 'LIST PENGAJUAN', href: `${basePath}/pengajuan` },
         { label: 'REKAP PENGAJUAN' },
@@ -399,12 +400,6 @@ export const PpPengajuanShowTemplate: FC<PpPengajuanShowTemplateProps> = ({
             </div>
           </div>
         </div>
-
-        {flashSuccess && (
-          <div className="p-4 bg-[#E4F6EC] border border-[#BDE8D1] rounded-[22px] text-xs font-bold text-[#0B7A4E]">
-            {flashSuccess}
-          </div>
-        )}
 
         {/* 5. Pembayaran & Verifikasi Memo PPK (FR-55, FR-56, FR-57) */}
         {pembayaranContext?.pembayaran && onApprovePembayaran && onRejectPembayaran ? (

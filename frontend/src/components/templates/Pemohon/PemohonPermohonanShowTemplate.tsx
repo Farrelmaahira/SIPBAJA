@@ -2,8 +2,6 @@ import { useState, useEffect, useMemo, type FC } from 'react';
 import {
   ArrowLeft,
   RotateCcw,
-  CheckCircle2,
-  X,
   AlertCircle,
   Pencil,
   Trash2,
@@ -50,7 +48,7 @@ export const PemohonPermohonanShowTemplate: FC<
   hasError,
   errorMessage,
   flashMessage,
-  onCloseFlash,
+  onCloseFlash: _onCloseFlash,
   onRetry,
   onBack,
   onRevisi,
@@ -210,6 +208,7 @@ export const PemohonPermohonanShowTemplate: FC<
         roleSubtitle="Unit Pemohon"
         profileHref="/pemohon/profil"
         notifikasiHref="/pemohon/notifikasi"
+        flash={flashMessage ? { success: flashMessage } : undefined}
         breadcrumb={[
           {
             label: 'Dashboard',
@@ -272,25 +271,6 @@ export const PemohonPermohonanShowTemplate: FC<
         {/* Success Content */}
         {!isLoading && permohonan && (
           <div className="space-y-6">
-            {flashMessage && (
-              <div className="p-4 rounded-2xl bg-[#EEF5F2] border border-[#7FE0B8] text-[#0E7C5A] text-sm font-medium flex items-center justify-between gap-3 shadow-2xs">
-                <div className="flex items-center gap-2.5">
-                  <CheckCircle2 className="w-5 h-5 shrink-0" />
-                  <span>{flashMessage}</span>
-                </div>
-                {onCloseFlash && (
-                  <button
-                    type="button"
-                    onClick={onCloseFlash}
-                    className="text-[#0E7C5A] hover:opacity-70 p-1 rounded transition-opacity"
-                    aria-label="Tutup pemberitahuan"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            )}
-
             {/* Hero Banner with Status Pill & Back CTA */}
             <HeroBanner
               eyebrow="PERMOHONAN PENGADAAN"

@@ -128,6 +128,20 @@ class PermohonanRevisiTest extends TestCase
         $this->assertEquals('Pengadaan Printer Laboratorium Terupdate', $permohonan->judul);
         $this->assertEquals(25000000, (float) $permohonan->estimasi_anggaran);
         $this->assertEquals('diajukan', $permohonan->status);
+
+        $perencanaan = User::whereHas('Role', fn ($q) => $q->where('nama', 'Perencanaan'))->first();
+        if ($perencanaan) {
+            $this->assertDatabaseHas('notifications', [
+                'user_id' => $perencanaan->id,
+                'judul' => 'Permohonan Telah Direvisi',
+                'ref_id' => $permohonan->id,
+            ]);
+        }
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $pemohon->id,
+            'judul' => 'Revisi Permohonan Berhasil Dikirim',
+            'ref_id' => $permohonan->id,
+        ]);
     }
 
     public function test_revisi_validation_requires_valid_data(): void

@@ -2,7 +2,6 @@ import type { FC } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
-  CheckCircle2,
   AlertCircle,
   Edit,
   Lock,
@@ -97,6 +96,7 @@ export const PpbjPengadaanShowTemplate: FC<PpbjPengadaanShowTemplateProps> = ({
       roleTitle="PPBJ"
       roleSubtitle="Pengadaan Barang & Jasa"
       user={user}
+      flash={flash}
       breadcrumb={[
         { label: 'DASHBOARD', href: '/ppbj/dashboard' },
         { label: 'DAFTAR PENGADAAN', href: '/ppbj/pengadaan' },
@@ -104,20 +104,6 @@ export const PpbjPengadaanShowTemplate: FC<PpbjPengadaanShowTemplateProps> = ({
       ]}
     >
       <div className="space-y-6">
-        {/* Flash Notifications */}
-        {flash.success && (
-          <div className="p-4 rounded-2xl bg-[#EBF7F2] border border-[#D0EAE0] flex items-center gap-3 text-sm font-semibold text-[#0E7C5A]">
-            <CheckCircle2 className="w-5 h-5 shrink-0" />
-            <span>{flash.success}</span>
-          </div>
-        )}
-        {flash.error && (
-          <div className="p-4 rounded-2xl bg-[#FEF3F2] border border-[#FECDCA] flex items-center gap-3 text-sm font-semibold text-[#B42318]">
-            <AlertCircle className="w-5 h-5 shrink-0" />
-            <span>{flash.error}</span>
-          </div>
-        )}
-
         {isLoading || !pengadaan ? (
           <div className="bg-white rounded-2xl border border-[#E4EBE8] p-16 text-center shadow-xs">
             <div className="flex flex-col items-center justify-center gap-3">
