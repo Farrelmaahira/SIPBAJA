@@ -13,6 +13,7 @@ import AppLayout from '../General/AppLayout';
 import HeroBanner from '../../organisms/HeroBanner';
 import StatusPill from '../../atoms/StatusPill';
 import { PermohonanInfoSection } from '../../organisms/PermohonanInfoSection';
+import { CatatanPerencanaanCard } from '../../organisms/Bidang2/CatatanPerencanaanCard';
 import DokumenListCard from '../../organisms/DokumenListCard';
 import CatatanPenolakanCard from '../../molecules/CatatanPenolakanCard';
 import PerencanaanVerifikasiMakCard from '../../organisms/PerencanaanVerifikasiMakCard';
@@ -395,59 +396,19 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
             />
           ) : (
             <div className="space-y-6">
-              <section
-                className="bg-white rounded-[22px] md:rounded-[24px] border border-[#E4EBE8] shadow-[0_4px_16px_rgba(20,32,28,0.04)] p-6 md:p-8"
-                aria-labelledby="mak-digunakan-title"
-              >
-                <div>
-                  <h2
-                    id="mak-digunakan-title"
-                    className="text-base md:text-lg font-bold text-[#14201C]"
-                  >
-                    MAK yang Digunakan
-                  </h2>
-                  <p className="text-xs text-[#5F6F6A] mt-0.5">
-                    Kode, nama, dan penanggung jawab Jenis MAK pada permohonan ini.
-                  </p>
-                </div>
-
-                {permohonanMakOptions.length === 0 ? (
-                  <p className="mt-4 text-xs text-[#5F6F6A]">
-                    Belum ada Jenis MAK yang ditetapkan.
-                  </p>
-                ) : (
-                  <ul className="mt-4 border-t border-[#F0F4F2] divide-y divide-[#F0F4F2]">
-                    {permohonanMakOptions.map((mak) => {
-                      const penanggungJawab =
-                        mak.ppk_user?.nama ||
-                        mak.ppk?.nama ||
-                        mak.Ppk?.nama ||
-                        'Belum Ditugaskan';
-
-                      return (
-                        <li key={mak.id} className="py-3.5">
-                          <div className="flex flex-wrap items-center gap-2">
-                            {mak.kode && (
-                              <span className="px-2 py-0.5 rounded-md bg-[#EEF5F2] text-[#0E7C5A] text-[11px] font-bold">
-                                {mak.kode}
-                              </span>
-                            )}
-                            <span className="text-sm font-bold text-[#14201C]">
-                              {mak.nama}
-                            </span>
-                          </div>
-                          <p className="text-xs text-[#5F6F6A] mt-1">
-                            Penanggung jawab:{' '}
-                            <span className="font-semibold text-[#14201C]">
-                              {penanggungJawab}
-                            </span>
-                          </p>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </section>
+              <CatatanPerencanaanCard
+                catatan={{
+                  catatan: detail?.approval_perencanaan?.alasan ?? null,
+                  pemeriksa_peran: 'Tim Perencanaan',
+                }}
+                makList={permohonanMakOptions.map((mak) => ({
+                  id: mak.id,
+                  kode: mak.kode ?? '',
+                  nama: mak.nama,
+                  ppk_nama:
+                    mak.ppk_user?.nama || mak.ppk?.nama || mak.Ppk?.nama || null,
+                }))}
+              />
 
               <RiwayatStatusTimeline
                 title="Timeline Proses"
