@@ -16,8 +16,8 @@ export type { PerencanaanDashboardStats, PermohonanTerbaruItem };
 export const PerencanaanDashboard: FC = () => {
   const [stats, setStats] = useState<PerencanaanDashboardStats | undefined>(undefined);
   const [permohonanTerbaru, setPermohonanTerbaru] = useState<PermohonanTerbaruItem[]>([]);
-  const [recentNotifications, setRecentNotifications] = useState<NotificationItem[]>([]);
-  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState<number>(0);
+  const [recentNotifications, setRecentNotifications] = useState<NotificationItem[] | undefined>(undefined);
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState<number | undefined>(undefined);
   const [statistikBulanan, setStatistikBulanan] = useState<StatistikBulananItem[]>([]);
   const [statistikTahunan, setStatistikTahunan] = useState<StatistikTahunanItem[]>([]);
   const [viewMode, setViewMode] = useState<'bulan' | 'tahun'>('tahun');

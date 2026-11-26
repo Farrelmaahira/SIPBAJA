@@ -164,8 +164,44 @@ class Bidang2Service
             'mak_list' => $makList,
             'dokumen' => $dokumenData,
             'catatan_perencanaan' => $catatanPerencanaan,
+            'catatan_penolakan' => $this->resolveCatatanPenolakan($permohonan),
             'rkakl_aktif' => $rkaklAktif,
             'keputusan_bidang2' => $keputusanBidang2,
+        ];
+    }
+
+    /**
+     * @return array{pemeriksa_peran: string, diperiksa_at: string|null, alasan: string|null}|null
+     */
+    private function resolveCatatanPenolakan(Permohonan $permohonan): ?array
+    {
+        if ($permohonan->status !== 'ditolak') {
+            return null;
+        }
+
+        $penolakan = ApprovalPermohonan::with('Actor')
+            ->where('permohonan_id', $permohonan->id)
+            ->where('keputusan', 'ditolak')
+            ->orderByDesc('revisi_ke')
+            ->orderByDesc('id')
+            ->first();
+
+        if (! $penolakan) {
+            return null;
+        }
+
+        $peranMap = [
+            'PERENCANAAN' => 'Tim Perencanaan',
+            'BIDANG2' => 'Wakil Direktur II (Bidang 2)',
+            'PPK' => 'Pejabat Pembuat Komitmen (PPK)',
+        ];
+
+        return [
+            'pemeriksa_peran' => $peranMap[(string) $penolakan->tahap] ?? (string) $penolakan->tahap,
+            'diperiksa_at' => $penolakan->created_at
+                ? Carbon::parse($penolakan->created_at)->translatedFormat('d M Y, H:i')
+                : null,
+            'alasan' => $penolakan->alasan,
         ];
     }
 

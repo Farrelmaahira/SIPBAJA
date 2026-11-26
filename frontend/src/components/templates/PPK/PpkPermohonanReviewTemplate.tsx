@@ -11,6 +11,7 @@ import {
 import AppLayout, { type AppNavItem as PpNavItem } from '../General/AppLayout';
 import { DokumenListCard } from '../../organisms/DokumenListCard';
 import { PermohonanInfoSection } from '../../organisms/PermohonanInfoSection';
+import CatatanPenolakanCard from '../../molecules/CatatanPenolakanCard';
 import CatatanPerencanaanCard from '../../organisms/Bidang2/CatatanPerencanaanCard';
 import type { NotificationItem } from '../../../types/notification';
 import type { DokumenItem } from '../../../types/dokumen';
@@ -133,6 +134,18 @@ export const PpkPermohonanReviewTemplate: FC<PpkPermohonanReviewTemplateProps> =
                 status: viewModel.status,
               }}
             />
+
+            {viewModel.status === 'ditolak' && (
+              <CatatanPenolakanCard
+                catatan={
+                  (viewModel as any)?.catatanPenolakan ?? {
+                    pemeriksa_peran: 'PPK',
+                    diperiksa_at: null,
+                    alasan: (viewModel as any)?.alasanPenolakan || 'Permohonan ditolak oleh PPK.',
+                  }
+                }
+              />
+            )}
 
             {/* Dokumen Permohonan + Keputusan PPK */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

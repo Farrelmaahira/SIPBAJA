@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ApprovalPermohonan;
 use App\Models\Dokumen;
 use App\Models\Mak;
 use App\Models\Permohonan;
@@ -1001,6 +1002,7 @@ class PermohonanService
             'approval_perencanaan' => $approvalPerencanaan ? [
                 'alasan' => $approvalPerencanaan->alasan,
             ] : null,
+            'catatan_penolakan' => $detailUtama['catatan_penolakan'] ?? null,
             'dokumen_permohonan' => $dokumenPermohonan,
             'dokumen' => $dokumenInfo,
             'rkakl_active' => $rkaklInfo,
@@ -1137,10 +1139,36 @@ class PermohonanService
             ->values()
             ->all();
 
+        $catatanPenolakan = null;
+        if ($permohonan->status === 'ditolak') {
+            $penolakan = ApprovalPermohonan::with('Actor')
+                ->where('permohonan_id', $permohonan->id)
+                ->where('keputusan', 'ditolak')
+                ->orderByDesc('revisi_ke')
+                ->orderByDesc('id')
+                ->first();
+
+            if ($penolakan) {
+                $peranMap = [
+                    'PERENCANAAN' => 'Tim Perencanaan',
+                    'BIDANG2' => 'Wakil Direktur II (Bidang 2)',
+                    'PPK' => 'Pejabat Pembuat Komitmen (PPK)',
+                ];
+                $catatanPenolakan = [
+                    'pemeriksa_peran' => $peranMap[(string) $penolakan->tahap] ?? (string) $penolakan->tahap,
+                    'diperiksa_at' => $penolakan->created_at
+                        ? Carbon::parse($penolakan->created_at)->translatedFormat('d M Y, H:i')
+                        : null,
+                    'alasan' => $penolakan->alasan,
+                ];
+            }
+        }
+
         return [
             'permohonan' => $permohonan,
             'dokumen_permohonan' => $dokumenPermohonan,
             'catatan_perencanaan' => $catatanPerencanaan,
+            'catatan_penolakan' => $catatanPenolakan,
             'mak_list' => $makList,
             'permohonan_mak_ppk' => $permohonan->PermohonanMak
                 ->filter(fn ($pm) => (int) ($pm->Mak?->ppk_user_id ?? 0) === (int) $ppk->id)

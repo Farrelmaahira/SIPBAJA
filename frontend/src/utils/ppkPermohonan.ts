@@ -27,6 +27,11 @@ export interface PpkPermohonanViewModel {
   canDecide: boolean;
   decisionBlockedReason: string | null;
   catatanPerencanaan?: CatatanPerencanaanData | null;
+  catatanPenolakan?: {
+    pemeriksa_peran: string;
+    diperiksa_at?: string | null;
+    alasan?: string | null;
+  } | null;
 }
 
 export interface PpkDecisionState {
@@ -141,6 +146,7 @@ export function normalizePpkPermohonanDetail(
     canDecide: decision.canDecide,
     decisionBlockedReason: decision.reason,
     catatanPerencanaan,
+    catatanPenolakan: (detail as any).catatan_penolakan ?? null,
   };
 }
 

@@ -10,6 +10,7 @@ import StatusPill from '../../atoms/StatusPill';
 import DocumentPreviewModal from '../../organisms/DocumentPreviewModal';
 import DokumenListCard from '../../organisms/DokumenListCard';
 import { PermohonanInfoSection } from '../../organisms/PermohonanInfoSection';
+import CatatanPenolakanCard from '../../molecules/CatatanPenolakanCard';
 import CatatanPerencanaanCard from '../../organisms/Bidang2/CatatanPerencanaanCard';
 import KeputusanBidang2Card from '../../organisms/Bidang2/KeputusanBidang2Card';
 import SetujuPermohonanModal from '../../organisms/Bidang2/SetujuPermohonanModal';
@@ -190,6 +191,18 @@ export const Bidang2PengajuanShowTemplate: FC<Bidang2PengajuanShowTemplateProps>
                 status: permohonan.status,
               }}
             />
+
+            {permohonan.status === 'ditolak' && (
+              <CatatanPenolakanCard
+                catatan={
+                  (permohonan as any)?.catatan_penolakan ?? {
+                    pemeriksa_peran: 'Bidang 2',
+                    diperiksa_at: null,
+                    alasan: (permohonan as any)?.alasan_penolakan || 'Permohonan ditolak oleh Bidang 2.',
+                  }
+                }
+              />
+            )}
 
             {/* Tata Letak 2 Kolom: Kiri (Dokumen Permohonan Live Preview) & Kanan (Jenis MAK, Catatan & Keputusan) */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
