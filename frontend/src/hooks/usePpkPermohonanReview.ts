@@ -26,8 +26,7 @@ export interface UsePpkPermohonanReviewResult {
   closeApproveModal: () => void;
   selectedMemoFile: File | null;
   memoFileError: string;
-  catatanApprove: string;
-  setCatatanApprove: (value: string) => void;
+
   selectMemoFile: (file: File | null) => void;
   rejectModalOpen: boolean;
   openRejectModal: () => void;
@@ -60,7 +59,6 @@ export function usePpkPermohonanReview(
   const [rejectModalOpen, setRejectModalOpen] = useState<boolean>(false);
   const [selectedMemoFile, setSelectedMemoFile] = useState<File | null>(null);
   const [memoFileError, setMemoFileError] = useState<string>('');
-  const [catatanApprove, setCatatanApprove] = useState<string>('');
   const [alasanTolak, setAlasanTolak] = useState<string>('');
   const [alasanError, setAlasanError] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -200,7 +198,7 @@ export function usePpkPermohonanReview(
       setMemoFileError('');
 
       try {
-        await ppkService.approvePermohonan(id, selectedMemoFile, catatanApprove);
+        await ppkService.approvePermohonan(id, selectedMemoFile);
         setApproveModalOpen(false);
         onDecisionSuccess();
       } catch (err: unknown) {
@@ -210,7 +208,7 @@ export function usePpkPermohonanReview(
         setIsSubmitting(false);
       }
     },
-    [catatanApprove, id, onDecisionSuccess, selectedMemoFile]
+    [id, onDecisionSuccess, selectedMemoFile]
   );
 
   const submitReject = useCallback(
@@ -300,8 +298,6 @@ export function usePpkPermohonanReview(
     closeApproveModal: () => setApproveModalOpen(false),
     selectedMemoFile,
     memoFileError,
-    catatanApprove,
-    setCatatanApprove,
     selectMemoFile,
     rejectModalOpen,
     openRejectModal: () => setRejectModalOpen(true),

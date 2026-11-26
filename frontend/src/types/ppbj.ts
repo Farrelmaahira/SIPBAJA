@@ -135,7 +135,7 @@ export interface PpbjPermohonanDetail {
   status: string;
   tanggalPengajuan: string;
   pembuatNama: string;
-  makList: Array<{ kode: string; nama: string }>;
+  makList: Array<{ kode: string; nama: string; ppk_nama?: string | null }>;
   paketList: PpbjPaketDraftItem[];
   bisaDipecah: boolean;
   sudahDikunci: boolean;

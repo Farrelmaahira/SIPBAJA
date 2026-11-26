@@ -35,9 +35,7 @@ export interface PpkPermohonanReviewTemplateProps {
   onCloseApproveModal: () => void;
   selectedMemoFile: File | null;
   memoFileError: string;
-  catatanApprove: string;
   onSelectMemoFile: (file: File | null) => void;
-  onCatatanApproveChange: (val: string) => void;
   onApproveSubmit: (e: FormEvent) => void;
   rejectModalOpen: boolean;
   onOpenRejectModal: () => void;
@@ -68,9 +66,7 @@ export const PpkPermohonanReviewTemplate: FC<PpkPermohonanReviewTemplateProps> =
   onCloseApproveModal,
   selectedMemoFile,
   memoFileError,
-  catatanApprove,
   onSelectMemoFile,
-  onCatatanApproveChange,
   onApproveSubmit,
   rejectModalOpen,
   onOpenRejectModal,
@@ -282,18 +278,6 @@ export const PpkPermohonanReviewTemplate: FC<PpkPermohonanReviewTemplateProps> =
                 )}
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-[#0E1B16] mb-1.5">
-                  Catatan Persetujuan (Opsional)
-                </label>
-                <textarea
-                  rows={3}
-                  value={catatanApprove}
-                  onChange={(e) => onCatatanApproveChange(e.target.value)}
-                  placeholder="Tambahkan catatan persetujuan bila diperlukan..."
-                  className="w-full p-3 rounded-xl border border-[#CBD6D0] text-xs text-[#0E1B16] focus:outline-none focus:ring-1 focus:ring-[#0E7C5A]"
-                />
-              </div>
 
               <div className="flex items-center justify-end gap-3 pt-2">
                 <button

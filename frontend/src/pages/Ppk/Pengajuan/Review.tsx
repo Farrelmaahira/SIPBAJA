@@ -30,9 +30,7 @@ export const PpkPermohonanReview: FC = () => {
       onCloseApproveModal={review.closeApproveModal}
       selectedMemoFile={review.selectedMemoFile}
       memoFileError={review.memoFileError}
-      catatanApprove={review.catatanApprove}
       onSelectMemoFile={review.selectMemoFile}
-      onCatatanApproveChange={review.setCatatanApprove}
       onApproveSubmit={review.submitApprove}
       rejectModalOpen={review.rejectModalOpen}
       onOpenRejectModal={review.openRejectModal}

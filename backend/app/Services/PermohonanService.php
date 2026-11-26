@@ -721,6 +721,7 @@ class PermohonanService
             ->map(fn ($pm) => [
                 'kode' => (string) ($pm->Mak->kode ?? $pm->Mak->nama),
                 'nama' => (string) $pm->Mak->nama,
+                'ppk_nama' => $pm->Mak->Ppk?->nama,
             ])
             ->values()
             ->all();

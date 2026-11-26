@@ -11,7 +11,7 @@ import HeroBanner from '../../organisms/HeroBanner';
 import StatusPill from '../../atoms/StatusPill';
 import DokumenListCard from '../../organisms/DokumenListCard';
 import { PermohonanInfoSection } from '../../organisms/PermohonanInfoSection';
-import PermohonanShowMakList from '../../molecules/PermohonanShowMakList';
+import CatatanPerencanaanCard from '../../organisms/Bidang2/CatatanPerencanaanCard';
 import PermohonanShowPaketList from '../../molecules/PermohonanShowPaketList';
 import PengadaanSplitForm from '../../organisms/PengadaanSplitForm';
 import { PPBJ_NAV_ITEMS } from '../../../constants/ppbjNav';
@@ -146,44 +146,18 @@ export const PpbjPermohonanShowTemplate: FC<PpbjPermohonanShowTemplateProps> = (
                 isLoadingPreview={isLoadingPreview}
               />
 
-              {/* MAK & Catatan dari Perencanaan */}
-              <section
-                className="bg-white rounded-[22px] border border-[#E4EBE8] shadow-[0_4px_16px_rgba(13,51,38,0.05)] p-6"
-                aria-labelledby="heading-mak"
-              >
-                <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#F0F4F2]">
-                  <div>
-                    <h3 id="heading-mak" className="text-sm font-bold text-[#14201C]">
-                      Jenis MAK & Penanggung Jawab dari Perencanaan
-                    </h3>
-                    <p className="text-xs text-[#5F6F6A] mt-0.5">
-                      Sumber mata anggaran dan catatan verifikasi tim perencanaan
-                    </p>
-                  </div>
-                  {permohonan.makList && permohonan.makList.length > 0 && (
-                    <span className="text-xs font-semibold text-[#5F6F6A] bg-[#F1F7F4] px-2.5 py-1 rounded-full">
-                      {permohonan.makList.length} Mata Anggaran
-                    </span>
-                  )}
-                </div>
-
-                <PermohonanShowMakList makList={permohonan.makList} />
-
-                {/* Catatan dari Perencanaan */}
-                {permohonan.catatanPerencanaan && (
-                  <div className="mt-4 p-4 rounded-2xl bg-[#EBF7F2] border border-[#D0EAE0] flex items-start gap-3">
-                    <Info className="w-5 h-5 text-[#0E7C5A] shrink-0 mt-0.5" />
-                    <div className="text-left text-xs">
-                      <span className="block text-[11px] font-bold text-[#0E7C5A] uppercase tracking-wider mb-1">
-                        Catatan dari Perencanaan
-                      </span>
-                      <p className="text-xs text-[#14201C] leading-relaxed whitespace-pre-line">
-                        {permohonan.catatanPerencanaan}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </section>
+              <CatatanPerencanaanCard
+                catatan={{
+                  catatan: permohonan.catatanPerencanaan ?? null,
+                  pemeriksa_peran: 'Tim Perencanaan',
+                }}
+                makList={permohonan.makList.map((mak, index) => ({
+                  id: `${mak.kode}-${index}`,
+                  kode: mak.kode,
+                  nama: mak.nama,
+                  ppk_nama: mak.ppk_nama ?? null,
+                }))}
+              />
             </div>
 
             {/* Card 3: Dokumen Pengadaan */}
