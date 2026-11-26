@@ -735,7 +735,7 @@ class PengadaanService
     }
 
     /**
-     * Menyalin nominal kontrak ke atribut `nominal` agar konsisten dengan endpoint PPBJ.
+     * Menyalin nominal kontrak atau estimasi permohonan ke atribut `nominal` agar konsisten dengan endpoint PPBJ.
      */
     private function pasangNominalKontrak(Pengadaan $pengadaan): Pengadaan
     {
@@ -928,10 +928,17 @@ class PengadaanService
         }
 
         return $query
-            ->orderByDesc('id')
+            ->orderBy('id')
             ->paginate($perPage)
             ->withQueryString()
-            ->through(fn (Pengadaan $item) => $this->pasangNominalKontrak($item));
+            ->through(function (Pengadaan $item): Pengadaan {
+                $this->pasangNominalKontrak($item);
+                if ($item->nominal === 0.0) {
+                    $item->nominal = (float) ($item->Permohonan?->estimasi_anggaran ?? 0);
+                }
+
+                return $item;
+            });
     }
 
     public function getDetailPengadaanPpbj(int $pengadaanId): Pengadaan

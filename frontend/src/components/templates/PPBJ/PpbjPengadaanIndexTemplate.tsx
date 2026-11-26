@@ -87,7 +87,7 @@ export const PpbjPengadaanIndexTemplate: FC<PpbjPengadaanIndexTemplateProps> = (
             header: 'MAK',
             render: (item) => (
                 <span className="text-xs text-[#5F6F6A]">
-                    {item.makNama || item.permohonanMak?.mak?.nama || '-'}
+                    {item.makNama || item.permohonanMak?.mak?.nama || item.permohonan?.makList?.join(', ') || '-'}
                 </span>
             )
         },
