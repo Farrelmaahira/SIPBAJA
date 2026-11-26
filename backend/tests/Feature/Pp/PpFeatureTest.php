@@ -5,7 +5,9 @@ namespace Tests\Feature\Pp;
 use App\Models\ApprovalPermohonan;
 use App\Models\Dokumen;
 use App\Models\LevelPengadaan;
+use App\Models\Mak;
 use App\Models\Pengadaan;
+use App\Models\PermohonanMak;
 use App\Models\User;
 use Database\Seeders\MasterReferenceSeeder;
 use Database\Seeders\PengadaanPpSeeder;
@@ -100,6 +102,31 @@ class PpFeatureTest extends TestCase
                     'mak_list',
                 ],
             ]);
+    }
+
+    public function test_pp_review_detail_returns_only_assigned_mak(): void
+    {
+        $pengadaan = Pengadaan::whereHas('Level', fn ($q) => $q->where('perlu_review_pp', true))->firstOrFail();
+        $assignedMak = $pengadaan->PermohonanMak->Mak;
+        $otherMak = Mak::create([
+            'kode' => '999999',
+            'nama' => 'MAK tidak terkait',
+            'ppk_user_id' => $this->ppUser->id,
+            'isActive' => true,
+        ]);
+        PermohonanMak::create([
+            'permohonan_id' => $pengadaan->permohonan_id,
+            'mak_id' => $otherMak->id,
+            'ditentukan_oleh' => $this->ppUser->id,
+        ]);
+
+        $response = $this->actingAs($this->ppUser, 'sanctum')
+            ->getJson("/api/v1/pp/pengajuan/{$pengadaan->id}/review");
+
+        $response->assertOk()
+            ->assertJsonCount(1, 'detail.mak_list')
+            ->assertJsonPath('detail.mak_list.0.id', $assignedMak->id)
+            ->assertJsonPath('detail.mak_list.0.nama', $assignedMak->nama);
     }
 
     public function test_pp_can_approve_pengadaan(): void

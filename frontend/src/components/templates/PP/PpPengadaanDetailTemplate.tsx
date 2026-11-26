@@ -509,7 +509,7 @@ export const PpPengadaanDetailTemplate: FC<PpPengadaanDetailTemplateProps> = ({
                 <span className="text-xs font-bold text-[#14201C] block mt-0.5">
                   {makList.length > 0
                     ? makList.map((m) => (m.kode ? `${m.kode} \u00b7 ${m.nama}` : m.nama)).join(', ')
-                    : '532111 \u00b7 Belanja Modal Peralatan dan Mesin'}
+                    : '-'}
                 </span>
               </div>
             </div>
@@ -518,7 +518,7 @@ export const PpPengadaanDetailTemplate: FC<PpPengadaanDetailTemplateProps> = ({
               <UserCheck className="w-4 h-4 text-[#0E7C5A] shrink-0" />
               <span className="text-[#8A9A95]">Penanggung Jawab MAK:</span>
               <span className="font-bold text-[#14201C]">
-                {ppk?.nama ? `${ppk.nama} \u00b7 PPK` : 'Budi Santoso \u00b7 PPK'}
+                {ppk?.nama ? `${ppk.nama} \u00b7 PPK` : '-'}
               </span>
             </div>
           </div>

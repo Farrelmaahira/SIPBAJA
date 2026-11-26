@@ -669,11 +669,14 @@ class PengadaanService
 
         $memoPermohonan = $this->permohonanMemos($pengadaan, $actor);
 
-        $makList = DB::table('permohonan_mak')
-            ->join('maks', 'permohonan_mak.mak_id', '=', 'maks.id')
-            ->where('permohonan_mak.permohonan_id', $pengadaan->permohonan_id)
-            ->select('maks.id', 'maks.nama')
-            ->get();
+        $assignedMak = $pengadaan->PermohonanMak;
+        $makList = $assignedMak?->Mak === null
+            ? []
+            : [[
+                'id' => (int) $assignedMak->Mak->id,
+                'kode' => (string) ($assignedMak->Mak->kode ?? ''),
+                'nama' => (string) ($assignedMak->Mak->nama ?? '-'),
+            ]];
 
         return [
             'pengadaan' => $pengadaan,
