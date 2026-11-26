@@ -84,7 +84,6 @@ export function usePpkPermohonanList(): UsePpkPermohonanListResult {
       )
       .then((res) => {
         const items = res.data ?? [];
-        console.log(items)
         setData(mapPpkPermohonanRows(items));
         setMeta({
           current_page: res.meta?.current_page ?? 1,

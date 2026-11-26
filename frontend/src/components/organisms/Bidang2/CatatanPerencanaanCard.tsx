@@ -14,7 +14,6 @@ export const CatatanPerencanaanCard: FC<CatatanPerencanaanCardProps> = ({
   catatan,
   makList,
 }) => {
-  console.log(makList)
   const hasMak = Boolean(makList && makList.length > 0);
   const tanggalCatatan = catatan?.tanggal ? ` · ${catatan.tanggal}` : '';
   const headerCatatan = `${catatan?.pemeriksa_peran || 'Tim Perencanaan'}${tanggalCatatan}`;
