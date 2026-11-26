@@ -1,4 +1,4 @@
-import type { PermohonanItem } from './permohonan';
+import type { CatatanPenolakanData, PermohonanItem } from './permohonan';
 import type { DokumenItem } from './dokumen';
 import type { NotificationItem } from './notification';
 
@@ -128,6 +128,7 @@ export interface PerencanaanPengajuanDetail {
   approval_perencanaan?: {
     alasan: string | null;
   } | null;
+  catatan_penolakan?: CatatanPenolakanData | null;
   dokumen?: DokumenPermohonanDetail | null;
   dokumen_permohonan?: DokumenPermohonanDetail[];
   rkakl_active?: DokumenPermohonanDetail | null;

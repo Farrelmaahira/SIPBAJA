@@ -465,15 +465,7 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
         )}
 
         {isDitolak && (
-          <CatatanPenolakanCard
-            catatan={
-              (permohonan as any)?.catatan_penolakan ?? {
-                pemeriksa_peran: 'Perencanaan',
-                diperiksa_at: null,
-                alasan: detail?.approval_perencanaan?.alasan || 'Permohonan ditolak oleh Pemeriksa.',
-              }
-            }
-          />
+          <CatatanPenolakanCard catatan={detail?.catatan_penolakan} />
         )}
 
         {/* Two-Column Section (Dokumen Permohonan & Timeline Proses) */}

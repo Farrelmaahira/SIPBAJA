@@ -96,6 +96,51 @@ class PengajuanApproveCatatanTest extends TestCase
             ->assertJsonPath('detail.approval_perencanaan.alasan', 'MAK disetujui untuk printer.');
     }
 
+    public function test_detail_uses_latest_rejection_reason_instead_of_approval_note(): void
+    {
+        $role = Role::create(['nama' => 'Perencanaan']);
+        $user = User::factory()->create(['role_id' => $role->id]);
+        $roleBidang2 = Role::create(['nama' => 'Bidang 2']);
+        $actorBidang2 = User::factory()->create(['role_id' => $roleBidang2->id]);
+        $unit = Unit::create(['nama' => 'Teknik Informatika']);
+
+        $permohonan = Permohonan::create([
+            'unit_id' => $unit->id,
+            'created_by' => $user->id,
+            'nomor_surat' => '004/TI/2026',
+            'judul' => 'Pengadaan Laptop',
+            'ringkasan_tujuan' => 'Laptop Lab',
+            'estimasi_anggaran' => 30000000,
+            'status' => 'ditolak',
+        ]);
+
+        ApprovalPermohonan::create([
+            'permohonan_id' => $permohonan->id,
+            'tahap' => 'PERENCANAAN',
+            'revisi_ke' => 0,
+            'keputusan' => 'disetujui',
+            'alasan' => 'Disetujui untuk diteruskan ke Bidang 2.',
+            'actor_id' => $user->id,
+        ]);
+
+        ApprovalPermohonan::create([
+            'permohonan_id' => $permohonan->id,
+            'tahap' => 'BIDANG2',
+            'revisi_ke' => 0,
+            'keputusan' => 'ditolak',
+            'alasan' => 'Estimasi anggaran melebihi alokasi MAK semester ini.',
+            'actor_id' => $actorBidang2->id,
+        ]);
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->getJson("/api/v1/perencanaan/pengajuan/{$permohonan->id}");
+
+        $response->assertOk()
+            ->assertJsonPath('detail.approval_perencanaan.alasan', 'Disetujui untuk diteruskan ke Bidang 2.')
+            ->assertJsonPath('detail.catatan_penolakan.alasan', 'Estimasi anggaran melebihi alokasi MAK semester ini.')
+            ->assertJsonPath('detail.catatan_penolakan.pemeriksa_peran', 'Tim Bidang 2');
+    }
+
     public function test_perencanaan_can_approve_permohonan_without_notes(): void
     {
         $role = Role::create(['nama' => 'Perencanaan']);
