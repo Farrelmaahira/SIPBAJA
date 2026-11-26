@@ -63,7 +63,7 @@ export const PerencanaanPengajuanIndexTemplate: FC<PerencanaanPengajuanIndexTemp
       className: 'font-bold text-[#0E7C5A] whitespace-nowrap',
       render: (item) => (
         <Link
-          to={`/perencanaan/pengajuan/${item.id}`}
+          to={`/perencanaan/permohonan/${item.id}`}
           className="hover:underline"
         >
           {item.nomor_surat || '-'}

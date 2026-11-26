@@ -206,7 +206,7 @@ export function usePerencanaanPengajuan({
         catatanVerifikasi.trim() || undefined
       );
       setApproveModalOpen(false);
-      navigate('/perencanaan/pengajuan');
+      navigate('/perencanaan/permohonan');
     } catch (err: unknown) {
       const serverErr = extractServerErrors(err);
       if (serverErr.fieldErrors.mak_ids) {
@@ -236,7 +236,7 @@ export function usePerencanaanPengajuan({
       try {
         await perencanaanService.rejectPengajuan(id, alasanPenolakan.trim());
         setRejectModalOpen(false);
-        navigate('/perencanaan/pengajuan');
+        navigate('/perencanaan/permohonan');
       } catch (err: unknown) {
         const serverErr = extractServerErrors(err);
         setAlasanError(

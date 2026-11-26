@@ -4,21 +4,15 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
-  FileText,
   ChevronDown,
   Save,
   Lock,
-  Hash,
-  Calendar,
-  Building2,
-  Activity,
-  Banknote,
   Check,
-  X,
 } from 'lucide-react';
 import AppLayout from '../General/AppLayout';
 import HeroBanner from '../../organisms/HeroBanner';
 import StatusPill from '../../atoms/StatusPill';
+import { PermohonanInfoSection } from '../../organisms/PermohonanInfoSection';
 import DokumenListCard from '../../organisms/DokumenListCard';
 import CatatanPenolakanCard from '../../molecules/CatatanPenolakanCard';
 import PerencanaanVerifikasiMakCard from '../../organisms/PerencanaanVerifikasiMakCard';
@@ -279,7 +273,7 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
         notifikasiHref="/perencanaan/notifikasi"
         readAllHref="/perencanaan/notifikasi/read-all"
         breadcrumb={[
-          { label: 'LIST PENGAJUAN', href: '/perencanaan/pengajuan' },
+          { label: 'LIST PENGAJUAN', href: '/perencanaan/permohonan' },
           { label: 'DETAIL PERMOHONAN' },
         ]}
       >
@@ -313,7 +307,7 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
           : undefined
       }
       breadcrumb={[
-        { label: 'LIST PENGAJUAN', href: '/perencanaan/pengajuan' },
+        { label: 'LIST PENGAJUAN', href: '/perencanaan/permohonan' },
         { label: 'DETAIL PERMOHONAN' },
       ]}
     >
@@ -335,119 +329,17 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
         />
 
         {/* Informasi Permohonan Card (Full Width) */}
-        <section
-          className="bg-white rounded-[22px] md:rounded-[24px] border border-[#E4EBE8] shadow-[0_4px_16px_rgba(20,32,28,0.04)] p-6 md:p-8"
-          aria-labelledby="info-permohonan-title"
-        >
-          <div>
-            <h2
-              id="info-permohonan-title"
-              className="text-base md:text-lg font-bold text-[#14201C]"
-            >
-              Informasi Permohonan
-            </h2>
-            <p className="text-xs text-[#5F6F6A] mt-0.5">
-              Ringkasan data yang diajukan
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-y-5 gap-x-8 pt-5">
-            {/* Left Column */}
-            <div className="space-y-4">
-              {/* Nomor Permohonan */}
-              <div className="flex items-center gap-3.5">
-                <div className="w-9 h-9 rounded-xl bg-[#EEF5F2] text-[#0E7C5A] flex items-center justify-center shrink-0 shadow-2xs">
-                  <Hash className="w-4 h-4 stroke-[2.2]" />
-                </div>
-                <div>
-                  <p className="text-xs text-[#5F6F6A]">Nomor Permohonan</p>
-                  <p className="text-xs md:text-sm font-bold text-[#14201C] mt-0.5">
-                    {permohonan?.nomor_surat || '111-FFF-111'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Nomor Referensi Srikandi */}
-              <div className="flex items-center gap-3.5">
-                <div className="w-9 h-9 rounded-xl bg-[#EEF5F2] text-[#0E7C5A] flex items-center justify-center shrink-0 shadow-2xs">
-                  <Hash className="w-4 h-4 stroke-[2.2]" />
-                </div>
-                <div>
-                  <p className="text-xs text-[#5F6F6A]">Nomor Referensi Srikandi</p>
-                  <p className="text-xs md:text-sm font-bold text-[#14201C] mt-0.5">
-                    {(permohonan as any)?.nomor_srikandi || (permohonan as any)?.nomor_referensi || '025/ND/KS.01/2026'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Judul Permohonan */}
-              <div className="flex items-center gap-3.5">
-                <div className="w-9 h-9 rounded-xl bg-[#EEF5F2] text-[#0E7C5A] flex items-center justify-center shrink-0 shadow-2xs">
-                  <FileText className="w-4 h-4 stroke-[2.2]" />
-                </div>
-                <div>
-                  <p className="text-xs text-[#5F6F6A]">Judul Permohonan</p>
-                  <p className="text-xs md:text-sm font-bold text-[#14201C] mt-0.5">
-                    {permohonan?.judul || 'Pengadaan Komputer'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Nominal/Estimasi */}
-              <div className="flex items-center gap-3.5">
-                <div className="w-9 h-9 rounded-xl bg-[#EEF5F2] text-[#0E7C5A] flex items-center justify-center shrink-0 shadow-2xs">
-                  <Banknote className="w-4 h-4 stroke-[2.2]" />
-                </div>
-                <div>
-                  <p className="text-xs text-[#5F6F6A]">Nominal/Estimasi</p>
-                  <p className="text-xs md:text-sm font-bold text-[#14201C] mt-0.5">
-                    {formatRupiah(permohonan?.estimasi_anggaran)}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Column */}
-            <div className="space-y-4">
-              {/* Tanggal Pengajuan */}
-              <div className="flex items-center gap-3.5">
-                <div className="w-9 h-9 rounded-xl bg-[#EEF5F2] text-[#0E7C5A] flex items-center justify-center shrink-0 shadow-2xs">
-                  <Calendar className="w-4 h-4 stroke-[2.2]" />
-                </div>
-                <div>
-                  <p className="text-xs text-[#5F6F6A]">Tanggal Pengajuan</p>
-                  <p className="text-xs md:text-sm font-bold text-[#14201C] mt-0.5">
-                    {formatTanggalIndo(permohonan?.created_at ? String(permohonan.created_at) : undefined)}
-                  </p>
-                </div>
-              </div>
-
-              {/* Diajukan Oleh */}
-              <div className="flex items-center gap-3.5">
-                <div className="w-9 h-9 rounded-xl bg-[#EEF5F2] text-[#0E7C5A] flex items-center justify-center shrink-0 shadow-2xs">
-                  <Building2 className="w-4 h-4 stroke-[2.2]" />
-                </div>
-                <div>
-                  <p className="text-xs text-[#5F6F6A]">Diajukan Oleh</p>
-                  <p className="text-xs md:text-sm font-bold text-[#14201C] mt-0.5">
-                    {unitNama}
-                  </p>
-                </div>
-              </div>
-
-              {/* Status */}
-              <div className="flex items-center gap-3.5">
-                <div className="w-9 h-9 rounded-xl bg-[#EEF5F2] text-[#0E7C5A] flex items-center justify-center shrink-0 shadow-2xs">
-                  <Activity className="w-4 h-4 stroke-[2.2]" />
-                </div>
-                <div>
-                  <p className="text-xs text-[#5F6F6A] mb-1">Status</p>
-                  <StatusPill status={rawStatus} />
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+        <PermohonanInfoSection
+          permohonan={{
+            nomor_surat: permohonan?.nomor_surat,
+            created_at: permohonan?.created_at,
+            judul: permohonan?.judul,
+            unit_nama: unitNama,
+            pembuat_nama: (permohonan as any)?.pembuat_nama || (permohonan as any)?.pemohon?.nama,
+            estimasi_anggaran: permohonan?.estimasi_anggaran,
+            status: rawStatus,
+          }}
+        />
 
         {/* Status Callout / Banner (Pengadaan Selesai / Ditolak) */}
         {isSelesai && (
@@ -485,7 +377,7 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
             autoExpand={true}
           />
 
-          {/* Right Column: Timeline Proses atau Verifikasi MAK */}
+          {/* Right Column: MAK & Timeline, atau Verifikasi MAK */}
           {mode === 'verifikasi' ? (
             <PerencanaanVerifikasiMakCard
               maksList={maksList}
@@ -502,16 +394,72 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
               processing={processing}
             />
           ) : (
-            <RiwayatStatusTimeline
-              title="Timeline Proses"
-              subtitle={
-                isSelesai
-                  ? 'Seluruh tahapan telah diselesaikan'
-                  : 'Posisi permohonan dalam alur proses'
-              }
-              steps={permohonanSteps}
-              logs={timelineLogs}
-            />
+            <div className="space-y-6">
+              <section
+                className="bg-white rounded-[22px] md:rounded-[24px] border border-[#E4EBE8] shadow-[0_4px_16px_rgba(20,32,28,0.04)] p-6 md:p-8"
+                aria-labelledby="mak-digunakan-title"
+              >
+                <div>
+                  <h2
+                    id="mak-digunakan-title"
+                    className="text-base md:text-lg font-bold text-[#14201C]"
+                  >
+                    MAK yang Digunakan
+                  </h2>
+                  <p className="text-xs text-[#5F6F6A] mt-0.5">
+                    Kode, nama, dan penanggung jawab Jenis MAK pada permohonan ini.
+                  </p>
+                </div>
+
+                {permohonanMakOptions.length === 0 ? (
+                  <p className="mt-4 text-xs text-[#5F6F6A]">
+                    Belum ada Jenis MAK yang ditetapkan.
+                  </p>
+                ) : (
+                  <ul className="mt-4 border-t border-[#F0F4F2] divide-y divide-[#F0F4F2]">
+                    {permohonanMakOptions.map((mak) => {
+                      const penanggungJawab =
+                        mak.ppk_user?.nama ||
+                        mak.ppk?.nama ||
+                        mak.Ppk?.nama ||
+                        'Belum Ditugaskan';
+
+                      return (
+                        <li key={mak.id} className="py-3.5">
+                          <div className="flex flex-wrap items-center gap-2">
+                            {mak.kode && (
+                              <span className="px-2 py-0.5 rounded-md bg-[#EEF5F2] text-[#0E7C5A] text-[11px] font-bold">
+                                {mak.kode}
+                              </span>
+                            )}
+                            <span className="text-sm font-bold text-[#14201C]">
+                              {mak.nama}
+                            </span>
+                          </div>
+                          <p className="text-xs text-[#5F6F6A] mt-1">
+                            Penanggung jawab:{' '}
+                            <span className="font-semibold text-[#14201C]">
+                              {penanggungJawab}
+                            </span>
+                          </p>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </section>
+
+              <RiwayatStatusTimeline
+                title="Timeline Proses"
+                subtitle={
+                  isSelesai
+                    ? 'Seluruh tahapan telah diselesaikan'
+                    : 'Posisi permohonan dalam alur proses'
+                }
+                steps={permohonanSteps}
+                logs={timelineLogs}
+              />
+            </div>
           )}
         </div>
 
