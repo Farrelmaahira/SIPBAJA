@@ -922,6 +922,30 @@ Prefix Rute: `/api/v1/ppk`
 
 #### 1. Dashboard & List Pengadaan
 - **Dashboard:** `GET /api/v1/ppk/dashboard`
+  - **Response (200 OK):**
+    ```json
+    {
+      "stats": {
+        "total": 18,
+        "menunggu": 2,
+        "disetujui": 12,
+        "ditolak": 2,
+        "tambahan_bulan_ini": 3,
+        "disetujui_bulan_ini": 2,
+        "ditolak_tahun_ini": 1
+      },
+      "pengajuanTerbaru": [...],
+      "permohonanTerbaru": [...],
+      "statistikBulanan": [
+        { "bulan": 1, "disetujui": 0, "ditolak": 0 }
+      ],
+      "statistikTahunan": [
+        { "tahun": 2026, "disetujui": 12, "ditolak": 2 }
+      ],
+      "recentNotifications": [...],
+      "unreadNotificationsCount": 0
+    }
+    ```
 - **List Pengajuan (Pengadaan):** `GET /api/v1/ppk/pengajuan?q={keyword}&statuses[]={status}&bulan={bulan}&tahun={tahun}&unit_id={unitId}`
 - **Detail Pengajuan:** `GET /api/v1/ppk/pengajuan/{pengadaanId}`
 

@@ -21,13 +21,15 @@ class DashboardPpkController extends Controller
     {
         $user = auth()->user();
         $data = $this->pengadaanService->getDashboardPpk($user);
-        $permohonanPaginator = $this->permohonanService->paginatePermohonanUntukPpk($user, [], 5);
+        $permohonanPaginator = $this->permohonanService->paginatePermohonanUntukPpk($user, [], 4);
         $notifData = $this->notificationService->getRecentAndUnreadCount((int) auth()->id());
 
         return response()->json([
             'stats' => $data['stats'],
             'pengajuanTerbaru' => $data['pengajuan_terbaru'],
             'permohonanTerbaru' => $permohonanPaginator->items(),
+            'statistikBulanan' => $data['statistik_bulanan'] ?? [],
+            'statistikTahunan' => $data['statistik_tahunan'] ?? [],
             'recentNotifications' => $notifData['recentNotifications'],
             'unreadNotificationsCount' => $notifData['unreadNotificationsCount'],
         ]);

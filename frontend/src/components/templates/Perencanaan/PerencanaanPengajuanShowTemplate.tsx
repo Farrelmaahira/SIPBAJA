@@ -20,6 +20,7 @@ import AppLayout from '../General/AppLayout';
 import HeroBanner from '../../organisms/HeroBanner';
 import StatusPill from '../../atoms/StatusPill';
 import DokumenListCard from '../../organisms/DokumenListCard';
+import CatatanPenolakanCard from '../../molecules/CatatanPenolakanCard';
 import PerencanaanVerifikasiMakCard from '../../organisms/PerencanaanVerifikasiMakCard';
 import RiwayatStatusTimeline, {
   type TimelineStepItem,
@@ -464,17 +465,15 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
         )}
 
         {isDitolak && (
-          <div className="flex items-center gap-3.5 p-4 md:p-5 rounded-2xl bg-[#FEE4E2] border border-[#FECDCA] text-[#D92D20]">
-            <div className="w-8 h-8 rounded-full bg-[#D92D20] text-white flex items-center justify-center shrink-0 shadow-2xs">
-              <X className="w-4 h-4 stroke-[2.5]" />
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-[#D92D20]">Permohonan Ditolak</h4>
-              <p className="text-xs text-[#B42318] mt-0.5">
-                {detail?.approval_perencanaan?.alasan || (permohonan as any)?.catatan_penolakan?.alasan || 'Permohonan ditolak oleh Pemeriksa.'}
-              </p>
-            </div>
-          </div>
+          <CatatanPenolakanCard
+            catatan={
+              (permohonan as any)?.catatan_penolakan ?? {
+                pemeriksa_peran: 'Perencanaan',
+                diperiksa_at: null,
+                alasan: detail?.approval_perencanaan?.alasan || 'Permohonan ditolak oleh Pemeriksa.',
+              }
+            }
+          />
         )}
 
         {/* Two-Column Section (Dokumen Permohonan & Timeline Proses) */}

@@ -14,6 +14,9 @@ export interface PpkDashboardStats {
   menunggu?: number;
   disetujui?: number;
   ditolak?: number;
+  tambahan_bulan_ini?: number;
+  disetujui_bulan_ini?: number;
+  ditolak_tahun_ini?: number;
 }
 
 export interface PpkPermohonanMakItem {
@@ -92,6 +95,8 @@ export interface PpkDashboardResponse {
   stats?: PpkDashboardStats;
   pengajuanTerbaru?: PpPengadaanItem[];
   permohonanTerbaru?: PpkPermohonanItem[];
+  statistikBulanan?: { bulan: number; disetujui: number; ditolak: number }[];
+  statistikTahunan?: { tahun: number; disetujui: number; ditolak: number }[];
   recentNotifications?: NotificationItem[];
   unreadNotificationsCount?: number;
 }

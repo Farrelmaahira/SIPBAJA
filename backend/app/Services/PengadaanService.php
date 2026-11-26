@@ -750,11 +750,29 @@ class PengadaanService
     public function getDashboardPpk(User $ppk): array
     {
         $base = $this->baseQueryPpk($ppk);
+        $tahunIni = Carbon::now()->year;
+        $bulanIni = Carbon::now()->month;
 
         $total = (clone $base)->count();
         $menunggu = (clone $base)->whereIn('status', ['menunggu_persetujuan', 'menunggu_review', 'diteruskan'])->count();
         $disetujui = (clone $base)->whereIn('status', ['disetujui', 'selesai'])->count();
         $ditolak = (clone $base)->where('status', 'ditolak')->count();
+
+        $tambahanBulanIni = (clone $base)
+            ->whereYear('created_at', $tahunIni)
+            ->whereMonth('created_at', $bulanIni)
+            ->count();
+
+        $disetujuiBulanIni = (clone $base)
+            ->whereYear('created_at', $tahunIni)
+            ->whereMonth('created_at', $bulanIni)
+            ->whereIn('status', ['disetujui', 'selesai'])
+            ->count();
+
+        $ditolakTahunIni = (clone $base)
+            ->whereYear('created_at', $tahunIni)
+            ->where('status', 'ditolak')
+            ->count();
 
         $pengajuanTerbaru = (clone $base)
             ->orderByDesc('created_at')
@@ -762,14 +780,55 @@ class PengadaanService
             ->get()
             ->each(fn (Pengadaan $item) => $this->pasangNominalKontrak($item));
 
+        $rowsBulan = (clone $base)
+            ->whereYear('created_at', $tahunIni)
+            ->whereIn('status', ['disetujui', 'selesai', 'ditolak'])
+            ->get(['status', 'created_at']);
+
+        $groupedBulan = $rowsBulan->groupBy(fn ($item) => Carbon::parse($item->created_at)->month);
+        $statistikBulanan = collect(range(1, 12))->map(function (int $bulan) use ($groupedBulan) {
+            $items = $groupedBulan->get($bulan, collect());
+
+            return [
+                'bulan' => $bulan,
+                'disetujui' => $items->whereIn('status', ['disetujui', 'selesai'])->count(),
+                'ditolak' => $items->where('status', 'ditolak')->count(),
+            ];
+        })->values()->all();
+
+        $tahunAwal = $tahunIni - 4;
+        $rowsTahun = (clone $base)
+            ->whereBetween('created_at', [
+                Carbon::create($tahunAwal, 1, 1)->startOfDay(),
+                Carbon::create($tahunIni, 12, 31)->endOfDay(),
+            ])
+            ->whereIn('status', ['disetujui', 'selesai', 'ditolak'])
+            ->get(['status', 'created_at']);
+
+        $groupedTahun = $rowsTahun->groupBy(fn ($item) => Carbon::parse($item->created_at)->year);
+        $statistikTahunan = collect(range($tahunAwal, $tahunIni))->map(function (int $thn) use ($groupedTahun) {
+            $items = $groupedTahun->get($thn, collect());
+
+            return [
+                'tahun' => $thn,
+                'disetujui' => $items->whereIn('status', ['disetujui', 'selesai'])->count(),
+                'ditolak' => $items->where('status', 'ditolak')->count(),
+            ];
+        })->values()->all();
+
         return [
             'stats' => [
                 'total' => $total,
                 'menunggu' => $menunggu,
                 'disetujui' => $disetujui,
                 'ditolak' => $ditolak,
+                'tambahan_bulan_ini' => $tambahanBulanIni,
+                'disetujui_bulan_ini' => $disetujuiBulanIni,
+                'ditolak_tahun_ini' => $ditolakTahunIni,
             ],
             'pengajuan_terbaru' => $pengajuanTerbaru,
+            'statistik_bulanan' => $statistikBulanan,
+            'statistik_tahunan' => $statistikTahunan,
         ];
     }
 
