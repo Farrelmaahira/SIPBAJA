@@ -576,8 +576,9 @@ class PermohonanService
             abort(403, 'Anda tidak berhak menghapus permohonan milik unit lain.');
         }
 
-        // Syarat FR-24: Belum diproses atau disetujui pada tahapan selanjutnya
-        $sudahDisetujuiLanjutan = $permohonan->Approvals()->where('keputusan', 'disetujui')->exists();
+        // Syarat FR-24: Belum diproses atau disetujui pada tahapan selanjutnya (kecuali status terakhir ditolak)
+        $isDitolak = $permohonan->status === 'ditolak';
+        $sudahDisetujuiLanjutan = ! $isDitolak && $permohonan->Approvals()->where('keputusan', 'disetujui')->exists();
         $adaPengadaan = $permohonan->Pengadaan()->exists();
         $statusTidakBoleh = in_array($permohonan->status, [
             'menunggu_persetujuan',
@@ -671,8 +672,8 @@ class PermohonanService
                 'ringkasanTujuan' => (string) ($item->ringkasan_tujuan ?? ''),
                 'unitNama' => (string) ($item->Unit?->nama ?? '-'),
                 'estimasiAnggaran' => (float) ($item->estimasi_anggaran ?? 0),
-                'nilaiPengadaan' => $nilaiPengadaan,
-                'nominal' => $nilaiPengadaan,
+                'nilaiPengadaan' => (float) ($item->estimasi_anggaran ?? 0),
+                'nominal' => (float) ($item->estimasi_anggaran ?? 0),
                 'revisiKe' => (int) ($item->revisi_ke ?? 0),
                 'status' => (string) ($item->status ?? 'menunggu_persetujuan'),
                 'tanggalPengajuan' => $tanggalPengajuan,

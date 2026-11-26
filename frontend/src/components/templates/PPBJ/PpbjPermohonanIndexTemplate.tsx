@@ -64,7 +64,7 @@ export const PpbjPermohonanIndexTemplate: FC<PpbjPermohonanIndexTemplateProps> =
     },
     {
       key: 'judul',
-      header: 'Judul Pengadaan',
+      header: 'Judul Permohonan',
       render: (item) => (
         <span className="text-xs text-[#14201C] line-clamp-1 max-w-xs font-medium">
           {item.judul || '-'}
@@ -91,9 +91,9 @@ export const PpbjPermohonanIndexTemplate: FC<PpbjPermohonanIndexTemplateProps> =
     },
     {
       key: 'estimasiAnggaran',
-      header: 'Nilai Pengadaan',
+      header: 'Nilai Permohonan',
       render: (item) => {
-        const nominal = Number(item.nilaiPengadaan ?? item.nominal ?? 0);
+        const nominal = Number(item.estimasiAnggaran ?? item.estimasi_anggaran ?? 0);
         return (
           <span className="text-xs font-bold text-[#0E7C5A] whitespace-nowrap">
             {formatRupiah(nominal)}
@@ -140,8 +140,8 @@ export const PpbjPermohonanIndexTemplate: FC<PpbjPermohonanIndexTemplateProps> =
         )}
 
         <CrudTable<PpbjPermohonanItem>
-          title="Daftar Permohonan Pengadaan"
-          subtitle="Seluruh permohonan pengadaan yang masuk untuk ditinjau"
+          title="Daftar Permohonan"
+          subtitle="Seluruh permohonan yang masuk untuk ditinjau"
           columns={columns}
           rows={items}
           isLoading={isLoading}
