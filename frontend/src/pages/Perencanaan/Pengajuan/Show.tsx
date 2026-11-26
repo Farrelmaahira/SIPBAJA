@@ -68,7 +68,7 @@ export const PerencanaanPengajuanShow: FC<PerencanaanShowProps> = ({
         pengajuan.setAlasanPenolakan(val);
         if (pengajuan.alasanError) pengajuan.setAlasanError('');
       }}
-      onBack={() => navigate('/perencanaan/pengajuan')}
+      onBack={() => navigate('/perencanaan/permohonan')}
       recentNotifications={recentNotifications}
       unreadNotificationsCount={unreadNotificationsCount}
     />

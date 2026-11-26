@@ -8,26 +8,24 @@ import {
   ChevronDown,
   Save,
   Lock,
-  Download,
-  Eye,
   Hash,
   Calendar,
   Building2,
   Activity,
   Banknote,
-  Tag,
   Check,
   X,
 } from 'lucide-react';
 import AppLayout from '../General/AppLayout';
 import HeroBanner from '../../organisms/HeroBanner';
 import StatusPill from '../../atoms/StatusPill';
+import DokumenListCard from '../../organisms/DokumenListCard';
 import PerencanaanVerifikasiMakCard from '../../organisms/PerencanaanVerifikasiMakCard';
 import RiwayatStatusTimeline, {
   type TimelineStepItem,
   type TimelineLogItem,
 } from '../../organisms/RiwayatStatusTimeline';
-import { formatRupiah, formatTanggalIndo, formatBytes } from '../../../utils/formatters';
+import { formatRupiah, formatTanggalIndo } from '../../../utils/formatters';
 import { PERENCANAAN_NAV_ITEMS } from '@/constants/perencanaanNav';
 import type {
   PerencanaanPengajuanDetail,
@@ -120,9 +118,9 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
   onDownloadDokumen,
   isViewingDocId,
   isDownloadingDocId,
-  previewBlobUrl: _previewBlobUrl,
-  previewDocId: _previewDocId,
-  isLoadingPreview: _isLoadingPreview = false,
+  previewBlobUrl,
+  previewDocId,
+  isLoadingPreview = false,
   rkaklPreviewBlobUrl: _rkaklPreviewBlobUrl = null,
   isLoadingRkaklPreview: _isLoadingRkaklPreview = false,
   processing = false,
@@ -161,23 +159,6 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
         .filter((m): m is PerencanaanMakItem => Boolean(m))
       : (detail?.maks ?? maksList).filter((m) => (detail?.selected_mak_ids ?? selectedMakIds).includes(m.id));
 
-  const selectedMaksDisplay = (detail?.maks ?? maksList).filter((m) =>
-    (detail?.selected_mak_ids ?? selectedMakIds).includes(m.id)
-  );
-
-  const firstMak = selectedMaksDisplay[0];
-  const makKodeNama = firstMak
-    ? (firstMak.kode ? `${firstMak.kode} - ${firstMak.nama}` : firstMak.nama)
-    : '3112 - Belanja Modal Peralatan dan Mesin';
-
-  const ppkName =
-    firstMak?.Ppk?.nama ||
-    firstMak?.ppk?.nama ||
-    firstMak?.ppk_user?.nama ||
-    (permohonan as any)?.permohonan_mak?.[0]?.mak?.ppk?.nama ||
-    (permohonan as any)?.permohonan_mak?.[0]?.mak?.Ppk?.nama ||
-    'Budi Santoso';
-
   const unitNama =
     permohonan?.unit_kerja?.nama ||
     (permohonan as any)?.Unit?.nama ||
@@ -185,12 +166,6 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
     (permohonan as any)?.pemohon_user?.unit_kerja?.nama ||
     (permohonan as any)?.pemohon?.nama ||
     'Jurusan Teknik Informatika & Komputer';
-
-  // Dokumen surat permohonan utama
-  const primaryDoc =
-    dokumenList.find((d) => d.tipe_dokumen === 'surat_permohonan') ||
-    detail?.dokumen ||
-    dokumenList[0];
 
   // Stepper & Timeline Data
   const trackingData = detail?.tracking;
@@ -505,89 +480,19 @@ export const PerencanaanPengajuanShowTemplate: FC<PerencanaanPengajuanShowTempla
         {/* Two-Column Section (Dokumen Permohonan & Timeline Proses) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
           {/* Left Column: Dokumen Permohonan */}
-          <div className="bg-white rounded-[22px] md:rounded-[24px] p-6 border border-[#E4EBE8] shadow-[0_4px_16px_rgba(20,32,28,0.04)] space-y-4">
-            <div>
-              <h3 className="text-base font-bold text-[#14201C]">Dokumen Permohonan</h3>
-              <p className="text-xs text-[#5F6F6A] mt-0.5">
-                {dokumenList.length || 1} dokumen terlampir · Jenis MAK dan penanggung jawab
-              </p>
-            </div>
-
-            {/* Box Berkas Surat Permohonan */}
-            {primaryDoc ? (
-              <div className="rounded-2xl border border-[#E4EBE8] bg-white p-4 space-y-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-[#FEE4E2] text-[#D92D20] flex items-center justify-center shrink-0">
-                      <FileText className="w-5 h-5" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs text-[#5F6F6A]">Surat Permohonan</p>
-                      <p className="text-xs md:text-sm font-bold text-[#14201C] truncate">
-                        {primaryDoc.nama_asli || `Surat_Permohonan_${permohonan?.judul || 'Pengadaan'}.pdf`}
-                      </p>
-                      <p className="text-[11px] text-[#8A9A95] mt-0.5">
-                        PDF • {primaryDoc.ukuran_bytes ? formatBytes(primaryDoc.ukuran_bytes) : '8 MB'}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => onDownloadDokumen(primaryDoc)}
-                    disabled={isDownloadingDocId === primaryDoc.id}
-                    className="w-9 h-9 rounded-xl border border-[#E4EBE8] hover:bg-[#F4F7F5] text-[#5F6F6A] flex items-center justify-center shrink-0 transition-colors cursor-pointer"
-                    title="Unduh Dokumen"
-                  >
-                    {isDownloadingDocId === primaryDoc.id ? (
-                      <Loader2 className="w-4 h-4 animate-spin text-[#0E7C5A]" />
-                    ) : (
-                      <Download className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
-
-                {/* Tombol Lihat Dokumen Full Width */}
-                <button
-                  type="button"
-                  onClick={() => onViewDokumen(primaryDoc)}
-                  disabled={isViewingDocId === primaryDoc.id}
-                  className="w-full py-2.5 px-4 rounded-xl border border-[#0E7C5A] text-[#0E7C5A] text-xs font-semibold hover:bg-[#EEF5F2] flex items-center justify-center gap-2 transition-colors cursor-pointer"
-                >
-                  {isViewingDocId === primaryDoc.id ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
-                  <span>Lihat Dokumen</span>
-                </button>
-              </div>
-            ) : (
-              <div className="p-4 rounded-2xl border border-[#E4EBE8] bg-[#F8FAF9] text-center text-xs text-[#5F6F6A]">
-                Dokumen surat permohonan belum diunggah.
-              </div>
-            )}
-
-            {/* Sub-card Jenis MAK & Penanggung Jawab (Mint Green) */}
-            <div className="p-4 rounded-2xl bg-[#EAF6F1] border border-[#CDE9DE] flex items-start gap-3.5">
-              <div className="w-8 h-8 rounded-xl bg-[#D8EFE5] text-[#0E7C5A] flex items-center justify-center shrink-0 mt-0.5">
-                <Tag className="w-4 h-4" />
-              </div>
-              <div className="space-y-2 text-xs">
-                <div>
-                  <p className="text-[#5F6F6A] font-medium">Jenis MAK</p>
-                  <p className="font-bold text-[#14201C] mt-0.5">
-                    {makKodeNama}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[#5F6F6A] font-medium">Penanggung Jawab MAK</p>
-                  <p className="font-bold text-[#14201C] mt-0.5">
-                    {ppkName} · PPK
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <DokumenListCard
+            title="Dokumen Permohonan"
+            dokumenList={dokumenList}
+            nomorSurat={permohonan?.nomor_surat}
+            onViewNewTab={onViewDokumen}
+            onDownload={onDownloadDokumen}
+            isViewingId={isViewingDocId}
+            isDownloadingId={isDownloadingDocId}
+            previewBlobUrl={previewBlobUrl}
+            previewDocId={previewDocId}
+            isLoadingPreview={isLoadingPreview}
+            autoExpand={true}
+          />
 
           {/* Right Column: Timeline Proses atau Verifikasi MAK */}
           {mode === 'verifikasi' ? (
