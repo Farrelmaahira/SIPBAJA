@@ -834,7 +834,7 @@ Prefix Rute: `/api/v1/ppbj`
 
 #### 1. Dashboard PPBJ
 - **Method & URL:** `GET /api/v1/ppbj/dashboard`
-- **Success Response (200 OK):** Rekap paket pengadaan, antrean pemaketan, dan status review.
+- **Success Response (200 OK):** Rekap `stats`, `permohonanMasuk`, `pengadaanBerjalan`, `terminKontrak`, serta `statistikBulanan` (`bulan`, `disetujui`, `ditolak`) dan `statistikTahunan` (`tahun`, `disetujui`, `ditolak`).
 
 #### 2. List & Detail Permohonan
 - **List:** `GET /api/v1/ppbj/permohonan`

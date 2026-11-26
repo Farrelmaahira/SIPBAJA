@@ -80,6 +80,8 @@ export interface PpbjDashboardData {
   permohonanMasuk: PpbjPermohonanItem[];
   pengadaanBerjalan: PpbjPengadaanItem[];
   terminKontrak: PpbjTerminItem[];
+  statistikBulanan?: { bulan: number; disetujui: number; ditolak: number }[];
+  statistikTahunan?: { tahun: number; disetujui: number; ditolak: number }[];
 }
 
 export type PpbjDashboardItem =

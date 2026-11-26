@@ -24,7 +24,59 @@ class PpbjDashboardService
             'permohonanMasuk' => $this->ambilPermohonanMasuk(),
             'pengadaanBerjalan' => $this->ambilPengadaanBerjalan(),
             'terminKontrak' => $this->ambilTerminKontrak(),
+            'statistikBulanan' => $this->hitungStatistikBulanan(),
+            'statistikTahunan' => $this->hitungStatistikTahunan(),
         ];
+    }
+
+    /**
+     * @return array<int, array{bulan: int, disetujui: int, ditolak: int}>
+     */
+    public function hitungStatistikBulanan(): array
+    {
+        $tahunIni = Carbon::now()->year;
+        $rowsBulan = Permohonan::whereYear('created_at', $tahunIni)
+            ->whereIn('status', ['disetujui', 'diproses_ppbj', 'selesai', 'ditolak'])
+            ->get(['status', 'created_at']);
+
+        $groupedBulan = $rowsBulan->groupBy(fn ($item) => Carbon::parse($item->created_at)->month);
+
+        return collect(range(1, 12))->map(function (int $bulan) use ($groupedBulan) {
+            $items = $groupedBulan->get($bulan, collect());
+
+            return [
+                'bulan' => $bulan,
+                'disetujui' => $items->whereIn('status', ['disetujui', 'diproses_ppbj', 'selesai'])->count(),
+                'ditolak' => $items->where('status', 'ditolak')->count(),
+            ];
+        })->values()->all();
+    }
+
+    /**
+     * @return array<int, array{tahun: int, disetujui: int, ditolak: int}>
+     */
+    public function hitungStatistikTahunan(): array
+    {
+        $tahunIni = Carbon::now()->year;
+        $tahunAwal = $tahunIni - 4;
+        $rowsTahun = Permohonan::whereBetween('created_at', [
+            Carbon::create($tahunAwal, 1, 1)->startOfDay(),
+            Carbon::create($tahunIni, 12, 31)->endOfDay(),
+        ])
+            ->whereIn('status', ['disetujui', 'diproses_ppbj', 'selesai', 'ditolak'])
+            ->get(['status', 'created_at']);
+
+        $groupedTahun = $rowsTahun->groupBy(fn ($item) => Carbon::parse($item->created_at)->year);
+
+        return collect(range($tahunAwal, $tahunIni))->map(function (int $thn) use ($groupedTahun) {
+            $items = $groupedTahun->get($thn, collect());
+
+            return [
+                'tahun' => $thn,
+                'disetujui' => $items->whereIn('status', ['disetujui', 'diproses_ppbj', 'selesai'])->count(),
+                'ditolak' => $items->where('status', 'ditolak')->count(),
+            ];
+        })->values()->all();
     }
 
     /**

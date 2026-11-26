@@ -1,50 +1,52 @@
 import type { FC } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   FileText,
-  Package,
+  Hourglass,
   CheckCircle2,
   XCircle,
 } from 'lucide-react';
 import AppLayout from '../General/AppLayout';
 import HeroBanner from '../../organisms/HeroBanner';
 import StatCard from '../../molecules/StatCard';
-import PpbjTabbedTable, {
-  type PpbjTabKey,
-  type PpbjTabbedTableCounts,
-} from '../../molecules/PpbjTabbedTable';
-import type { PpbjStatItem, PpbjDashboardItem } from '../../../types/ppbj';
+import StatistikChart, { type ChartDatum } from '../../organisms/StatistikChart';
+import PpbjDashboardTableCard, { type PpbjDashboardTableRow } from '../../organisms/PpbjDashboardTableCard';
+import type { PpbjStatItem } from '../../../types/ppbj';
 import type { AppTopbarUser } from '../../organisms/AppTopbar';
 import { PPBJ_NAV_ITEMS } from '../../../constants/ppbjNav';
-
 
 export interface PpbjDashboardTemplateProps {
   user?: AppTopbarUser | null;
   stats?: PpbjStatItem[];
-  activeTab?: PpbjTabKey;
-  onTabChange?: (tab: PpbjTabKey) => void;
-  searchQuery?: string;
-  onSearchChange?: (query: string) => void;
-  items?: PpbjDashboardItem[];
-  counts?: PpbjTabbedTableCounts;
+  permohonanRows?: PpbjDashboardTableRow[];
+  pengadaanRows?: PpbjDashboardTableRow[];
+  chartData?: ChartDatum[];
+  viewMode: 'bulan' | 'tahun';
+  onViewModeChange: (mode: 'bulan' | 'tahun') => void;
   isLoading?: boolean;
+  errorMessage?: string;
 }
 
 export const PpbjDashboardTemplate: FC<PpbjDashboardTemplateProps> = ({
   user = null,
   stats = [],
-  activeTab = 'permohonan',
-  onTabChange,
-  searchQuery = '',
-  onSearchChange,
-  items = [],
-  counts = { permohonan: 0, pengadaan: 0, termin: 0 },
+  permohonanRows = [],
+  pengadaanRows = [],
+  chartData,
+  viewMode,
+  onViewModeChange,
   isLoading = false,
+  errorMessage = '',
 }) => {
-  const displayName = user?.nama || user?.name || 'Petugas PPBJ';
+  const navigate = useNavigate();
 
-  const statIcons = [FileText, Package, CheckCircle2, XCircle];
-  const statBgColors = ['bg-[#E8F0FF]', 'bg-[#FEF6EE]', 'bg-[#E4F6EC]', 'bg-[#FEE4E2]'];
-  const statTextColors = ['text-[#1F55C7]', 'text-[#B54708]', 'text-[#0B7A4E]', 'text-[#D92D20]'];
+  const statIcons = [FileText, Hourglass, CheckCircle2, XCircle];
+  const statBgColors = ['bg-[#E4F6EC]', 'bg-[#E8F0FF]', 'bg-[#E4F6EC]', 'bg-[#FDECEC]'];
+  const statTextColors = ['text-[#0E7C5A]', 'text-[#2F68D6]', 'text-[#0E7C5A]', 'text-[#D92D20]'];
+  const badgeVariants: Array<'success' | 'info' | 'danger'> = ['success', 'info', 'success', 'danger'];
+
+  const totalDisetujui = Number(stats[2]?.value ?? 0);
+  const totalDitolak = Number(stats[3]?.value ?? 0);
 
   return (
     <AppLayout
@@ -52,8 +54,9 @@ export const PpbjDashboardTemplate: FC<PpbjDashboardTemplateProps> = ({
       navItems={PPBJ_NAV_ITEMS}
       roleInitials="PB"
       roleTitle="PPBJ"
-      roleSubtitle="Pengadaan Barang & Jasa"
+      roleSubtitle="Unit PPBJ"
       user={user}
+      flash={errorMessage ? { error: errorMessage } : undefined}
       breadcrumb={[
         { label: 'DASHBOARD', href: '/ppbj/dashboard' },
       ]}
@@ -62,37 +65,62 @@ export const PpbjDashboardTemplate: FC<PpbjDashboardTemplateProps> = ({
         {/* Hero Banner Organism */}
         <HeroBanner
           eyebrow="DASHBOARD"
-          title={`Selamat datang, ${displayName}`}
+          title="Selamat datang, PPBJ"
           description="Pantau, verifikasi, dan kelola seluruh permohonan pengadaan yang masuk dalam satu tempat."
+          ctaLabel="Lihat Pengajuan"
+          ctaIcon={FileText}
+          onCta={() => navigate('/ppbj/pengadaan')}
         />
 
         {/* Stat Cards Grid */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5" aria-label="Ringkasan Statistik">
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" aria-label="Ringkasan Statistik">
           {stats.slice(0, 4).map((item, index) => (
             <StatCard
               key={index}
               icon={statIcons[index] || FileText}
               label={item.label}
-              value={item.value}
-              unit={item.unit}
-              iconBg={statBgColors[index] || 'bg-[#E8F0FF]'}
-              iconColor={statTextColors[index] || 'text-[#1F55C7]'}
+              value={isLoading ? '-' : item.value}
+              iconBg={statBgColors[index] || 'bg-[#E4F6EC]'}
+              iconColor={statTextColors[index] || 'text-[#0E7C5A]'}
+              badge={{
+                label: item.unit,
+                variant: badgeVariants[index] || 'info',
+              }}
             />
           ))}
         </section>
 
-        {/* Tabbed Table Section */}
-        <section aria-label="Daftar Data Pengadaan">
-          <PpbjTabbedTable
-            activeTab={activeTab}
-            onTabChange={onTabChange}
-            searchQuery={searchQuery}
-            onSearchChange={onSearchChange}
-            items={items}
-            counts={counts}
-            isLoading={isLoading}
-          />
-        </section>
+        {/* Statistik Permohonan Chart */}
+        <StatistikChart
+          viewMode={viewMode}
+          onViewModeChange={onViewModeChange}
+          chartData={chartData}
+          totalDisetujui={totalDisetujui}
+          totalDitolak={totalDitolak}
+          isLoading={isLoading}
+        />
+
+        {/* Permohonan Masuk Terbaru */}
+        <PpbjDashboardTableCard
+          title="Permohonan Masuk Terbaru"
+          subtitle="4 permohonan terbaru · diperbarui hari ini"
+          lihatSemuaHref="/ppbj/permohonan"
+          numberColumnLabel="NO PERMOHONAN"
+          rows={permohonanRows}
+          isLoading={isLoading}
+          emptyMessage="Belum ada permohonan masuk."
+        />
+
+        {/* Pengadaan Terbaru */}
+        <PpbjDashboardTableCard
+          title="Pengadaan Terbaru"
+          subtitle="4 pengadaan terbaru · diperbarui hari ini"
+          lihatSemuaHref="/ppbj/pengadaan"
+          numberColumnLabel="NO PENGADAAN"
+          rows={pengadaanRows}
+          isLoading={isLoading}
+          emptyMessage="Belum ada pengadaan terbaru."
+        />
       </div>
     </AppLayout>
   );
