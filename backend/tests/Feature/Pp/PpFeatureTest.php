@@ -222,6 +222,29 @@ class PpFeatureTest extends TestCase
             ->assertHeader('content-type', 'application/pdf');
     }
 
+    public function test_pp_can_preview_pengadaan_document_stored_on_public_disk(): void
+    {
+        $pengadaan = Pengadaan::whereHas('Level', fn ($q) => $q->where('perlu_review_pp', true))->firstOrFail();
+        $dokumen = Dokumen::create([
+            'ref_type' => 'pengadaan',
+            'ref_id' => $pengadaan->id,
+            'tipe_dokumen' => 'dokumen_pengadaan',
+            'versi' => 1,
+            'nama_asli' => 'Dokumen_Pengadaan.pdf',
+            'nama_hash' => 'dokumen-pengadaan-public.pdf',
+            'mime_type' => 'application/pdf',
+            'ukuran_bytes' => 1024,
+            'uploaded_by' => $this->ppUser->id,
+        ]);
+
+        Storage::disk('public')->put('dokumen_pengadaan/dokumen-pengadaan-public.pdf', '%PDF-1.4 dummy');
+
+        $this->actingAs($this->ppUser, 'sanctum')
+            ->get("/api/v1/pp/pengajuan/{$pengadaan->id}/dokumen/{$dokumen->id}?disposition=inline")
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf');
+    }
+
     private function createMemoDokumen(int $permohonanId, string $namaAsli, string $namaHash): Dokumen
     {
         return Dokumen::create([

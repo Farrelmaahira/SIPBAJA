@@ -95,10 +95,10 @@ export const PpbjPengadaanIndexTemplate: FC<PpbjPengadaanIndexTemplateProps> = (
             key: 'nilaiPengadaan',
             header: 'Nilai Pengadaan',
             render: (item) => {
-                const nominal = Number(item.nominal ?? (item as any)?.kontrak?.nominal_kontrak ?? 0);
+                const nominal = item.nominal ?? (item as any)?.kontrak?.nominal_kontrak ?? null;
                 return (
                     <span className="font-bold text-xs text-[#0E7C5A] tabular-nums">
-                        {formatRupiah(nominal)}
+                        {nominal !== null ? formatRupiah(Number(nominal)) : '-'}
                     </span>
                 );
             }

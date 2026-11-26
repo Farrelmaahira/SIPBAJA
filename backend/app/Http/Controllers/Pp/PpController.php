@@ -105,20 +105,32 @@ class PpController extends Controller
         $path = $dokumen->path;
 
         if (! $path) {
-            if ($dokumen->ref_type === 'permohonan') {
-                $path = 'dokumen/permohonan/'.$dokumen->nama_hash;
-            } elseif ($dokumen->ref_type === 'pengadaan') {
-                $path = 'dokumen/pengadaan/'.$dokumen->nama_hash;
-            } elseif ($dokumen->ref_type === 'approval_permohonan') {
-                $path = $this->memoPath($dokumen);
+            $namaHash = basename($dokumen->nama_hash);
+            $candidates = array_unique(array_filter([
+                $dokumen->nama_hash,
+                'dokumen/pengadaan/'.$namaHash,
+                'dokumen_pengadaan/'.$namaHash,
+                'dokumen/permohonan/'.$namaHash,
+                'dokumen/permohonan/memo/'.$namaHash,
+                'dokumen/memo/'.$namaHash,
+                $this->memoPath($dokumen),
+            ]));
+
+            foreach ($candidates as $candidate) {
+                if (Storage::disk('local')->exists($candidate)) {
+                    $path = $candidate;
+                    $disk = 'local';
+                    break;
+                }
+                if (Storage::disk('public')->exists($candidate)) {
+                    $path = $candidate;
+                    $disk = 'public';
+                    break;
+                }
             }
         }
 
-        if (! $path) {
-            return response()->json(['message' => 'Berkas fisik dokumen tidak ditemukan di server.'], 404);
-        }
-
-        if (! Storage::disk('local')->exists($path)) {
+        if (! $path || ! Storage::disk($disk)->exists($path)) {
             return response()->json(['message' => 'Berkas fisik dokumen tidak ditemukan di server.'], 404);
         }
 

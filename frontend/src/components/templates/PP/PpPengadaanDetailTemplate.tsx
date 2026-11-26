@@ -535,14 +535,12 @@ export const PpPengadaanDetailTemplate: FC<PpPengadaanDetailTemplateProps> = ({
               judul={permohonan.judul}
               unitNama={unit?.nama}
               tanggal={pengadaan.created_at || permohonan.created_at}
-              onViewNewTab={handleViewInTab}
+              onViewNewTab={handleViewNewTab}
               onDownload={handleDownload}
-              isViewingId={viewingDocId}
               isDownloadingId={downloadingDocId}
               previewBlobUrl={pengadaanBlobUrl}
-              previewNama={primaryDokumenPengadaan?.nama_asli}
-              previewUkuran={primaryDokumenPengadaan?.ukuran_bytes}
-              isBlobLoading={loadingPengadaanBlob}
+              previewDocId={primaryDokumenPengadaan?.id}
+              isLoadingPreview={loadingPengadaanBlob}
             />
           </div>
 

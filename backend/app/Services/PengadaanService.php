@@ -934,8 +934,9 @@ class PengadaanService
             ->through(function (Pengadaan $item): Pengadaan {
                 $this->pasangNominalKontrak($item);
                 if ($item->nominal === 0.0) {
-                    $item->nominal = (float) ($item->Permohonan?->estimasi_anggaran ?? 0);
+                    $item->nominal = null;
                 }
+                $item->makNama = $item->PermohonanMak?->Mak?->nama;
 
                 return $item;
             });
