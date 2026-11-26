@@ -67,7 +67,6 @@ export interface PpbjTerminItem {
   kontrakTipe: string;
   judul: string;
   unitNama: string;
-  terminKe: number;
   nominalRencana: number;
   tanggalJatuhTempo: string;
   status: string;

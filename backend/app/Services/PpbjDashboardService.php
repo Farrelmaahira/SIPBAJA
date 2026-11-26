@@ -144,7 +144,6 @@ class PpbjDashboardService
                 'kontrakTipe' => $r->Kontrak?->tipe ?? '-',
                 'judul' => $r->Kontrak?->Pengadaan?->Permohonan?->judul ?? '-',
                 'unitNama' => $r->Kontrak?->Pengadaan?->Permohonan?->Unit?->nama ?? '-',
-                'terminKe' => $r->termin_ke,
                 'nominalRencana' => (float) $r->nominal_rencana,
                 'tanggalJatuhTempo' => $r->tanggal_jatuh_tempo ? Carbon::parse($r->tanggal_jatuh_tempo)->format('Y-m-d') : '-',
                 'status' => $r->status,

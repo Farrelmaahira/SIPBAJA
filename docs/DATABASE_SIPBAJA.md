@@ -70,6 +70,9 @@ Wadah peran (Jurusan/Unit/Bidang, Perencanaan, Bidang 2, PPBJ, PP, PPK, Perlengk
 |---|---|---|---|
 | id | bigint | PK | Identitas unik peran |
 | nama | string | UNIQUE | Nama peran, dipakai untuk menentukan dashboard dan akses |
+| isActive | boolean | NOT NULL, DEFAULT true | Status aktif peran |
+| created_at | timestamp | NULL | Waktu dibuat |
+| updated_at | timestamp | NULL | Waktu diperbarui |
 
 ### `permissions`
 Daftar izin akses per fitur sebagai dasar RBAC.
@@ -78,6 +81,8 @@ Daftar izin akses per fitur sebagai dasar RBAC.
 |---|---|---|---|
 | id | bigint | PK | Identitas unik izin |
 | kode | string | UNIQUE | Kode izin, mis. `pengadaan.create`, `pembayaran.approve` |
+| created_at | timestamp | NULL | Waktu dibuat |
+| updated_at | timestamp | NULL | Waktu diperbarui |
 
 ### `role_permissions`
 Menghubungkan peran dengan izin yang dimilikinya.
@@ -95,7 +100,8 @@ Data Jurusan/Unit/Bidang agar filter dan rekap per unit konsisten, tidak bergant
 | Kolom | Tipe | Constraint | Fungsi |
 |---|---|---|---|
 | id | bigint | PK | Identitas unik unit |
-| nama | string | NOT NULL | Nama jurusan/unit/bidang |
+| nama | string | UNIQUE, NOT NULL | Nama jurusan/unit/bidang |
+| isActive | boolean | NOT NULL, DEFAULT true | Status aktif unit |
 
 ### `users`
 Akun pengguna untuk login dan penanda aktor di seluruh proses.
@@ -108,6 +114,10 @@ Akun pengguna untuk login dan penanda aktor di seluruh proses.
 | nama | string | NOT NULL | Nama pengguna |
 | email | string | UNIQUE, NOT NULL | Kredensial login |
 | password | string | NOT NULL | Hash bcrypt, tidak pernah disimpan sebagai teks asli |
+| remember_token | string | NULL | Token sesi "remember me" |
+| isActive | boolean | NOT NULL, DEFAULT true | Status aktif akun |
+| created_at | timestamp | NULL | Waktu dibuat |
+| updated_at | timestamp | NULL | Waktu diperbarui |
 | deleted_at | timestamp | NULL | Soft delete, agar riwayat approval dan unggahan tetap utuh saat akun dihapus |
 
 ## 4. Data Referensi
@@ -118,8 +128,11 @@ Empat MAK (BLU Fisik, BLU Non-Fisik, RM Fisik, RM Non-Fisik). Setiap MAK punya s
 | Kolom | Tipe | Constraint | Fungsi |
 |---|---|---|---|
 | id | bigint | PK | Identitas unik MAK |
+| kode | string | NOT NULL | Kode MAK (maks. 50 karakter) |
 | nama | string | UNIQUE, NOT NULL | Nama MAK |
 | ppk_user_id | bigint | FK → users, NOT NULL | PPK yang bertugas untuk MAK ini, dasar penugasan PPK pada pengadaan |
+| isActive | boolean | NOT NULL, DEFAULT true | Status aktif MAK |
+| deleted_at | timestamp | NULL | Soft delete MAK |
 
 ### `jenis_pengadaan`
 
@@ -134,6 +147,7 @@ Empat MAK (BLU Fisik, BLU Non-Fisik, RM Fisik, RM Non-Fisik). Setiap MAK punya s
 |---|---|---|---|
 | id | bigint | PK | Identitas unik metode |
 | nama | string | UNIQUE, NOT NULL | Nama metode (Inaproc, SPSE, Tender, Non-Tender) |
+| isActive | boolean | NOT NULL, DEFAULT true | Status aktif metode pengadaan |
 
 ### `level_pengadaan`
 Menyimpan batas nominal agar aturan level tidak ditulis mati di kode.
@@ -193,7 +207,6 @@ Hasil pecahan permohonan yang disusun PPBJ. Satu pengadaan dibiayai tepat satu M
 | metode_id | bigint | FK → metode_pengadaan, NULL | Metode pengadaan, diisi belakangan oleh PPBJ |
 | level_id | bigint | FK → level_pengadaan, NOT NULL | Level berdasarkan nominal, menentukan reviewer |
 | ppk_id | bigint | FK → users, NULL | PPK yang ditugaskan, mengikuti MAK |
-| nominal | decimal | NOT NULL | Nilai pengadaan ini |
 | revisi_ke | int | NOT NULL, DEFAULT 0 | Nomor revisi aktif. 0 = susunan awal. Naik 1 setiap ada penolakan |
 | status | string | NOT NULL | Status progres pengadaan (daftar nilai ditetapkan saat implementasi) |
 | created_at | timestamp | NOT NULL | Waktu dibuat |
@@ -210,21 +223,20 @@ Kontrak/SPK/Surat Pesanan yang diterbitkan PPBJ setelah pembelian.
 | tipe | string | NOT NULL | Kontrak, SPK, atau Surat Pesanan |
 | nomor | string | NOT NULL | Nomor kontrak |
 | tanggal | date | NOT NULL | Tanggal terbit |
+| vendor_nama | string | NULL | Nama vendor pemenang |
+| nominal_kontrak | decimal | NULL | Nilai nominal kontrak |
 
 ### `rencana_pembayaran`
 Rencana termin yang disepakati sejak kontrak diterbitkan. Dipisah dari `pembayaran` karena rencana dibuat sekali di awal, sedangkan realisasi terjadi bertahap.
 
 | Kolom | Tipe | Constraint | Fungsi |
 |---|---|---|---|
-| id | bigint | PK | Identitas unik rencana termin |
+| id | bigint | PK | Identitas unik rencana pembayaran |
 | kontrak_id | bigint | FK → kontrak, NOT NULL | Kontrak pemilik rencana |
-| termin_ke | int | NOT NULL | Urutan termin |
-| nominal_rencana | decimal | NOT NULL | Nominal yang disepakati untuk termin ini |
-| tanggal_jatuh_tempo | date | NULL | Target tanggal pembayaran termin |
+| nominal_rencana | decimal | NOT NULL | Nominal yang disepakati untuk rencana pembayaran ini |
+| tanggal_jatuh_tempo | date | NULL | Target tanggal pembayaran |
 | status | string | NOT NULL | `menunggu` atau `lunas`, disimpan eksplisit untuk kebutuhan audit |
 | created_at | timestamp | NOT NULL | Waktu rencana dibuat |
-
-Constraint tambahan (usulan): `UNIQUE (kontrak_id, termin_ke)`.
 
 ### `pembayaran`
 Realisasi pembayaran per termin. Terhubung ke kontrak hanya lewat `rencana_pembayaran`, tanpa `kontrak_id` atau `termin_ke` sendiri.
@@ -232,8 +244,9 @@ Realisasi pembayaran per termin. Terhubung ke kontrak hanya lewat `rencana_pemba
 | Kolom | Tipe | Constraint | Fungsi |
 |---|---|---|---|
 | id | bigint | PK | Identitas unik pembayaran |
-| rencana_pembayaran_id | bigint | FK → rencana_pembayaran, UNIQUE, NOT NULL | Termin yang direalisasikan, relasi 1 banding 1 |
-| nominal | decimal | NOT NULL | Nominal yang dibayarkan, wajib sama persis dengan `nominal_rencana` |
+| rencana_pembayaran_id | bigint | FK → rencana_pembayaran, UNIQUE, NOT NULL | Rencana pembayaran yang direalisasikan, relasi 1 banding 1 |
+| nominal | decimal | NOT NULL | Nominal yang dibayarkan |
+| tanggal_pembayaran | date | NULL | Tanggal realisasi pembayaran |
 | revisi_ke | int | NOT NULL, DEFAULT 0 | Nomor revisi aktif. 0 = pengajuan awal. Naik 1 setiap ada penolakan |
 | status | string | NOT NULL | menunggu_ppk, menunggu_bidang2, disetujui, ditolak, dibayar |
 

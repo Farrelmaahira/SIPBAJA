@@ -15,7 +15,6 @@ class RencanaPembayaran extends Model
 
     protected $fillable = [
         'kontrak_id',
-        'termin_ke',
         'nominal_rencana',
         'tanggal_jatuh_tempo',
         'status',

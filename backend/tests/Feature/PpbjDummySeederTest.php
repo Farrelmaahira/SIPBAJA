@@ -100,7 +100,7 @@ class PpbjDummySeederTest extends TestCase
         $kontrak = Kontrak::where('pengadaan_id', $pengadaan->id)->first();
         $this->assertNotNull($kontrak);
 
-        $termins = RencanaPembayaran::where('kontrak_id', $kontrak->id)->orderBy('termin_ke')->get();
+        $termins = RencanaPembayaran::where('kontrak_id', $kontrak->id)->orderBy('id')->get();
         $this->assertCount(3, $termins);
 
         $totalRencana = $termins->sum('nominal_rencana');

@@ -71,7 +71,6 @@ class PpbjPembayaranApiTest extends TestCase
 
         $rencana = RencanaPembayaran::create([
             'kontrak_id' => $kontrak->id,
-            'termin_ke' => 1,
             'nominal_rencana' => 50000000,
             'tanggal_jatuh_tempo' => now()->addDays(20),
             'status' => 'belum_lunas',

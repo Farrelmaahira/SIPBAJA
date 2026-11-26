@@ -90,7 +90,6 @@ class PimpinanPembayaranApiTest extends TestCase
 
         $rencana = RencanaPembayaran::create([
             'kontrak_id' => $kontrak->id,
-            'termin_ke' => 1,
             'nominal_rencana' => 75000000,
             'tanggal_jatuh_tempo' => now()->addDays(14),
             'status' => 'belum_lunas',

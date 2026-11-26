@@ -363,10 +363,12 @@ class PpbjDummySeeder extends Seeder
             foreach ($terminNominals as $index => $nominal) {
                 $terminKe = $index + 1;
                 $rencana = RencanaPembayaran::updateOrCreate(
-                    ['kontrak_id' => $kontrak4->id, 'termin_ke' => $terminKe],
+                    [
+                        'kontrak_id' => $kontrak4->id,
+                        'tanggal_jatuh_tempo' => now()->addDays($terminKe * 30)->toDateString(),
+                    ],
                     [
                         'nominal_rencana' => $nominal,
-                        'tanggal_jatuh_tempo' => now()->addDays($terminKe * 30)->toDateString(),
                         'status' => 'menunggu',
                     ]
                 );
@@ -450,7 +452,7 @@ class PpbjDummySeeder extends Seeder
             );
 
             $rencana5 = RencanaPembayaran::updateOrCreate(
-                ['kontrak_id' => $kontrak5->id, 'termin_ke' => 1],
+                ['kontrak_id' => $kontrak5->id],
                 [
                     'nominal_rencana' => 60000000,
                     'tanggal_jatuh_tempo' => now()->addDays(10)->toDateString(),

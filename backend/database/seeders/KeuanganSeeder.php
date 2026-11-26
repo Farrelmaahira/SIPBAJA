@@ -197,7 +197,7 @@ class KeuanganSeeder extends Seeder
             );
 
             $rencana = RencanaPembayaran::updateOrCreate(
-                ['kontrak_id' => $kontrak->id, 'termin_ke' => 1],
+                ['kontrak_id' => $kontrak->id],
                 [
                     'nominal_rencana' => $item['nilai'],
                     'tanggal_jatuh_tempo' => Carbon::now()->addDays(14)->toDateString(),

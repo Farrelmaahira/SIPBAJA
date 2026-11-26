@@ -1070,7 +1070,7 @@ class PengadaanService
             $tanggalJatuhTempo = $data['tanggal_jatuh_tempo'] ?? ($kontrak->tanggal ?: now()->toDateString());
             $tanggalReminder = $data['tanggal_reminder'] ?? $tanggalJatuhTempo;
 
-            $rencana = $kontrak->RencanaPembayaran()->firstOrNew(['termin_ke' => 1]);
+            $rencana = $kontrak->RencanaPembayaran()->firstOrNew([]);
             $rencana->nominal_rencana = $data['nominal_kontrak'];
             $rencana->tanggal_jatuh_tempo = $tanggalJatuhTempo;
             $rencana->status = $rencana->status ?: 'menunggu';
@@ -1504,7 +1504,7 @@ class PengadaanService
             }
 
             $rencana = $kontrak->RencanaPembayaran()->firstOrCreate(
-                ['termin_ke' => 1],
+                [],
                 [
                     'nominal_rencana' => $nominal ?: ($kontrak->nominal_kontrak ?: 0),
                     'tanggal_jatuh_tempo' => now()->addDays(14),

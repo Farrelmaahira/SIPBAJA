@@ -12,12 +12,13 @@ class Pembayaran extends Model
 
     public $timestamps = false;
 
-    protected $fillable = ['rencana_pembayaran_id', 'nominal', 'revisi_ke', 'status'];
+    protected $fillable = ['rencana_pembayaran_id', 'nominal', 'tanggal_pembayaran', 'revisi_ke', 'status'];
 
     protected function casts(): array
     {
         return [
             'nominal' => 'decimal:2',
+            'tanggal_pembayaran' => 'date',
             'revisi_ke' => 'integer',
         ];
     }

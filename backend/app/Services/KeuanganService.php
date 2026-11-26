@@ -846,7 +846,7 @@ class KeuanganService
             }
 
             $rencana = $kontrak->RencanaPembayaran()->first() ?? RencanaPembayaran::firstOrCreate(
-                ['kontrak_id' => $kontrak->id, 'termin_ke' => 1],
+                ['kontrak_id' => $kontrak->id],
                 [
                     'nominal_rencana' => $nominalFinal,
                     'tanggal_jatuh_tempo' => $data['tanggal_pembayaran'] ?? now()->toDateString(),
