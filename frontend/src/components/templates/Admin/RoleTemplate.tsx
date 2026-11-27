@@ -134,7 +134,7 @@ export const RoleTemplate: FC<RoleTemplateProps> = ({
       profileHref="/admin/pengguna"
       notifikasiHref="/admin/dashboard"
     >
-      <div className="fixed top-5 right-5 z-50">
+      <div className="fixed top-5 right-6 lg:right-8 z-50">
         <FlashMessage type={flashType} message={flashMessage} onClose={onDismissFlash} />
       </div>
       <div className="space-y-6">
