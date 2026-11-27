@@ -574,13 +574,28 @@ class PengadaanService
         $keyword = trim((string) ($filters['q'] ?? $filters['search'] ?? ''));
         if ($keyword !== '') {
             $query->whereHas('Permohonan', function ($q) use ($keyword) {
-                $q->where('nomor_surat', 'like', "%{$keyword}%")
-                    ->orWhere('judul', 'like', "%{$keyword}%");
+                $q->whereLike('nomor_surat', "%{$keyword}%", caseSensitive: false)
+                    ->orWhereLike('judul', "%{$keyword}%", caseSensitive: false);
             });
         }
 
         if (! empty($filters['statuses']) && is_array($filters['statuses'])) {
-            $query->whereIn('status', $filters['statuses']);
+            $mapped = [];
+            foreach ($filters['statuses'] as $st) {
+                if ($st === 'verifikasi_gagal') {
+                    $mapped[] = 'ditolak_pp';
+                    $mapped[] = 'verifikasi_gagal';
+                } elseif ($st === 'review_dokumen_pengadaan') {
+                    $mapped[] = 'review_pp';
+                    $mapped[] = 'review_dokumen_pengadaan';
+                } elseif ($st === 'terverifikasi') {
+                    $mapped[] = 'diverifikasi_pp';
+                    $mapped[] = 'terverifikasi';
+                } else {
+                    $mapped[] = $st;
+                }
+            }
+            $query->whereIn('status', array_unique($mapped));
         } elseif (! empty($filters['status']) && $filters['status'] !== 'semua') {
             $query->where('status', $filters['status']);
         }
@@ -844,9 +859,13 @@ class PengadaanService
 
         $keyword = trim((string) ($filters['q'] ?? $filters['search'] ?? ''));
         if ($keyword !== '') {
-            $query->whereHas('Permohonan', function ($q) use ($keyword) {
-                $q->where('nomor_surat', 'like', "%{$keyword}%")
-                    ->orWhere('judul', 'like', "%{$keyword}%");
+            $query->where(function (Builder $sub) use ($keyword) {
+                $sub->whereHas('Permohonan', function ($q) use ($keyword) {
+                    $q->whereLike('nomor_surat', "%{$keyword}%", caseSensitive: false)
+                        ->orWhereLike('judul', "%{$keyword}%", caseSensitive: false);
+                })->orWhereHas('Kontrak', function ($q) use ($keyword) {
+                    $q->whereLike('nomor', "%{$keyword}%", caseSensitive: false);
+                });
             });
         }
 
@@ -907,11 +926,11 @@ class PengadaanService
         if ($keyword !== '') {
             $query->where(function (Builder $sub) use ($keyword) {
                 $sub->whereHas('Permohonan', function ($q) use ($keyword) {
-                    $q->where('nomor_surat', 'like', "%{$keyword}%")
-                        ->orWhere('judul', 'like', "%{$keyword}%");
+                    $q->whereLike('nomor_surat', "%{$keyword}%", caseSensitive: false)
+                        ->orWhereLike('judul', "%{$keyword}%", caseSensitive: false);
                 })->orWhereHas('Kontrak', function ($q) use ($keyword) {
-                    $q->where('vendor_nama', 'like', "%{$keyword}%")
-                        ->orWhere('nomor', 'like', "%{$keyword}%");
+                    $q->whereLike('vendor_nama', "%{$keyword}%", caseSensitive: false)
+                        ->orWhereLike('nomor', "%{$keyword}%", caseSensitive: false);
                 });
             });
         }
@@ -920,6 +939,14 @@ class PengadaanService
             $query->whereIn('status', $filters['statuses']);
         } elseif (! empty($filters['status']) && $filters['status'] !== 'semua') {
             $query->where('status', $filters['status']);
+        }
+
+        if (! empty($filters['review_pp']) && $filters['review_pp'] !== 'semua') {
+            if ($filters['review_pp'] === 'ya' || $filters['review_pp'] === '1') {
+                $query->whereHas('Permohonan', fn ($q) => $q->whereBetween('nilai', [50000000, 200000000]));
+            } elseif ($filters['review_pp'] === 'tidak' || $filters['review_pp'] === '0') {
+                $query->whereHas('Permohonan', fn ($q) => $q->where(fn ($sub) => $sub->where('nilai', '<', 50000000)->orWhere('nilai', '>', 200000000)));
+            }
         }
 
         if (! empty($filters['bulan']) && is_numeric($filters['bulan'])) {

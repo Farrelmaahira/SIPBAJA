@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 import AppLayout from '../General/AppLayout';
 import HeroBanner from '../../organisms/HeroBanner';
 import CrudTable, { type CrudColumn } from '../../organisms/CrudTable';
-import FilterPengajuanModal from '../../organisms/FilterPengajuanModal';
-import TableToolbar from '../../molecules/TableToolbar';
+import { FilterStatusToolbar } from '../../molecules/FilterStatusToolbar';
+import { PERENCANAAN_STATUS_OPTIONS } from '../../../constants/statusFilters';
 import TableFooter from '../../molecules/TableFooter';
 import StatusPill from '../../atoms/StatusPill';
 import type { PermohonanTerbaruItem } from '../../../types/perencanaan';
@@ -97,17 +97,25 @@ export const PerencanaanPengajuanIndexTemplate: FC<PerencanaanPengajuanIndexTemp
   ];
 
   const toolbar = (
-    <TableToolbar
+    <FilterStatusToolbar
       searchValue={searchQuery}
       onSearchChange={onSearchChange}
-      onSearchSubmit={onSearchSubmit}
-      filterStatusCount={selectedStatuses.length}
-      onFilterStatusClick={onOpenFilterModal}
+      selectedStatuses={selectedStatuses}
+      filterOpen={filterModalOpen}
+      onToggleFilter={(open) => (open ? onOpenFilterModal() : onCloseFilterModal())}
+      onApplyFilters={onApplyFilter}
+      options={PERENCANAAN_STATUS_OPTIONS}
+      statusSectionTitle="STATUS PERMOHONAN"
       selectedBulan={selectedBulan}
       onBulanChange={onBulanChange}
       selectedTahun={selectedTahun}
       onTahunChange={onTahunChange}
-      total={`${totalCount} permohonan`}
+      onResetFilters={() => {
+        onSearchChange('');
+        onBulanChange('');
+        onTahunChange('');
+        onApplyFilter([]);
+      }}
     />
   );
 
@@ -160,13 +168,6 @@ export const PerencanaanPengajuanIndexTemplate: FC<PerencanaanPengajuanIndexTemp
           ]}
         />
       </div>
-
-      <FilterPengajuanModal
-        isOpen={filterModalOpen}
-        onClose={onCloseFilterModal}
-        onApply={onApplyFilter}
-        selectedStatuses={selectedStatuses}
-      />
     </AppLayout>
   );
 };

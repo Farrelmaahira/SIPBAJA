@@ -100,18 +100,29 @@ class MakService
         return Mak::count();
     }
 
-    public function paginateUntukPerencanaan(?string $q = ''): LengthAwarePaginator
+    public function paginateUntukPerencanaan(?string $q = '', ?string $status = ''): LengthAwarePaginator
     {
         return Mak::query()
             ->with(['Ppk:id,nama,email'])
             ->withCount('PermohonanMak')
             ->when($q, function ($query, $keyword) {
                 $query->where(function ($sub) use ($keyword) {
-                    $sub->where('nama', 'like', "%{$keyword}%");
+                    $sub->whereLike('nama', "%{$keyword}%", caseSensitive: false);
                     if (Schema::hasColumn('maks', 'kode')) {
-                        $sub->orWhere('kode', 'like', "%{$keyword}%");
+                        $sub->orWhereLike('kode', "%{$keyword}%", caseSensitive: false);
                     }
                 });
+            })
+            ->when($status !== null && $status !== '' && $status !== 'semua', function ($query) use ($status) {
+                $statuses = array_filter(array_map('trim', explode(',', (string) $status)));
+                $wantAktif = in_array('aktif', $statuses, true);
+                $wantNonaktif = in_array('nonaktif', $statuses, true) || in_array('tidak_aktif', $statuses, true);
+
+                if ($wantAktif && ! $wantNonaktif) {
+                    $query->where('is_active', true);
+                } elseif ($wantNonaktif && ! $wantAktif) {
+                    $query->where('is_active', false);
+                }
             })
             ->orderBy('id')
             ->paginate(10)

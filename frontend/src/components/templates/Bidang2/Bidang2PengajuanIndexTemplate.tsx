@@ -4,8 +4,8 @@ import AppLayout from '../General/AppLayout';
 import HeroBanner from '../../organisms/HeroBanner';
 import CrudTable, { type CrudColumn } from '../../organisms/CrudTable';
 import StatusPill from '../../atoms/StatusPill';
-import FilterPengajuanModal, { type FilterStatusOption } from '../../organisms/FilterPengajuanModal';
-import TableToolbar from '../../molecules/TableToolbar';
+import { FilterStatusToolbar } from '../../molecules/FilterStatusToolbar';
+import { BIDANG2_PERMOHONAN_STATUS_OPTIONS } from '../../../constants/statusFilters';
 import TableFooter from '../../molecules/TableFooter';
 import { BIDANG2_NAV_ITEMS } from '../../../constants/bidang2Nav';
 import { formatRupiah, formatTanggal } from '../../../utils/formatters';
@@ -134,14 +134,20 @@ export const Bidang2PengajuanIndexTemplate: FC<Bidang2PengajuanIndexTemplateProp
   ];
 
   const toolbar = (
-    <TableToolbar
+    <FilterStatusToolbar
       searchValue={searchQuery}
       onSearchChange={onSearchChange}
-      onSearchSubmit={onSearchSubmit}
       searchPlaceholder="Cari nomor surat atau judul..."
-      filterStatusCount={selectedStatuses.length}
-      onFilterStatusClick={onOpenFilterModal}
-      total={`${pagination.total} permohonan`}
+      selectedStatuses={selectedStatuses}
+      filterOpen={filterModalOpen}
+      onToggleFilter={(open) => (open ? onOpenFilterModal?.() : onCloseFilterModal?.())}
+      onApplyFilters={onApplyFilter ?? (() => {})}
+      options={BIDANG2_PERMOHONAN_STATUS_OPTIONS}
+      statusSectionTitle="STATUS PERMOHONAN"
+      onResetFilters={() => {
+        onSearchChange('');
+        onApplyFilter?.([]);
+      }}
     />
   );
 
@@ -193,16 +199,6 @@ export const Bidang2PengajuanIndexTemplate: FC<Bidang2PengajuanIndexTemplateProp
           ]}
         />
       </div>
-
-      {onCloseFilterModal && onApplyFilter && (
-        <FilterPengajuanModal
-          isOpen={filterModalOpen}
-          onClose={onCloseFilterModal}
-          onApply={onApplyFilter}
-          selectedStatuses={selectedStatuses}
-          options={BIDANG2_FILTER_STATUS_OPTIONS}
-        />
-      )}
     </AppLayout>
   );
 };

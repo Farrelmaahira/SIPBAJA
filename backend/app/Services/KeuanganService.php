@@ -151,14 +151,14 @@ class KeuanganService
 
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
-                $q->whereHas('Kontrak', fn ($k) => $k->where('nomor', 'like', "%{$search}%"))
-                    ->orWhereHas('Permohonan', fn ($p) => $p->where('judul', 'like', "%{$search}%")->orWhere('nomor_surat', 'like', "%{$search}%"))
-                    ->orWhereHas('Permohonan.Unit', fn ($u) => $u->where('nama', 'like', "%{$search}%"));
+                $q->whereHas('Kontrak', fn ($k) => $k->whereLike('nomor', "%{$search}%", caseSensitive: false))
+                    ->orWhereHas('Permohonan', fn ($p) => $p->whereLike('judul', "%{$search}%", caseSensitive: false)->orWhereLike('nomor_surat', "%{$search}%", caseSensitive: false))
+                    ->orWhereHas('Permohonan.Unit', fn ($u) => $u->whereLike('nama', "%{$search}%", caseSensitive: false));
             });
         }
 
         if (count($statuses) === 1) {
-            if (in_array('menunggu_input', $statuses, true)) {
+            if (in_array('menunggu_input', $statuses, true) || in_array('menunggu_bukti_pembayaran', $statuses, true)) {
                 $query->where(function ($q) {
                     $q->where('status', '!=', 'selesai')
                         ->orWhereHas('Kontrak.RencanaPembayaran.Pembayaran', fn ($p) => $p->where('status', '!=', 'selesai'));
@@ -169,6 +169,14 @@ class KeuanganService
                         ->orWhereHas('Kontrak.RencanaPembayaran.Pembayaran', fn ($p) => $p->where('status', 'selesai'));
                 });
             }
+        }
+
+        if (! empty($filters['bulan']) && is_numeric($filters['bulan'])) {
+            $query->whereMonth('created_at', (int) $filters['bulan']);
+        }
+
+        if (! empty($filters['tahun']) && is_numeric($filters['tahun'])) {
+            $query->whereYear('created_at', (int) $filters['tahun']);
         }
 
         $totalDb = $query->count();

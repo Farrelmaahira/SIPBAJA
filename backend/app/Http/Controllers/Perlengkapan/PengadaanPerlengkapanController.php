@@ -26,6 +26,8 @@ class PengadaanPerlengkapanController extends Controller
         $filters = [
             'search' => $request->query('search', $request->query('q', '')),
             'status' => $request->query('status', $request->query('statuses', [])),
+            'bulan' => $request->query('bulan'),
+            'tahun' => $request->query('tahun'),
         ];
 
         $page = max($request->integer('page', 1), 1);

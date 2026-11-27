@@ -1,4 +1,4 @@
-import { useRef, type FC } from 'react';
+import { useRef, type FC, type ReactNode } from 'react';
 import TableToolbar from './TableToolbar';
 import FilterStatusPopover, { type FilterStatusOption } from './FilterStatusPopover';
 
@@ -13,6 +13,13 @@ export interface FilterStatusToolbarProps {
   options: FilterStatusOption[];
   statusSectionTitle?: string;
   filterStatusLabel?: string;
+  selectedBulan?: string;
+  onBulanChange?: (value: string) => void;
+  selectedTahun?: string;
+  onTahunChange?: (value: string) => void;
+  onResetFilters?: () => void;
+  hasActiveFilters?: boolean;
+  children?: ReactNode;
 }
 
 export const FilterStatusToolbar: FC<FilterStatusToolbarProps> = ({
@@ -26,6 +33,13 @@ export const FilterStatusToolbar: FC<FilterStatusToolbarProps> = ({
   options,
   statusSectionTitle = 'STATUS',
   filterStatusLabel = 'Filter Status',
+  selectedBulan,
+  onBulanChange,
+  selectedTahun,
+  onTahunChange,
+  onResetFilters,
+  hasActiveFilters,
+  children,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -38,7 +52,15 @@ export const FilterStatusToolbar: FC<FilterStatusToolbarProps> = ({
         filterStatusLabel={filterStatusLabel}
         filterStatusCount={selectedStatuses.length}
         onFilterStatusClick={() => onToggleFilter(true)}
-      />
+        selectedBulan={selectedBulan}
+        onBulanChange={onBulanChange}
+        selectedTahun={selectedTahun}
+        onTahunChange={onTahunChange}
+        onResetFilters={onResetFilters}
+        hasActiveFilters={hasActiveFilters}
+      >
+        {children}
+      </TableToolbar>
       <FilterStatusPopover
         isOpen={filterOpen}
         onClose={() => onToggleFilter(false)}

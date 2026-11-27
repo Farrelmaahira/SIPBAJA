@@ -306,8 +306,8 @@ class PermohonanService
 
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('nomor_surat', 'like', "%{$search}%")
-                    ->orWhere('judul', 'like', "%{$search}%");
+                $q->whereLike('nomor_surat', "%{$search}%", caseSensitive: false)
+                    ->orWhereLike('judul', "%{$search}%", caseSensitive: false);
             });
         }
 
@@ -880,8 +880,8 @@ class PermohonanService
         $keyword = trim((string) ($filters['search'] ?? $filters['q'] ?? ''));
         if ($keyword !== '') {
             $query->where(function ($q) use ($keyword) {
-                $q->where('nomor_surat', 'like', "%{$keyword}%")
-                    ->orWhere('judul', 'like', "%{$keyword}%");
+                $q->whereLike('nomor_surat', "%{$keyword}%", caseSensitive: false)
+                    ->orWhereLike('judul', "%{$keyword}%", caseSensitive: false);
             });
         }
 
@@ -900,12 +900,17 @@ class PermohonanService
                 if ($st === 'semua') {
                     continue;
                 }
-                if ($st === 'diajukan') {
+                if ($st === 'diajukan' || $st === 'menunggu_jenis_mak') {
                     $mappedStatuses[] = 'diajukan';
                     $mappedStatuses[] = 'menunggu_verifikasi';
-                } elseif ($st === 'pengadaan') {
+                    $mappedStatuses[] = 'menunggu_jenis_mak';
+                } elseif ($st === 'pengadaan' || $st === 'sedang_diproses') {
                     $mappedStatuses[] = 'pengadaan';
                     $mappedStatuses[] = 'disetujui';
+                    $mappedStatuses[] = 'sedang_diproses';
+                    $mappedStatuses[] = 'menunggu_persetujuan';
+                    $mappedStatuses[] = 'menunggu_bidang2';
+                    $mappedStatuses[] = 'menunggu_ppk';
                 } else {
                     $mappedStatuses[] = $st;
                 }
@@ -1063,14 +1068,32 @@ class PermohonanService
         $keyword = trim((string) ($filters['search'] ?? $filters['q'] ?? ''));
         if ($keyword !== '') {
             $query->where(function ($q) use ($keyword) {
-                $q->where('nomor_surat', 'like', "%{$keyword}%")
-                    ->orWhere('judul', 'like', "%{$keyword}%");
+                $q->whereLike('nomor_surat', "%{$keyword}%", caseSensitive: false)
+                    ->orWhereLike('judul', "%{$keyword}%", caseSensitive: false);
             });
         }
 
         $statuses = array_values(array_filter((array) ($filters['statuses'] ?? [])));
         if ($statuses !== []) {
-            $query->whereIn('status', $statuses);
+            $mapped = [];
+            foreach ($statuses as $st) {
+                if ($st === 'menunggu_jenis_mak') {
+                    $mapped[] = 'menunggu_verifikasi';
+                    $mapped[] = 'menunggu_jenis_mak';
+                } elseif ($st === 'review_surat_permohonan') {
+                    $mapped[] = 'menunggu_persetujuan';
+                    $mapped[] = 'menunggu_ppk';
+                } elseif ($st === 'menunggu_persetujuan_bidang_2') {
+                    $mapped[] = 'menunggu_bidang2';
+                } elseif ($st === 'sedang_diproses') {
+                    $mapped[] = 'disetujui';
+                    $mapped[] = 'pengadaan';
+                    $mapped[] = 'sedang_diproses';
+                } else {
+                    $mapped[] = $st;
+                }
+            }
+            $query->whereIn('status', array_unique($mapped));
         } elseif (! empty($filters['status']) && $filters['status'] !== 'semua') {
             $query->where('status', $filters['status']);
         }

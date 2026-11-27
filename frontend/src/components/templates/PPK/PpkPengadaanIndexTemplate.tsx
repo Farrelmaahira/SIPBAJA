@@ -2,10 +2,10 @@ import type { FC, FormEvent } from 'react';
 import AppLayout, { type AppNavItem } from '../General/AppLayout';
 import HeroBanner from '../../organisms/HeroBanner';
 import CrudTable, { type CrudColumn } from '../../organisms/CrudTable';
-import TableToolbar from '../../molecules/TableToolbar';
+import { FilterStatusToolbar } from '../../molecules/FilterStatusToolbar';
 import TableFooter from '../../molecules/TableFooter';
 import StatusPill from '../../atoms/StatusPill';
-import FilterPengajuanModal from '../../organisms/FilterPengajuanModal';
+import { PENGADAAN_STATUS_OPTIONS } from '../../../constants/statusFilters';
 import { formatRupiah, formatTanggal } from '../../../utils/formatters';
 import type { PpPengadaanItem } from '../../../types/pp';
 import type { NotificationItem } from '../../../types/notification';
@@ -130,18 +130,26 @@ export const PpkPengadaanIndexTemplate: FC<PpkPengadaanIndexTemplateProps> = ({
   ];
 
   const toolbar = (
-    <TableToolbar
+    <FilterStatusToolbar
       searchValue={searchQuery}
       onSearchChange={onSearchChange}
-      onSearchSubmit={onSearchSubmit}
       filterStatusLabel="Status"
-      filterStatusCount={selectedStatuses.length}
-      onFilterStatusClick={onOpenFilterModal}
+      selectedStatuses={selectedStatuses}
+      filterOpen={filterModalOpen}
+      onToggleFilter={(open) => (open ? onOpenFilterModal() : onCloseFilterModal())}
+      onApplyFilters={onApplyFilter}
+      options={PENGADAAN_STATUS_OPTIONS}
+      statusSectionTitle="STATUS PENGADAAN"
       selectedBulan={selectedBulan}
       onBulanChange={onBulanChange}
       selectedTahun={selectedTahun}
       onTahunChange={onTahunChange}
-      total={`${items.length} / ${totalCount} pengadaan`}
+      onResetFilters={() => {
+        onSearchChange('');
+        onBulanChange('');
+        onTahunChange('');
+        onApplyFilter([]);
+      }}
     />
   );
 
@@ -195,13 +203,6 @@ export const PpkPengadaanIndexTemplate: FC<PpkPengadaanIndexTemplateProps> = ({
           ]}
         />
       </div>
-
-      <FilterPengajuanModal
-        isOpen={filterModalOpen}
-        onClose={onCloseFilterModal}
-        selectedStatuses={selectedStatuses}
-        onApplyFilter={onApplyFilter}
-      />
     </AppLayout>
   );
 };

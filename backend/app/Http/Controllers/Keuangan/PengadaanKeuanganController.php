@@ -28,6 +28,8 @@ class PengadaanKeuanganController extends Controller
         $filters = [
             'search' => $request->query('search', $request->query('q', '')),
             'status' => $request->query('status', []),
+            'bulan' => $request->query('bulan'),
+            'tahun' => $request->query('tahun'),
         ];
 
         $data = $this->keuanganService->getPengadaanList($filters, $page, $perPage);

@@ -28,10 +28,19 @@ class Bidang2Service
             $normalizedStatuses = [];
             foreach ($statuses as $s) {
                 $trimmed = trim($s);
-                if (in_array($trimmed, ['review_permohonan', 'menunggu_bidang2', 'menunggu_persetujuan'], true)) {
+                if (in_array($trimmed, ['review_permohonan', 'review_surat_permohonan', 'menunggu_bidang2', 'menunggu_persetujuan'], true)) {
                     $normalizedStatuses[] = 'menunggu_persetujuan';
                     $normalizedStatuses[] = 'menunggu_bidang2';
                     $normalizedStatuses[] = 'diajukan';
+                } elseif ($trimmed === 'menunggu_jenis_mak') {
+                    $normalizedStatuses[] = 'menunggu_verifikasi';
+                    $normalizedStatuses[] = 'menunggu_jenis_mak';
+                } elseif ($trimmed === 'menunggu_persetujuan_ppk') {
+                    $normalizedStatuses[] = 'menunggu_ppk';
+                } elseif ($trimmed === 'sedang_diproses') {
+                    $normalizedStatuses[] = 'disetujui';
+                    $normalizedStatuses[] = 'pengadaan';
+                    $normalizedStatuses[] = 'sedang_diproses';
                 } elseif (! empty($trimmed)) {
                     $normalizedStatuses[] = $trimmed;
                 }
@@ -43,9 +52,17 @@ class Bidang2Service
 
         if (! empty($search)) {
             $query->where(function ($q) use ($search) {
-                $q->where('nomor_surat', 'like', "%{$search}%")
-                    ->orWhere('judul', 'like', "%{$search}%");
+                $q->whereLike('nomor_surat', "%{$search}%", caseSensitive: false)
+                    ->orWhereLike('judul', "%{$search}%", caseSensitive: false);
             });
+        }
+
+        if (! empty($filters['bulan']) && is_numeric($filters['bulan'])) {
+            $query->whereMonth('created_at', (int) $filters['bulan']);
+        }
+
+        if (! empty($filters['tahun']) && is_numeric($filters['tahun'])) {
+            $query->whereYear('created_at', (int) $filters['tahun']);
         }
 
         return $query->orderBy('created_at', 'desc')->paginate($perPage)->withQueryString();

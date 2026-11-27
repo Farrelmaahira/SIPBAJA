@@ -32,6 +32,7 @@ class PengadaanController extends Controller
             'statuses' => $request->query('statuses', []),
             'bulan' => $request->query('bulan'),
             'tahun' => $request->query('tahun'),
+            'review_pp' => $request->query('review_pp'),
         ];
 
         $perPage = (int) $request->query('per_page', 10);

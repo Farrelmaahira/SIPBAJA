@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 import { Eye, Pencil, Plus, Trash2 } from 'lucide-react';
 import AppLayout from '../General/AppLayout';
 import HeroBanner from '../../organisms/HeroBanner';
-import FilterPermohonanModal from '../../molecules/FilterPermohonanModal';
-import TableToolbar from '../../molecules/TableToolbar';
+import { FilterStatusToolbar } from '../../molecules/FilterStatusToolbar';
+import { PEMOHON_STATUS_OPTIONS } from '../../../constants/statusFilters';
 import TableFooter from '../../molecules/TableFooter';
 import CrudTable, { type CrudActionItem, type CrudColumn } from '../../organisms/CrudTable';
 import Modal from '../../organisms/Modal';
@@ -127,20 +127,27 @@ export const PemohonPermohonanIndexTemplate: FC<
     ];
 
     const toolbar = (
-      <TableToolbar
+      <FilterStatusToolbar
         searchValue={searchQuery}
         onSearchChange={onSearchChange}
-        onSearchSubmit={onSearchSubmit}
-        onClearSearch={onClearSearch}
         searchPlaceholder="Cari nomor atau judul..."
-        filterStatusLabel="Filter"
-        filterStatusCount={isFilterActive ? 1 : 0}
-        onFilterStatusClick={() => onToggleFilterModal(true)}
+        filterStatusLabel="Filter Status"
+        selectedStatuses={selectedStatuses}
+        filterOpen={filterModalOpen}
+        onToggleFilter={onToggleFilterModal}
+        onApplyFilters={onApplyFilters}
+        options={PEMOHON_STATUS_OPTIONS}
+        statusSectionTitle="STATUS PERMOHONAN"
         selectedBulan={selectedBulan}
         onBulanChange={onBulanChange}
         selectedTahun={selectedTahun}
         onTahunChange={onTahunChange}
-        total={isLoading ? 'Memuat data...' : `${pagination.total} permohonan`}
+        onResetFilters={() => {
+          onClearSearch();
+          onBulanChange?.('');
+          onTahunChange?.('');
+          onApplyFilters([]);
+        }}
       />
     );
 
@@ -247,14 +254,6 @@ export const PemohonPermohonanIndexTemplate: FC<
             />
           )}
         </div>
-
-        <FilterPermohonanModal
-          isOpen={filterModalOpen}
-          onClose={() => onToggleFilterModal(false)}
-          selectedStatuses={selectedStatuses}
-          onApply={onApplyFilters}
-          onReset={onResetFilters}
-        />
 
         <Modal
           open={deleteTarget !== null}

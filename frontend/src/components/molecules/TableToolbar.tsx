@@ -48,6 +48,8 @@ export interface TableToolbarProps {
   selectedTahun?: string;
   onTahunChange?: (value: string) => void;
   tahunOptions?: TableToolbarOption[];
+  onResetFilters?: () => void;
+  hasActiveFilters?: boolean;
   total?: ReactNode;
   children?: ReactNode;
 }
@@ -67,11 +69,16 @@ export const TableToolbar: FC<TableToolbarProps> = ({
   selectedTahun = '',
   onTahunChange,
   tahunOptions,
+  onResetFilters,
+  hasActiveFilters,
   total,
   children,
 }) => {
   const resolvedTahunOptions = tahunOptions ?? buildTahunOptions();
   const hasActiveFilter = filterStatusCount > 0;
+  const showResetButton =
+    Boolean(onResetFilters) &&
+    (hasActiveFilters ?? (filterStatusCount > 0 || Boolean(selectedBulan) || Boolean(selectedTahun) || Boolean(searchValue)));
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 w-full">
@@ -158,6 +165,17 @@ export const TableToolbar: FC<TableToolbarProps> = ({
         )}
 
         {children}
+
+        {showResetButton && (
+          <button
+            type="button"
+            onClick={onResetFilters}
+            className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-[#E4EBE8] text-xs font-semibold text-[#5C6E68] hover:text-[#14201C] hover:bg-[#F4F7F6] transition-colors cursor-pointer"
+          >
+            <X className="w-3.5 h-3.5" />
+            Reset Filter
+          </button>
+        )}
       </div>
 
       {total != null && <span className="text-xs text-[#8A9A95] font-medium">{total}</span>}

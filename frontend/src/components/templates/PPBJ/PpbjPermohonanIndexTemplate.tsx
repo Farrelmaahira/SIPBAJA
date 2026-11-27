@@ -159,6 +159,11 @@ export const PpbjPermohonanIndexTemplate: FC<PpbjPermohonanIndexTemplateProps> =
               onBulanChange={onBulanChange}
               selectedTahun={selectedTahun}
               onTahunChange={onTahunChange}
+              onResetFilters={() => {
+                onSearchChange('');
+                onBulanChange('');
+                onTahunChange('');
+              }}
               total={totalCount > 0 ? `${totalCount} permohonan` : undefined}
             />
           }

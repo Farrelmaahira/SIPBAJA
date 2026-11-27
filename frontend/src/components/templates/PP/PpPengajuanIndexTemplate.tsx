@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import AppLayout from '../General/AppLayout';
 import HeroBanner from '../../organisms/HeroBanner';
 import CrudTable, { type CrudColumn } from '../../organisms/CrudTable';
-import TableToolbar from '../../molecules/TableToolbar';
+import { FilterStatusToolbar } from '../../molecules/FilterStatusToolbar';
+import { PP_PENGADAAN_STATUS_OPTIONS } from '../../../constants/statusFilters';
 import TableFooter from '../../molecules/TableFooter';
 import StatusPill from '../../atoms/StatusPill';
 import FilterPengajuanModal from '../../organisms/FilterPengajuanModal';
@@ -110,18 +111,26 @@ export const PpPengajuanIndexTemplate: FC<PpPengajuanIndexTemplateProps> = ({
   ];
 
   const toolbar = (
-    <TableToolbar
+    <FilterStatusToolbar
       searchValue={searchQuery}
       onSearchChange={onSearchChange}
-      onSearchSubmit={onSearchSubmit}
       filterStatusLabel="Status"
-      filterStatusCount={selectedStatuses.length}
-      onFilterStatusClick={onOpenFilterModal}
+      selectedStatuses={selectedStatuses}
+      filterOpen={filterModalOpen}
+      onToggleFilter={(open) => (open ? onOpenFilterModal() : onCloseFilterModal())}
+      onApplyFilters={onApplyFilter}
+      options={PP_PENGADAAN_STATUS_OPTIONS}
+      statusSectionTitle="STATUS PENGADAAN"
       selectedBulan={selectedBulan}
       onBulanChange={onBulanChange}
       selectedTahun={selectedTahun}
       onTahunChange={onTahunChange}
-      total={`${items.length} / ${totalCount} pengadaan`}
+      onResetFilters={() => {
+        onSearchChange('');
+        onBulanChange('');
+        onTahunChange('');
+        onApplyFilter([]);
+      }}
     />
   );
 
@@ -175,13 +184,6 @@ export const PpPengajuanIndexTemplate: FC<PpPengajuanIndexTemplateProps> = ({
           ]}
         />
       </div>
-
-      <FilterPengajuanModal
-        isOpen={filterModalOpen}
-        onClose={onCloseFilterModal}
-        selectedStatuses={selectedStatuses}
-        onApplyFilter={onApplyFilter}
-      />
     </AppLayout>
   );
 };

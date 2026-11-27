@@ -19,13 +19,14 @@ class PerencanaanMakController extends Controller
     public function index(Request $request): JsonResponse
     {
         $q = (string) $request->query('q', '');
-        $maks = $this->makService->paginateUntukPerencanaan($q);
+        $status = (string) $request->query('status', '');
+        $maks = $this->makService->paginateUntukPerencanaan($q, $status);
         $ppkOptions = $this->makService->getOpsiPpk();
 
         return response()->json([
             'maks' => $maks,
             'ppkOptions' => $ppkOptions,
-            'filters' => ['q' => $q],
+            'filters' => ['q' => $q, 'status' => $status],
         ]);
     }
 

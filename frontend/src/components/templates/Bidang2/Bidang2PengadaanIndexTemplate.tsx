@@ -105,6 +105,7 @@ export const Bidang2PengadaanIndexTemplate: FC<Bidang2PengadaanIndexTemplateProp
       onSearchChange={onSearchChange}
       onSearchSubmit={onSearchSubmit}
       searchPlaceholder="Cari nomor pengadaan atau judul..."
+      onResetFilters={() => onSearchChange('')}
       total={`${pagination.total} pengadaan`}
     />
   );
