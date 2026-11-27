@@ -1,4 +1,4 @@
-import { useEffect, useState, type FC, type ChangeEvent } from 'react';
+import { useEffect, useState, type FC } from 'react';
 import axios from 'axios';
 import { adminService } from '../../../services/adminService';
 import UnitKerjaTemplate from '../../../components/templates/Admin/UnitKerjaTemplate';
@@ -14,6 +14,8 @@ export const UnitKerjaIndex: FC = () => {
   const [paginationMeta, setPaginationMeta] = useState<PaginationMeta | null>(null);
   const [query, setQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const [modalMode, setModalMode] = useState<'create' | 'edit' | null>(null);
@@ -33,10 +35,15 @@ export const UnitKerjaIndex: FC = () => {
     }
   };
 
-  const fetchUnits = async (searchQuery = query, page = currentPage, signal?: AbortSignal) => {
+  const fetchUnits = async (
+    searchQuery = query,
+    page = currentPage,
+    statuses = selectedStatuses,
+    signal?: AbortSignal
+  ) => {
     setIsLoading(true);
     try {
-      const data = await adminService.getUnits({ q: searchQuery, page }, signal);
+      const data = await adminService.getUnits({ q: searchQuery, page, statuses }, signal);
 
       if (data.units?.data) {
         setUnits(data.units.data);
@@ -59,14 +66,14 @@ export const UnitKerjaIndex: FC = () => {
   useEffect(() => {
     const controller = new AbortController();
     const timer = setTimeout(() => {
-      fetchUnits(query, currentPage, controller.signal);
+      fetchUnits(query, currentPage, selectedStatuses, controller.signal);
     }, 300);
 
     return () => {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [query, currentPage]);
+  }, [query, currentPage, selectedStatuses]);
 
   const openCreate = () => {
     setFormData({ ...EMPTY_FORM });
@@ -145,8 +152,15 @@ export const UnitKerjaIndex: FC = () => {
         />
       }
       query={query}
-      onQueryChange={(e: ChangeEvent<HTMLInputElement>) => {
-        setQuery(e.target.value);
+      onQueryChange={(value: string) => {
+        setQuery(value);
+        setCurrentPage(1);
+      }}
+      selectedStatuses={selectedStatuses}
+      filterModalOpen={filterModalOpen}
+      onToggleFilterModal={setFilterModalOpen}
+      onApplyFilters={(statuses) => {
+        setSelectedStatuses(statuses);
         setCurrentPage(1);
       }}
       modalMode={modalMode}

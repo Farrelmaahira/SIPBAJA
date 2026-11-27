@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\Mak;
+use App\Models\MetodePengadaan;
 use App\Models\Role;
+use App\Models\Unit;
 use App\Models\User;
 use App\Services\MakService;
 use App\Services\RolePermissionService;
@@ -64,6 +66,78 @@ class AdminCrudApiTest extends TestCase
                 'units',
                 'filters',
             ]);
+    }
+
+    public function test_admin_can_search_pengguna_by_name_case_insensitively(): void
+    {
+        $response = $this->actingAs($this->admin(), 'sanctum')->getJson('/api/v1/admin/pengguna?q=jurusan');
+
+        $response->assertStatus(200);
+
+        $names = collect($response->json('users.data'))->pluck('nama');
+
+        $this->assertTrue($names->contains('Jurusan Unit Bidang'));
+    }
+
+    public function test_admin_can_filter_pengguna_by_status(): void
+    {
+        $inactive = User::where('email', 'perencanaan@pnj.ac.id')->firstOrFail();
+        $inactive->update(['isActive' => false]);
+
+        $inactiveResponse = $this->actingAs($this->admin(), 'sanctum')
+            ->getJson('/api/v1/admin/pengguna?statuses[]=nonaktif');
+        $inactiveResponse->assertStatus(200);
+
+        $inactiveIds = collect($inactiveResponse->json('users.data'))->pluck('id');
+        $this->assertTrue($inactiveIds->contains($inactive->id));
+        $this->assertFalse($inactiveIds->contains($this->admin()->id));
+
+        $activeResponse = $this->actingAs($this->admin(), 'sanctum')
+            ->getJson('/api/v1/admin/pengguna?statuses[]=aktif');
+        $activeResponse->assertStatus(200);
+
+        $activeIds = collect($activeResponse->json('users.data'))->pluck('id');
+        $this->assertTrue($activeIds->contains($this->admin()->id));
+        $this->assertFalse($activeIds->contains($inactive->id));
+    }
+
+    public function test_admin_master_data_search_is_case_insensitive(): void
+    {
+        $this->actingAs($this->admin(), 'sanctum');
+
+        $this->assertTrue(collect($this->getJson('/api/v1/admin/unit-kerja?q=jurusan')->json('units.data'))
+            ->pluck('nama')->contains('Jurusan Teknik Informatika'));
+
+        $this->assertTrue(collect($this->getJson('/api/v1/admin/mak?q=blu fisik')->json('maks.data'))
+            ->pluck('nama')->contains('BLU Fisik'));
+
+        $this->assertTrue(collect($this->getJson('/api/v1/admin/metode-pengadaan?q=inaproc')->json('metode_pengadaan.data'))
+            ->pluck('nama')->contains('Inaproc'));
+
+        $this->assertTrue(collect($this->getJson('/api/v1/admin/role?q=pemohon')->json('roles.data'))
+            ->pluck('nama')->contains('Pemohon'));
+    }
+
+    public function test_admin_master_data_can_filter_by_status(): void
+    {
+        $this->actingAs($this->admin(), 'sanctum');
+
+        $targets = [
+            ['/api/v1/admin/unit-kerja', 'units', Unit::where('nama', 'Jurusan Teknik Informatika')->firstOrFail()],
+            ['/api/v1/admin/mak', 'maks', Mak::where('nama', 'BLU Fisik')->firstOrFail()],
+            ['/api/v1/admin/metode-pengadaan', 'metode_pengadaan', MetodePengadaan::where('nama', 'Inaproc')->firstOrFail()],
+            ['/api/v1/admin/role', 'roles', Role::where('nama', 'Pemohon')->firstOrFail()],
+        ];
+
+        foreach ($targets as [$endpoint, $key, $model]) {
+            $model->update(['isActive' => false]);
+
+            $inactiveIds = collect($this->getJson("{$endpoint}?statuses[]=nonaktif")->json("{$key}.data"))->pluck('id');
+            $this->assertTrue($inactiveIds->contains($model->id), "{$endpoint} tidak memuat data nonaktif.");
+
+            $activeIds = collect($this->getJson("{$endpoint}?statuses[]=aktif")->json("{$key}.data"))->pluck('id');
+            $this->assertFalse($activeIds->contains($model->id), "{$endpoint} masih memuat data nonaktif.");
+        }
     }
 
     public function test_admin_can_create_pengguna(): void

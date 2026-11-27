@@ -1,10 +1,11 @@
-import type { ChangeEvent, FC, ReactNode } from 'react';
+import type { FC, ReactNode } from 'react';
 import { Plus, Pencil, ToggleRight, ToggleLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AppLayout from '../General/AppLayout';
 import { CrudTable, type CrudActionItem, type CrudColumn } from '../../organisms/CrudTable';
 import { Modal } from '../../organisms/Modal';
-import { SearchBar } from '../../molecules/SearchBar';
+import { FilterStatusToolbar } from '../../molecules/FilterStatusToolbar';
+import { ACTIVE_STATUS_FILTER_OPTIONS } from '../../../constants/statusFilters';
 import { FormField } from '../../molecules/FormField';
 import { TextInput } from '../../molecules/TextInput';
 import { PrimaryButton } from '../../atoms/PrimaryButton';
@@ -65,8 +66,12 @@ export interface RoleTemplateProps {
   rows?: RoleRowItem[];
   pagination?: ReactNode;
   query?: string;
-  onQueryChange?: (e: ChangeEvent<HTMLInputElement>) => void;
+  onQueryChange?: (value: string) => void;
   searchPlaceholder?: string;
+  selectedStatuses?: string[];
+  filterModalOpen?: boolean;
+  onToggleFilterModal?: (open: boolean) => void;
+  onApplyFilters?: (statuses: string[]) => void;
   modalMode?: 'create' | 'edit' | null;
   form: {
     data: RoleFormData;
@@ -92,6 +97,10 @@ export const RoleTemplate: FC<RoleTemplateProps> = ({
   query = '',
   onQueryChange,
   searchPlaceholder = 'Cari peran...',
+  selectedStatuses = [],
+  filterModalOpen = false,
+  onToggleFilterModal,
+  onApplyFilters,
   modalMode = null,
   form,
   onOpenCreate,
@@ -131,14 +140,17 @@ export const RoleTemplate: FC<RoleTemplateProps> = ({
           columns={columns}
           rows={rows}
           toolbar={
-            <div className="max-w-md w-full">
-              <SearchBar
-                value={query}
-                onChange={onQueryChange}
-                placeholder={searchPlaceholder}
-                id="role-table-search"
-              />
-            </div>
+            <FilterStatusToolbar
+              searchValue={query}
+              onSearchChange={onQueryChange ?? (() => {})}
+              searchPlaceholder={searchPlaceholder}
+              options={ACTIVE_STATUS_FILTER_OPTIONS}
+              selectedStatuses={selectedStatuses}
+              filterOpen={filterModalOpen}
+              onToggleFilter={onToggleFilterModal ?? (() => {})}
+              onApplyFilters={onApplyFilters ?? (() => {})}
+              statusSectionTitle="STATUS PERAN"
+            />
           }
           actions={(row: RoleRowItem) => {
             const active = row.isActive ?? (row.status === 'aktif');

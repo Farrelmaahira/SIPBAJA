@@ -23,7 +23,10 @@ export const adminService = {
   },
 
   // Pengguna
-  async getUsers(params?: { q?: string; page?: number }, signal?: AbortSignal): Promise<AdminPenggunaResponse> {
+  async getUsers(
+    params?: { q?: string; page?: number; statuses?: string[] },
+    signal?: AbortSignal
+  ): Promise<AdminPenggunaResponse> {
     const response = await api.get<AdminPenggunaResponse>('/v1/admin/pengguna', { params, signal });
     return response.data;
   },
@@ -58,7 +61,10 @@ export const adminService = {
   },
 
   // Unit Kerja
-  async getUnits(params?: { q?: string; page?: number }, signal?: AbortSignal): Promise<AdminUnitKerjaResponse> {
+  async getUnits(
+    params?: { q?: string; page?: number; statuses?: string[] },
+    signal?: AbortSignal
+  ): Promise<AdminUnitKerjaResponse> {
     const response = await api.get<AdminUnitKerjaResponse>('/v1/admin/unit-kerja', { params, signal });
     return response.data;
   },
@@ -93,7 +99,10 @@ export const adminService = {
   },
 
   // MAK
-  async getMaks(params?: { q?: string; page?: number }, signal?: AbortSignal): Promise<AdminMakResponse> {
+  async getMaks(
+    params?: { q?: string; page?: number; statuses?: string[] },
+    signal?: AbortSignal
+  ): Promise<AdminMakResponse> {
     const response = await api.get<AdminMakResponse>('/v1/admin/mak', { params, signal });
     return response.data;
   },
@@ -128,7 +137,10 @@ export const adminService = {
   },
 
   // Roles
-  async getRoles(params?: { q?: string; page?: number }, signal?: AbortSignal): Promise<AdminRoleResponse> {
+  async getRoles(
+    params?: { q?: string; page?: number; statuses?: string[] },
+    signal?: AbortSignal
+  ): Promise<AdminRoleResponse> {
     const response = await api.get<AdminRoleResponse>('/v1/admin/role', { params, signal });
     return response.data;
   },
@@ -180,7 +192,7 @@ export const adminService = {
 
   // Metode Pengadaan
   async getMetodePengadaan(
-    params?: { q?: string; page?: number },
+    params?: { q?: string; page?: number; statuses?: string[] },
     signal?: AbortSignal
   ): Promise<AdminMetodePengadaanResponse> {
     const response = await api.get<AdminMetodePengadaanResponse>('/v1/admin/metode-pengadaan', {

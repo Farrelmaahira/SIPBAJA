@@ -11,12 +11,21 @@ class MetodePengadaanService
     /**
      * Mengambil daftar metode pengadaan terpaginasi dengan pencarian nama.
      */
-    public function paginate(?string $q = null, int $perPage = 10): LengthAwarePaginator
+    /**
+     * @param  array<int, string>  $statuses
+     */
+    public function paginate(?string $q = null, int $perPage = 10, array $statuses = []): LengthAwarePaginator
     {
         return MetodePengadaan::query()
             ->withCount('Pengadaan')
             ->when($q, function ($query, $q) {
-                $query->where('nama', 'like', "%{$q}%");
+                $query->whereLike('nama', "%{$q}%", caseSensitive: false);
+            })
+            ->when($statuses, function ($query) use ($statuses) {
+                $query->whereIn('isActive', array_unique(array_map(
+                    fn (string $status) => $status === 'aktif',
+                    $statuses,
+                )));
             })
             ->orderBy('id', 'asc')
             ->paginate($perPage)

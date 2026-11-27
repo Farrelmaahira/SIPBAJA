@@ -1,11 +1,12 @@
-import type { ChangeEvent, FC, ReactNode } from 'react';
+import type { FC, ReactNode } from 'react';
 import { Plus, Pencil, ToggleRight, ToggleLeft } from 'lucide-react';
 import AppLayout from '../General/AppLayout';
 import { CrudTable, type CrudActionItem, type CrudColumn } from '../../organisms/CrudTable';
 import Modal from '../../organisms/Modal';
-import SearchBar from '../../molecules/SearchBar';
 import PrimaryButton from '../../atoms/PrimaryButton';
 import StatusPill from '../../atoms/StatusPill';
+import FilterStatusToolbar from '../../molecules/FilterStatusToolbar';
+import { ACTIVE_STATUS_FILTER_OPTIONS } from '../../../constants/statusFilters';
 import { ADMIN_NAV_ITEMS } from '../../../constants/adminNav';
 import HeroBanner from '@/components/organisms/HeroBanner';
 import TableFooter from '@/components/molecules/TableFooter';
@@ -79,8 +80,12 @@ export interface AdminPenggunaTemplateProps {
   query?: string;
   paginationMeta: PaginationMeta;
   onPageChange?: (page: number) => void;
-  onQueryChange?: (e: ChangeEvent<HTMLInputElement>) => void;
+  onQueryChange?: (value: string) => void;
   searchPlaceholder?: string;
+  selectedStatuses?: string[];
+  filterModalOpen?: boolean;
+  onToggleFilterModal?: (open: boolean) => void;
+  onApplyFilters?: (statuses: string[]) => void;
   modalMode?: 'create' | 'edit' | null;
   form: AdminPenggunaTemplateForm;
   onOpenCreate?: () => void;
@@ -104,6 +109,10 @@ export const AdminPenggunaTemplate: FC<AdminPenggunaTemplateProps> = ({
   onPageChange,
   onQueryChange,
   searchPlaceholder = 'Cari nama atau email...',
+  selectedStatuses = [],
+  filterModalOpen = false,
+  onToggleFilterModal,
+  onApplyFilters,
   modalMode = null,
   form,
   onOpenCreate,
@@ -171,14 +180,17 @@ export const AdminPenggunaTemplate: FC<AdminPenggunaTemplateProps> = ({
           columns={columns}
           rows={rows}
           toolbar={
-            <div className="max-w-md w-full">
-              <SearchBar
-                value={query}
-                onChange={onQueryChange}
-                placeholder={searchPlaceholder}
-                id="pengguna-table-search"
-              />
-            </div>
+            <FilterStatusToolbar
+              searchValue={query}
+              onSearchChange={onQueryChange ?? (() => {})}
+              searchPlaceholder={searchPlaceholder}
+              options={ACTIVE_STATUS_FILTER_OPTIONS}
+              selectedStatuses={selectedStatuses}
+              filterOpen={filterModalOpen}
+              onToggleFilter={onToggleFilterModal ?? (() => {})}
+              onApplyFilters={onApplyFilters ?? (() => {})}
+              statusSectionTitle="STATUS PENGGUNA"
+            />
           }
           actions={tableActions}
           emptyTitle="Belum ada pengguna"

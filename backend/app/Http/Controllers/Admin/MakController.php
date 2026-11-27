@@ -25,9 +25,12 @@ class MakController extends Controller
         $this->authorize('viewAny', Mak::class);
 
         return response()->json([
-            'maks' => $this->maks->paginate(request('q')),
+            'maks' => $this->maks->paginate(request('q'), (array) request('statuses', [])),
             'ppkOptions' => $this->users->getPpkOptions(),
-            'filters' => ['q' => request('q', '')],
+            'filters' => [
+                'q' => request('q', ''),
+                'statuses' => (array) request('statuses', []),
+            ],
         ]);
     }
 

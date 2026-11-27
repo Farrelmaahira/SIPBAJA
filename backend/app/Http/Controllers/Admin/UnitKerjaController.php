@@ -21,8 +21,11 @@ class UnitKerjaController extends Controller
         $this->authorize('viewAny', Unit::class);
 
         return response()->json([
-            'units' => $this->units->paginate(request('q')),
-            'filters' => ['q' => request('q', '')],
+            'units' => $this->units->paginate(request('q'), (array) request('statuses', [])),
+            'filters' => [
+                'q' => request('q', ''),
+                'statuses' => (array) request('statuses', []),
+            ],
         ]);
     }
 

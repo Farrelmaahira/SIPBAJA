@@ -1,4 +1,4 @@
-import { useEffect, useState, type FC, type ChangeEvent } from 'react';
+import { useEffect, useState, type FC } from 'react';
 import axios from 'axios';
 import { adminService } from '../../../services/adminService';
 import AdminMakTemplate, { type MakFormData } from '../../../components/templates/Admin/AdminMakTemplate';
@@ -16,6 +16,8 @@ export const MakIndex: FC = () => {
   const [paginationMeta, setPaginationMeta] = useState<PaginationMeta | null>(null);
   const [query, setQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const [modalMode, setModalMode] = useState<'create' | 'edit' | null>(null);
@@ -31,10 +33,15 @@ export const MakIndex: FC = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const fetchMaks = async (searchQuery = query, page = currentPage, signal?: AbortSignal) => {
+  const fetchMaks = async (
+    searchQuery = query,
+    page = currentPage,
+    statuses = selectedStatuses,
+    signal?: AbortSignal
+  ) => {
     setIsLoading(true);
     try {
-      const data = await adminService.getMaks({ q: searchQuery, page }, signal);
+      const data = await adminService.getMaks({ q: searchQuery, page, statuses }, signal);
 
       if (data.maks?.data) {
         setMaks(data.maks.data as unknown as MakRowItem[]);
@@ -61,14 +68,14 @@ export const MakIndex: FC = () => {
   useEffect(() => {
     const controller = new AbortController();
     const timer = setTimeout(() => {
-      fetchMaks(query, currentPage, controller.signal);
+      fetchMaks(query, currentPage, selectedStatuses, controller.signal);
     }, 300);
 
     return () => {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [query, currentPage]);
+  }, [query, currentPage, selectedStatuses]);
 
   const openCreate = () => {
     setFormData({ ...EMPTY_FORM });
@@ -151,8 +158,15 @@ export const MakIndex: FC = () => {
       }
       ppkOptions={ppkOptions}
       query={query}
-      onQueryChange={(e: ChangeEvent<HTMLInputElement>) => {
-        setQuery(e.target.value);
+      onQueryChange={(value: string) => {
+        setQuery(value);
+        setCurrentPage(1);
+      }}
+      selectedStatuses={selectedStatuses}
+      filterModalOpen={filterModalOpen}
+      onToggleFilterModal={setFilterModalOpen}
+      onApplyFilters={(statuses) => {
+        setSelectedStatuses(statuses);
         setCurrentPage(1);
       }}
       modalMode={modalMode}

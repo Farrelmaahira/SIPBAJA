@@ -8,15 +8,24 @@ use Illuminate\Support\Facades\DB;
 
 class UserService
 {
-    public function paginate(?string $q): LengthAwarePaginator
+    /**
+     * @param  array<int, string>  $statuses
+     */
+    public function paginate(?string $q, array $statuses = []): LengthAwarePaginator
     {
         return User::query()
             ->with(['role:id,nama', 'unit:id,nama'])
             ->when($q, function ($query, $q) {
                 $query->where(function ($sub) use ($q) {
-                    $sub->where('nama', 'like', "%{$q}%")
-                        ->orWhere('email', 'like', "%{$q}%");
+                    $sub->whereLike('nama', "%{$q}%", caseSensitive: false)
+                        ->orWhereLike('email', "%{$q}%", caseSensitive: false);
                 });
+            })
+            ->when($statuses, function ($query) use ($statuses) {
+                $query->whereIn('isActive', array_unique(array_map(
+                    fn (string $status) => $status === 'aktif',
+                    $statuses,
+                )));
             })
             ->orderBy('nama')
             ->paginate(10)

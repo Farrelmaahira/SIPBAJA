@@ -24,9 +24,11 @@ class MetodePengadaanController extends Controller
 
         $q = $request->query('q', $request->query('search', ''));
 
+        $statuses = (array) $request->query('statuses', []);
+
         return response()->json([
-            'metode_pengadaan' => $this->metodeService->paginate($q),
-            'filters' => ['q' => $q],
+            'metode_pengadaan' => $this->metodeService->paginate($q, 10, $statuses),
+            'filters' => ['q' => $q, 'statuses' => $statuses],
         ]);
     }
 

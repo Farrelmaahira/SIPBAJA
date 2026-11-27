@@ -8,12 +8,21 @@ use Illuminate\Support\Facades\DB;
 
 class UnitService
 {
-    public function paginate(?string $q): LengthAwarePaginator
+    /**
+     * @param  array<int, string>  $statuses
+     */
+    public function paginate(?string $q, array $statuses = []): LengthAwarePaginator
     {
         return Unit::query()
             ->withCount('Users')
             ->when($q, function ($query, $q) {
-                $query->where('nama', 'like', "%{$q}%");
+                $query->whereLike('nama', "%{$q}%", caseSensitive: false);
+            })
+            ->when($statuses, function ($query) use ($statuses) {
+                $query->whereIn('isActive', array_unique(array_map(
+                    fn (string $status) => $status === 'aktif',
+                    $statuses,
+                )));
             })
             ->orderBy('nama')
             ->paginate(10)

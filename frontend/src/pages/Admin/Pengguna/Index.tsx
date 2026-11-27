@@ -1,4 +1,4 @@
-import { useEffect, useState, type FC, type ChangeEvent } from 'react';
+import { useEffect, useState, type FC } from 'react';
 import axios from 'axios';
 import { adminService } from '../../../services/adminService';
 import AdminPenggunaTemplate, {
@@ -29,6 +29,8 @@ export const PenggunaIndex: FC = () => {
   const [units, setUnits] = useState<Array<{ id: number; nama: string }>>([]);
   const [query, setQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const [modalMode, setModalMode] = useState<'create' | 'edit' | null>(null);
@@ -44,10 +46,15 @@ export const PenggunaIndex: FC = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const fetchUsers = async (searchQuery = query, page = currentPage, signal?: AbortSignal) => {
+  const fetchUsers = async (
+    searchQuery = query,
+    page = currentPage,
+    statuses = selectedStatuses,
+    signal?: AbortSignal
+  ) => {
     setIsLoading(true);
     try {
-      const data = await adminService.getUsers({ q: searchQuery, page }, signal);
+      const data = await adminService.getUsers({ q: searchQuery, page, statuses }, signal);
 
       if (data.users?.data) {
         setUsers(data.users.data);
@@ -73,14 +80,14 @@ export const PenggunaIndex: FC = () => {
   useEffect(() => {
     const controller = new AbortController();
     const timer = setTimeout(() => {
-      fetchUsers(query, currentPage, controller.signal);
+      fetchUsers(query, currentPage, selectedStatuses, controller.signal);
     }, 300);
 
     return () => {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [query, currentPage]);
+  }, [query, currentPage, selectedStatuses]);
 
   const openCreate = () => {
     setFormData({ ...EMPTY_FORM });
@@ -167,8 +174,15 @@ export const PenggunaIndex: FC = () => {
       roles={roles}
       units={units}
       query={query}
-      onQueryChange={(e: ChangeEvent<HTMLInputElement>) => {
-        setQuery(e.target.value);
+      onQueryChange={(value: string) => {
+        setQuery(value);
+        setCurrentPage(1);
+      }}
+      selectedStatuses={selectedStatuses}
+      filterModalOpen={filterModalOpen}
+      onToggleFilterModal={setFilterModalOpen}
+      onApplyFilters={(statuses) => {
+        setSelectedStatuses(statuses);
         setCurrentPage(1);
       }}
       modalMode={modalMode}

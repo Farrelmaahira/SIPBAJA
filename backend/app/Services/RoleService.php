@@ -8,12 +8,21 @@ use Illuminate\Support\Facades\DB;
 
 class RoleService
 {
-    public function paginate(?string $q): LengthAwarePaginator
+    /**
+     * @param  array<int, string>  $statuses
+     */
+    public function paginate(?string $q, array $statuses = []): LengthAwarePaginator
     {
         return Role::query()
             ->withCount(['Users', 'Permissions'])
             ->when($q, function ($query, $q) {
-                $query->where('nama', 'like', "%{$q}%");
+                $query->whereLike('nama', "%{$q}%", caseSensitive: false);
+            })
+            ->when($statuses, function ($query) use ($statuses) {
+                $query->whereIn('isActive', array_unique(array_map(
+                    fn (string $status) => $status === 'aktif',
+                    $statuses,
+                )));
             })
             ->orderBy('nama')
             ->paginate(10)

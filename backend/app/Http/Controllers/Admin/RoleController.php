@@ -21,8 +21,11 @@ class RoleController extends Controller
         $this->authorize('viewAny', Role::class);
 
         return response()->json([
-            'roles' => $this->roles->paginate(request('q')),
-            'filters' => ['q' => request('q', '')],
+            'roles' => $this->roles->paginate(request('q'), (array) request('statuses', [])),
+            'filters' => [
+                'q' => request('q', ''),
+                'statuses' => (array) request('statuses', []),
+            ],
         ]);
     }
 

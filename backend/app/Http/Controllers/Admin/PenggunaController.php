@@ -27,10 +27,13 @@ class PenggunaController extends Controller
         $this->authorize('viewAny', User::class);
 
         return response()->json([
-            'users' => $this->users->paginate(request('q')),
+            'users' => $this->users->paginate(request('q'), (array) request('statuses', [])),
             'roles' => $this->roles->getRoleOptions(),
             'units' => $this->units->getUnitOptions(),
-            'filters' => ['q' => request('q', '')],
+            'filters' => [
+                'q' => request('q', ''),
+                'statuses' => (array) request('statuses', []),
+            ],
         ]);
     }
 
