@@ -23,6 +23,7 @@ export const MakIndex: FC = () => {
   const [modalMode, setModalMode] = useState<'create' | 'edit' | null>(null);
   const [toggleTarget, setToggleTarget] = useState<MakRowItem | null>(null);
   const [isToggling, setIsToggling] = useState(false);
+  const [flash, setFlash] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [editId, setEditId] = useState<number | null>(null);
 
   const [formData, setFormData] = useState<MakFormData>({ ...EMPTY_FORM });
@@ -106,8 +107,10 @@ export const MakIndex: FC = () => {
     try {
       if (modalMode === 'create') {
         await adminService.createMak(formData);
+        setFlash({ type: 'success', message: 'MAK berhasil ditambahkan.' });
       } else if (modalMode === 'edit' && editId) {
         await adminService.updateMak(editId, formData);
+        setFlash({ type: 'success', message: 'MAK berhasil diperbarui.' });
       }
       closeModal();
       fetchMaks();
@@ -118,6 +121,8 @@ export const MakIndex: FC = () => {
           flat[k] = Array.isArray(v) ? (v[0] as string) : String(v);
         }
         setErrors(flat);
+      } else {
+        setFlash({ type: 'error', message: err.response?.data?.message || 'Gagal menyimpan MAK.' });
       }
     } finally {
       setProcessing(false);
@@ -139,9 +144,11 @@ export const MakIndex: FC = () => {
     try {
       await adminService.toggleStatusMak(toggleTarget.id);
       setToggleTarget(null);
+      setFlash({ type: 'success', message: 'Status MAK berhasil diperbarui.' });
       fetchMaks();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to toggle status MAK:', err);
+      setFlash({ type: 'error', message: err.response?.data?.message || 'Gagal mengubah status MAK.' });
     } finally {
       setIsToggling(false);
     }
@@ -186,6 +193,9 @@ export const MakIndex: FC = () => {
       onConfirmToggle={confirmToggle}
       isToggling={isToggling}
       isLoading={isLoading}
+      flashType={flash?.type}
+      flashMessage={flash?.message ?? null}
+      onDismissFlash={() => setFlash(null)}
     />
   );
 };

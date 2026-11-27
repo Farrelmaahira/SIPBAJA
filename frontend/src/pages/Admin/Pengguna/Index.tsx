@@ -36,6 +36,7 @@ export const PenggunaIndex: FC = () => {
   const [modalMode, setModalMode] = useState<'create' | 'edit' | null>(null);
   const [toggleTarget, setToggleTarget] = useState<UserRowItem | null>(null);
   const [isToggling, setIsToggling] = useState(false);
+  const [flash, setFlash] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [editId, setEditId] = useState<number | null>(null);
 
   const [formData, setFormData] = useState<PenggunaFormData>({ ...EMPTY_FORM });
@@ -121,12 +122,14 @@ export const PenggunaIndex: FC = () => {
     try {
       if (modalMode === 'create') {
         await adminService.createUser(formData);
+        setFlash({ type: 'success', message: 'Pengguna berhasil ditambahkan.' });
       } else if (modalMode === 'edit' && editId) {
         const payload = { ...formData };
         if (!payload.password) {
           delete payload.password;
         }
         await adminService.updateUser(editId, payload);
+        setFlash({ type: 'success', message: 'Pengguna berhasil diperbarui.' });
       }
       closeModal();
       fetchUsers();
@@ -137,6 +140,8 @@ export const PenggunaIndex: FC = () => {
           flat[k] = Array.isArray(v) ? (v[0] as string) : String(v);
         }
         setErrors(flat);
+      } else {
+        setFlash({ type: 'error', message: err.response?.data?.message || 'Gagal menyimpan pengguna.' });
       }
     } finally {
       setProcessing(false);
@@ -158,9 +163,11 @@ export const PenggunaIndex: FC = () => {
     try {
       await adminService.toggleStatusUser(toggleTarget.id);
       setToggleTarget(null);
+      setFlash({ type: 'success', message: 'Status pengguna berhasil diperbarui.' });
       void fetchUsers();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to toggle status pengguna:', err);
+      setFlash({ type: 'error', message: err.response?.data?.message || 'Gagal mengubah status pengguna.' });
     } finally {
       setIsToggling(false);
     }
@@ -202,6 +209,9 @@ export const PenggunaIndex: FC = () => {
       onConfirmToggle={confirmToggle}
       isToggling={isToggling}
       isLoading={isLoading}
+      flashType={flash?.type}
+      flashMessage={flash?.message ?? null}
+      onDismissFlash={() => setFlash(null)}
     />
   );
 };

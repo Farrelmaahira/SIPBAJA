@@ -12,6 +12,7 @@ import { StatusPill } from '../../atoms/StatusPill';
 import { ADMIN_NAV_ITEMS } from '../../../constants/adminNav';
 import { UnitKerjaFormState, UnitKerjaItem } from '@/types/admin';
 import HeroBanner from '@/components/organisms/HeroBanner';
+import { FlashMessage } from '@/components/molecules/FlashMessage';
 
 export interface UnitKerjaTemplateProps {
   rows?: UnitKerjaItem[];
@@ -35,6 +36,9 @@ export interface UnitKerjaTemplateProps {
   onConfirmToggle?: () => void;
   isToggling?: boolean;
   isLoading?: boolean;
+  flashType?: 'success' | 'error';
+  flashMessage?: string | null;
+  onDismissFlash?: () => void;
 }
 
 const columns: CrudColumn<UnitKerjaItem>[] = [
@@ -87,6 +91,9 @@ export const UnitKerjaTemplate: FC<UnitKerjaTemplateProps> = ({
   onConfirmToggle,
   isToggling = false,
   isLoading = false,
+  flashType = 'success',
+  flashMessage = null,
+  onDismissFlash,
 }) => {
   const { data, setData, errors, processing } = form;
   const isEdit = modalMode === 'edit';
@@ -120,6 +127,9 @@ export const UnitKerjaTemplate: FC<UnitKerjaTemplateProps> = ({
       profileHref="/admin/pengguna"
       notifikasiHref="/admin/dashboard"
     >
+      <div className="fixed top-5 right-5 z-50">
+        <FlashMessage type={flashType} message={flashMessage} onClose={onDismissFlash} />
+      </div>
       <div className="space-y-6">
         <HeroBanner
           title="Unit Kerja"

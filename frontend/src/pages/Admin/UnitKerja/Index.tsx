@@ -21,6 +21,7 @@ export const UnitKerjaIndex: FC = () => {
   const [modalMode, setModalMode] = useState<'create' | 'edit' | null>(null);
   const [toggleTarget, setToggleTarget] = useState<UnitKerjaItem | null>(null);
   const [isToggling, setIsToggling] = useState(false);
+  const [flash, setFlash] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [editId, setEditId] = useState<string | number | null>(null);
 
   const [formData, setFormData] = useState<UnitKerjaFormData>({ ...EMPTY_FORM });
@@ -101,8 +102,10 @@ export const UnitKerjaIndex: FC = () => {
     try {
       if (modalMode === 'create') {
         await adminService.createUnit(formData);
+        setFlash({ type: 'success', message: 'Unit kerja berhasil ditambahkan.' });
       } else if (modalMode === 'edit' && editId) {
         await adminService.updateUnit(editId, formData);
+        setFlash({ type: 'success', message: 'Unit kerja berhasil diperbarui.' });
       }
       closeModal();
       fetchUnits();
@@ -113,6 +116,8 @@ export const UnitKerjaIndex: FC = () => {
           flat[k] = Array.isArray(v) ? (v[0] as string) : String(v);
         }
         setErrors(flat);
+      } else {
+        setFlash({ type: 'error', message: err.response?.data?.message || 'Gagal menyimpan unit kerja.' });
       }
     } finally {
       setProcessing(false);
@@ -134,9 +139,11 @@ export const UnitKerjaIndex: FC = () => {
     try {
       await adminService.toggleStatusUnit(toggleTarget.id);
       setToggleTarget(null);
+      setFlash({ type: 'success', message: 'Status unit kerja berhasil diperbarui.' });
       fetchUnits();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to toggle status unit kerja:', err);
+      setFlash({ type: 'error', message: err.response?.data?.message || 'Gagal mengubah status unit kerja.' });
     } finally {
       setIsToggling(false);
     }
@@ -180,6 +187,9 @@ export const UnitKerjaIndex: FC = () => {
       onConfirmToggle={confirmToggle}
       isToggling={isToggling}
       isLoading={isLoading}
+      flashType={flash?.type}
+      flashMessage={flash?.message ?? null}
+      onDismissFlash={() => setFlash(null)}
     />
   );
 };

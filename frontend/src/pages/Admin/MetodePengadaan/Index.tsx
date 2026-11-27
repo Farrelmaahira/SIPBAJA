@@ -22,6 +22,7 @@ export const AdminMetodePengadaanIndex: FC = () => {
   const [editId, setEditId] = useState<string | number | null>(null);
   const [toggleTarget, setToggleTarget] = useState<AdminMetodePengadaanItem | null>(null);
   const [isToggling, setIsToggling] = useState(false);
+  const [flash, setFlash] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const [formData, setFormData] = useState<MetodePengadaanFormData>({ ...EMPTY_FORM });
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
@@ -99,8 +100,10 @@ export const AdminMetodePengadaanIndex: FC = () => {
     try {
       if (modalMode === 'create') {
         await adminService.createMetodePengadaan({ nama: formData.nama });
+        setFlash({ type: 'success', message: 'Metode pengadaan berhasil ditambahkan.' });
       } else if (modalMode === 'edit' && editId) {
         await adminService.updateMetodePengadaan(editId, { nama: formData.nama });
+        setFlash({ type: 'success', message: 'Metode pengadaan berhasil diperbarui.' });
       }
       closeModal();
       void fetchMetode();
@@ -111,6 +114,8 @@ export const AdminMetodePengadaanIndex: FC = () => {
           flat[k] = Array.isArray(v) ? (v[0] as string) : String(v);
         }
         setErrors(flat);
+      } else {
+        setFlash({ type: 'error', message: err.response?.data?.message || 'Gagal menyimpan metode pengadaan.' });
       }
     } finally {
       setProcessing(false);
@@ -132,9 +137,11 @@ export const AdminMetodePengadaanIndex: FC = () => {
     try {
       await adminService.toggleStatusMetodePengadaan(toggleTarget.id);
       setToggleTarget(null);
+      setFlash({ type: 'success', message: 'Status metode pengadaan berhasil diperbarui.' });
       void fetchMetode();
-    } catch (err: unknown) {
+    } catch (err: any) {
       console.error('Failed to toggle status metode pengadaan:', err);
+      setFlash({ type: 'error', message: err.response?.data?.message || 'Gagal mengubah status metode pengadaan.' });
     } finally {
       setIsToggling(false);
     }
@@ -178,6 +185,9 @@ export const AdminMetodePengadaanIndex: FC = () => {
       onConfirmToggle={confirmToggle}
       isToggling={isToggling}
       isLoading={isLoading}
+      flashType={flash?.type}
+      flashMessage={flash?.message ?? null}
+      onDismissFlash={() => setFlash(null)}
     />
   );
 };

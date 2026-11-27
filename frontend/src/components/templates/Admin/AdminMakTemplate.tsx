@@ -14,6 +14,7 @@ import normalizeOptions from '../../../utils/normalizeOptions';
 import { ADMIN_NAV_ITEMS } from '../../../constants/adminNav';
 import { MakRowItem, PpkOptionUser } from '@/types/admin';
 import HeroBanner from '@/components/organisms/HeroBanner';
+import { FlashMessage } from '@/components/molecules/FlashMessage';
 
 const columns: CrudColumn<MakRowItem>[] = [
   {
@@ -86,6 +87,9 @@ export interface AdminMakTemplateProps {
   onConfirmToggle?: () => void;
   isToggling?: boolean;
   isLoading?: boolean;
+  flashType?: 'success' | 'error';
+  flashMessage?: string | null;
+  onDismissFlash?: () => void;
 }
 
 export const AdminMakTemplate: FC<AdminMakTemplateProps> = ({
@@ -111,6 +115,9 @@ export const AdminMakTemplate: FC<AdminMakTemplateProps> = ({
   onConfirmToggle,
   isToggling = false,
   isLoading = false,
+  flashType = 'success',
+  flashMessage = null,
+  onDismissFlash,
 }) => {
   const { data, setData, errors, processing = false } = form;
   const isEdit = modalMode === 'edit';
@@ -130,6 +137,9 @@ export const AdminMakTemplate: FC<AdminMakTemplateProps> = ({
       profileHref="/admin/pengguna"
       notifikasiHref="/admin/dashboard"
     >
+      <div className="fixed top-5 right-5 z-50">
+        <FlashMessage type={flashType} message={flashMessage} onClose={onDismissFlash} />
+      </div>
       <div className="space-y-6">
         <HeroBanner
           title="Master MAK"

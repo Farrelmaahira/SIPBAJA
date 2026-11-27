@@ -13,6 +13,7 @@ import { StatusPill } from '../../atoms/StatusPill';
 import { ADMIN_NAV_ITEMS } from '../../../constants/adminNav';
 import { RoleRowItem } from '@/types/admin';
 import HeroBanner from '@/components/organisms/HeroBanner';
+import { FlashMessage } from '@/components/molecules/FlashMessage';
 
 const columns: CrudColumn<RoleRowItem>[] = [
   {
@@ -89,6 +90,9 @@ export interface RoleTemplateProps {
   onConfirmToggle?: () => void;
   isToggling?: boolean;
   isLoading?: boolean;
+  flashType?: 'success' | 'error';
+  flashMessage?: string | null;
+  onDismissFlash?: () => void;
 }
 
 export const RoleTemplate: FC<RoleTemplateProps> = ({
@@ -113,6 +117,9 @@ export const RoleTemplate: FC<RoleTemplateProps> = ({
   onConfirmToggle,
   isToggling = false,
   isLoading = false,
+  flashType = 'success',
+  flashMessage = null,
+  onDismissFlash,
 }) => {
   const { data, setData, errors, processing = false } = form;
   const isEdit = modalMode === 'edit';
@@ -127,6 +134,9 @@ export const RoleTemplate: FC<RoleTemplateProps> = ({
       profileHref="/admin/pengguna"
       notifikasiHref="/admin/dashboard"
     >
+      <div className="fixed top-5 right-5 z-50">
+        <FlashMessage type={flashType} message={flashMessage} onClose={onDismissFlash} />
+      </div>
       <div className="space-y-6">
         <HeroBanner
           title="Peran"

@@ -74,16 +74,16 @@ export const FlashMessage: FC<FlashMessageProps> = ({
   };
 
   const icons = {
-    success: <CheckCircle2 className={`w-4 h-4 shrink-0 ${iconStyles.success}`} />,
-    error: <AlertCircle className={`w-4 h-4 shrink-0 ${iconStyles.error}`} />,
-    warning: <AlertCircle className={`w-4 h-4 shrink-0 ${iconStyles.warning}`} />,
-    info: <Info className={`w-4 h-4 shrink-0 ${iconStyles.info}`} />,
+    success: <CheckCircle2 className={`w-5 h-5 shrink-0 ${iconStyles.success}`} />,
+    error: <AlertCircle className={`w-5 h-5 shrink-0 ${iconStyles.error}`} />,
+    warning: <AlertCircle className={`w-5 h-5 shrink-0 ${iconStyles.warning}`} />,
+    info: <Info className={`w-5 h-5 shrink-0 ${iconStyles.info}`} />,
   };
 
   return (
     <div
       role="alert"
-      className={`inline-flex items-center gap-2 py-2 px-3 rounded-xl border text-xs font-semibold shadow-[0_4px_16px_rgba(13,51,38,0.08)] w-fit max-w-sm sm:max-w-md transition-all duration-300 ease-out transform ${
+      className={`inline-flex items-center gap-3 py-3 px-4 rounded-xl border text-sm font-semibold shadow-[0_4px_16px_rgba(13,51,38,0.08)] w-fit max-w-md sm:max-w-lg transition-all duration-300 ease-out transform ${
         isFadingOut
           ? 'opacity-0 -translate-y-2 scale-95 pointer-events-none'
           : 'opacity-100 translate-y-0 scale-100'
@@ -94,10 +94,10 @@ export const FlashMessage: FC<FlashMessageProps> = ({
       <button
         type="button"
         onClick={handleDismiss}
-        className="p-0.5 rounded-md hover:bg-black/5 active:bg-black/10 transition-colors shrink-0 cursor-pointer ml-1 text-current opacity-60 hover:opacity-100"
+        className="p-1 rounded-md hover:bg-black/5 active:bg-black/10 transition-colors shrink-0 cursor-pointer ml-1 text-current opacity-60 hover:opacity-100"
         aria-label="Tutup pesan"
       >
-        <X className="w-3.5 h-3.5" />
+        <X className="w-4 h-4" />
       </button>
     </div>
   );

@@ -10,6 +10,7 @@ import { TextInput } from '../../molecules/TextInput';
 import { PrimaryButton } from '../../atoms/PrimaryButton';
 import { StatusPill } from '../../atoms/StatusPill';
 import { HeroBanner } from '../../organisms/HeroBanner';
+import { FlashMessage } from '@/components/molecules/FlashMessage';
 import { ADMIN_NAV_ITEMS } from '../../../constants/adminNav';
 import type { AdminMetodePengadaanItem, MetodePengadaanFormData } from '../../../types/admin';
 
@@ -40,6 +41,9 @@ export interface AdminMetodePengadaanTemplateProps {
   onConfirmToggle?: () => void;
   isToggling?: boolean;
   isLoading?: boolean;
+  flashType?: 'success' | 'error';
+  flashMessage?: string | null;
+  onDismissFlash?: () => void;
 }
 
 const columns: CrudColumn<AdminMetodePengadaanItem>[] = [
@@ -96,6 +100,9 @@ export const AdminMetodePengadaanTemplate: FC<AdminMetodePengadaanTemplateProps>
   onConfirmToggle,
   isToggling = false,
   isLoading = false,
+  flashType = 'success',
+  flashMessage = null,
+  onDismissFlash,
 }) => {
   const { data, setData, errors, processing } = form;
   const isEdit = modalMode === 'edit';
@@ -126,6 +133,9 @@ export const AdminMetodePengadaanTemplate: FC<AdminMetodePengadaanTemplateProps>
       profileHref="/admin/pengguna"
       notifikasiHref="/admin/dashboard"
     >
+      <div className="fixed top-5 right-5 z-50">
+        <FlashMessage type={flashType} message={flashMessage} onClose={onDismissFlash} />
+      </div>
       <div className="space-y-6">
         <HeroBanner
           eyebrow="MASTER DATA"

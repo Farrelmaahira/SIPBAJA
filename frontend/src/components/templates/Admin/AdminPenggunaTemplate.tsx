@@ -9,6 +9,7 @@ import FilterStatusToolbar from '../../molecules/FilterStatusToolbar';
 import { ACTIVE_STATUS_FILTER_OPTIONS } from '../../../constants/statusFilters';
 import { ADMIN_NAV_ITEMS } from '../../../constants/adminNav';
 import HeroBanner from '@/components/organisms/HeroBanner';
+import { FlashMessage } from '@/components/molecules/FlashMessage';
 import TableFooter from '@/components/molecules/TableFooter';
 import { PaginationMeta } from '@/components/molecules/Pagination';
 import { PenggunaFormData } from '@/types/admin';
@@ -98,6 +99,9 @@ export interface AdminPenggunaTemplateProps {
   onConfirmToggle?: () => void;
   isToggling?: boolean;
   isLoading?: boolean;
+  flashType?: 'success' | 'error';
+  flashMessage?: string | null;
+  onDismissFlash?: () => void;
 }
 
 export const AdminPenggunaTemplate: FC<AdminPenggunaTemplateProps> = ({
@@ -125,6 +129,9 @@ export const AdminPenggunaTemplate: FC<AdminPenggunaTemplateProps> = ({
   onConfirmToggle,
   isToggling = false,
   isLoading = false,
+  flashType = 'success',
+  flashMessage = null,
+  onDismissFlash,
 }) => {
   const { data, setData, errors, processing = false } = form;
   const isEdit = modalMode === 'edit';
@@ -167,6 +174,9 @@ export const AdminPenggunaTemplate: FC<AdminPenggunaTemplateProps> = ({
       profileHref="/admin/pengguna"
       notifikasiHref="/admin/dashboard"
     >
+      <div className="fixed top-5 right-5 z-50">
+        <FlashMessage type={flashType} message={flashMessage} onClose={onDismissFlash} />
+      </div>
       <div className="space-y-6">
         <HeroBanner
           title="Pengguna"

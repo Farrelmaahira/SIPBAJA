@@ -21,6 +21,7 @@ export const RoleIndex: FC = () => {
   const [modalMode, setModalMode] = useState<'create' | 'edit' | null>(null);
   const [toggleTarget, setToggleTarget] = useState<RoleRowItem | null>(null);
   const [isToggling, setIsToggling] = useState(false);
+  const [flash, setFlash] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [editId, setEditId] = useState<number | null>(null);
 
   const [formData, setFormData] = useState<RoleFormData>({ ...EMPTY_FORM });
@@ -97,8 +98,10 @@ export const RoleIndex: FC = () => {
     try {
       if (modalMode === 'edit' && editId) {
         await adminService.updateRole(editId, formData);
+        setFlash({ type: 'success', message: 'Role berhasil diperbarui.' });
       } else if (modalMode === 'create') {
         await adminService.createRole(formData);
+        setFlash({ type: 'success', message: 'Role berhasil ditambahkan.' });
       }
       closeModal();
       fetchRoles();
@@ -109,6 +112,8 @@ export const RoleIndex: FC = () => {
           flat[k] = Array.isArray(v) ? (v[0] as string) : String(v);
         }
         setErrors(flat);
+      } else {
+        setFlash({ type: 'error', message: err.response?.data?.message || 'Gagal menyimpan role.' });
       }
     } finally {
       setProcessing(false);
@@ -130,9 +135,11 @@ export const RoleIndex: FC = () => {
     try {
       await adminService.toggleStatusRole(toggleTarget.id);
       setToggleTarget(null);
+      setFlash({ type: 'success', message: 'Status role berhasil diperbarui.' });
       fetchRoles();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to toggle status role:', err);
+      setFlash({ type: 'error', message: err.response?.data?.message || 'Gagal mengubah status role.' });
     } finally {
       setIsToggling(false);
     }
@@ -176,6 +183,9 @@ export const RoleIndex: FC = () => {
       onConfirmToggle={confirmToggle}
       isToggling={isToggling}
       isLoading={isLoading}
+      flashType={flash?.type}
+      flashMessage={flash?.message ?? null}
+      onDismissFlash={() => setFlash(null)}
     />
   );
 };
