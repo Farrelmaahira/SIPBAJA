@@ -4,11 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\Pengadaan;
 use App\Models\User;
-use Database\Seeders\KeuanganSeeder;
-use Database\Seeders\MasterReferenceSeeder;
-use Database\Seeders\RbacSeeder;
-use Database\Seeders\RoleSeeder;
-use Database\Seeders\UserSeeder;
+use Database\Seeders\MasterDataSeeder;
+use Database\Seeders\PermohonanPengadaanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -22,11 +19,8 @@ class KeuanganApiTest extends TestCase
     {
         parent::setUp();
         $this->seed([
-            RoleSeeder::class,
-            UserSeeder::class,
-            RbacSeeder::class,
-            MasterReferenceSeeder::class,
-            KeuanganSeeder::class,
+            MasterDataSeeder::class,
+            PermohonanPengadaanSeeder::class,
         ]);
     }
 

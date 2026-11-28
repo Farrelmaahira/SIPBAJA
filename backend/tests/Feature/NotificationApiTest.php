@@ -4,9 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Notification;
 use App\Models\User;
-use Database\Seeders\MasterReferenceSeeder;
-use Database\Seeders\RoleSeeder;
-use Database\Seeders\UserSeeder;
+use Database\Seeders\MasterDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -17,7 +15,7 @@ class NotificationApiTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed([RoleSeeder::class, UserSeeder::class, MasterReferenceSeeder::class]);
+        $this->seed(MasterDataSeeder::class);
     }
 
     public function test_centralized_notifications_endpoints(): void

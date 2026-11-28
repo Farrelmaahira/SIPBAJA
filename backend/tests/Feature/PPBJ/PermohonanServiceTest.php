@@ -5,7 +5,8 @@ namespace Tests\Feature\PPBJ;
 use App\Models\Permohonan;
 use App\Services\PermohonanService;
 use Database\Seeders\DatabaseSeeder;
-use Database\Seeders\PpbjDummySeeder;
+use Database\Seeders\MasterDataSeeder;
+use Database\Seeders\PermohonanPengadaanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -18,7 +19,10 @@ class PermohonanServiceTest extends TestCase
         parent::setUp();
 
         $this->seed(DatabaseSeeder::class);
-        $this->seed(PpbjDummySeeder::class);
+        $this->seed([
+            MasterDataSeeder::class,
+            PermohonanPengadaanSeeder::class,
+        ]);
     }
 
     public function test_get_permohonan_ppbj_list_mengembalikan_daftar_permohonan_dengan_relasi_lengkap(): void

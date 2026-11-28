@@ -3,8 +3,7 @@
 namespace Tests\Unit\Services;
 
 use App\Services\AuthService;
-use Database\Seeders\RoleSeeder;
-use Database\Seeders\UserSeeder;
+use Database\Seeders\MasterDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
@@ -19,7 +18,7 @@ class AuthServiceTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed([RoleSeeder::class, UserSeeder::class]);
+        $this->seed(MasterDataSeeder::class);
         $this->authService = app(AuthService::class);
     }
 

@@ -10,7 +10,6 @@ use App\Models\Pembayaran;
 use App\Models\Permohonan;
 use App\Models\RencanaPembayaran;
 use Database\Seeders\DatabaseSeeder;
-use Database\Seeders\PpbjDummySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -23,7 +22,6 @@ class PpbjDummySeederTest extends TestCase
         parent::setUp();
 
         $this->seed(DatabaseSeeder::class);
-        $this->seed(PpbjDummySeeder::class);
     }
 
     public function test_skenario_1_permohonan_siap_dipaketkan(): void

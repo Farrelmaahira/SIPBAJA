@@ -8,9 +8,7 @@ use App\Models\Mak;
 use App\Models\MetodePengadaan;
 use App\Models\Role;
 use App\Models\User;
-use Database\Seeders\MasterReferenceSeeder;
-use Database\Seeders\RoleSeeder;
-use Database\Seeders\UserSeeder;
+use Database\Seeders\MasterDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -22,12 +20,12 @@ class MasterReferenceSeederTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed([RoleSeeder::class, UserSeeder::class]);
+        $this->seed(MasterDataSeeder::class);
     }
 
     public function test_master_reference_seeder_membuat_data_master_lengkap(): void
     {
-        $this->seed(MasterReferenceSeeder::class);
+        $this->seed(MasterDataSeeder::class);
 
         $ppkRole = Role::where('nama', 'PPK')->firstOrFail();
 
@@ -89,8 +87,8 @@ class MasterReferenceSeederTest extends TestCase
 
     public function test_master_reference_seeder_bersifat_idempoten(): void
     {
-        $this->seed(MasterReferenceSeeder::class);
-        $this->seed(MasterReferenceSeeder::class);
+        $this->seed(MasterDataSeeder::class);
+        $this->seed(MasterDataSeeder::class);
 
         $this->assertSame(4, Mak::count());
         $this->assertSame(3, JenisPengadaan::count());

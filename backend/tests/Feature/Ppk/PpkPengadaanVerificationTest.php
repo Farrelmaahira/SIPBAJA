@@ -12,9 +12,7 @@ use App\Models\PermohonanMak;
 use App\Models\Role;
 use App\Models\Unit;
 use App\Models\User;
-use Database\Seeders\MasterReferenceSeeder;
-use Database\Seeders\RbacSeeder;
-use Database\Seeders\RoleSeeder;
+use Database\Seeders\MasterDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -36,11 +34,7 @@ class PpkPengadaanVerificationTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed([
-            RoleSeeder::class,
-            RbacSeeder::class,
-            MasterReferenceSeeder::class,
-        ]);
+        $this->seed(MasterDataSeeder::class);
 
         $ppkRole = Role::where('nama', 'PPK')->firstOrFail();
         $unit = Unit::first() ?? Unit::create(['nama' => 'Unit Umum', 'kode' => 'UU']);

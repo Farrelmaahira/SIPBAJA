@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Dokumen;
+use App\Models\Kontrak;
 use App\Models\Notification;
 use App\Models\Pembayaran;
 use App\Models\Pengadaan;

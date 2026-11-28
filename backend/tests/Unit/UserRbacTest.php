@@ -5,8 +5,7 @@ namespace Tests\Unit;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
-use Database\Seeders\RbacSeeder;
-use Database\Seeders\RoleSeeder;
+use Database\Seeders\MasterDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -18,7 +17,7 @@ class UserRbacTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed([RoleSeeder::class, RbacSeeder::class]);
+        $this->seed(MasterDataSeeder::class);
     }
 
     public function test_has_role_memeriksa_peran_tunggal_dan_banyak(): void

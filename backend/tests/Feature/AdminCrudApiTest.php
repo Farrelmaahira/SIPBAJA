@@ -12,10 +12,7 @@ use App\Services\RolePermissionService;
 use App\Services\RoleService;
 use App\Services\UnitService;
 use App\Services\UserService;
-use Database\Seeders\MasterReferenceSeeder;
-use Database\Seeders\RbacSeeder;
-use Database\Seeders\RoleSeeder;
-use Database\Seeders\UserSeeder;
+use Database\Seeders\MasterDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -26,7 +23,7 @@ class AdminCrudApiTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed([RoleSeeder::class, UserSeeder::class, RbacSeeder::class, MasterReferenceSeeder::class]);
+        $this->seed(MasterDataSeeder::class);
     }
 
     private function admin(): User

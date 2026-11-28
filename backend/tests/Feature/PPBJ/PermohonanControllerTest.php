@@ -6,7 +6,8 @@ use App\Models\Dokumen;
 use App\Models\Permohonan;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
-use Database\Seeders\PpbjDummySeeder;
+use Database\Seeders\MasterDataSeeder;
+use Database\Seeders\PermohonanPengadaanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -21,7 +22,10 @@ class PermohonanControllerTest extends TestCase
     {
         parent::setUp();
         $this->seed(DatabaseSeeder::class);
-        $this->seed(PpbjDummySeeder::class);
+        $this->seed([
+            MasterDataSeeder::class,
+            PermohonanPengadaanSeeder::class,
+        ]);
 
         $this->ppbjUser = User::whereHas('Role', fn ($q) => $q->where('nama', 'PPBJ'))->firstOrFail();
     }

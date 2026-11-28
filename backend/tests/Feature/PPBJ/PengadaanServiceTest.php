@@ -11,7 +11,8 @@ use App\Models\Permohonan;
 use App\Models\User;
 use App\Services\PengadaanService;
 use Database\Seeders\DatabaseSeeder;
-use Database\Seeders\PpbjDummySeeder;
+use Database\Seeders\MasterDataSeeder;
+use Database\Seeders\PermohonanPengadaanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -29,7 +30,10 @@ class PengadaanServiceTest extends TestCase
         parent::setUp();
 
         $this->seed(DatabaseSeeder::class);
-        $this->seed(PpbjDummySeeder::class);
+        $this->seed([
+            MasterDataSeeder::class,
+            PermohonanPengadaanSeeder::class,
+        ]);
 
         $this->pengadaanService = app(PengadaanService::class);
     }

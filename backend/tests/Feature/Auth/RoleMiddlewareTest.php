@@ -4,7 +4,7 @@ namespace Tests\Feature\Auth;
 
 use App\Models\Role;
 use App\Models\User;
-use Database\Seeders\RoleSeeder;
+use Database\Seeders\MasterDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
@@ -17,7 +17,7 @@ class RoleMiddlewareTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(RoleSeeder::class);
+        $this->seed(MasterDataSeeder::class);
 
         Route::middleware(['web', 'auth', 'role:Admin'])->get('/test-role-admin', function () {
             return response('admin ok', 200);

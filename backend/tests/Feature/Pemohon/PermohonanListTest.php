@@ -5,10 +5,7 @@ namespace Tests\Feature\Pemohon;
 use App\Models\Permohonan;
 use App\Models\Unit;
 use App\Models\User;
-use Database\Seeders\MasterReferenceSeeder;
-use Database\Seeders\RbacSeeder;
-use Database\Seeders\RoleSeeder;
-use Database\Seeders\UserSeeder;
+use Database\Seeders\MasterDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -19,12 +16,7 @@ class PermohonanListTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed([
-            RoleSeeder::class,
-            UserSeeder::class,
-            RbacSeeder::class,
-            MasterReferenceSeeder::class,
-        ]);
+        $this->seed(MasterDataSeeder::class);
     }
 
     private function getPemohonUser(): User

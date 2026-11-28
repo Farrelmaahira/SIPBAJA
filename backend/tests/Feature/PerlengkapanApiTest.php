@@ -3,10 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use Database\Seeders\MasterReferenceSeeder;
-use Database\Seeders\RbacSeeder;
-use Database\Seeders\RoleSeeder;
-use Database\Seeders\UserSeeder;
+use Database\Seeders\MasterDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -19,7 +16,7 @@ class PerlengkapanApiTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed([RoleSeeder::class, UserSeeder::class, RbacSeeder::class, MasterReferenceSeeder::class]);
+        $this->seed(MasterDataSeeder::class);
     }
 
     private function perlengkapanUser(): User

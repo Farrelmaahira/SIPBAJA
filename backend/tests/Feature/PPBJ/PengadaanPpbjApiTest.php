@@ -11,7 +11,8 @@ use App\Models\Pengadaan;
 use App\Models\PermohonanMak;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
-use Database\Seeders\PpbjDummySeeder;
+use Database\Seeders\MasterDataSeeder;
+use Database\Seeders\PermohonanPengadaanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -29,7 +30,10 @@ class PengadaanPpbjApiTest extends TestCase
     {
         parent::setUp();
         $this->seed(DatabaseSeeder::class);
-        $this->seed(PpbjDummySeeder::class);
+        $this->seed([
+            MasterDataSeeder::class,
+            PermohonanPengadaanSeeder::class,
+        ]);
 
         $this->ppbjUser = User::whereHas('Role', fn ($q) => $q->where('nama', 'PPBJ'))->firstOrFail();
         $this->pemohonUser = User::whereHas('Role', fn ($q) => $q->where('nama', 'Pemohon'))->firstOrFail();

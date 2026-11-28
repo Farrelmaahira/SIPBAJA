@@ -5,8 +5,7 @@ namespace Tests\Unit\Services;
 use App\Models\Notification;
 use App\Models\User;
 use App\Services\NotificationService;
-use Database\Seeders\RoleSeeder;
-use Database\Seeders\UserSeeder;
+use Database\Seeders\MasterDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -22,7 +21,7 @@ class NotificationServiceTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed([RoleSeeder::class, UserSeeder::class]);
+        $this->seed(MasterDataSeeder::class);
         $this->notificationService = app(NotificationService::class);
         $this->user = User::where('email', 'perencanaan@pnj.ac.id')->firstOrFail();
     }

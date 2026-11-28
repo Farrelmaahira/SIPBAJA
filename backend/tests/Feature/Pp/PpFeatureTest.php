@@ -9,11 +9,8 @@ use App\Models\Mak;
 use App\Models\Pengadaan;
 use App\Models\PermohonanMak;
 use App\Models\User;
-use Database\Seeders\MasterReferenceSeeder;
-use Database\Seeders\PengadaanPpSeeder;
-use Database\Seeders\RbacSeeder;
-use Database\Seeders\RoleSeeder;
-use Database\Seeders\UserSeeder;
+use Database\Seeders\MasterDataSeeder;
+use Database\Seeders\PermohonanPengadaanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -31,11 +28,8 @@ class PpFeatureTest extends TestCase
         parent::setUp();
 
         $this->seed([
-            RoleSeeder::class,
-            RbacSeeder::class,
-            UserSeeder::class,
-            MasterReferenceSeeder::class,
-            PengadaanPpSeeder::class,
+            MasterDataSeeder::class,
+            PermohonanPengadaanSeeder::class,
         ]);
 
         $this->ppUser = User::whereHas('role', fn ($q) => $q->where('nama', 'PP'))->firstOrFail();
